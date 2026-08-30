@@ -1550,7 +1550,7 @@
         <div class="ratio-legend">
           <span style="color: var(--blue);"><span class="badge-gender-male">Men</span> <strong id="legendMaleText">0 (0%)</strong></span>
           <span style="color: var(--rose);"><span class="badge-gender-female">Women</span> <strong id="legendFemaleText">0 (0%)</strong></span>
-          <span style="color: #b45309;"><span class="badge-child">👶 Children</span> <strong id="legendChildText">0 (0%)</strong></span>
+          <span style="color: #b45309;"><span class="badge-child"><i class="fa-solid fa-children" style="margin-right: 4px;"></i> Children</span> <strong id="legendChildText">0 (0%)</strong></span>
         </div>
       </div>
 
@@ -1590,14 +1590,14 @@
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
           <div>
             <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 22px;">🎂</span>
+              <span style="font-size: 20px; color: var(--accent);"><i class="fa-solid fa-cake-candles"></i></span>
               <h2 class="card-title" style="color: white; font-size: 19px; margin: 0;">Member Birthday Reminders</h2>
               <span id="bdayBadgeCount" style="background: var(--accent); color: #111; font-weight: 800; font-size: 11px; padding: 3px 10px; border-radius: 20px;">0 Upcoming</span>
             </div>
             <p class="card-sub" style="color: #c4d0ca; margin-top: 3px;">Track members celebrating birthdays today and in the next 30 days</p>
           </div>
           <button class="btn-main" style="background: rgba(255,255,255,0.12); color: white; font-size: 12.5px;" onclick="renderBirthdayRemindersWidget(true)">
-            <i class="fas fa-rotate"></i> Refresh Reminders
+            <i class="fa-solid fa-rotate"></i> Refresh Reminders
           </button>
         </div>
 
@@ -1621,13 +1621,13 @@
         <!-- 2-Sided Switcher: Permanent Members vs New Visitors / Guests -->
         <div style="display: flex; gap: 10px; margin: 18px 0 16px 0; border-bottom: 1.5px solid var(--line); padding-bottom: 14px; flex-wrap: wrap; align-items: center;">
           <button id="btnDirFilterMembers" class="btn-main" style="padding: 10px 20px; font-size: 13.5px; font-weight: 800; border-radius: 8px; background: var(--ink); color: white; border: none; cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('MEMBERS')">
-            <i class="fas fa-users" style="color: var(--accent);"></i> 👥 Permanent Church Members <span id="dirCountMembers" style="background: rgba(255,255,255,0.22); padding: 2px 9px; border-radius: 12px; margin-left: 6px; font-size: 11.5px;">0</span>
+            <i class="fa-solid fa-users" style="color: var(--accent); margin-right: 6px;"></i> Permanent Church Members <span id="dirCountMembers" style="background: rgba(255,255,255,0.22); padding: 2px 9px; border-radius: 12px; margin-left: 6px; font-size: 11.5px;">0</span>
           </button>
           <button id="btnDirFilterGuests" class="btn-main" style="padding: 10px 20px; font-size: 13.5px; font-weight: 800; border-radius: 8px; background: #fffbeb; color: #b45309; border: 1.5px solid #fde68a; cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('GUESTS')">
-            <i class="fas fa-star" style="color: #d97706;"></i> ⭐ First-Timers & New Visitors <span id="dirCountGuests" style="background: #fef3c7; color: #92400e; padding: 2px 9px; border-radius: 12px; margin-left: 6px; font-size: 11.5px; border: 1px solid #fde68a;">0</span>
+            <i class="fa-solid fa-star" style="color: #d97706; margin-right: 6px;"></i> First-Timers & New Visitors <span id="dirCountGuests" style="background: #fef3c7; color: #92400e; padding: 2px 9px; border-radius: 12px; margin-left: 6px; font-size: 11.5px; border: 1px solid #fde68a;">0</span>
           </button>
           <button id="btnDirFilterAll" class="btn-main" style="padding: 10px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; background: #fafbfa; color: var(--muted); border: 1px solid var(--line); cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('ALL')">
-            <i class="fas fa-list-ul"></i> All Records <span id="dirCountAll" style="background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 12px; margin-left: 5px; font-size: 11px;">0</span>
+            <i class="fa-solid fa-list-ul" style="margin-right: 6px;"></i> All Records <span id="dirCountAll" style="background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 12px; margin-left: 5px; font-size: 11px;">0</span>
           </button>
         </div>
 
@@ -1666,7 +1666,7 @@
 
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
           <button id="btnSwitchBackAuto" class="btn-main" style="background: #14532d; color: white; border: 1.5px solid #22c55e; display: none;" onclick="resetKioskToRegularSchedule()">
-            <i class="fas fa-rotate-left"></i> ⚡ Program Ended: Switch Back to Regular Schedule
+            <i class="fa-solid fa-rotate-left" style="margin-right: 6px;"></i> Program Ended: Switch Back to Regular Schedule
           </button>
           <select id="adminKioskProgramPicker" class="form-ctrl" aria-label="Select active kiosk program" style="width: 280px; font-weight: 700; background: white; color: var(--ink); padding: 10px 14px;" onchange="handleAdminSetKioskActive(this.value)">
             <!-- Injected by JS -->
@@ -2102,17 +2102,17 @@
           <div style="display: flex; flex-direction: column; gap: 10px;">
             <label for="permAttendance" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="permAttendance" aria-label="Attendance Check-In Privilege" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>📋 Attendance &amp; Demographics</span>
+              <span><i class="fa-solid fa-clipboard-user" style="color: var(--accent); margin-right: 6px;"></i> Attendance &amp; Demographics</span>
             </label>
 
             <label for="permMembers" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="permMembers" aria-label="Member Directory Privilege" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>👥 Member Directory</span>
+              <span><i class="fa-solid fa-address-book" style="color: var(--accent); margin-right: 6px;"></i> Member Directory</span>
             </label>
 
             <label for="permPrograms" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="permPrograms" aria-label="Programs Management Privilege" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>📅 Services &amp; Programs Setup</span>
+              <span><i class="fa-solid fa-calendar-days" style="color: var(--accent); margin-right: 6px;"></i> Services &amp; Programs Setup</span>
             </label>
           </div>
         </div>
@@ -2165,17 +2165,17 @@
           <div style="display: flex; flex-direction: column; gap: 10px;">
             <label for="editPermAttendance" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="editPermAttendance" aria-label="Edit Attendance Check-In Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>📋 Attendance &amp; Demographics</span>
+              <span><i class="fa-solid fa-clipboard-user" style="color: var(--accent); margin-right: 6px;"></i> Attendance &amp; Demographics</span>
             </label>
 
             <label for="editPermMembers" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="editPermMembers" aria-label="Edit Member Directory Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>👥 Member Directory</span>
+              <span><i class="fa-solid fa-address-book" style="color: var(--accent); margin-right: 6px;"></i> Member Directory</span>
             </label>
 
             <label for="editPermPrograms" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="editPermPrograms" aria-label="Edit Programs Management Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>📅 Services &amp; Programs Setup</span>
+              <span><i class="fa-solid fa-calendar-days" style="color: var(--accent); margin-right: 6px;"></i> Services &amp; Programs Setup</span>
             </label>
           </div>
         </div>
@@ -3145,7 +3145,7 @@
               <td>GHS ${Number(item.specialSeed).toLocaleString()}</td>
               <td><strong style="color: var(--emerald); font-size: 14px;">GHS ${tot.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></td>
               <td>${item.recordedBy}</td>
-              <td><span class="badge-check">&#10003; Reconciled</span></td>
+              <td><span class="badge-check"><i class="fa-solid fa-circle-check" style="margin-right: 4px;"></i> Reconciled</span></td>
               <td>
                 <button class="btn-main" style="padding: 4px 10px; font-size: 12px;" onclick="printServiceRemittance('${item.id}')">
                   <i class="fas fa-receipt"></i> Slip
@@ -3171,7 +3171,7 @@
                 <div class="fin-mobile-card-total">GHS ${tot.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
               </div>
               <div class="fin-mobile-card-row">
-                <span class="badge-check">&#10003; Reconciled</span>
+                <span class="badge-check"><i class="fa-solid fa-circle-check" style="margin-right: 4px;"></i> Reconciled</span>
                 <span style="font-size:12px;color:var(--muted);">By: ${item.recordedBy}</span>
               </div>
               <div class="fin-mobile-card-actions">
@@ -3467,18 +3467,18 @@
 
         let catBadge = `<span class="badge-adult">Adult</span>`;
         if (isGuest) {
-          catBadge = `<span class="badge-guest"><i class="fas fa-star" style="color:#d97706;"></i> New Visitor / Guest</span>`;
+          catBadge = `<span class="badge-guest"><i class="fa-solid fa-star" style="color:#d97706; margin-right:4px;"></i> New Visitor / Guest</span>`;
         } else if (isChild) {
-          catBadge = `<span class="badge-child">&#128118; Child</span>`;
+          catBadge = `<span class="badge-child"><i class="fa-solid fa-children" style="margin-right:4px;"></i> Child</span>`;
         } else if (m.category==='Youth') {
           catBadge = `<span class="badge-check" style="background:#e0f2fe;color:#0369a1;">Youth</span>`;
         }
 
         const roleDisplay = isGuest 
-          ? `<span style="background:#fffbeb; color:#b45309; font-weight:800; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;"><i class="fas fa-handshake"></i> First Timer</span>`
+          ? `<span style="background:#fffbeb; color:#b45309; font-weight:800; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;"><i class="fa-solid fa-handshake" style="margin-right:4px;"></i> First Timer</span>`
           : `<span class="badge-check">${m.role||'Member'}</span>`;
 
-        const phoneDisplay = isChild&&m.guardian ? `${escapeHtml(m.phone)||'—'} <span style="font-size:11px;color:var(--muted);">&#128100; ${escapeHtml(m.guardian)}</span>` : (escapeHtml(m.phone)||'—');
+        const phoneDisplay = isChild&&m.guardian ? `${escapeHtml(m.phone)||'—'} <span style="font-size:11px;color:var(--muted);"><i class="fa-solid fa-user-shield" style="margin-right:3px;"></i> ${escapeHtml(m.guardian)}</span>` : (escapeHtml(m.phone)||'—');
         return { genderBadge, catBadge, phoneDisplay, roleDisplay, isGuest };
       };
 
@@ -3493,7 +3493,7 @@
           return `<tr>
             <td>${i+1}</td><td><strong>${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</strong></td>
             <td>${catBadge}</td><td>${phoneDisplay}</td><td>${genderBadge}</td>
-            <td>${m.address?`<span>&#128205; ${escapeHtml(m.address)}</span>`:'—'}</td>
+            <td>${m.address?`<span><i class="fa-solid fa-location-dot" style="margin-right:4px; color:var(--muted);"></i> ${escapeHtml(m.address)}</span>`:'—'}</td>
             <td>${roleDisplay}</td>
             <td>${statusBadge}</td>
             <td>${m.isPresent?`<strong>${m.checkInTime}</strong>`:'<span style="color:#991b1b;font-weight:700;font-size:12px;">Did Not Attend</span>'}</td>
@@ -3779,18 +3779,18 @@
 
         let catBadge = `<span class="badge-adult">Adult</span>`;
         if (isGuest) {
-          catBadge = `<span class="badge-guest"><i class="fas fa-star" style="color:#d97706;"></i> New Visitor / Guest</span>`;
+          catBadge = `<span class="badge-guest"><i class="fa-solid fa-star" style="color:#d97706; margin-right:4px;"></i> New Visitor / Guest</span>`;
         } else if (isChild) {
-          catBadge = `<span class="badge-child">&#128118; Child</span>`;
+          catBadge = `<span class="badge-child"><i class="fa-solid fa-children" style="margin-right:4px;"></i> Child</span>`;
         } else if (m.category==='Youth') {
           catBadge = `<span class="badge-check" style="background:#e0f2fe;color:#0369a1;">Youth</span>`;
         }
 
         const roleDisplay = isGuest 
-          ? `<span style="background:#fffbeb; color:#b45309; font-weight:800; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;"><i class="fas fa-handshake"></i> First Timer</span>`
+          ? `<span style="background:#fffbeb; color:#b45309; font-weight:800; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;"><i class="fa-solid fa-handshake" style="margin-right:4px;"></i> First Timer</span>`
           : `<span class="badge-check">${m.role||'Member'}</span>`;
 
-        const phoneDisplay = isChild&&m.guardian ? `<strong style="color:var(--accent);">${escapeHtml(m.phone)||'—'}</strong><div style="font-size:11px;color:var(--muted);"><i class="fas fa-user-shield"></i> ${escapeHtml(m.guardian)}</div>` : `<strong style="color:var(--accent);">${escapeHtml(m.phone)||'—'}</strong>`;
+        const phoneDisplay = isChild&&m.guardian ? `<strong style="color:var(--accent);">${escapeHtml(m.phone)||'—'}</strong><div style="font-size:11px;color:var(--muted);"><i class="fa-solid fa-user-shield" style="margin-right:3px;"></i> ${escapeHtml(m.guardian)}</div>` : `<strong style="color:var(--accent);">${escapeHtml(m.phone)||'—'}</strong>`;
         return {genderBadge, catBadge, phoneDisplay, roleDisplay, isChild, isGuest};
       };
 
@@ -3798,8 +3798,8 @@
         const emptyMsg = currentDirSubTab === 'GUESTS' 
           ? 'No first-timers or new visitors registered yet.'
           : (currentDirSubTab === 'MEMBERS' ? 'No permanent church members found matching this search.' : 'No records found in directory.');
-        if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px;font-size:13.5px;"><i class="fas fa-info-circle" style="margin-right:6px;"></i> ${emptyMsg}</td></tr>`;
-        if (mobCards) mobCards.innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px 0;font-size:13.5px;"><i class="fas fa-info-circle"></i> ${emptyMsg}</div>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px;font-size:13.5px;"><i class="fa-solid fa-circle-info" style="margin-right:6px;"></i> ${emptyMsg}</td></tr>`;
+        if (mobCards) mobCards.innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px 0;font-size:13.5px;"><i class="fa-solid fa-circle-info" style="margin-right:6px;"></i> ${emptyMsg}</div>`;
         return;
       }
 
@@ -3810,8 +3810,8 @@
           return `<tr>
             <td>${i+1}</td><td><strong>${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</strong></td>
             <td>${catBadge}</td><td>${phoneDisplay}</td><td>${genderBadge}</td>
-            <td>${m.address?`<span>&#128205; ${escapeHtml(m.address)}</span>`:'—'}</td>
-            <td>${m.dob?`<span class="badge-dob"><i class="fas fa-calendar-day"></i> ${escapeHtml(m.dob)}</span>`:'—'}</td>
+            <td>${m.address?`<span><i class="fa-solid fa-location-dot" style="margin-right:4px; color:var(--muted);"></i> ${escapeHtml(m.address)}</span>`:'—'}</td>
+            <td>${m.dob?`<span class="badge-dob"><i class="fa-solid fa-cake-candles" style="margin-right:4px;"></i> ${escapeHtml(m.dob)}</span>`:'—'}</td>
             <td>${roleDisplay}</td>
             <td><div style="display:flex;gap:6px;">
               <button class="btn-main" style="padding:4px 10px;font-size:12px;background:#c89b55;color:#111;" onclick="openEditMemberModal('${m.id}')"><i class="fas fa-edit"></i> Edit</button>
@@ -3891,14 +3891,14 @@
             <div style="flex: 1; min-width: 260px; background: linear-gradient(135deg, #c89b55 0%, #a87d3b 100%); color: #111; padding: 14px 16px; border-radius: 8px; border: 1px solid #fef08a; box-shadow: 0 4px 12px rgba(200,155,85,0.3);">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                  <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; background: #111; color: #c89b55; padding: 2px 8px; border-radius: 4px;">🎉 TODAY!</span>
+                  <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; background: #111; color: #c89b55; padding: 2px 8px; border-radius: 4px;"><i class="fa-solid fa-cake-candles" style="margin-right: 4px;"></i> TODAY!</span>
                   <div style="font-size: 16px; font-weight: 800; margin-top: 6px;">${m.firstName} ${m.lastName}</div>
                   <div style="font-size: 12px; opacity: 0.9; margin-top: 2px;">Turning <strong>${b.age} years old</strong></div>
                 </div>
-                <span style="font-size: 26px;">🎂</span>
+                <i class="fa-solid fa-cake-candles" style="font-size: 24px; color: #111;"></i>
               </div>
               <div style="margin-top: 10px; font-size: 12px; font-weight: 700; border-top: 1px dashed rgba(0,0,0,0.2); padding-top: 8px; display: flex; justify-content: space-between; align-items: center;">
-                <span><i class="fas fa-phone"></i> ${m.phone || 'No Phone'}</span>
+                <span><i class="fa-solid fa-phone" style="margin-right: 4px;"></i> ${m.phone || 'No Phone'}</span>
                 <span style="background: rgba(0,0,0,0.15); padding: 3px 8px; border-radius: 4px;">Wish Happy Birthday!</span>
               </div>
             </div>`;
@@ -3914,7 +3914,7 @@
                 <span style="font-size: 11px; font-weight: 700; background: rgba(200,155,85,0.25); color: var(--accent); padding: 3px 8px; border-radius: 4px;">${dayText}</span>
               </div>
               <div style="margin-top: 8px; font-size: 11.5px; color: #a3b899; display: flex; align-items: center; gap: 6px;">
-                <i class="fas fa-user-tag"></i> ${m.category || 'Member'} ${m.phone ? `· 📞 ${m.phone}` : ''}
+                <i class="fa-solid fa-user-tag"></i> ${m.category || 'Member'} ${m.phone ? `· <i class="fa-solid fa-phone" style="font-size: 10px; margin-left: 2px;"></i> ${m.phone}` : ''}
               </div>
             </div>`;
         }

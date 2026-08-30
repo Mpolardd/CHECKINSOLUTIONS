@@ -956,7 +956,7 @@
               <div>
                 <div class="member-name">${m.firstName} ${m.lastName}</div>
                 <div class="member-phone"><i class="fas fa-phone-alt" style="font-size: 11px; margin-right: 4px;"></i>${m.phone}</div>
-                ${m.address ? `<div style="font-size: 12px; color: var(--muted); margin-top: 2px;">📍 ${m.address}</div>` : ''}
+                ${m.address ? `<div style="font-size: 12px; color: var(--muted); margin-top: 2px;"><i class="fa-solid fa-location-dot" style="margin-right: 4px; font-size: 11px;"></i>${m.address}</div>` : ''}
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
                 <span class="member-meta"><i class="fas fa-check-circle"></i> Click to check in</span>
@@ -1056,7 +1056,7 @@
       const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
       document.getElementById('passName').innerHTML = isChild 
-        ? `${fullName} <span style="font-size: 13px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-weight: 700; margin-left: 6px;">👶 Child / Sunday School</span>`
+        ? `${fullName} <span style="font-size: 13px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-weight: 700; margin-left: 6px;"><i class="fa-solid fa-children" style="margin-right: 4px;"></i>Child / Sunday School</span>`
         : fullName;
 
       document.getElementById('passDetails').innerText = `${currentServiceName} · ${dateStr}, ${timeStr}`;
