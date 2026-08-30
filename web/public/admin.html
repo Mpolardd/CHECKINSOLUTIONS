@@ -693,6 +693,19 @@
       border-radius: 4px;
     }
 
+    .badge-guest {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
     .ratio-fill-child {
       background: #f59e0b;
       transition: width 0.4s ease;
@@ -1465,7 +1478,7 @@
               <option value="Friday: Prophetic Healing & Deliverance">Friday — Prophetic Healing & Deliverance</option>
             </select>
 
-            <!-- Status Filter Buttons (Present vs Absent) -->
+            <!-- Status Filter Buttons (Present vs Absent vs Guests) -->
             <div class="filter-presets">
               <button class="btn-preset active" id="btnAttFilterAll" onclick="setAttFilter('ALL')">
                 All Members (<span id="countAllFilter">0</span>)
@@ -1475,6 +1488,9 @@
               </button>
               <button class="btn-preset" id="btnAttFilterAbsent" onclick="setAttFilter('ABSENT')" style="color: #991b1b;">
                 <i class="fas fa-times-circle"></i> Absent / Missed (<span id="countAbsentFilter">0</span>)
+              </button>
+              <button class="btn-preset" id="btnAttFilterGuest" onclick="setAttFilter('GUEST')" style="color: #b45309; font-weight: 700;">
+                <i class="fas fa-star" style="color: #d97706;"></i> First-Timers / Guests (<span id="countGuestFilter">0</span>)
               </button>
             </div>
           </div>
@@ -1486,7 +1502,7 @@
         </div>
       </div>
 
-      <!-- Metrics with Attendance & Absentee Counts (Including Children / Sunday School) -->
+      <!-- Metrics with Attendance & Absentee Counts (Including Children & Visitors) -->
       <div class="metrics-row">
         <div class="metric-box">
           <div class="metric-num" id="statTodayCount">0</div>
@@ -1499,6 +1515,10 @@
         <div class="metric-box">
           <div class="metric-num" style="color: #991b1b;" id="statAbsentCount">0 (0%)</div>
           <div class="metric-label">Absent / Missed</div>
+        </div>
+        <div class="metric-box" style="border-left: 3.5px solid #d97706;">
+          <div class="metric-num" style="color: #d97706;" id="statAttGuestCount">0 Guests</div>
+          <div class="metric-label">First-Timers / Guests</div>
         </div>
         <div class="metric-box">
           <div class="metric-num" style="color: var(--blue);" id="statAttMaleCount">0 Men</div>
@@ -3233,6 +3253,8 @@
       document.getElementById('btnAttFilterAll').classList.toggle('active', filter === 'ALL');
       document.getElementById('btnAttFilterPresent').classList.toggle('active', filter === 'PRESENT');
       document.getElementById('btnAttFilterAbsent').classList.toggle('active', filter === 'ABSENT');
+      const guestBtn = document.getElementById('btnAttFilterGuest');
+      if (guestBtn) guestBtn.classList.toggle('active', filter === 'GUEST');
       renderAttendanceAndDemographics();
     }
 
@@ -3244,20 +3266,61 @@
     function renderAttendanceAndDemographics() {
       const activeAttList = getAttendanceListForService(currentSelectedService);
       
-      // Map members into Present or Absent
-      let totalDirectory = allMembers.length;
+      // Combine all directory members + any active check-ins (e.g. newly registered visitors/guests)
+      let directoryList = [...allMembers];
+
+      activeAttList.forEach(att => {
+        const phone = (att.phone || '').trim();
+        const name = (att.name || '').trim().toLowerCase();
+        const exists = directoryList.some(m => 
+          (phone && m.phone && m.phone.trim() === phone) ||
+          (name && `${m.firstName} ${m.lastName}`.trim().toLowerCase() === name)
+        );
+        if (!exists && att.name) {
+          const parts = att.name.split(' ');
+          const fName = parts[0] || 'Visitor';
+          const lName = parts.slice(1).join(' ') || 'Guest';
+          directoryList.push({
+            id: 'guest_' + Math.random().toString(36).substr(2, 9),
+            firstName: fName,
+            lastName: lName,
+            phone: att.phone || '—',
+            gender: att.gender || 'Not specified',
+            address: att.address || '',
+            category: 'Visitor / Guest',
+            role: 'Visitor / First Timer',
+            isGuest: true
+          });
+        }
+      });
+
+      let totalDirectory = directoryList.length;
       let presentCount = 0;
       let absentCount = 0;
       let attendingMale = 0;
       let attendingFemale = 0;
       let attendingChild = 0;
+      let attendingGuest = 0;
 
-      const processedMembers = allMembers.map(m => {
-        const found = activeAttList.find(a => a.phone === m.phone || `${m.firstName} ${m.lastName}`.toLowerCase() === (a.name || '').toLowerCase());
-        const isPresent = Boolean(found);
+      const processedMembers = directoryList.map(m => {
+        const found = activeAttList.find(a => 
+          (a.phone && m.phone && a.phone.trim() === m.phone.trim()) ||
+          (`${m.firstName} ${m.lastName}`.trim().toLowerCase() === (a.name || '').trim().toLowerCase())
+        );
+        const isPresent = Boolean(found) || Boolean(m.isGuest);
+
+        const isGuest = Boolean(m.isGuest) ||
+                        m.category === 'Visitor' ||
+                        m.category === 'Visitor / First-Timer' ||
+                        m.category === 'Visitor / Guest' ||
+                        (m.role && m.role.toLowerCase().includes('visitor')) ||
+                        (m.role && m.role.toLowerCase().includes('first timer'));
 
         if (isPresent) {
           presentCount++;
+          if (isGuest) {
+            attendingGuest++;
+          }
           const isChild = m.category === 'Child' || (m.role && m.role.toLowerCase().includes('child'));
           if (isChild) {
             attendingChild++;
@@ -3274,8 +3337,9 @@
         return {
           ...m,
           isPresent,
-          checkInTime: found ? found.time : '—',
-          checkInMethod: found ? (found.method || 'KIOSK') : '—'
+          isGuest,
+          checkInTime: found ? (found.time || 'Today') : (m.isGuest ? 'Today' : '—'),
+          checkInMethod: found ? (found.method || 'KIOSK') : (m.isGuest ? 'KIOSK' : '—')
         };
       });
 
@@ -3290,11 +3354,15 @@
       document.getElementById('countAllFilter').innerText = totalDirectory;
       document.getElementById('countPresentFilter').innerText = presentCount;
       document.getElementById('countAbsentFilter').innerText = absentCount;
+      const guestFilterCount = document.getElementById('countGuestFilter');
+      if (guestFilterCount) guestFilterCount.innerText = attendingGuest;
 
       // Update Metric Cards
       document.getElementById('statTodayCount').innerText = totalDirectory;
       document.getElementById('statPresentCount').innerText = `${presentCount} (${presentPct}%)`;
       document.getElementById('statAbsentCount').innerText = `${absentCount} (${absentPct}%)`;
+      const guestStatCard = document.getElementById('statAttGuestCount');
+      if (guestStatCard) guestStatCard.innerText = `${attendingGuest} Guests`;
       document.getElementById('statAttMaleCount').innerText = `${attendingMale} (${malePct}%)`;
       document.getElementById('statAttFemaleCount').innerText = `${attendingFemale} (${femalePct}%)`;
       document.getElementById('statAttChildCount').innerText = `${attendingChild} (${childPct}%)`;
@@ -3304,17 +3372,19 @@
       document.getElementById('ratioFillFemale').style.width = `${femalePct}%`;
       document.getElementById('ratioFillChild').style.width = `${childPct}%`;
 
-      document.getElementById('ratioDetailsText').innerText = `${attendingMale} Men (${malePct}%) · ${attendingFemale} Women (${femalePct}%) · ${attendingChild} Children (${childPct}%)`;
+      document.getElementById('ratioDetailsText').innerText = `${attendingMale} Men (${malePct}%) · ${attendingFemale} Women (${femalePct}%) · ${attendingChild} Children (${childPct}%) · ${attendingGuest} First-Timer Guests`;
       document.getElementById('legendMaleText').innerText = `${attendingMale} (${malePct}%)`;
       document.getElementById('legendFemaleText').innerText = `${attendingFemale} (${femalePct}%)`;
       document.getElementById('legendChildText').innerText = `${attendingChild} (${childPct}%)`;
 
-      // Filter by Active View Mode (ALL, PRESENT, ABSENT)
+      // Filter by Active View Mode (ALL, PRESENT, ABSENT, GUEST)
       let listToDisplay = processedMembers;
       if (currentAttFilter === 'PRESENT') {
         listToDisplay = processedMembers.filter(m => m.isPresent);
       } else if (currentAttFilter === 'ABSENT') {
         listToDisplay = processedMembers.filter(m => !m.isPresent);
+      } else if (currentAttFilter === 'GUEST') {
+        listToDisplay = processedMembers.filter(m => m.isGuest);
       }
 
       renderAttendanceTableHTML(listToDisplay);
@@ -3325,8 +3395,8 @@
       const mobCards = document.getElementById('attMobileCards');
 
       if (list.length === 0) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--muted); padding: 30px;">No members found matching this filter for the selected service.</td></tr>`;
-        if (mobCards) mobCards.innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px 0;">No members found.</div>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--muted); padding: 30px;">No attendees found matching this filter for the selected service.</td></tr>`;
+        if (mobCards) mobCards.innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px 0;">No attendees found.</div>`;
         return;
       }
 
@@ -3335,15 +3405,34 @@
         const isFemale = (m.gender||'').toLowerCase().startsWith('f');
         const genderBadge = isMale ? `<span class="badge-gender-male">Male</span>` : isFemale ? `<span class="badge-gender-female">Female</span>` : `—`;
         const isChild = m.category==='Child'||(m.role&&m.role.toLowerCase().includes('child'));
-        const catBadge = isChild ? `<span class="badge-child">&#128118; Child</span>` : m.category==='Youth' ? `<span class="badge-check" style="background:#e0f2fe;color:#0369a1;">Youth</span>` : `<span class="badge-adult">Adult</span>`;
+        const isGuest = Boolean(m.isGuest) ||
+                        m.category === 'Visitor' ||
+                        m.category === 'Visitor / First-Timer' ||
+                        m.category === 'Visitor / Guest' ||
+                        (m.role && m.role.toLowerCase().includes('visitor')) ||
+                        (m.role && m.role.toLowerCase().includes('first timer'));
+
+        let catBadge = `<span class="badge-adult">Adult</span>`;
+        if (isGuest) {
+          catBadge = `<span class="badge-guest"><i class="fas fa-star" style="color:#d97706;"></i> New Visitor / Guest</span>`;
+        } else if (isChild) {
+          catBadge = `<span class="badge-child">&#128118; Child</span>`;
+        } else if (m.category==='Youth') {
+          catBadge = `<span class="badge-check" style="background:#e0f2fe;color:#0369a1;">Youth</span>`;
+        }
+
+        const roleDisplay = isGuest 
+          ? `<span style="background:#fffbeb; color:#b45309; font-weight:800; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;"><i class="fas fa-handshake"></i> First Timer</span>`
+          : `<span class="badge-check">${m.role||'Member'}</span>`;
+
         const phoneDisplay = isChild&&m.guardian ? `${m.phone||'—'} <span style="font-size:11px;color:var(--muted);">&#128100; ${m.guardian}</span>` : (m.phone||'—');
-        return { genderBadge, catBadge, phoneDisplay };
+        return { genderBadge, catBadge, phoneDisplay, roleDisplay, isGuest };
       };
 
       // Desktop table
       if (tbody) {
         tbody.innerHTML = list.map((m, i) => {
-          const {genderBadge, catBadge, phoneDisplay} = buildBadges(m);
+          const {genderBadge, catBadge, phoneDisplay, roleDisplay} = buildBadges(m);
           const statusBadge = m.isPresent ? `<span class="badge-present"><i class="fas fa-check-circle"></i> Present</span>` : `<span class="badge-absent"><i class="fas fa-times-circle"></i> Absent</span>`;
           const followUpBtn = m.isPresent
             ? `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#14532d;" onclick="toggleMemberAttendance('${m.phone}',false)"><i class="fas fa-check"></i> Checked In</button>`
@@ -3352,7 +3441,7 @@
             <td>${i+1}</td><td><strong>${m.firstName} ${m.lastName}</strong></td>
             <td>${catBadge}</td><td>${phoneDisplay}</td><td>${genderBadge}</td>
             <td>${m.address?`<span>&#128205; ${m.address}</span>`:'—'}</td>
-            <td><span class="badge-check">${m.role||'Member'}</span></td>
+            <td>${roleDisplay}</td>
             <td>${statusBadge}</td>
             <td>${m.isPresent?`<strong>${m.checkInTime}</strong>`:'<span style="color:#991b1b;font-weight:700;font-size:12px;">Did Not Attend</span>'}</td>
             <td>${followUpBtn}</td>
@@ -3363,7 +3452,7 @@
       // Mobile cards
       if (mobCards) {
         mobCards.innerHTML = list.map((m, i) => {
-          const {genderBadge, catBadge} = buildBadges(m);
+          const {genderBadge, catBadge, phoneDisplay, roleDisplay} = buildBadges(m);
           const statusBadge = m.isPresent ? `<span class="badge-present"><i class="fas fa-check-circle"></i> Present</span>` : `<span class="badge-absent"><i class="fas fa-times-circle"></i> Absent</span>`;
           const btn = m.isPresent
             ? `<button class="btn-main mob-card-actions" style="background:#14532d;" onclick="toggleMemberAttendance('${m.phone}',false)"><i class="fas fa-check"></i> Checked In</button>`
@@ -3377,9 +3466,9 @@
               <div class="mob-card-meta">
                 <div class="mob-card-row"><span>Category</span><strong>${catBadge}</strong></div>
                 <div class="mob-card-row"><span>Gender</span><strong>${genderBadge}</strong></div>
-                <div class="mob-card-row"><span>Phone</span><strong>${m.phone||'—'}</strong></div>
+                <div class="mob-card-row"><span>Phone</span><strong>${phoneDisplay}</strong></div>
                 ${m.guardian?`<div class="mob-card-row"><span>Guardian</span><strong>${m.guardian}</strong></div>`:''}
-                <div class="mob-card-row"><span>Role</span><strong>${m.role||'Member'}</strong></div>
+                <div class="mob-card-row"><span>Role</span><strong>${roleDisplay}</strong></div>
                 <div class="mob-card-row"><span>Check-In</span><strong>${m.isPresent?m.checkInTime:'Did Not Attend'}</strong></div>
               </div>
               <div class="mob-card-actions">${btn}</div>
@@ -3479,6 +3568,8 @@
             const liveList = live.recent.map(item => ({
               phone: item.member?.phone || '',
               name: `${item.member?.firstName || ''} ${item.member?.lastName || ''}`.trim(),
+              gender: item.member?.gender || '',
+              address: item.member?.address || '',
               time: new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               method: item.method || 'KIOSK'
             }));
@@ -3544,9 +3635,23 @@
         const isFemale = (m.gender||'').toLowerCase().startsWith('f');
         const genderBadge = isMale ? `<span class="badge-gender-male">Male</span>` : isFemale ? `<span class="badge-gender-female">Female</span>` : `—`;
         const isChild = m.category==='Child'||(m.role&&m.role.toLowerCase().includes('child'));
-        const catBadge = isChild ? `<span class="badge-child">&#128118; Child</span>` : m.category==='Youth' ? `<span class="badge-check" style="background:#e0f2fe;color:#0369a1;">Youth</span>` : `<span class="badge-adult">Adult</span>`;
+        const isGuest = m.category === 'Visitor' || m.category === 'Visitor / First-Timer' || m.category === 'Visitor / Guest' || (m.role && m.role.toLowerCase().includes('visitor')) || (m.role && m.role.toLowerCase().includes('first timer'));
+
+        let catBadge = `<span class="badge-adult">Adult</span>`;
+        if (isGuest) {
+          catBadge = `<span class="badge-guest"><i class="fas fa-star" style="color:#d97706;"></i> New Visitor / Guest</span>`;
+        } else if (isChild) {
+          catBadge = `<span class="badge-child">&#128118; Child</span>`;
+        } else if (m.category==='Youth') {
+          catBadge = `<span class="badge-check" style="background:#e0f2fe;color:#0369a1;">Youth</span>`;
+        }
+
+        const roleDisplay = isGuest 
+          ? `<span style="background:#fffbeb; color:#b45309; font-weight:800; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;"><i class="fas fa-handshake"></i> First Timer</span>`
+          : `<span class="badge-check">${m.role||'Member'}</span>`;
+
         const phoneDisplay = isChild&&m.guardian ? `<strong style="color:var(--accent);">${m.phone||'—'}</strong><div style="font-size:11px;color:var(--muted);"><i class="fas fa-user-shield"></i> ${m.guardian}</div>` : `<strong style="color:var(--accent);">${m.phone||'—'}</strong>`;
-        return {genderBadge, catBadge, phoneDisplay, isChild};
+        return {genderBadge, catBadge, phoneDisplay, roleDisplay, isChild, isGuest};
       };
 
       if (list.length === 0) {
@@ -3558,13 +3663,13 @@
       // Desktop table
       if (tbody) {
         tbody.innerHTML = list.map((m, i) => {
-          const {genderBadge, catBadge, phoneDisplay} = buildMemberBadges(m);
+          const {genderBadge, catBadge, phoneDisplay, roleDisplay} = buildMemberBadges(m);
           return `<tr>
             <td>${i+1}</td><td><strong>${m.firstName} ${m.lastName}</strong></td>
             <td>${catBadge}</td><td>${phoneDisplay}</td><td>${genderBadge}</td>
             <td>${m.address?`<span>&#128205; ${m.address}</span>`:'—'}</td>
             <td>${m.dob?`<span class="badge-dob"><i class="fas fa-calendar-day"></i> ${m.dob}</span>`:'—'}</td>
-            <td><span class="badge-check">${m.role||'Member'}</span></td>
+            <td>${roleDisplay}</td>
             <td><div style="display:flex;gap:6px;">
               <button class="btn-main" style="padding:4px 10px;font-size:12px;background:#c89b55;color:#111;" onclick="openEditMemberModal('${m.id}')"><i class="fas fa-edit"></i> Edit</button>
               <button class="btn-main" style="padding:4px 10px;font-size:12px;background:#c5221f;" onclick="deleteMember('${m.id}')"><i class="fas fa-trash-alt"></i> Remove</button>
