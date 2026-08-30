@@ -914,9 +914,12 @@
   </main>
 
   <script>
+    // Purge legacy offline finance caches
+    ['sfmi_service_finances', 'sfmi_fin_reconciliation_entries'].forEach(k => {
+      try { localStorage.removeItem(k); } catch(e) {}
+    });
+
     const API_BASE = (() => {
-      const custom = localStorage.getItem('sfmi_backend_api');
-      if (custom) return custom.replace(/\/+$/, '');
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       return isLocal ? 'http://localhost:4000/api/v1' : '/api/v1';
     })();
@@ -1246,34 +1249,19 @@
           body: JSON.stringify(payload)
         });
         if (res.ok) {
-          showSuccessNotification(`Figures for ${serviceName} (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) saved successfully!`);
-          showToast(`Financial collections for <strong>${serviceName}</strong> (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) submitted successfully!`, 'success', 'Treasury Entry Saved');
+          showSuccessNotification(`Figures for ${serviceName} (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) saved directly to Supabase!`);
+          showToast(`Financial collections for <strong>${serviceName}</strong> (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) recorded in Supabase database!`, 'success', 'Treasury Entry Saved');
           e.target.reset();
           document.getElementById('finServiceDate').value = new Date().toISOString().split('T')[0];
           computeGrandTotal();
           return;
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Failed to record entry in Supabase.', 'error', 'Save Failed');
         }
-      } catch (err) {}
-
-      // Fallback
-      const newEntry = {
-        id: 'fe_' + Date.now(),
-        ...payload,
-        totalAmount
-      };
-      const saved = localStorage.getItem('sfmi_service_finances');
-      let entries = [];
-      if (saved) {
-        try { entries = JSON.parse(saved); } catch(e){}
+      } catch (err) {
+        showToast('Network error saving financial figures to Supabase.', 'error', 'Network Error');
       }
-      entries.unshift(newEntry);
-      localStorage.setItem('sfmi_service_finances', JSON.stringify(entries));
-
-      showSuccessNotification(`Figures for ${serviceName} (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) saved successfully!`);
-      showToast(`Financial collections for <strong>${serviceName}</strong> (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) recorded successfully!`, 'success', 'Treasury Entry Saved');
-      e.target.reset();
-      document.getElementById('finServiceDate').value = new Date().toISOString().split('T')[0];
-      computeGrandTotal();
     }
 
     function showSuccessNotification(msg) {

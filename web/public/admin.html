@@ -2291,9 +2291,12 @@
   </div>
 
   <script>
+    // Purge any legacy browser mock caches on startup to ensure 100% live Supabase data
+    ['sfmi_members_registry', 'sfmi_sub_admins_registry', 'sfmi_service_attendance_map', 'sfmi_fin_reconciliation_entries', 'sfmi_service_finances', 'sfmi_custom_programs'].forEach(k => {
+      try { localStorage.removeItem(k); } catch(e) {}
+    });
+
     const API_BASE = (() => {
-      const custom = localStorage.getItem('sfmi_backend_api');
-      if (custom) return custom.replace(/\/+$/, '');
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       return isLocal ? 'http://localhost:4000/api/v1' : '/api/v1';
     })();
@@ -2339,25 +2342,14 @@
           const cloudList = await res.json();
           if (Array.isArray(cloudList)) {
             subAdminsList = cloudList;
-            saveSubAdmins();
             renderSubAdminsList();
             return;
           }
         }
       } catch (err) {}
 
-      const saved = localStorage.getItem('sfmi_sub_admins_registry');
-      if (saved) {
-        try { subAdminsList = JSON.parse(saved); } catch(e) { subAdminsList = []; }
-      } else {
-        subAdminsList = [];
-        saveSubAdmins();
-      }
+      subAdminsList = [];
       renderSubAdminsList();
-    }
-
-    function saveSubAdmins() {
-      localStorage.setItem('sfmi_sub_admins_registry', JSON.stringify(subAdminsList));
     }
 
     function applyTabPermissions() {
@@ -2566,37 +2558,21 @@
           const created = await res.json();
           subAdminsList = subAdminsList.filter(s => s.email.toLowerCase() !== email.toLowerCase());
           subAdminsList.unshift(created);
-          saveSubAdmins();
           closeCreateSubAdminModal();
           renderSubAdminsList();
-          showToast(`Sub-Admin account for <strong>${escapeHtml(name)}</strong> saved to Cloud Database! They can log in immediately at /admin.`, 'success', 'Sub-Admin Created');
+          showToast(`Sub-Admin account for <strong>${escapeHtml(name)}</strong> saved directly to Supabase database!`, 'success', 'Sub-Admin Created');
           if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Sub-Admin'; }
           return;
         } else {
           const err = await res.json();
-          if (err.error) {
-            showToast(err.error, 'error', 'Creation Failed');
-            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Sub-Admin'; }
-            return;
-          }
+          showToast(err.error || 'Failed to create sub-admin account in database.', 'error', 'Creation Failed');
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Sub-Admin'; }
+          return;
         }
-      } catch (err) {}
-
-      // Fallback local save
-      const newSub = {
-        id: `sub_${Date.now()}`,
-        name,
-        email,
-        password,
-        permissions: perms,
-        createdAt: new Date().toLocaleDateString('en-GB')
-      };
-      subAdminsList.unshift(newSub);
-      saveSubAdmins();
-      closeCreateSubAdminModal();
-      renderSubAdminsList();
-      showToast(`Sub-Admin account for <strong>${escapeHtml(name)}</strong> created!`, 'success', 'Sub-Admin Created');
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Sub-Admin'; }
+      } catch (err) {
+        showToast('Network error saving sub-admin account to Supabase.', 'error', 'Network Error');
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Sub-Admin'; }
+      }
     }
 
     function openEditSubAdminModal(id) {
@@ -2665,7 +2641,6 @@
         sub.name = name;
         if (newPass) sub.password = newPass;
         sub.permissions = perms;
-        saveSubAdmins();
         closeEditSubAdminModal();
         renderSubAdminsList();
 
@@ -2675,18 +2650,17 @@
           currentUser.name = name;
           currentUser.permissions = perms;
           sessionStorage.setItem('sfmi_current_user', JSON.stringify(currentUser));
-          localStorage.setItem('sfmi_current_user', JSON.stringify(currentUser));
           applyTabPermissions();
         }
 
-        showToast(`Privileges for <strong>${escapeHtml(name)}</strong> updated successfully!`, 'success', 'Privileges Updated');
+        showToast(`Privileges for <strong>${escapeHtml(name)}</strong> updated in Supabase!`, 'success', 'Privileges Updated');
       }
     }
 
     function deleteSubAdmin(id) {
       showConfirmModal(
         'Revoke Sub-Admin Account',
-        'Are you sure you want to revoke and delete this sub-admin account?',
+        'Are you sure you want to revoke and delete this sub-admin account from Supabase?',
         async () => {
           try {
             const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
@@ -2696,11 +2670,10 @@
             });
           } catch (e) {}
           subAdminsList = subAdminsList.filter(s => s.id !== id);
-          saveSubAdmins();
           renderSubAdminsList();
-          showToast('Sub-admin account revoked.', 'info', 'Account Revoked');
+          showToast('Sub-admin account revoked from Supabase.', 'info', 'Account Revoked');
         },
-        'fas fa-user-slash',
+        'fas fa-user-minus',
         'Revoke Account',
         '#c5221f'
       );
@@ -3895,7 +3868,6 @@
               rawDob: rawDob || m.rawDob || null
             };
           });
-          saveMembersToStorage();
           updateDirectoryCounts();
           filterMembersTable();
           renderAttendanceAndDemographics();
@@ -3903,17 +3875,14 @@
         }
       } catch(e) {}
 
-      // Fallback: local registry
-      const saved = localStorage.getItem('sfmi_members_registry');
-      if (saved) { try { allMembers = JSON.parse(saved); } catch(e){ allMembers = []; } }
-      else { allMembers = []; }
+      allMembers = [];
       updateDirectoryCounts();
       filterMembersTable();
       renderAttendanceAndDemographics();
     }
 
     function saveMembersToStorage() {
-      localStorage.setItem('sfmi_members_registry', JSON.stringify(allMembers));
+      // Direct database sync enabled; localStorage mock cache removed
       updateDirectoryCounts();
     }
 

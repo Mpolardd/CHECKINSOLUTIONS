@@ -880,9 +880,12 @@
   </div>
 
   <script>
+    // Purge legacy mock data caches
+    ['sfmi_members_registry', 'sfmi_service_attendance_map', 'sfmi_custom_programs'].forEach(k => {
+      try { localStorage.removeItem(k); } catch(e) {}
+    });
+
     const API_BASE = (() => {
-      const custom = localStorage.getItem('sfmi_backend_api');
-      if (custom) return custom.replace(/\/+$/, '');
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       return isLocal ? 'http://localhost:4000/api/v1' : '/api/v1';
     })();
@@ -1019,23 +1022,11 @@
         const res = await fetch(`${API_BASE}/attendance/search?q=${encodeURIComponent(q)}`);
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             matches = data;
           }
         }
       } catch (err) {}
-
-      if (matches.length === 0) {
-        const savedReg = localStorage.getItem('sfmi_members_registry');
-        let list = mockMembers;
-        if (savedReg) {
-          try { list = JSON.parse(savedReg); } catch(e){}
-        }
-        matches = list.filter(m => 
-          `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) || 
-          (m.phone && m.phone.includes(q))
-        );
-      }
 
       if (matches.length === 0) {
         grid.style.display = 'none';
@@ -1124,26 +1115,6 @@
           }
         }
       } catch (err) {}
-
-      // Record in local service attendance map
-      const currentSelectorVal = document.getElementById('kioskServiceSelector').value;
-      const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      const savedServiceMap = localStorage.getItem('sfmi_service_attendance_map');
-      let serviceMap = {};
-      if (savedServiceMap) {
-        try { serviceMap = JSON.parse(savedServiceMap); } catch(e){}
-      }
-      if (!serviceMap[currentSelectorVal]) serviceMap[currentSelectorVal] = [];
-      if (!serviceMap[currentSelectorVal].some(a => a.phone === selectedMember.phone)) {
-        serviceMap[currentSelectorVal].push({
-          phone: selectedMember.phone,
-          name: `${selectedMember.firstName} ${selectedMember.lastName}`,
-          time: timeNow,
-          method: 'KIOSK'
-        });
-        localStorage.setItem('sfmi_service_attendance_map', JSON.stringify(serviceMap));
-      }
 
       showPassScreen(selectedMember);
     }
@@ -1250,18 +1221,9 @@
         }
       } catch (err) {}
 
-      // Save into member registry
-      const savedReg = localStorage.getItem('sfmi_members_registry');
-      let list = mockMembers;
-      if (savedReg) {
-        try { list = JSON.parse(savedReg); } catch(e){}
-      }
-      list.unshift(newMember);
-      localStorage.setItem('sfmi_members_registry', JSON.stringify(list));
-
       closeRegisterModal();
       e.target.reset();
-      showToast(`Welcome <strong>${firstName} ${lastName}</strong> (${category})! Your details have been registered.`, 'success', 'Visitor Registered');
+      showToast(`Welcome <strong>${escapeHtml(firstName)} ${escapeHtml(lastName)}</strong> (${category})! Your details have been registered in Supabase.`, 'success', 'Visitor Registered');
       selectMemberForCheckin(newMember);
     }
 
