@@ -2638,18 +2638,6 @@
       loadSubAdmins();
       applyTabPermissions();
 
-      // ── Wipe ALL stale localStorage mock/test data for a clean production start ──
-      const keysToWipe = [
-        'sfmi_members_registry',
-        'sfmi_service_finances',
-        'sfmi_custom_programs',
-        'sfmi_active_kiosk_service',
-        'sfmi_svc_name_sun', 'sfmi_svc_sched_sun', 'sfmi_svc_img_sun',
-        'sfmi_svc_name_wed', 'sfmi_svc_sched_wed', 'sfmi_svc_img_wed',
-        'sfmi_svc_name_fri', 'sfmi_svc_sched_fri', 'sfmi_svc_img_fri'
-      ];
-      keysToWipe.forEach(k => localStorage.removeItem(k));
-
       loadSavedMembers();
       loadFinanceData();
       loadCustomPrograms();
