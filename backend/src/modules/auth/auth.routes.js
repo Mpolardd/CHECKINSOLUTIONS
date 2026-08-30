@@ -28,39 +28,9 @@ async function refreshToken(user) {
   return raw;
 }
 
-// Ensure default sub-admin exists in database
-async function ensureDefaultSubAdmin() {
-  try {
-    const existing = await prisma.user.findUnique({ where: { email: 'samuel@solutionsfaith.com' } });
-    if (!existing) {
-      const passwordHash = await bcrypt.hash('Solutions12@26', 10);
-      const user = await prisma.user.create({
-        data: {
-          email: 'samuel@solutionsfaith.com',
-          passwordHash,
-          role: 'ADMIN'
-        }
-      });
-      await prisma.auditLog.create({
-        data: {
-          action: 'CREATE_SUB_ADMIN',
-          entity: 'SUB_ADMIN_PROFILE',
-          entityId: user.id,
-          metadata: {
-            name: 'Deacon Samuel',
-            email: 'samuel@solutionsfaith.com',
-            permissions: ['attendance', 'members', 'programs']
-          }
-        }
-      });
-    }
-  } catch (e) {}
-}
-
 router.post('/login', async (req, res, next) => {
   try {
     const body = loginSchema.parse(req.body);
-    await ensureDefaultSubAdmin();
 
     const user = await prisma.user.findUnique({ where: { email: body.email.toLowerCase() } });
     if (!user || !(await bcrypt.compare(body.password, user.passwordHash))) {
@@ -179,7 +149,6 @@ router.get('/verify', async (req, res) => {
 
 router.get('/subadmins', async (req, res) => {
   try {
-    await ensureDefaultSubAdmin();
     const subAdminUsers = await prisma.user.findMany({
       where: { role: 'ADMIN' },
       orderBy: { createdAt: 'desc' },
