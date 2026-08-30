@@ -2194,6 +2194,14 @@
         .replace(/'/g, '&#39;');
     }
 
+    function normalizePhoneClient(raw) {
+      if (!raw) return '';
+      const digits = String(raw).replace(/[^\d]/g, '');
+      if (digits.startsWith('233') && digits.length >= 12) return '0' + digits.slice(3);
+      if (digits.length === 9 && !digits.startsWith('0')) return '0' + digits;
+      return digits;
+    }
+
     let allMembers = [];
     let serviceAttendanceMap = {};
 
@@ -3287,18 +3295,24 @@
       let directoryList = [...allMembers];
 
       activeAttList.forEach(att => {
-        const phone = (att.phone || '').trim();
-        const name = (att.name || '').trim().toLowerCase();
-        const exists = directoryList.some(m => 
-          (phone && m.phone && m.phone.trim() === phone) ||
-          (name && `${m.firstName} ${m.lastName}`.trim().toLowerCase() === name)
-        );
+        const attPhone = (att.phone || '').trim();
+        const attNormPhone = normalizePhoneClient(attPhone);
+        const attName = (att.name || '').trim().toLowerCase();
+        const exists = directoryList.some(m => {
+          if (att.memberId && m.id && att.memberId === m.id) return true;
+          const mNormPhone = normalizePhoneClient(m.phone);
+          if (attNormPhone && mNormPhone && attNormPhone === mNormPhone) return true;
+          if (attPhone && m.phone && m.phone.trim() === attPhone) return true;
+          const mName = `${m.firstName} ${m.lastName}`.trim().toLowerCase();
+          if (attName && (attName === mName || attName.startsWith(m.firstName.toLowerCase()))) return true;
+          return false;
+        });
         if (!exists && att.name) {
           const parts = att.name.split(' ');
           const fName = parts[0] || 'Visitor';
           const lName = parts.slice(1).join(' ') || 'Guest';
           directoryList.push({
-            id: 'guest_' + Math.random().toString(36).substr(2, 9),
+            id: att.memberId || ('guest_' + Math.random().toString(36).substr(2, 9)),
             firstName: fName,
             lastName: lName,
             phone: att.phone || '—',
@@ -3320,10 +3334,18 @@
       let attendingGuest = 0;
 
       const processedMembers = directoryList.map(m => {
-        const found = activeAttList.find(a => 
-          (a.phone && m.phone && a.phone.trim() === m.phone.trim()) ||
-          (`${m.firstName} ${m.lastName}`.trim().toLowerCase() === (a.name || '').trim().toLowerCase())
-        );
+        const mNormPhone = normalizePhoneClient(m.phone);
+        const mFullName = `${m.firstName} ${m.lastName}`.trim().toLowerCase();
+
+        const found = activeAttList.find(a => {
+          if (a.memberId && m.id && a.memberId === m.id) return true;
+          const aNormPhone = normalizePhoneClient(a.phone);
+          if (aNormPhone && mNormPhone && aNormPhone === mNormPhone) return true;
+          if (a.phone && m.phone && a.phone.trim() === m.phone.trim()) return true;
+          const aFullName = (a.name || `${a.firstName || ''} ${a.lastName || ''}`).trim().toLowerCase();
+          if (aFullName && (aFullName === mFullName || aFullName.startsWith(m.firstName.toLowerCase()))) return true;
+          return false;
+        });
         const isPresent = Boolean(found) || Boolean(m.isGuest);
 
         const isGuest = (found && Boolean(found.isGuest)) ||
@@ -3532,19 +3554,36 @@
       renderAttendanceTableHTML(filtered);
     }
 
-    function toggleMemberAttendance(phone, makePresent) {
+    async function toggleMemberAttendance(phone, makePresent) {
       if (!serviceAttendanceMap[currentSelectedService]) {
         serviceAttendanceMap[currentSelectedService] = [];
       }
 
+      const norm = normalizePhoneClient(phone);
       if (makePresent) {
         const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         serviceAttendanceMap[currentSelectedService].push({ phone, time: timeNow, method: 'ADMIN_MANUAL' });
+        try {
+          const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+          await fetch(`${API_BASE}/attendance/checkin`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ phone, serviceName: currentSelectedService, method: 'MANUAL' })
+          });
+        } catch (e) {}
       } else {
-        serviceAttendanceMap[currentSelectedService] = serviceAttendanceMap[currentSelectedService].filter(a => a.phone !== phone);
+        serviceAttendanceMap[currentSelectedService] = serviceAttendanceMap[currentSelectedService].filter(a => {
+          if (a.phone === phone) return false;
+          if (norm && normalizePhoneClient(a.phone) === norm) return false;
+          return true;
+        });
       }
 
       renderAttendanceAndDemographics();
+      setTimeout(fetchLiveCounts, 400);
     }
 
     function downloadAttendanceAbsenteeCSV() {
@@ -3552,7 +3591,8 @@
       let csv = `Service Name,Full Name,Category,Phone Number,Parent / Guardian,Gender,Residential Location,Ministry Role,Attendance Status,Check-In Time\n`;
 
       allMembers.forEach(m => {
-        const found = activeAttList.find(a => a.phone === m.phone || `${m.firstName} ${m.lastName}`.toLowerCase() === (a.name || '').toLowerCase());
+        const mNorm = normalizePhoneClient(m.phone);
+        const found = activeAttList.find(a => (a.phone && m.phone && (a.phone === m.phone || normalizePhoneClient(a.phone) === mNorm)) || `${m.firstName} ${m.lastName}`.toLowerCase() === (a.name || '').toLowerCase());
         const isPresent = Boolean(found);
         const status = isPresent ? 'PRESENT (Attended)' : 'ABSENT (Did Not Attend)';
         const checkTime = found ? found.time : 'N/A';
@@ -3577,21 +3617,31 @@
 
     async function fetchLiveCounts() {
       try {
-        const curRes = await fetch(`${API_BASE}/attendance/services/current`);
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        const curRes = await fetch(`${API_BASE}/attendance/services/current`, { headers });
         const cur = await curRes.json();
         if (cur?.id) {
-          const liveRes = await fetch(`${API_BASE}/attendance/live-count/${cur.id}`);
+          const liveRes = await fetch(`${API_BASE}/attendance/live-count/${cur.id}`, { headers });
           const live = await liveRes.json();
-          if (live.recent && live.recent.length > 0) {
-            const liveList = live.recent.map(item => ({
-              phone: item.member?.phone || '',
-              name: `${item.member?.firstName || ''} ${item.member?.lastName || ''}`.trim(),
-              gender: item.member?.gender || '',
-              address: item.member?.address || '',
-              time: new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              method: item.method || 'KIOSK',
-              isGuest: Boolean(item.isGuest)
-            }));
+          if (live.recent && Array.isArray(live.recent)) {
+            const liveList = live.recent.map(item => {
+              const fName = item.member?.firstName || '';
+              const lName = item.member?.lastName || '';
+              return {
+                memberId: item.memberId || item.member?.id || null,
+                phone: item.member?.phone || '',
+                firstName: fName,
+                lastName: lName,
+                name: `${fName} ${lName}`.trim(),
+                gender: item.member?.gender || '',
+                address: item.member?.address || '',
+                time: new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                method: item.method || 'KIOSK',
+                isGuest: Boolean(item.isGuest)
+              };
+            });
             const serviceKey = currentSelectedService || 'Sunday: Family & Friends Service';
             serviceAttendanceMap[serviceKey] = liveList;
             serviceAttendanceMap['Sunday: Family & Friends Service'] = liveList;
