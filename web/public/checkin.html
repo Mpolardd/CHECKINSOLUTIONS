@@ -628,7 +628,7 @@
   <!-- Top Bar -->
   <header class="kiosk-nav">
     <div class="kiosk-nav-inner">
-      <a href="/checkin.html" class="brand-kiosk">
+      <a href="/checkin" class="brand-kiosk">
         <img id="navLogoImg" src="/church-logo.jpg" alt="Logo">
         <div>
           <div class="brand-title" id="navChurchName">SOLUTIONS FAITH MINISTRY INTERNATIONAL</div>
@@ -729,7 +729,8 @@
           </div>
 
           <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap;">
-            <button class="btn btn-accent" onclick="finishCheckIn()" style="width: 100%; justify-content: center; padding: 14px;">Done / Next Person</button>
+            <button class="btn btn-primary" onclick="printPassTicket()"><i class="fas fa-print"></i> Print Pass Ticket</button>
+            <button class="btn btn-accent" onclick="finishCheckIn()">Done / Next Person</button>
           </div>
         </div>
       </div>
@@ -778,7 +779,12 @@
   </div>
 
   <script>
-    const API_BASE = 'http://localhost:4000/api/v1';
+    const API_BASE = (() => {
+      const custom = localStorage.getItem('sfmi_backend_api');
+      if (custom) return custom.replace(/\/+$/, '');
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      return isLocal ? 'http://localhost:4000/api/v1' : '/api/v1';
+    })();
 
     let currentDay = 'Sunday';
     let currentServiceName = 'Family & Friends Service';

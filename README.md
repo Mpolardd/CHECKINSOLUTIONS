@@ -33,6 +33,18 @@ Full-stack Church Management & Attendance Kiosk System built for Solutions Faith
    ```
    - **Backend API**: `http://localhost:4000`
    - **Web Application**: `http://localhost:5173`
-     - Kiosk: `http://localhost:5173/checkin.html`
-     - Admin Portal: `http://localhost:5173/admin.html`
-     - Treasury Portal: `http://localhost:5173/finance.html`
+     - Kiosk: `http://localhost:5173/checkin` (or `http://localhost:5173/`)
+     - Admin Portal: `http://localhost:5173/admin`
+     - Treasury Portal: `http://localhost:5173/finance`
+
+## ☁️ Deploying to Vercel
+
+1. **Push to GitHub**: This repository is already connected to [https://github.com/Mpolardd/CHECKINSOLUTIONS](https://github.com/Mpolardd/CHECKINSOLUTIONS).
+2. **Import into Vercel**:
+   - Go to [vercel.com](https://vercel.com) and click **"Add New Project"**.
+   - Select the `CHECKINSOLUTIONS` repository.
+   - **Framework Preset**: Vite
+   - **Root Directory**: Select `web` (or leave default `./` as both root and web have `vercel.json` pre-configured).
+   - Click **"Deploy"**.
+3. **Clean URLs Out-of-the-Box**:
+   - Vercel will automatically serve `/admin`, `/finance`, and `/checkin` cleanly without any `.html` extensions.
