@@ -2555,15 +2555,31 @@
     const INACTIVITY_LIMIT_MS = 30 * 60 * 1000; // 30 minutes
     let inactivityTimer = null;
 
+    function initInactivityListeners() {
+      const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+      let throttleTimeout = null;
+
+      events.forEach(evt => {
+        window.addEventListener(evt, () => {
+          if (!throttleTimeout) {
+            throttleTimeout = setTimeout(() => {
+              throttleTimeout = null;
+              resetInactivityTimer();
+            }, 2000);
+          }
+        }, { passive: true });
+      });
+    }
+
     function resetInactivityTimer() {
-      const isAuth = localStorage.getItem('sfmi_admin_auth') === 'true';
-      if (!isAuth) {
+      const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token') || sessionStorage.getItem('sfmi_sub_session');
+      if (!token) {
         if (inactivityTimer) clearTimeout(inactivityTimer);
         return;
       }
 
       const now = Date.now();
-      const lastActive = parseInt(localStorage.getItem('sfmi_admin_last_active') || '0', 10);
+      const lastActive = parseInt(sessionStorage.getItem('sfmi_admin_last_active') || localStorage.getItem('sfmi_admin_last_active') || '0', 10);
 
       // Check if already inactive past limit across tabs or refresh
       if (lastActive > 0 && (now - lastActive) > INACTIVITY_LIMIT_MS) {
@@ -2571,6 +2587,7 @@
         return;
       }
 
+      sessionStorage.setItem('sfmi_admin_last_active', now.toString());
       localStorage.setItem('sfmi_admin_last_active', now.toString());
 
       if (inactivityTimer) clearTimeout(inactivityTimer);
