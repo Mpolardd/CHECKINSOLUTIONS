@@ -1609,13 +1609,26 @@
       <div class="admin-card">
         <div class="card-head-row">
           <div>
-            <h2 class="card-title">Church Member & Children Directory</h2>
-            <p class="card-sub">Manage registered adults, youth, and children (Sunday School / Kids Church) with parent linkages</p>
+            <h2 class="card-title">Church Member & Directory Registry</h2>
+            <p class="card-sub">Separated directory views for registered church members vs new visitors / first-timers</p>
           </div>
-          <div style="display: flex; gap: 10px;">
-            <input type="text" id="memberSearchInput" class="form-ctrl" aria-label="Search member directory" placeholder="Search name, parent, phone, location, gender or DOB..." style="width: 340px;" oninput="filterMembersTable()" />
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="memberSearchInput" class="form-ctrl" aria-label="Search member directory" placeholder="Search name, phone, parent, location..." style="width: 320px;" oninput="filterMembersTable()" />
             <button class="btn-accent" onclick="openAddMemberModal()">+ Add New Member / Child</button>
           </div>
+        </div>
+
+        <!-- 2-Sided Switcher: Permanent Members vs New Visitors / Guests -->
+        <div style="display: flex; gap: 10px; margin: 18px 0 16px 0; border-bottom: 1.5px solid var(--line); padding-bottom: 14px; flex-wrap: wrap; align-items: center;">
+          <button id="btnDirFilterMembers" class="btn-main" style="padding: 10px 20px; font-size: 13.5px; font-weight: 800; border-radius: 8px; background: var(--ink); color: white; border: none; cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('MEMBERS')">
+            <i class="fas fa-users" style="color: var(--accent);"></i> 👥 Permanent Church Members <span id="dirCountMembers" style="background: rgba(255,255,255,0.22); padding: 2px 9px; border-radius: 12px; margin-left: 6px; font-size: 11.5px;">0</span>
+          </button>
+          <button id="btnDirFilterGuests" class="btn-main" style="padding: 10px 20px; font-size: 13.5px; font-weight: 800; border-radius: 8px; background: #fffbeb; color: #b45309; border: 1.5px solid #fde68a; cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('GUESTS')">
+            <i class="fas fa-star" style="color: #d97706;"></i> ⭐ First-Timers & New Visitors <span id="dirCountGuests" style="background: #fef3c7; color: #92400e; padding: 2px 9px; border-radius: 12px; margin-left: 6px; font-size: 11.5px; border: 1px solid #fde68a;">0</span>
+          </button>
+          <button id="btnDirFilterAll" class="btn-main" style="padding: 10px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; background: #fafbfa; color: var(--muted); border: 1px solid var(--line); cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('ALL')">
+            <i class="fas fa-list-ul"></i> All Records <span id="dirCountAll" style="background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 12px; margin-left: 5px; font-size: 11px;">0</span>
+          </button>
         </div>
 
           <div class="table-responsive">
@@ -1624,7 +1637,7 @@
                 <th>#</th><th>Full Name</th><th>Category</th>
                 <th>Phone / Parent Guardian</th><th>Gender</th>
                 <th>Residential Location</th><th>Date of Birth (DOB)</th>
-                <th>Role / Sunday School</th><th>Actions</th>
+                <th>Role / Department</th><th>Actions</th>
               </tr></thead>
               <tbody id="membersTableBody"><!-- Injected by JS --></tbody>
             </table>
@@ -3651,6 +3664,56 @@
       } catch (e) {}
     }
 
+    let currentDirSubTab = 'MEMBERS'; // 'MEMBERS', 'GUESTS', 'ALL'
+
+    function isGuestMember(m) {
+      if (!m) return false;
+      if (m.isGuest) return true;
+      const cat = (m.category || '').toLowerCase();
+      const role = (m.role || '').toLowerCase();
+      return cat.includes('visitor') || cat.includes('guest') || cat.includes('first-timer') || cat.includes('first timer') ||
+             role.includes('visitor') || role.includes('guest') || role.includes('first timer') || role.includes('first-timer');
+    }
+
+    function updateDirectoryCounts() {
+      const guests = allMembers.filter(isGuestMember);
+      const regularMembers = allMembers.filter(m => !isGuestMember(m));
+      
+      const elMembers = document.getElementById('dirCountMembers');
+      const elGuests = document.getElementById('dirCountGuests');
+      const elAll = document.getElementById('dirCountAll');
+
+      if (elMembers) elMembers.innerText = regularMembers.length;
+      if (elGuests) elGuests.innerText = guests.length;
+      if (elAll) elAll.innerText = allMembers.length;
+    }
+
+    function setMemberDirectorySubTab(tab) {
+      currentDirSubTab = tab;
+      
+      const btnMem = document.getElementById('btnDirFilterMembers');
+      const btnGst = document.getElementById('btnDirFilterGuests');
+      const btnAll = document.getElementById('btnDirFilterAll');
+
+      if (btnMem) {
+        btnMem.style.background = tab === 'MEMBERS' ? 'var(--ink)' : '#fafbfa';
+        btnMem.style.color = tab === 'MEMBERS' ? 'white' : 'var(--ink)';
+        btnMem.style.border = tab === 'MEMBERS' ? 'none' : '1px solid var(--line)';
+      }
+      if (btnGst) {
+        btnGst.style.background = tab === 'GUESTS' ? '#d97706' : '#fffbeb';
+        btnGst.style.color = tab === 'GUESTS' ? 'white' : '#b45309';
+        btnGst.style.border = tab === 'GUESTS' ? 'none' : '1.5px solid #fde68a';
+      }
+      if (btnAll) {
+        btnAll.style.background = tab === 'ALL' ? 'var(--ink)' : '#fafbfa';
+        btnAll.style.color = tab === 'ALL' ? 'white' : 'var(--muted)';
+        btnAll.style.border = tab === 'ALL' ? 'none' : '1px solid var(--line)';
+      }
+
+      filterMembersTable();
+    }
+
     /* Member Directory (With Children, Address, Gender & DOB) */
     async function loadSavedMembers() {
       try {
@@ -3677,7 +3740,8 @@
         if (res.ok) {
           const data = await res.json();
           allMembers = Array.isArray(data) ? data : (Array.isArray(data.members) ? data.members : []);
-          renderMembersTable();
+          updateDirectoryCounts();
+          filterMembersTable();
           renderAttendanceAndDemographics();
           return;
         }
@@ -3687,15 +3751,22 @@
       const saved = localStorage.getItem('sfmi_members_registry');
       if (saved) { try { allMembers = JSON.parse(saved); } catch(e){ allMembers = []; } }
       else { allMembers = []; }
-      renderMembersTable();
+      updateDirectoryCounts();
+      filterMembersTable();
       renderAttendanceAndDemographics();
     }
 
     function saveMembersToStorage() {
       localStorage.setItem('sfmi_members_registry', JSON.stringify(allMembers));
+      updateDirectoryCounts();
     }
 
-    function renderMembersTable(list = allMembers) {
+    function renderMembersTable(list = null) {
+      if (list === null) {
+        filterMembersTable();
+        return;
+      }
+
       const tbody = document.getElementById('membersTableBody');
       const mobCards = document.getElementById('membersMobileCards');
 
@@ -3704,7 +3775,7 @@
         const isFemale = (m.gender||'').toLowerCase().startsWith('f');
         const genderBadge = isMale ? `<span class="badge-gender-male">Male</span>` : isFemale ? `<span class="badge-gender-female">Female</span>` : `—`;
         const isChild = m.category==='Child'||(m.role&&m.role.toLowerCase().includes('child'));
-        const isGuest = m.category === 'Visitor' || m.category === 'Visitor / First-Timer' || m.category === 'Visitor / Guest' || (m.role && m.role.toLowerCase().includes('visitor')) || (m.role && m.role.toLowerCase().includes('first timer'));
+        const isGuest = isGuestMember(m);
 
         let catBadge = `<span class="badge-adult">Adult</span>`;
         if (isGuest) {
@@ -3724,8 +3795,11 @@
       };
 
       if (list.length === 0) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px;">No members in directory.</td></tr>`;
-        if (mobCards) mobCards.innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px 0;">No members in directory yet.</div>`;
+        const emptyMsg = currentDirSubTab === 'GUESTS' 
+          ? 'No first-timers or new visitors registered yet.'
+          : (currentDirSubTab === 'MEMBERS' ? 'No permanent church members found matching this search.' : 'No records found in directory.');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px;font-size:13.5px;"><i class="fas fa-info-circle" style="margin-right:6px;"></i> ${emptyMsg}</td></tr>`;
+        if (mobCards) mobCards.innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px 0;font-size:13.5px;"><i class="fas fa-info-circle"></i> ${emptyMsg}</div>`;
         return;
       }
 
@@ -3900,16 +3974,28 @@
     }
 
     function filterMembersTable() {
-      const q = document.getElementById('memberSearchInput').value.toLowerCase();
-      const filtered = allMembers.filter(m => 
+      const q = (document.getElementById('memberSearchInput')?.value || '').toLowerCase().trim();
+      
+      let baseList = allMembers;
+      if (currentDirSubTab === 'MEMBERS') {
+        baseList = allMembers.filter(m => !isGuestMember(m));
+      } else if (currentDirSubTab === 'GUESTS') {
+        baseList = allMembers.filter(isGuestMember);
+      }
+
+      const filtered = baseList.filter(m => 
+        !q ||
         `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) || 
         (m.phone && m.phone.includes(q)) ||
         (m.guardian && m.guardian.toLowerCase().includes(q)) ||
         (m.address && m.address.toLowerCase().includes(q)) ||
         (m.category && m.category.toLowerCase().includes(q)) ||
         (m.gender && m.gender.toLowerCase().includes(q)) ||
-        (m.dob && m.dob.toLowerCase().includes(q))
+        (m.dob && m.dob.toLowerCase().includes(q)) ||
+        (m.role && m.role.toLowerCase().includes(q))
       );
+
+      updateDirectoryCounts();
       renderMembersTable(filtered);
     }
 
