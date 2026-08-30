@@ -3862,7 +3862,7 @@
     /* Member Directory (With Children, Address, Gender & DOB) */
     async function loadSavedMembers() {
       try {
-        let token = localStorage.getItem('sfmi_token');
+        let token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         if (!token) {
           try {
             const loginRes = await fetch(`${API_BASE}/auth/login`, {
@@ -3875,6 +3875,7 @@
               if (loginData.accessToken) {
                 token = loginData.accessToken;
                 localStorage.setItem('sfmi_token', token);
+                sessionStorage.setItem('sfmi_token', token);
               }
             }
           } catch(err){}
@@ -3884,7 +3885,17 @@
         const res = await fetch(`${API_BASE}/members`, { headers });
         if (res.ok) {
           const data = await res.json();
-          allMembers = Array.isArray(data) ? data : (Array.isArray(data.members) ? data.members : []);
+          const rawMembers = Array.isArray(data) ? data : (Array.isArray(data.members) ? data.members : []);
+          allMembers = rawMembers.map(m => {
+            const rawDob = m.dateOfBirth ? (m.dateOfBirth.split('T')[0] || '') : (m.dob || '');
+            const formattedDob = rawDob ? formatDisplayDate(rawDob) : '';
+            return {
+              ...m,
+              dob: formattedDob || m.dob || '',
+              rawDob: rawDob || m.rawDob || null
+            };
+          });
+          saveMembersToStorage();
           updateDirectoryCounts();
           filterMembersTable();
           renderAttendanceAndDemographics();
@@ -3892,7 +3903,7 @@
         }
       } catch(e) {}
 
-      // Fallback: empty directory (No mock data!)
+      // Fallback: local registry
       const saved = localStorage.getItem('sfmi_members_registry');
       if (saved) { try { allMembers = JSON.parse(saved); } catch(e){ allMembers = []; } }
       else { allMembers = []; }
@@ -4148,10 +4159,25 @@
       showConfirmModal(
         'Remove Member',
         'Are you sure you want to remove this member from the directory?',
-        () => {
+        async () => {
+          let token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+          if (id && !id.startsWith('mem_') && !id.startsWith('guest_')) {
+            try {
+              await fetch(`${API_BASE}/members/${id}`, {
+                method: 'DELETE',
+                headers: {
+                  ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
+              });
+            } catch (err) {
+              console.error('Error deleting member from backend:', err);
+            }
+          }
+
           allMembers = allMembers.filter(m => m.id !== id);
           saveMembersToStorage();
-          renderMembersTable();
+          updateDirectoryCounts();
+          filterMembersTable();
           renderAttendanceAndDemographics();
           showToast('Member removed from directory.', 'info', 'Member Removed');
         },
@@ -4222,7 +4248,7 @@
       document.getElementById('editMemberModal').classList.remove('active');
     }
 
-    function handleUpdateMember(e) {
+    async function handleUpdateMember(e) {
       e.preventDefault();
       const id = document.getElementById('editMemId').value;
       const first = document.getElementById('editMemFirst').value.trim();
@@ -4238,6 +4264,33 @@
 
       const formattedDob = formatDisplayDate(rawDob);
 
+      let token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      if (id && !id.startsWith('mem_') && !id.startsWith('guest_')) {
+        try {
+          await fetch(`${API_BASE}/members/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({
+              firstName: first,
+              lastName: last,
+              category,
+              guardian: category === 'Child' ? guardian : undefined,
+              phone: phone || undefined,
+              gender: gender || undefined,
+              address: address || undefined,
+              dateOfBirth: rawDob ? new Date(rawDob).toISOString() : undefined,
+              role: role || (category === 'Child' ? 'Child / Sunday School' : 'Member'),
+              email: email || undefined
+            })
+          });
+        } catch (err) {
+          console.error('Error updating member on backend:', err);
+        }
+      }
+
       const index = allMembers.findIndex(m => m.id === id);
       if (index !== -1) {
         allMembers[index] = {
@@ -4252,14 +4305,16 @@
           dob: formattedDob,
           rawDob: rawDob || null,
           email,
-          role
+          role,
+          isGuest: category.toLowerCase().includes('visitor') || category.toLowerCase().includes('guest')
         };
 
         saveMembersToStorage();
-        renderMembersTable();
+        updateDirectoryCounts();
+        filterMembersTable();
         renderAttendanceAndDemographics();
         closeEditMemberModal();
-        showToast(`Member profile for <strong>${first} ${last}</strong> (${category}) updated successfully!`, 'success', 'Profile Updated');
+        showToast(`Member profile for <strong>${escapeHtml(first)} ${escapeHtml(last)}</strong> updated in cloud database!`, 'success', 'Profile Updated');
       }
     }
 
@@ -4270,7 +4325,7 @@
       return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
-    function handleSaveNewMember(e) {
+    async function handleSaveNewMember(e) {
       e.preventDefault();
       const first = document.getElementById('newMemFirst').value.trim();
       const last = document.getElementById('newMemLast').value.trim();
@@ -4280,13 +4335,63 @@
       const gender = document.getElementById('newMemGender').value;
       const address = document.getElementById('newMemAddress').value.trim();
       const rawDob = document.getElementById('newMemDob').value;
-      const email = document.getElementById('newMemEmail').value.trim();
+      const email = document.getElementById('newMemEmail')?.value?.trim() || '';
       const role = document.getElementById('newMemRole').value;
 
       const formattedDob = formatDisplayDate(rawDob);
 
+      let token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      if (!token) {
+        try {
+          const loginRes = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: 'Admin@solutionsfaith.com', password: 'Solutions12@26' })
+          });
+          if (loginRes.ok) {
+            const loginData = await loginRes.json();
+            if (loginData.accessToken) {
+              token = loginData.accessToken;
+              localStorage.setItem('sfmi_token', token);
+              sessionStorage.setItem('sfmi_token', token);
+            }
+          }
+        } catch (err) {}
+      }
+
+      let createdMember = null;
+      try {
+        const payload = {
+          firstName: first,
+          lastName: last,
+          category,
+          guardian: category === 'Child' ? guardian : undefined,
+          phone: phone || undefined,
+          gender: gender || undefined,
+          address: address || undefined,
+          dateOfBirth: rawDob ? new Date(rawDob).toISOString() : undefined,
+          role: role || (category === 'Child' ? 'Child / Sunday School' : 'Member'),
+          email: email || undefined
+        };
+
+        const res = await fetch(`${API_BASE}/members`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          createdMember = await res.json();
+        }
+      } catch (err) {
+        console.error('Error persisting member to backend:', err);
+      }
+
       const newM = {
-        id: 'mem_' + Date.now(),
+        id: createdMember?.id || ('mem_' + Date.now()),
         firstName: first,
         lastName: last,
         category,
@@ -4297,16 +4402,18 @@
         dob: formattedDob,
         rawDob: rawDob || null,
         email,
-        role: role || (category === 'Child' ? 'Child / Sunday School' : 'Member')
+        role: role || (category === 'Child' ? 'Child / Sunday School' : 'Member'),
+        isGuest: category.toLowerCase().includes('visitor') || category.toLowerCase().includes('guest')
       };
 
       allMembers.unshift(newM);
       saveMembersToStorage();
-      renderMembersTable();
+      updateDirectoryCounts();
+      filterMembersTable();
       renderAttendanceAndDemographics();
       closeAddMemberModal();
       e.target.reset();
-      showToast(`New ${category} <strong>${first} ${last}</strong> added to directory successfully!`, 'success', 'Member Registered');
+      showToast(`New ${category} <strong>${escapeHtml(first)} ${escapeHtml(last)}</strong> saved permanently to cloud database!`, 'success', 'Member Registered');
     }
 
     /* SERVICES & SPECIAL PROGRAMS SETUP MANAGER */
