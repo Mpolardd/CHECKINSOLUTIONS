@@ -3682,7 +3682,7 @@
       // Desktop table
       if (tbody) {
         tbody.innerHTML = list.map((m, i) => {
-          const {genderBadge, catBadge, phoneDisplay, roleDisplay} = buildBadges(m);
+          const {genderBadge, catBadge, phoneDisplay, roleDisplay} = buildMemberBadges(m);
           return `<tr>
             <td>${i+1}</td><td><strong>${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</strong></td>
             <td>${catBadge}</td><td>${phoneDisplay}</td><td>${genderBadge}</td>
