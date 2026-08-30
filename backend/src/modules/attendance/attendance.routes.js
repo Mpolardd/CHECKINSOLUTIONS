@@ -141,25 +141,10 @@ router.get('/live-count/:serviceId', async (req, res, next) => {
     });
     const guestIds = new Set(guestLogs.map(l => l.entityId));
 
-    // Also: Any attendee whose member record was created on the service date or has only 1 attendance in total
-    const attendanceCounts = await prisma.attendance.groupBy({
-      by: ['memberId'],
-      where: { memberId: { in: memberIds } },
-      _count: { id: true }
-    });
-    attendanceCounts.forEach(c => {
-      if (c._count.id <= 1) {
-        guestIds.add(c.memberId);
-      }
-    });
-
     attendees.forEach(a => {
       const g = (a.member?.gender || '').toUpperCase();
       if (g.startsWith('M')) maleCount++;
       else if (g.startsWith('F')) femaleCount++;
-      if (a.member?.createdAt && new Date(a.member.createdAt).toDateString() === new Date(a.checkedInAt).toDateString()) {
-        guestIds.add(a.memberId);
-      }
     });
 
     const enrichedRecent = attendees.slice(0, 100).map(a => ({
