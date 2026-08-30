@@ -1202,7 +1202,7 @@
     </div>
 
     <!-- TAB 1: FINANCIAL OVERVIEW & ANALYTICS -->
-    <div id="secFinance">
+    <div id="secFinance" style="display: none;">
       
       <!-- Date Range & Preset Filter Bar -->
       <div class="filter-toolbar">
@@ -2075,11 +2075,6 @@
               <input type="checkbox" id="permPrograms" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span>📅 Services &amp; Programs Setup</span>
             </label>
-
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700; color: #991b1b;">
-              <input type="checkbox" id="permFinance" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>💰 Financial Overview &amp; Analytics (Sensitive)</span>
-            </label>
           </div>
         </div>
 
@@ -2143,11 +2138,6 @@
               <input type="checkbox" id="editPermPrograms" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span>📅 Services &amp; Programs Setup</span>
             </label>
-
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700; color: #991b1b;">
-              <input type="checkbox" id="editPermFinance" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>💰 Financial Overview &amp; Analytics</span>
-            </label>
           </div>
         </div>
 
@@ -2199,18 +2189,24 @@
 
     function applyTabPermissions() {
       let currentUser = null;
-      try { currentUser = JSON.parse(localStorage.getItem('sfmi_current_user')); } catch (e) {}
+      try {
+        currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
+      } catch (e) {}
 
-      const permissions = (currentUser && Array.isArray(currentUser.permissions)) 
+      const isSubAdmin = currentUser && currentUser.role === 'SUB_ADMIN';
+      const isSuperAdmin = !isSubAdmin;
+
+      // Sub-Admins NEVER have access to Finance or Staff & Sub-Admins
+      // They are strictly limited to the privileges granted to them (Attendance, Members, Programs)
+      const rawPerms = (currentUser && Array.isArray(currentUser.permissions)) 
         ? currentUser.permissions 
-        : ['finance', 'attendance', 'members', 'programs'];
+        : ['attendance', 'members', 'programs'];
 
-      const isSuperAdmin = !currentUser || currentUser.role === 'SUPER_ADMIN';
+      const permissions = isSuperAdmin 
+        ? ['finance', 'attendance', 'members', 'programs', 'subAdmins']
+        : rawPerms.filter(p => p !== 'finance' && p !== 'subAdmins');
 
-      const btnSub = document.getElementById('btnManageSubAdmins');
-      if (btnSub) btnSub.style.display = isSuperAdmin ? 'inline-flex' : 'none';
-
-      const allTabs = ['finance', 'attendance', 'members', 'programs'];
+      const allTabs = ['finance', 'attendance', 'members', 'programs', 'subAdmins'];
       let firstAllowedTab = null;
 
       allTabs.forEach(t => {
@@ -2219,13 +2215,26 @@
 
         const desktopBtn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
         const mobBtn = document.getElementById(`mobBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const sec = document.getElementById(`sec${t.charAt(0).toUpperCase() + t.slice(1)}`);
 
         if (desktopBtn) desktopBtn.style.display = isAllowed ? 'inline-flex' : 'none';
         if (mobBtn) mobBtn.style.display = isAllowed ? 'flex' : 'none';
+        if (!isAllowed && sec) sec.style.display = 'none';
       });
 
+      // Manage Sub-Admins button & tab is strictly Super Admin only
+      const btnSub = document.getElementById('btnManageSubAdmins');
+      if (btnSub) btnSub.style.display = isSuperAdmin ? 'inline-flex' : 'none';
+      const tabSub = document.getElementById('tabBtnSubAdmins');
+      if (tabSub) tabSub.style.display = isSuperAdmin ? 'inline-flex' : 'none';
+      const mobSub = document.getElementById('mobBtnSubAdmins');
+      if (mobSub) mobSub.style.display = isSuperAdmin ? 'flex' : 'none';
+
+      // Always switch to their first permitted tab
       if (firstAllowedTab) {
         switchTab(firstAllowedTab);
+      } else {
+        switchTab(isSuperAdmin ? 'finance' : 'attendance');
       }
     }
 
@@ -2359,10 +2368,9 @@
       if (document.getElementById('permAttendance').checked) perms.push('attendance');
       if (document.getElementById('permMembers').checked) perms.push('members');
       if (document.getElementById('permPrograms').checked) perms.push('programs');
-      if (document.getElementById('permFinance').checked) perms.push('finance');
 
       if (perms.length === 0) {
-        showToast('Please select at least one tab privilege for this sub-admin.', 'error', 'No Privileges Selected');
+        showToast('Please select at least one module privilege for this sub-admin.', 'error', 'No Privileges Selected');
         return;
       }
 
@@ -2407,7 +2415,6 @@
       document.getElementById('editPermAttendance').checked = perms.includes('attendance');
       document.getElementById('editPermMembers').checked = perms.includes('members');
       document.getElementById('editPermPrograms').checked = perms.includes('programs');
-      document.getElementById('editPermFinance').checked = perms.includes('finance');
 
       const modal = document.getElementById('editSubAdminModal');
       if (!modal) return;
@@ -2432,10 +2439,9 @@
       if (document.getElementById('editPermAttendance').checked) perms.push('attendance');
       if (document.getElementById('editPermMembers').checked) perms.push('members');
       if (document.getElementById('editPermPrograms').checked) perms.push('programs');
-      if (document.getElementById('editPermFinance').checked) perms.push('finance');
 
       if (perms.length === 0) {
-        showToast('Please select at least one tab privilege.', 'error', 'No Privileges Selected');
+        showToast('Please select at least one module privilege.', 'error', 'No Privileges Selected');
         return;
       }
 
@@ -2796,6 +2802,21 @@
     };
 
     function switchTab(tab) {
+      let currentUser = null;
+      try {
+        currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
+      } catch (e) {}
+
+      // Hard guard: Sub-Admins cannot access Finance or Sub-Admin management under any circumstances
+      if (currentUser && currentUser.role === 'SUB_ADMIN') {
+        const allowed = Array.isArray(currentUser.permissions) 
+          ? currentUser.permissions.filter(p => p !== 'finance' && p !== 'subAdmins') 
+          : ['attendance', 'members', 'programs'];
+        if (tab === 'finance' || tab === 'subAdmins' || !allowed.includes(tab)) {
+          tab = allowed[0] || 'attendance';
+        }
+      }
+
       const tabs = ['finance', 'attendance', 'members', 'programs', 'subAdmins'];
       tabs.forEach(t => {
         const sec = document.getElementById(`sec${t.charAt(0).toUpperCase() + t.slice(1)}`);
