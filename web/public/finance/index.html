@@ -591,6 +591,103 @@
       .toast-title { font-size: 13px !important; }
       .toast-text { font-size: 12px !important; word-break: break-word !important; }
     }
+
+    /* ── SIMPLE & MODERN APP FOOTER ── */
+    .app-footer {
+      margin-top: 40px;
+      padding: 24px 0 28px 0;
+      border-top: 1px solid var(--line, #e2e8f0);
+      color: var(--muted, #64748b);
+      font-size: 13px;
+    }
+    .footer-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      width: 100%;
+    }
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .footer-badge {
+      background: var(--accent, #c89b55);
+      color: #111;
+      font-weight: 800;
+      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+    .footer-title {
+      font-weight: 700;
+      color: var(--ink, #0f172a);
+      font-size: 13.5px;
+    }
+    .footer-tagline {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted, #64748b);
+    }
+    .footer-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+    }
+    .footer-link {
+      color: var(--ink, #0f172a);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .footer-link:hover {
+      color: var(--accent, #c89b55);
+      text-decoration: underline;
+    }
+    .footer-sep {
+      color: #cbd5e1;
+    }
+    .footer-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #15803d;
+      font-weight: 700;
+      font-size: 11.5px;
+      background: #f0fdf4;
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid #bbf7d0;
+    }
+    .footer-copyright {
+      font-size: 11.5px;
+      color: var(--muted, #64748b);
+    }
+    @media (max-width: 768px) {
+      .footer-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .footer-right {
+        align-items: flex-start;
+      }
+    }
   </style>
 </head>
 
@@ -808,6 +905,31 @@
 
       </form>
     </div>
+
+    <!-- SFMI Clean Portal Footer -->
+    <footer class="app-footer">
+      <div class="footer-container">
+        <div class="footer-left">
+          <div class="footer-brand">
+            <span class="footer-badge">SFMI</span>
+            <span class="footer-title">Solutions Faith Ministries International</span>
+          </div>
+          <p class="footer-tagline">Church Financial Records &amp; Treasury Ledger</p>
+        </div>
+        <div class="footer-right">
+          <div class="footer-links">
+            <a href="/admin" class="footer-link"><i class="fa-solid fa-gauge-high"></i> Admin Portal</a>
+            <span class="footer-sep">·</span>
+            <a href="/checkin" target="_blank" class="footer-link"><i class="fa-solid fa-tablet-screen-button"></i> Kiosk View</a>
+            <span class="footer-sep">·</span>
+            <span class="footer-status"><i class="fa-solid fa-shield-halved" style="font-size: 10px; color: #15803d;"></i> Encrypted Entry</span>
+          </div>
+          <div class="footer-copyright">
+            &copy; 2026 Solutions Faith Ministries International. All rights reserved.
+          </div>
+        </div>
+      </div>
+    </footer>
 
   </main>
 
@@ -1134,9 +1256,13 @@
       };
 
       try {
+        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         const res = await fetch(`${API_BASE}/finance/service-entry`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify(payload)
         });
         if (res.ok) {

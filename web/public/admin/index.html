@@ -1113,6 +1113,103 @@
       font-size: 12.5px;
       min-width: 80px;
     }
+
+    /* ── SIMPLE & MODERN APP FOOTER ── */
+    .app-footer {
+      margin-top: 40px;
+      padding: 24px 0 28px 0;
+      border-top: 1px solid var(--line, #e2e8f0);
+      color: var(--muted, #64748b);
+      font-size: 13px;
+    }
+    .footer-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      width: 100%;
+    }
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .footer-badge {
+      background: var(--accent, #c89b55);
+      color: #111;
+      font-weight: 800;
+      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+    .footer-title {
+      font-weight: 700;
+      color: var(--ink, #0f172a);
+      font-size: 13.5px;
+    }
+    .footer-tagline {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted, #64748b);
+    }
+    .footer-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+    }
+    .footer-link {
+      color: var(--ink, #0f172a);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .footer-link:hover {
+      color: var(--accent, #c89b55);
+      text-decoration: underline;
+    }
+    .footer-sep {
+      color: #cbd5e1;
+    }
+    .footer-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #15803d;
+      font-weight: 700;
+      font-size: 11.5px;
+      background: #f0fdf4;
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid #bbf7d0;
+    }
+    .footer-copyright {
+      font-size: 11.5px;
+      color: var(--muted, #64748b);
+    }
+    @media (max-width: 768px) {
+      .footer-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .footer-right {
+        align-items: flex-start;
+      }
+    }
   </style>
 </head>
 
@@ -1550,7 +1647,7 @@
         <div class="ratio-legend">
           <span style="color: var(--blue);"><span class="badge-gender-male">Men</span> <strong id="legendMaleText">0 (0%)</strong></span>
           <span style="color: var(--rose);"><span class="badge-gender-female">Women</span> <strong id="legendFemaleText">0 (0%)</strong></span>
-          <span style="color: #b45309;"><span class="badge-child">👶 Children</span> <strong id="legendChildText">0 (0%)</strong></span>
+          <span style="color: #b45309;"><span class="badge-child"><i class="fa-solid fa-children" style="margin-right: 4px;"></i> Children</span> <strong id="legendChildText">0 (0%)</strong></span>
         </div>
       </div>
 
@@ -1590,14 +1687,14 @@
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
           <div>
             <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 22px;">🎂</span>
+              <span style="font-size: 20px; color: var(--accent);"><i class="fa-solid fa-cake-candles"></i></span>
               <h2 class="card-title" style="color: white; font-size: 19px; margin: 0;">Member Birthday Reminders</h2>
               <span id="bdayBadgeCount" style="background: var(--accent); color: #111; font-weight: 800; font-size: 11px; padding: 3px 10px; border-radius: 20px;">0 Upcoming</span>
             </div>
             <p class="card-sub" style="color: #c4d0ca; margin-top: 3px;">Track members celebrating birthdays today and in the next 30 days</p>
           </div>
           <button class="btn-main" style="background: rgba(255,255,255,0.12); color: white; font-size: 12.5px;" onclick="renderBirthdayRemindersWidget(true)">
-            <i class="fas fa-rotate"></i> Refresh Reminders
+            <i class="fa-solid fa-rotate"></i> Refresh Reminders
           </button>
         </div>
 
@@ -1609,13 +1706,26 @@
       <div class="admin-card">
         <div class="card-head-row">
           <div>
-            <h2 class="card-title">Church Member & Children Directory</h2>
-            <p class="card-sub">Manage registered adults, youth, and children (Sunday School / Kids Church) with parent linkages</p>
+            <h2 class="card-title">Church Member & Directory Registry</h2>
+            <p class="card-sub">Separated directory views for registered church members vs new visitors / first-timers</p>
           </div>
-          <div style="display: flex; gap: 10px;">
-            <input type="text" id="memberSearchInput" class="form-ctrl" aria-label="Search member directory" placeholder="Search name, parent, phone, location, gender or DOB..." style="width: 340px;" oninput="filterMembersTable()" />
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="memberSearchInput" class="form-ctrl" aria-label="Search member directory" placeholder="Search name, phone, parent, location..." style="width: 320px;" oninput="filterMembersTable()" />
             <button class="btn-accent" onclick="openAddMemberModal()">+ Add New Member / Child</button>
           </div>
+        </div>
+
+        <!-- 2-Sided Switcher: Permanent Members vs New Visitors / Guests -->
+        <div style="display: flex; gap: 10px; margin: 18px 0 16px 0; border-bottom: 1.5px solid var(--line); padding-bottom: 14px; flex-wrap: wrap; align-items: center;">
+          <button id="btnDirFilterMembers" class="btn-main" style="padding: 10px 20px; font-size: 13.5px; font-weight: 800; border-radius: 8px; background: var(--ink); color: white; border: none; cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('MEMBERS')">
+            <i class="fa-solid fa-users" style="color: var(--accent); margin-right: 6px;"></i> Permanent Church Members <span id="dirCountMembers" style="background: rgba(255,255,255,0.22); padding: 2px 9px; border-radius: 12px; margin-left: 6px; font-size: 11.5px;">0</span>
+          </button>
+          <button id="btnDirFilterGuests" class="btn-main" style="padding: 10px 20px; font-size: 13.5px; font-weight: 800; border-radius: 8px; background: #fffbeb; color: #b45309; border: 1.5px solid #fde68a; cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('GUESTS')">
+            <i class="fa-solid fa-star" style="color: #d97706; margin-right: 6px;"></i> First-Timers & New Visitors <span id="dirCountGuests" style="background: #fef3c7; color: #92400e; padding: 2px 9px; border-radius: 12px; margin-left: 6px; font-size: 11.5px; border: 1px solid #fde68a;">0</span>
+          </button>
+          <button id="btnDirFilterAll" class="btn-main" style="padding: 10px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; background: #fafbfa; color: var(--muted); border: 1px solid var(--line); cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('ALL')">
+            <i class="fa-solid fa-list-ul" style="margin-right: 6px;"></i> All Records <span id="dirCountAll" style="background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 12px; margin-left: 5px; font-size: 11px;">0</span>
+          </button>
         </div>
 
           <div class="table-responsive">
@@ -1624,7 +1734,7 @@
                 <th>#</th><th>Full Name</th><th>Category</th>
                 <th>Phone / Parent Guardian</th><th>Gender</th>
                 <th>Residential Location</th><th>Date of Birth (DOB)</th>
-                <th>Role / Sunday School</th><th>Actions</th>
+                <th>Role / Department</th><th>Actions</th>
               </tr></thead>
               <tbody id="membersTableBody"><!-- Injected by JS --></tbody>
             </table>
@@ -1653,7 +1763,7 @@
 
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
           <button id="btnSwitchBackAuto" class="btn-main" style="background: #14532d; color: white; border: 1.5px solid #22c55e; display: none;" onclick="resetKioskToRegularSchedule()">
-            <i class="fas fa-rotate-left"></i> ⚡ Program Ended: Switch Back to Regular Schedule
+            <i class="fa-solid fa-rotate-left" style="margin-right: 6px;"></i> Program Ended: Switch Back to Regular Schedule
           </button>
           <select id="adminKioskProgramPicker" class="form-ctrl" aria-label="Select active kiosk program" style="width: 280px; font-weight: 700; background: white; color: var(--ink); padding: 10px 14px;" onchange="handleAdminSetKioskActive(this.value)">
             <!-- Injected by JS -->
@@ -1733,6 +1843,31 @@
         </div>
       </div>
     </div>
+
+    <!-- SFMI Clean Portal Footer -->
+    <footer class="app-footer">
+      <div class="footer-container">
+        <div class="footer-left">
+          <div class="footer-brand">
+            <span class="footer-badge">SFMI</span>
+            <span class="footer-title">Solutions Faith Ministries International</span>
+          </div>
+          <p class="footer-tagline">Church Management &amp; Kiosk Check-In Portal</p>
+        </div>
+        <div class="footer-right">
+          <div class="footer-links">
+            <a href="/checkin" target="_blank" class="footer-link"><i class="fa-solid fa-tablet-screen-button"></i> Kiosk View</a>
+            <span class="footer-sep">·</span>
+            <a href="/finance" target="_blank" class="footer-link"><i class="fa-solid fa-coins"></i> Finance Portal</a>
+            <span class="footer-sep">·</span>
+            <span class="footer-status"><i class="fa-solid fa-circle" style="font-size: 7px; color: #22c55e;"></i> Cloud Connected</span>
+          </div>
+          <div class="footer-copyright">
+            &copy; 2026 Solutions Faith Ministries International. All rights reserved.
+          </div>
+        </div>
+      </div>
+    </footer>
 
   </main>
 
@@ -2089,17 +2224,17 @@
           <div style="display: flex; flex-direction: column; gap: 10px;">
             <label for="permAttendance" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="permAttendance" aria-label="Attendance Check-In Privilege" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>📋 Attendance &amp; Demographics</span>
+              <span><i class="fa-solid fa-clipboard-user" style="color: var(--accent); margin-right: 6px;"></i> Attendance &amp; Demographics</span>
             </label>
 
             <label for="permMembers" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="permMembers" aria-label="Member Directory Privilege" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>👥 Member Directory</span>
+              <span><i class="fa-solid fa-address-book" style="color: var(--accent); margin-right: 6px;"></i> Member Directory</span>
             </label>
 
             <label for="permPrograms" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="permPrograms" aria-label="Programs Management Privilege" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>📅 Services &amp; Programs Setup</span>
+              <span><i class="fa-solid fa-calendar-days" style="color: var(--accent); margin-right: 6px;"></i> Services &amp; Programs Setup</span>
             </label>
           </div>
         </div>
@@ -2152,17 +2287,17 @@
           <div style="display: flex; flex-direction: column; gap: 10px;">
             <label for="editPermAttendance" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="editPermAttendance" aria-label="Edit Attendance Check-In Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>📋 Attendance &amp; Demographics</span>
+              <span><i class="fa-solid fa-clipboard-user" style="color: var(--accent); margin-right: 6px;"></i> Attendance &amp; Demographics</span>
             </label>
 
             <label for="editPermMembers" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="editPermMembers" aria-label="Edit Member Directory Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>👥 Member Directory</span>
+              <span><i class="fa-solid fa-address-book" style="color: var(--accent); margin-right: 6px;"></i> Member Directory</span>
             </label>
 
             <label for="editPermPrograms" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="editPermPrograms" aria-label="Edit Programs Management Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span>📅 Services &amp; Programs Setup</span>
+              <span><i class="fa-solid fa-calendar-days" style="color: var(--accent); margin-right: 6px;"></i> Services &amp; Programs Setup</span>
             </label>
           </div>
         </div>
@@ -2183,11 +2318,30 @@
       return isLocal ? 'http://localhost:4000/api/v1' : '/api/v1';
     })();
 
+    // Centralized safe HTML sanitizer to prevent XSS attacks in dynamic tables
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function normalizePhoneClient(raw) {
+      if (!raw) return '';
+      const digits = String(raw).replace(/[^\d]/g, '');
+      if (digits.startsWith('233') && digits.length >= 12) return '0' + digits.slice(3);
+      if (digits.length === 9 && !digits.startsWith('0')) return '0' + digits;
+      return digits;
+    }
+
     let allMembers = [];
     let serviceAttendanceMap = {};
 
     let currentSelectedService = 'Sunday: Family & Friends Service';
-    let currentAttFilter = 'ALL'; // 'ALL', 'PRESENT', 'ABSENT'
+    let currentAttFilter = 'ALL'; // 'ALL', 'PRESENT', 'ABSENT', 'GUEST'
 
     let rawFinanceEntries = [];
     let filteredFinanceEntries = [];
@@ -2197,10 +2351,13 @@
 
     async function loadSubAdmins() {
       try {
-        const res = await fetch(`${API_BASE}/auth/subadmins`);
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const res = await fetch(`${API_BASE}/auth/subadmins`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
         if (res.ok) {
           const cloudList = await res.json();
-          if (Array.isArray(cloudList) && cloudList.length > 0) {
+          if (Array.isArray(cloudList)) {
             subAdminsList = cloudList;
             saveSubAdmins();
             renderSubAdminsList();
@@ -2213,16 +2370,7 @@
       if (saved) {
         try { subAdminsList = JSON.parse(saved); } catch(e) { subAdminsList = []; }
       } else {
-        subAdminsList = [
-          {
-            id: 'sub_def_1',
-            name: 'Deacon Samuel',
-            email: 'samuel@solutionsfaith.com',
-            password: 'Solutions12@26',
-            permissions: ['attendance', 'members', 'programs'],
-            createdAt: new Date().toLocaleDateString('en-GB')
-          }
-        ];
+        subAdminsList = [];
         saveSubAdmins();
       }
       renderSubAdminsList();
@@ -2349,10 +2497,10 @@
           tbody.innerHTML = subAdminsList.map((sub, i) => `
             <tr>
               <td>${i + 1}</td>
-              <td><strong>${sub.name}</strong> <span style="font-size:11px; font-weight:700; background:#111; color:white; padding:2px 8px; border-radius:12px; margin-left:4px;">Sub-Admin</span></td>
-              <td><i class="fas fa-envelope" style="color:var(--muted); margin-right:4px;"></i> ${sub.email}</td>
+              <td><strong>${escapeHtml(sub.name)}</strong> <span style="font-size:11px; font-weight:700; background:#111; color:white; padding:2px 8px; border-radius:12px; margin-left:4px;">Sub-Admin</span></td>
+              <td><i class="fas fa-envelope" style="color:var(--muted); margin-right:4px;"></i> ${escapeHtml(sub.email)}</td>
               <td><div style="display:flex; gap:6px; flex-wrap:wrap;">${buildBadges(sub) || '<span style="font-size:11px; color:var(--muted);">No privileges</span>'}</div></td>
-              <td>${sub.createdAt || '—'}</td>
+              <td>${escapeHtml(sub.createdAt) || '—'}</td>
               <td>
                 <div style="display:flex; gap:6px;">
                   <button class="btn-main" style="padding:5px 11px; font-size:12px; background:#c89b55; color:#111;" onclick="openEditSubAdminModal('${sub.id}')"><i class="fas fa-edit"></i> Edit Privileges</button>
@@ -2371,12 +2519,12 @@
           mobCards.innerHTML = subAdminsList.map(sub => `
             <div class="mob-card">
               <div class="mob-card-header">
-                <div class="mob-card-name">${sub.name}</div>
+                <div class="mob-card-name">${escapeHtml(sub.name)}</div>
                 <span style="font-size:11px; font-weight:700; background:#111; color:white; padding:3px 9px; border-radius:12px;">Sub-Admin</span>
               </div>
               <div class="mob-card-meta">
-                <div class="mob-card-row"><span>Email / ID</span><strong>${sub.email}</strong></div>
-                <div class="mob-card-row"><span>Created</span><strong>${sub.createdAt || '—'}</strong></div>
+                <div class="mob-card-row"><span>Email / ID</span><strong>${escapeHtml(sub.email)}</strong></div>
+                <div class="mob-card-row"><span>Created</span><strong>${escapeHtml(sub.createdAt) || '—'}</strong></div>
                 <div style="margin-top:8px;">
                   <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">Assigned Privileges:</span>
                   <div style="display:flex; gap:6px; flex-wrap:wrap;">${buildBadges(sub) || '<span style="font-size:11px; color:var(--muted);">No privileges</span>'}</div>
@@ -2424,9 +2572,13 @@
 
       // Persist in Cloud Database
       try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         const res = await fetch(`${API_BASE}/auth/subadmins`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ name, email, password, permissions: perms })
         });
 
@@ -2437,7 +2589,7 @@
           saveSubAdmins();
           closeCreateSubAdminModal();
           renderSubAdminsList();
-          showToast(`Sub-Admin account for <strong>${name}</strong> saved to Cloud Database! They can log in immediately at /admin.`, 'success', 'Sub-Admin Created');
+          showToast(`Sub-Admin account for <strong>${escapeHtml(name)}</strong> saved to Cloud Database! They can log in immediately at /admin.`, 'success', 'Sub-Admin Created');
           if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Sub-Admin'; }
           return;
         } else {
@@ -2463,7 +2615,7 @@
       saveSubAdmins();
       closeCreateSubAdminModal();
       renderSubAdminsList();
-      showToast(`Sub-Admin account for <strong>${name}</strong> created!`, 'success', 'Sub-Admin Created');
+      showToast(`Sub-Admin account for <strong>${escapeHtml(name)}</strong> created!`, 'success', 'Sub-Admin Created');
       if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Sub-Admin'; }
     }
 
@@ -2517,9 +2669,13 @@
       }
 
       try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         await fetch(`${API_BASE}/auth/subadmins/${id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ name, password: newPass, permissions: perms })
         });
       } catch (err) {}
@@ -2543,7 +2699,7 @@
           applyTabPermissions();
         }
 
-        showToast(`Privileges for <strong>${name}</strong> updated successfully!`, 'success', 'Privileges Updated');
+        showToast(`Privileges for <strong>${escapeHtml(name)}</strong> updated successfully!`, 'success', 'Privileges Updated');
       }
     }
 
@@ -2553,7 +2709,11 @@
         'Are you sure you want to revoke and delete this sub-admin account?',
         async () => {
           try {
-            await fetch(`${API_BASE}/auth/subadmins/${id}`, { method: 'DELETE' });
+            const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+            await fetch(`${API_BASE}/auth/subadmins/${id}`, {
+              method: 'DELETE',
+              headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
           } catch (e) {}
           subAdminsList = subAdminsList.filter(s => s.id !== id);
           saveSubAdmins();
@@ -3107,7 +3267,7 @@
               <td>GHS ${Number(item.specialSeed).toLocaleString()}</td>
               <td><strong style="color: var(--emerald); font-size: 14px;">GHS ${tot.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></td>
               <td>${item.recordedBy}</td>
-              <td><span class="badge-check">&#10003; Reconciled</span></td>
+              <td><span class="badge-check"><i class="fa-solid fa-circle-check" style="margin-right: 4px;"></i> Reconciled</span></td>
               <td>
                 <button class="btn-main" style="padding: 4px 10px; font-size: 12px;" onclick="printServiceRemittance('${item.id}')">
                   <i class="fas fa-receipt"></i> Slip
@@ -3133,7 +3293,7 @@
                 <div class="fin-mobile-card-total">GHS ${tot.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
               </div>
               <div class="fin-mobile-card-row">
-                <span class="badge-check">&#10003; Reconciled</span>
+                <span class="badge-check"><i class="fa-solid fa-circle-check" style="margin-right: 4px;"></i> Reconciled</span>
                 <span style="font-size:12px;color:var(--muted);">By: ${item.recordedBy}</span>
               </div>
               <div class="fin-mobile-card-actions">
@@ -3270,18 +3430,24 @@
       let directoryList = [...allMembers];
 
       activeAttList.forEach(att => {
-        const phone = (att.phone || '').trim();
-        const name = (att.name || '').trim().toLowerCase();
-        const exists = directoryList.some(m => 
-          (phone && m.phone && m.phone.trim() === phone) ||
-          (name && `${m.firstName} ${m.lastName}`.trim().toLowerCase() === name)
-        );
+        const attPhone = (att.phone || '').trim();
+        const attNormPhone = normalizePhoneClient(attPhone);
+        const attName = (att.name || '').trim().toLowerCase();
+        const exists = directoryList.some(m => {
+          if (att.memberId && m.id && att.memberId === m.id) return true;
+          const mNormPhone = normalizePhoneClient(m.phone);
+          if (attNormPhone && mNormPhone && attNormPhone === mNormPhone) return true;
+          if (attPhone && m.phone && m.phone.trim() === attPhone) return true;
+          const mName = `${m.firstName} ${m.lastName}`.trim().toLowerCase();
+          if (attName && (attName === mName || attName.startsWith(m.firstName.toLowerCase()))) return true;
+          return false;
+        });
         if (!exists && att.name) {
           const parts = att.name.split(' ');
           const fName = parts[0] || 'Visitor';
           const lName = parts.slice(1).join(' ') || 'Guest';
           directoryList.push({
-            id: 'guest_' + Math.random().toString(36).substr(2, 9),
+            id: att.memberId || ('guest_' + Math.random().toString(36).substr(2, 9)),
             firstName: fName,
             lastName: lName,
             phone: att.phone || '—',
@@ -3303,10 +3469,18 @@
       let attendingGuest = 0;
 
       const processedMembers = directoryList.map(m => {
-        const found = activeAttList.find(a => 
-          (a.phone && m.phone && a.phone.trim() === m.phone.trim()) ||
-          (`${m.firstName} ${m.lastName}`.trim().toLowerCase() === (a.name || '').trim().toLowerCase())
-        );
+        const mNormPhone = normalizePhoneClient(m.phone);
+        const mFullName = `${m.firstName} ${m.lastName}`.trim().toLowerCase();
+
+        const found = activeAttList.find(a => {
+          if (a.memberId && m.id && a.memberId === m.id) return true;
+          const aNormPhone = normalizePhoneClient(a.phone);
+          if (aNormPhone && mNormPhone && aNormPhone === mNormPhone) return true;
+          if (a.phone && m.phone && a.phone.trim() === m.phone.trim()) return true;
+          const aFullName = (a.name || `${a.firstName || ''} ${a.lastName || ''}`).trim().toLowerCase();
+          if (aFullName && (aFullName === mFullName || aFullName.startsWith(m.firstName.toLowerCase()))) return true;
+          return false;
+        });
         const isPresent = Boolean(found) || Boolean(m.isGuest);
 
         const isGuest = (found && Boolean(found.isGuest)) ||
@@ -3415,18 +3589,18 @@
 
         let catBadge = `<span class="badge-adult">Adult</span>`;
         if (isGuest) {
-          catBadge = `<span class="badge-guest"><i class="fas fa-star" style="color:#d97706;"></i> New Visitor / Guest</span>`;
+          catBadge = `<span class="badge-guest"><i class="fa-solid fa-star" style="color:#d97706; margin-right:4px;"></i> New Visitor / Guest</span>`;
         } else if (isChild) {
-          catBadge = `<span class="badge-child">&#128118; Child</span>`;
+          catBadge = `<span class="badge-child"><i class="fa-solid fa-children" style="margin-right:4px;"></i> Child</span>`;
         } else if (m.category==='Youth') {
           catBadge = `<span class="badge-check" style="background:#e0f2fe;color:#0369a1;">Youth</span>`;
         }
 
         const roleDisplay = isGuest 
-          ? `<span style="background:#fffbeb; color:#b45309; font-weight:800; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;"><i class="fas fa-handshake"></i> First Timer</span>`
+          ? `<span style="background:#fffbeb; color:#b45309; font-weight:800; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;"><i class="fa-solid fa-handshake" style="margin-right:4px;"></i> First Timer</span>`
           : `<span class="badge-check">${m.role||'Member'}</span>`;
 
-        const phoneDisplay = isChild&&m.guardian ? `${m.phone||'—'} <span style="font-size:11px;color:var(--muted);">&#128100; ${m.guardian}</span>` : (m.phone||'—');
+        const phoneDisplay = isChild&&m.guardian ? `${escapeHtml(m.phone)||'—'} <span style="font-size:11px;color:var(--muted);"><i class="fa-solid fa-user-shield" style="margin-right:3px;"></i> ${escapeHtml(m.guardian)}</span>` : (escapeHtml(m.phone)||'—');
         return { genderBadge, catBadge, phoneDisplay, roleDisplay, isGuest };
       };
 
@@ -3439,9 +3613,9 @@
             ? `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#14532d;" onclick="toggleMemberAttendance('${m.phone}',false)"><i class="fas fa-check"></i> Checked In</button>`
             : `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#c89b55;color:#111;" onclick="toggleMemberAttendance('${m.phone}',true)"><i class="fas fa-user-plus"></i> Mark Present</button>`;
           return `<tr>
-            <td>${i+1}</td><td><strong>${m.firstName} ${m.lastName}</strong></td>
+            <td>${i+1}</td><td><strong>${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</strong></td>
             <td>${catBadge}</td><td>${phoneDisplay}</td><td>${genderBadge}</td>
-            <td>${m.address?`<span>&#128205; ${m.address}</span>`:'—'}</td>
+            <td>${m.address?`<span><i class="fa-solid fa-location-dot" style="margin-right:4px; color:var(--muted);"></i> ${escapeHtml(m.address)}</span>`:'—'}</td>
             <td>${roleDisplay}</td>
             <td>${statusBadge}</td>
             <td>${m.isPresent?`<strong>${m.checkInTime}</strong>`:'<span style="color:#991b1b;font-weight:700;font-size:12px;">Did Not Attend</span>'}</td>
@@ -3461,14 +3635,14 @@
           return `
             <div class="mob-card">
               <div class="mob-card-header">
-                <div class="mob-card-name">${m.firstName} ${m.lastName}</div>
+                <div class="mob-card-name">${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</div>
                 ${statusBadge}
               </div>
               <div class="mob-card-meta">
                 <div class="mob-card-row"><span>Category</span><strong>${catBadge}</strong></div>
                 <div class="mob-card-row"><span>Gender</span><strong>${genderBadge}</strong></div>
                 <div class="mob-card-row"><span>Phone</span><strong>${phoneDisplay}</strong></div>
-                ${m.guardian?`<div class="mob-card-row"><span>Guardian</span><strong>${m.guardian}</strong></div>`:''}
+                ${m.guardian?`<div class="mob-card-row"><span>Guardian</span><strong>${escapeHtml(m.guardian)}</strong></div>`:''}
                 <div class="mob-card-row"><span>Role</span><strong>${roleDisplay}</strong></div>
                 <div class="mob-card-row"><span>Check-In</span><strong>${m.isPresent?m.checkInTime:'Did Not Attend'}</strong></div>
               </div>
@@ -3515,19 +3689,36 @@
       renderAttendanceTableHTML(filtered);
     }
 
-    function toggleMemberAttendance(phone, makePresent) {
+    async function toggleMemberAttendance(phone, makePresent) {
       if (!serviceAttendanceMap[currentSelectedService]) {
         serviceAttendanceMap[currentSelectedService] = [];
       }
 
+      const norm = normalizePhoneClient(phone);
       if (makePresent) {
         const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         serviceAttendanceMap[currentSelectedService].push({ phone, time: timeNow, method: 'ADMIN_MANUAL' });
+        try {
+          const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+          await fetch(`${API_BASE}/attendance/checkin`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ phone, serviceName: currentSelectedService, method: 'MANUAL' })
+          });
+        } catch (e) {}
       } else {
-        serviceAttendanceMap[currentSelectedService] = serviceAttendanceMap[currentSelectedService].filter(a => a.phone !== phone);
+        serviceAttendanceMap[currentSelectedService] = serviceAttendanceMap[currentSelectedService].filter(a => {
+          if (a.phone === phone) return false;
+          if (norm && normalizePhoneClient(a.phone) === norm) return false;
+          return true;
+        });
       }
 
       renderAttendanceAndDemographics();
+      setTimeout(fetchLiveCounts, 400);
     }
 
     function downloadAttendanceAbsenteeCSV() {
@@ -3535,7 +3726,8 @@
       let csv = `Service Name,Full Name,Category,Phone Number,Parent / Guardian,Gender,Residential Location,Ministry Role,Attendance Status,Check-In Time\n`;
 
       allMembers.forEach(m => {
-        const found = activeAttList.find(a => a.phone === m.phone || `${m.firstName} ${m.lastName}`.toLowerCase() === (a.name || '').toLowerCase());
+        const mNorm = normalizePhoneClient(m.phone);
+        const found = activeAttList.find(a => (a.phone && m.phone && (a.phone === m.phone || normalizePhoneClient(a.phone) === mNorm)) || `${m.firstName} ${m.lastName}`.toLowerCase() === (a.name || '').toLowerCase());
         const isPresent = Boolean(found);
         const status = isPresent ? 'PRESENT (Attended)' : 'ABSENT (Did Not Attend)';
         const checkTime = found ? found.time : 'N/A';
@@ -3560,28 +3752,131 @@
 
     async function fetchLiveCounts() {
       try {
-        const curRes = await fetch(`${API_BASE}/attendance/services/current`);
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        const curRes = await fetch(`${API_BASE}/attendance/services/current`, { headers });
         const cur = await curRes.json();
         if (cur?.id) {
-          const liveRes = await fetch(`${API_BASE}/attendance/live-count/${cur.id}`);
+          const liveRes = await fetch(`${API_BASE}/attendance/live-count/${cur.id}`, { headers });
           const live = await liveRes.json();
-          if (live.recent && live.recent.length > 0) {
-            const liveList = live.recent.map(item => ({
-              phone: item.member?.phone || '',
-              name: `${item.member?.firstName || ''} ${item.member?.lastName || ''}`.trim(),
-              gender: item.member?.gender || '',
-              address: item.member?.address || '',
-              time: new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              method: item.method || 'KIOSK',
-              isGuest: Boolean(item.isGuest)
-            }));
+          if (live.recent && Array.isArray(live.recent)) {
+            const liveList = live.recent.map(item => {
+              const fName = item.member?.firstName || '';
+              const lName = item.member?.lastName || '';
+              return {
+                memberId: item.memberId || item.member?.id || null,
+                phone: item.member?.phone || '',
+                firstName: fName,
+                lastName: lName,
+                name: `${fName} ${lName}`.trim(),
+                gender: item.member?.gender || '',
+                address: item.member?.address || '',
+                category: item.member?.category || (item.isGuest ? 'Visitor / Guest' : 'Adult'),
+                role: item.member?.role || (item.isGuest ? 'Visitor / First Timer' : 'Member'),
+                guardian: item.member?.guardian || '',
+                time: new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                method: item.method || 'KIOSK',
+                isGuest: Boolean(item.isGuest)
+              };
+            });
+
+            // Merge any active attendee/guest into allMembers directory if not already there
+            let modifiedDirectory = false;
+            liveList.forEach(att => {
+              const attPhoneNorm = normalizePhoneClient(att.phone);
+              const attFullName = att.name.toLowerCase();
+              const foundIndex = allMembers.findIndex(m => 
+                (att.memberId && m.id && att.memberId === m.id) ||
+                (att.phone && m.phone && (att.phone.trim() === m.phone.trim() || (attPhoneNorm && normalizePhoneClient(m.phone) === attPhoneNorm))) ||
+                (attFullName && `${m.firstName} ${m.lastName}`.trim().toLowerCase() === attFullName)
+              );
+
+              if (foundIndex >= 0) {
+                if (att.isGuest && !allMembers[foundIndex].isGuest) {
+                  allMembers[foundIndex].isGuest = true;
+                  if (!allMembers[foundIndex].category || allMembers[foundIndex].category === 'Adult') allMembers[foundIndex].category = 'Visitor / Guest';
+                  if (!allMembers[foundIndex].role || allMembers[foundIndex].role === 'Member') allMembers[foundIndex].role = 'Visitor / First Timer';
+                  modifiedDirectory = true;
+                }
+              } else if (att.name) {
+                allMembers.unshift({
+                  id: att.memberId || ('guest_' + Math.random().toString(36).substr(2, 9)),
+                  firstName: att.firstName || 'Visitor',
+                  lastName: att.lastName || 'Guest',
+                  phone: att.phone || '',
+                  gender: att.gender || 'Not specified',
+                  address: att.address || '',
+                  category: att.category || 'Visitor / Guest',
+                  role: att.role || 'Visitor / First Timer',
+                  guardian: att.guardian || '',
+                  isGuest: Boolean(att.isGuest)
+                });
+                modifiedDirectory = true;
+              }
+            });
+
             const serviceKey = currentSelectedService || 'Sunday: Family & Friends Service';
             serviceAttendanceMap[serviceKey] = liveList;
             serviceAttendanceMap['Sunday: Family & Friends Service'] = liveList;
             renderAttendanceAndDemographics();
+            if (modifiedDirectory) {
+              updateDirectoryCounts();
+              filterMembersTable();
+            }
           }
         }
       } catch (e) {}
+    }
+
+    let currentDirSubTab = 'MEMBERS'; // 'MEMBERS', 'GUESTS', 'ALL'
+
+    function isGuestMember(m) {
+      if (!m) return false;
+      if (m.isGuest) return true;
+      const cat = (m.category || '').toLowerCase();
+      const role = (m.role || '').toLowerCase();
+      return cat.includes('visitor') || cat.includes('guest') || cat.includes('first-timer') || cat.includes('first timer') ||
+             role.includes('visitor') || role.includes('guest') || role.includes('first timer') || role.includes('first-timer');
+    }
+
+    function updateDirectoryCounts() {
+      const guests = allMembers.filter(isGuestMember);
+      const regularMembers = allMembers.filter(m => !isGuestMember(m));
+      
+      const elMembers = document.getElementById('dirCountMembers');
+      const elGuests = document.getElementById('dirCountGuests');
+      const elAll = document.getElementById('dirCountAll');
+
+      if (elMembers) elMembers.innerText = regularMembers.length;
+      if (elGuests) elGuests.innerText = guests.length;
+      if (elAll) elAll.innerText = allMembers.length;
+    }
+
+    function setMemberDirectorySubTab(tab) {
+      currentDirSubTab = tab;
+      
+      const btnMem = document.getElementById('btnDirFilterMembers');
+      const btnGst = document.getElementById('btnDirFilterGuests');
+      const btnAll = document.getElementById('btnDirFilterAll');
+
+      if (btnMem) {
+        btnMem.style.background = tab === 'MEMBERS' ? 'var(--ink)' : '#fafbfa';
+        btnMem.style.color = tab === 'MEMBERS' ? 'white' : 'var(--ink)';
+        btnMem.style.border = tab === 'MEMBERS' ? 'none' : '1px solid var(--line)';
+      }
+      if (btnGst) {
+        btnGst.style.background = tab === 'GUESTS' ? '#d97706' : '#fffbeb';
+        btnGst.style.color = tab === 'GUESTS' ? 'white' : '#b45309';
+        btnGst.style.border = tab === 'GUESTS' ? 'none' : '1.5px solid #fde68a';
+      }
+      if (btnAll) {
+        btnAll.style.background = tab === 'ALL' ? 'var(--ink)' : '#fafbfa';
+        btnAll.style.color = tab === 'ALL' ? 'white' : 'var(--muted)';
+        btnAll.style.border = tab === 'ALL' ? 'none' : '1px solid var(--line)';
+      }
+
+      filterMembersTable();
     }
 
     /* Member Directory (With Children, Address, Gender & DOB) */
@@ -3610,7 +3905,8 @@
         if (res.ok) {
           const data = await res.json();
           allMembers = Array.isArray(data) ? data : (Array.isArray(data.members) ? data.members : []);
-          renderMembersTable();
+          updateDirectoryCounts();
+          filterMembersTable();
           renderAttendanceAndDemographics();
           return;
         }
@@ -3620,15 +3916,22 @@
       const saved = localStorage.getItem('sfmi_members_registry');
       if (saved) { try { allMembers = JSON.parse(saved); } catch(e){ allMembers = []; } }
       else { allMembers = []; }
-      renderMembersTable();
+      updateDirectoryCounts();
+      filterMembersTable();
       renderAttendanceAndDemographics();
     }
 
     function saveMembersToStorage() {
       localStorage.setItem('sfmi_members_registry', JSON.stringify(allMembers));
+      updateDirectoryCounts();
     }
 
-    function renderMembersTable(list = allMembers) {
+    function renderMembersTable(list = null) {
+      if (list === null) {
+        filterMembersTable();
+        return;
+      }
+
       const tbody = document.getElementById('membersTableBody');
       const mobCards = document.getElementById('membersMobileCards');
 
@@ -3637,28 +3940,31 @@
         const isFemale = (m.gender||'').toLowerCase().startsWith('f');
         const genderBadge = isMale ? `<span class="badge-gender-male">Male</span>` : isFemale ? `<span class="badge-gender-female">Female</span>` : `—`;
         const isChild = m.category==='Child'||(m.role&&m.role.toLowerCase().includes('child'));
-        const isGuest = m.category === 'Visitor' || m.category === 'Visitor / First-Timer' || m.category === 'Visitor / Guest' || (m.role && m.role.toLowerCase().includes('visitor')) || (m.role && m.role.toLowerCase().includes('first timer'));
+        const isGuest = isGuestMember(m);
 
         let catBadge = `<span class="badge-adult">Adult</span>`;
         if (isGuest) {
-          catBadge = `<span class="badge-guest"><i class="fas fa-star" style="color:#d97706;"></i> New Visitor / Guest</span>`;
+          catBadge = `<span class="badge-guest"><i class="fa-solid fa-star" style="color:#d97706; margin-right:4px;"></i> New Visitor / Guest</span>`;
         } else if (isChild) {
-          catBadge = `<span class="badge-child">&#128118; Child</span>`;
+          catBadge = `<span class="badge-child"><i class="fa-solid fa-children" style="margin-right:4px;"></i> Child</span>`;
         } else if (m.category==='Youth') {
           catBadge = `<span class="badge-check" style="background:#e0f2fe;color:#0369a1;">Youth</span>`;
         }
 
         const roleDisplay = isGuest 
-          ? `<span style="background:#fffbeb; color:#b45309; font-weight:800; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;"><i class="fas fa-handshake"></i> First Timer</span>`
+          ? `<span style="background:#fffbeb; color:#b45309; font-weight:800; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;"><i class="fa-solid fa-handshake" style="margin-right:4px;"></i> First Timer</span>`
           : `<span class="badge-check">${m.role||'Member'}</span>`;
 
-        const phoneDisplay = isChild&&m.guardian ? `<strong style="color:var(--accent);">${m.phone||'—'}</strong><div style="font-size:11px;color:var(--muted);"><i class="fas fa-user-shield"></i> ${m.guardian}</div>` : `<strong style="color:var(--accent);">${m.phone||'—'}</strong>`;
+        const phoneDisplay = isChild&&m.guardian ? `<strong style="color:var(--accent);">${escapeHtml(m.phone)||'—'}</strong><div style="font-size:11px;color:var(--muted);"><i class="fa-solid fa-user-shield" style="margin-right:3px;"></i> ${escapeHtml(m.guardian)}</div>` : `<strong style="color:var(--accent);">${escapeHtml(m.phone)||'—'}</strong>`;
         return {genderBadge, catBadge, phoneDisplay, roleDisplay, isChild, isGuest};
       };
 
       if (list.length === 0) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px;">No members in directory.</td></tr>`;
-        if (mobCards) mobCards.innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px 0;">No members in directory yet.</div>`;
+        const emptyMsg = currentDirSubTab === 'GUESTS' 
+          ? 'No first-timers or new visitors registered yet.'
+          : (currentDirSubTab === 'MEMBERS' ? 'No permanent church members found matching this search.' : 'No records found in directory.');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px;font-size:13.5px;"><i class="fa-solid fa-circle-info" style="margin-right:6px;"></i> ${emptyMsg}</td></tr>`;
+        if (mobCards) mobCards.innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px 0;font-size:13.5px;"><i class="fa-solid fa-circle-info" style="margin-right:6px;"></i> ${emptyMsg}</div>`;
         return;
       }
 
@@ -3667,10 +3973,10 @@
         tbody.innerHTML = list.map((m, i) => {
           const {genderBadge, catBadge, phoneDisplay, roleDisplay} = buildMemberBadges(m);
           return `<tr>
-            <td>${i+1}</td><td><strong>${m.firstName} ${m.lastName}</strong></td>
+            <td>${i+1}</td><td><strong>${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</strong></td>
             <td>${catBadge}</td><td>${phoneDisplay}</td><td>${genderBadge}</td>
-            <td>${m.address?`<span>&#128205; ${m.address}</span>`:'—'}</td>
-            <td>${m.dob?`<span class="badge-dob"><i class="fas fa-calendar-day"></i> ${m.dob}</span>`:'—'}</td>
+            <td>${m.address?`<span><i class="fa-solid fa-location-dot" style="margin-right:4px; color:var(--muted);"></i> ${escapeHtml(m.address)}</span>`:'—'}</td>
+            <td>${m.dob?`<span class="badge-dob"><i class="fa-solid fa-cake-candles" style="margin-right:4px;"></i> ${escapeHtml(m.dob)}</span>`:'—'}</td>
             <td>${roleDisplay}</td>
             <td><div style="display:flex;gap:6px;">
               <button class="btn-main" style="padding:4px 10px;font-size:12px;background:#c89b55;color:#111;" onclick="openEditMemberModal('${m.id}')"><i class="fas fa-edit"></i> Edit</button>
@@ -3689,15 +3995,15 @@
             return `
               <div class="mob-card">
                 <div class="mob-card-header">
-                  <div class="mob-card-name">${m.firstName} ${m.lastName}</div>
+                  <div class="mob-card-name">${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</div>
                   ${catBadge}
                 </div>
                 <div class="mob-card-meta">
                   <div class="mob-card-row"><span>Gender</span><strong>${genderBadge}</strong></div>
-                  <div class="mob-card-row"><span>Phone</span><strong>${m.phone||'—'}</strong></div>
-                  ${m.guardian?`<div class="mob-card-row"><span>Guardian</span><strong>${m.guardian}</strong></div>`:''}
-                  <div class="mob-card-row"><span>Location</span><strong>${m.address||'—'}</strong></div>
-                  <div class="mob-card-row"><span>Date of Birth</span><strong>${m.dob||'—'}</strong></div>
+                  <div class="mob-card-row"><span>Phone</span><strong>${escapeHtml(m.phone)||'—'}</strong></div>
+                  ${m.guardian?`<div class="mob-card-row"><span>Guardian</span><strong>${escapeHtml(m.guardian)}</strong></div>`:''}
+                  <div class="mob-card-row"><span>Location</span><strong>${escapeHtml(m.address)||'—'}</strong></div>
+                  <div class="mob-card-row"><span>Date of Birth</span><strong>${escapeHtml(m.dob)||'—'}</strong></div>
                   <div class="mob-card-row"><span>Role</span><strong>${m.role||'Member'}</strong></div>
                 </div>
                 <div class="mob-card-actions">
@@ -3750,14 +4056,14 @@
             <div style="flex: 1; min-width: 260px; background: linear-gradient(135deg, #c89b55 0%, #a87d3b 100%); color: #111; padding: 14px 16px; border-radius: 8px; border: 1px solid #fef08a; box-shadow: 0 4px 12px rgba(200,155,85,0.3);">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                  <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; background: #111; color: #c89b55; padding: 2px 8px; border-radius: 4px;">🎉 TODAY!</span>
+                  <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; background: #111; color: #c89b55; padding: 2px 8px; border-radius: 4px;"><i class="fa-solid fa-cake-candles" style="margin-right: 4px;"></i> TODAY!</span>
                   <div style="font-size: 16px; font-weight: 800; margin-top: 6px;">${m.firstName} ${m.lastName}</div>
                   <div style="font-size: 12px; opacity: 0.9; margin-top: 2px;">Turning <strong>${b.age} years old</strong></div>
                 </div>
-                <span style="font-size: 26px;">🎂</span>
+                <i class="fa-solid fa-cake-candles" style="font-size: 24px; color: #111;"></i>
               </div>
               <div style="margin-top: 10px; font-size: 12px; font-weight: 700; border-top: 1px dashed rgba(0,0,0,0.2); padding-top: 8px; display: flex; justify-content: space-between; align-items: center;">
-                <span><i class="fas fa-phone"></i> ${m.phone || 'No Phone'}</span>
+                <span><i class="fa-solid fa-phone" style="margin-right: 4px;"></i> ${m.phone || 'No Phone'}</span>
                 <span style="background: rgba(0,0,0,0.15); padding: 3px 8px; border-radius: 4px;">Wish Happy Birthday!</span>
               </div>
             </div>`;
@@ -3773,7 +4079,7 @@
                 <span style="font-size: 11px; font-weight: 700; background: rgba(200,155,85,0.25); color: var(--accent); padding: 3px 8px; border-radius: 4px;">${dayText}</span>
               </div>
               <div style="margin-top: 8px; font-size: 11.5px; color: #a3b899; display: flex; align-items: center; gap: 6px;">
-                <i class="fas fa-user-tag"></i> ${m.category || 'Member'} ${m.phone ? `· 📞 ${m.phone}` : ''}
+                <i class="fa-solid fa-user-tag"></i> ${m.category || 'Member'} ${m.phone ? `· <i class="fa-solid fa-phone" style="font-size: 10px; margin-left: 2px;"></i> ${m.phone}` : ''}
               </div>
             </div>`;
         }
@@ -3833,16 +4139,28 @@
     }
 
     function filterMembersTable() {
-      const q = document.getElementById('memberSearchInput').value.toLowerCase();
-      const filtered = allMembers.filter(m => 
+      const q = (document.getElementById('memberSearchInput')?.value || '').toLowerCase().trim();
+      
+      let baseList = allMembers;
+      if (currentDirSubTab === 'MEMBERS') {
+        baseList = allMembers.filter(m => !isGuestMember(m));
+      } else if (currentDirSubTab === 'GUESTS') {
+        baseList = allMembers.filter(isGuestMember);
+      }
+
+      const filtered = baseList.filter(m => 
+        !q ||
         `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) || 
         (m.phone && m.phone.includes(q)) ||
         (m.guardian && m.guardian.toLowerCase().includes(q)) ||
         (m.address && m.address.toLowerCase().includes(q)) ||
         (m.category && m.category.toLowerCase().includes(q)) ||
         (m.gender && m.gender.toLowerCase().includes(q)) ||
-        (m.dob && m.dob.toLowerCase().includes(q))
+        (m.dob && m.dob.toLowerCase().includes(q)) ||
+        (m.role && m.role.toLowerCase().includes(q))
       );
+
+      updateDirectoryCounts();
       renderMembersTable(filtered);
     }
 
