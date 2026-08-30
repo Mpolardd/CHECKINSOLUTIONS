@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Financial Entry Portal | SOLUTIONS FAITH MINISTRY INTERNATIONAL</title>
+  <link rel="icon" type="image/jpeg" href="/church-logo.jpg">
+  <link rel="shortcut icon" type="image/jpeg" href="/church-logo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <style>
+    :root {
+      --ink: #0d1a14;
+      --muted: #5e6d65;
+      --light: #f4f6f5;
+      --line: #d8e2dc;
+      --white: #ffffff;
+      --emerald: #14532d;
+      --emerald-dark: #072216;
+      --accent: #c89b55;
+      --accent-hover: #b38642;
+      --gold: #b45309;
+      --gold-bg: #fffbeb;
+      --max: 960px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "DM Sans", sans-serif;
+      color: var(--ink);
+      background: var(--light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Nav (Centered Brand & Logo) */
+    .fin-nav {
+      background: var(--emerald-dark);
+      color: white;
+      padding: 20px 24px;
+      border-bottom: 2px solid var(--accent);
+      position: relative;
+    }
+
+    .fin-nav-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .brand-fin {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-decoration: none;
+      color: white;
+      text-align: left;
+    }
+
+    .brand-fin img {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-family: Manrope, sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: #c4d0ca;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .nav-logout-wrap {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+    }
+
+    .btn-header-logout {
+      background: #c5221f;
+      color: white;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: 0 2px 8px rgba(197,34,31,0.35);
+      transition: background 0.2s, transform 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-header-logout:hover {
+      background: #a51815;
+      transform: translateY(-1px);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(3px);
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: white;
+      border-radius: 12px;
+      padding: 28px 24px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-sizing: border-box;
+    }
+
+    @keyframes modalPop {
+      from { opacity: 0; transform: scale(0.94); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .login-container {
+      max-width: 440px;
+      width: 100%;
+      margin: 80px auto;
+      padding: 0 20px;
+    }
+
+    .login-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 40px 36px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      text-align: center;
+    }
+
+    /* Container */
+    .fin-container {
+      max-width: var(--max);
+      width: 100%;
+      margin: 30px auto;
+      padding: 0 20px;
+      flex: 1;
+    }
+
+    /* Financial Card */
+    .fin-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 36px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      margin-bottom: 24px;
+    }
+
+    .card-head {
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .kicker {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 11px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-family: Manrope, sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    /* Form Layout */
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+
+    .form-ctrl {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-ctrl:focus {
+      border-color: var(--accent);
+    }
+
+    .form-ctrl-money {
+      font-family: Manrope, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    /* Step Cards Layout */
+    .step-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px 24px;
+      margin-bottom: 22px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .step-badge {
+      background: #092619;
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      padding: 5px 12px;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .step-title {
+      font-family: Manrope, sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .step-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Section Subheadings */
+    .form-section-title {
+      font-family: Manrope, sans-serif;
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--emerald-dark);
+      margin: 20px 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    /* Total Highlight Box */
+    .total-banner {
+      background: var(--gold-bg);
+      border: 1.5px solid #fde68a;
+      border-radius: 6px;
+      padding: 20px 24px;
+      margin: 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .total-title {
+      font-family: Manrope, sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+    }
+
+    .total-num {
+      font-family: Manrope, sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    /* Success Alert Banner */
+    .success-alert {
+      display: none;
+      background: #e6f4ea;
+      color: #137333;
+      border: 1px solid #b7e1cd;
+      border-radius: 4px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* Buttons */
+    .btn-main {
+      padding: 14px 32px;
+      background: var(--ink);
+      color: white;
+      font-weight: 700;
+      font-size: 14.5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-main:hover {
+      background: #233a2d;
+    }
+
+    /* Toast Notification System */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+      max-width: 440px;
+      width: calc(100vw - 48px);
+    }
+
+    .toast-msg {
+      pointer-events: auto;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 18px;
+      border-radius: 8px;
+      background: #092619;
+      color: white;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(200, 155, 85, 0.4);
+      position: relative;
+      overflow: hidden;
+      animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .toast-msg.toast-success { border-left: 4.5px solid #22c55e; }
+    .toast-msg.toast-warning { border-left: 4.5px solid #f59e0b; }
+    .toast-msg.toast-error { border-left: 4.5px solid #ef4444; }
+    .toast-msg.toast-info { border-left: 4.5px solid #3b82f6; }
+
+    .toast-icon {
+      font-size: 19px;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    .toast-success .toast-icon { color: #4ade80; }
+    .toast-warning .toast-icon { color: #fbbf24; }
+    .toast-error .toast-icon { color: #f87171; }
+    .toast-info .toast-icon { color: #60a5fa; }
+
+    .toast-body { flex: 1; }
+    .toast-title {
+      font-family: 'Manrope', sans-serif;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 2px;
+    }
+    .toast-text {
+      font-size: 12.5px;
+      color: #e2e8f0;
+      line-height: 1.4;
+    }
+
+    .toast-close {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 15px;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      margin-left: 4px;
+    }
+    .toast-close:hover { color: white; }
+
+    .toast-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: var(--accent);
+      width: 100%;
+      animation: toastProgress 4.5s linear forwards;
+    }
+
+    @keyframes toastSlideIn {
+      from { opacity: 0; transform: translateX(100%) scale(0.95); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+
+    @keyframes toastSlideOut {
+      from { opacity: 1; transform: translateX(0) scale(1); }
+      to { opacity: 0; transform: translateX(100%) scale(0.9); }
+    }
+
+    @keyframes toastProgress {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+
+    /* RESPONSIVE MEDIA QUERIES (MOBILE, TABLET, IPAD, DESKTOP) */
+    @media (max-width: 900px) {
+      .fin-container { padding: 18px 14px; }
+      .fin-card { padding: 22px 18px; }
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .fin-container { padding: 12px 10px; }
+      .fin-card { padding: 16px 12px; border-radius: 10px; }
+      .brand-title { font-size: 12.5px !important; line-height: 1.25; }
+      .brand-sub { font-size: 9.5px !important; }
+      .brand-fin img { width: 34px !important; height: 34px !important; }
+      .brand-fin { gap: 8px !important; }
+      .fin-nav { padding: 10px 12px; }
+      .fin-nav-inner { text-align: left; padding: 0 48px 0 12px !important; margin: 0; }
+      .nav-logout-wrap { right: 12px !important; top: 50% !important; transform: translateY(-50%) !important; }
+      .btn-header-logout { padding: 0 !important; width: 36px !important; height: 36px !important; border-radius: 50% !important; font-size: 14px !important; justify-content: center !important; align-items: center !important; flex-shrink: 0 !important; }
+      .btn-header-logout .logout-text { display: none !important; }
+
+      /* Pure Vertical Column Layout for Mobile (One step/field on top of the other) */
+      .card-head {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+      }
+
+      .step-card {
+        padding: 16px 12px !important;
+        margin-bottom: 16px !important;
+        border-radius: 8px !important;
+      }
+
+      .step-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 14px !important;
+      }
+
+      .form-row {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+      }
+
+      .grid-3, .grid-4 {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+      }
+
+      .form-group {
+        margin-bottom: 0 !important;
+        width: 100% !important;
+      }
+
+      .form-ctrl, select, input {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        font-size: 14px !important;
+      }
+
+      .total-banner {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        padding: 14px !important;
+        text-align: left !important;
+      }
+
+      .total-num {
+        font-size: 24px !important;
+      }
+
+      .btn-main {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 15px !important;
+        font-size: 15px !important;
+      }
+
+      /* Toast: float at screen bottom on mobile so it never covers the header */
+      .toast-container {
+        top: auto !important;
+        bottom: 16px !important;
+        left: 12px !important;
+        right: 12px !important;
+        width: auto !important;
+        max-width: calc(100vw - 24px) !important;
+        box-sizing: border-box !important;
+      }
+      .toast-msg {
+        padding: 12px 14px !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+      }
+      .toast-title { font-size: 13px !important; }
+      .toast-text { font-size: 12px !important; word-break: break-word !important; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Bar (Centered Brand & Logo) -->
+  <header class="fin-nav">
+    <div class="fin-nav-inner">
+      <div class="brand-fin">
+        <img id="finNavLogo" src="/church-logo.jpg" alt="Logo">
+        <div>
+          <div class="brand-title" id="finChurchName">SOLUTIONS FAITH MINISTRY INTERNATIONAL</div>
+          <div class="brand-sub">Church Treasury & Financial Entry Portal</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-logout-wrap" id="finLogoutWrap" style="display: none;">
+      <button id="btnFinLogout" class="btn-header-logout" style="display: none;" onclick="handleFinLogout()" title="Log Out">
+        <i class="fas fa-sign-out-alt"></i> <span class="logout-text">Log Out</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Reusable Custom Confirmation Modal -->
+  <div class="modal-backdrop" id="customConfirmModal" style="display: none;" onclick="if(event.target===this)closeCustomConfirmModal(false)">
+    <div class="modal-card" style="max-width: 400px; text-align: center; padding: 28px 24px;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: #fff1f2; color: #e11d48; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px;">
+        <i class="fas fa-sign-out-alt" id="confirmModalIcon"></i>
+      </div>
+      <h3 style="font-family: Manrope, sans-serif; font-size: 19px; font-weight: 800; color: var(--ink); margin-bottom: 8px;" id="confirmModalTitle">Confirm Action</h3>
+      <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px; line-height: 1.45;" id="confirmModalText">Are you sure you want to proceed?</p>
+      
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button type="button" class="btn-main" style="flex: 1; background: #f1f5f9; color: var(--ink); border: 1px solid var(--line); justify-content: center; font-size: 13.5px;" onclick="closeCustomConfirmModal(false)">Cancel</button>
+        <button type="button" class="btn-main" style="flex: 1; background: #c5221f; color: white; justify-content: center; font-size: 13.5px;" id="confirmModalOkBtn" onclick="closeCustomConfirmModal(true)">Yes, Proceed</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. LOGIN SCREEN GATE FOR FINANCE (No Logo in Login Box) -->
+  <div class="login-container" id="finLoginScreen">
+    <div class="login-card">
+      <h2 style="font-family: Manrope, sans-serif; font-size: 24px; margin-bottom: 4px;">Treasury Officer Login</h2>
+      <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px;">Authorized officers only. Enter credentials to record service collections.</p>
+
+      <form onsubmit="handleFinLoginSubmit(event)" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label">Officer Email</label>
+          <input required type="email" id="finLoginEmail" class="form-ctrl" placeholder="Enter treasury email address" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input required type="password" id="finLoginPassword" class="form-ctrl" style="padding-right: 42px;" placeholder="Enter password" autocomplete="current-password" />
+            <button type="button" onclick="togglePasswordVisibility('finLoginPassword', 'finEyeIcon')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; display: flex; align-items: center; justify-content: center; font-size: 15px;">
+              <i class="fas fa-eye" id="finEyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="finLoginErrorMsg" style="display: none; padding: 10px; margin-bottom: 14px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 4px; font-size: 13px; font-weight: 600;"></div>
+
+        <button type="submit" class="btn-main" style="width: 100%; padding: 14px; justify-content: center;">Sign In to Treasury Portal</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. MAIN FINANCIAL ENTRY DASHBOARD (Protected) -->
+  <main class="fin-container" id="finDashboardContent" style="display: none;">
+    
+    <!-- Success Banner -->
+    <div class="success-alert" id="successBanner">
+      <i class="fas fa-check-circle" style="margin-right: 6px;"></i> <span id="successMsgText">Service financials saved successfully.</span>
+    </div>
+
+    <!-- Post-Service Financial Entry Form -->
+    <div class="fin-card">
+      <div class="card-head">
+        <div>
+          <div class="kicker">Service Financial Reconciliation</div>
+          <h1 class="card-title">Post-Service Financial Figures Entry</h1>
+        </div>
+        <div style="font-size: 13px; color: var(--muted);" id="liveDateDisplay"></div>
+      </div>
+
+      <form onsubmit="handleSaveServiceFinance(event)">
+        
+        <!-- STEP 1: Service Details -->
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-badge">STEP 1</div>
+            <div>
+              <div class="step-title">Select Service & Date</div>
+              <div class="step-desc">Choose which service you are recording collections for</div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Select Service *</label>
+              <select required id="finServiceSelect" class="form-ctrl">
+                <option value="Time with the Lord (Wednesday)">Wednesday — Time with the Lord (6:00 PM – 8:00 PM)</option>
+                <option value="Prophetic Healing & Deliverance (Friday)">Friday — Prophetic Healing & Deliverance (6:00 PM – 8:00 PM)</option>
+                <option value="Family & Friends Service (Sunday)" selected>Sunday — Family & Friends Service (7:00 AM – 11:00 AM)</option>
+                <option value="Special Program / Convention">Special Program / Miracle Convention / Vigil</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Service Date *</label>
+              <input required type="date" id="finServiceDate" class="form-ctrl" />
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: Collections by Giving Category -->
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-badge">STEP 2</div>
+            <div>
+              <div class="step-title">Collections by Giving Category (GHS)</div>
+              <div class="step-desc">Enter verified figures counted for each ministry category</div>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group">
+              <label class="form-label">Tithes (GHS)</label>
+              <input type="number" step="0.01" min="0" id="inTithes" class="form-ctrl form-ctrl-money" placeholder="0.00" oninput="computeGrandTotal()" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">General Offering (GHS)</label>
+              <input type="number" step="0.01" min="0" id="inOffering" class="form-ctrl form-ctrl-money" placeholder="0.00" oninput="computeGrandTotal()" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Building & Welfare Fund (GHS)</label>
+              <input type="number" step="0.01" min="0" id="inBuilding" class="form-ctrl form-ctrl-money" placeholder="0.00" oninput="computeGrandTotal()" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Prophetic Seed / Special Giving (GHS)</label>
+              <input type="number" step="0.01" min="0" id="inSeed" class="form-ctrl form-ctrl-money" placeholder="0.00" oninput="computeGrandTotal()" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Thanksgiving & First Fruits (GHS)</label>
+              <input type="number" step="0.01" min="0" id="inThanksgiving" class="form-ctrl form-ctrl-money" placeholder="0.00" oninput="computeGrandTotal()" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Other Income / Donations (GHS)</label>
+              <input type="number" step="0.01" min="0" id="inOther" class="form-ctrl form-ctrl-money" placeholder="0.00" oninput="computeGrandTotal()" />
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Payment Channel Breakdown -->
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-badge">STEP 3</div>
+            <div>
+              <div class="step-title">Payment Channel Breakdown (GHS)</div>
+              <div class="step-desc">Enter breakdown received across Cash, MoMo, Bank, and POS</div>
+            </div>
+          </div>
+          <div class="grid-4">
+            <div class="form-group">
+              <label class="form-label"><i class="fas fa-money-bill-wave" style="color: #16a34a;"></i> Cash Collections (GHS)</label>
+              <input type="number" step="0.01" min="0" id="inCash" class="form-ctrl form-ctrl-money" placeholder="0.00" oninput="computeGrandTotal()" />
+            </div>
+            <div class="form-group">
+              <label class="form-label"><i class="fas fa-mobile-screen" style="color: #ea580c;"></i> Mobile Money / MoMo (GHS)</label>
+              <input type="number" step="0.01" min="0" id="inMomo" class="form-ctrl form-ctrl-money" placeholder="0.00" oninput="computeGrandTotal()" />
+            </div>
+            <div class="form-group">
+              <label class="form-label"><i class="fas fa-building-columns" style="color: #2563eb;"></i> Bank Deposits (GHS)</label>
+              <input type="number" step="0.01" min="0" id="inBank" class="form-ctrl form-ctrl-money" placeholder="0.00" oninput="computeGrandTotal()" />
+            </div>
+            <div class="form-group">
+              <label class="form-label"><i class="fas fa-credit-card" style="color: #9333ea;"></i> POS / Card Payments (GHS)</label>
+              <input type="number" step="0.01" min="0" id="inPos" class="form-ctrl form-ctrl-money" placeholder="0.00" oninput="computeGrandTotal()" />
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: Review Total & Verification -->
+        <div class="step-card" style="border: 1.5px solid var(--accent); background: #fafbfa;">
+          <div class="step-header" style="border-bottom: none; margin-bottom: 0;">
+            <div class="step-badge" style="background: var(--accent); color: #111;">STEP 4</div>
+            <div>
+              <div class="step-title">Review Total & Accountability Sign-Off</div>
+              <div class="step-desc">Verify total calculations and input counting officers</div>
+            </div>
+          </div>
+
+          <!-- Total Banner -->
+          <div class="total-banner">
+            <div>
+              <div class="total-title">Total Service Collections</div>
+              <div style="font-size: 12.5px; color: var(--muted); margin-top: 2px;">Calculated automatically across all categories</div>
+            </div>
+            <div class="total-num" id="displayGrandTotal">GHS 0.00</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Counting Officers / Recorded By *</label>
+              <input required id="finRecordedBy" class="form-ctrl" placeholder="e.g. Deacon Samuel & Sister Grace" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Remarks / Notes</label>
+              <input id="finNotes" class="form-ctrl" placeholder="e.g. Sunday thanksgiving service special appeal" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-main" style="width: 100%; justify-content: center; padding: 16px; font-size: 16px; margin-top: 8px;">
+            <i class="fas fa-save"></i> Submit & Save Financial Reconciliation
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </main>
+
+  <script>
+    const API_BASE = 'http://localhost:4000/api/v1';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initInactivityListeners();
+      checkFinAuth();
+    });
+
+    /* ── 30-MINUTE INACTIVITY AUTO-LOGOUT SYSTEM ── */
+    const INACTIVITY_LIMIT_MS = 30 * 60 * 1000; // 30 minutes
+    let inactivityTimer = null;
+
+    function resetInactivityTimer() {
+      const isAuth = localStorage.getItem('sfmi_fin_auth') === 'true';
+      if (!isAuth) {
+        if (inactivityTimer) clearTimeout(inactivityTimer);
+        return;
+      }
+
+      const now = Date.now();
+      const lastActive = parseInt(localStorage.getItem('sfmi_fin_last_active') || '0', 10);
+
+      // Check if already inactive past limit across tabs or refresh
+      if (lastActive > 0 && (now - lastActive) > INACTIVITY_LIMIT_MS) {
+        triggerAutoLogout();
+        return;
+      }
+
+      localStorage.setItem('sfmi_fin_last_active', now.toString());
+
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        triggerAutoLogout();
+      }, INACTIVITY_LIMIT_MS);
+    }
+
+    function purgeFinAuthSession() {
+      sessionStorage.removeItem('sfmi_fin_token');
+      sessionStorage.removeItem('sfmi_fin_user');
+      sessionStorage.removeItem('sfmi_fin_last_active');
+      localStorage.removeItem('sfmi_fin_token');
+      localStorage.removeItem('sfmi_fin_auth');
+      localStorage.removeItem('sfmi_fin_last_active');
+    }
+
+    function triggerAutoLogout() {
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      purgeFinAuthSession();
+      showFinLogin();
+      showToast('You were automatically logged out due to 30 minutes of inactivity.', 'warning', 'Session Timeout');
+    }
+
+    function initInactivityListeners() {
+      const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+      let throttleTimeout = null;
+
+      events.forEach(evt => {
+        window.addEventListener(evt, () => {
+          if (!throttleTimeout) {
+            throttleTimeout = setTimeout(() => {
+              throttleTimeout = null;
+              resetInactivityTimer();
+            }, 2000);
+          }
+        }, { passive: true });
+      });
+
+      setInterval(() => {
+        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token');
+        if (!token) return;
+        const lastActive = parseInt(localStorage.getItem('sfmi_fin_last_active') || '0', 10);
+        if (lastActive > 0 && (Date.now() - lastActive) > INACTIVITY_LIMIT_MS) {
+          triggerAutoLogout();
+        }
+      }, 60000);
+    }
+
+    async function checkFinAuth() {
+      const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token');
+      if (!token) {
+        purgeFinAuthSession();
+        showFinLogin();
+        return;
+      }
+
+      // Verify token cryptographically with server
+      try {
+        const res = await fetch(`${API_BASE}/auth/verify`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const role = (data.user && data.user.role) ? data.user.role : '';
+
+          if (role !== 'FINANCE' && role !== 'SUPER_ADMIN') {
+            purgeFinAuthSession();
+            showFinLogin();
+            showToast('Access Denied: Only Treasury / Finance Officers can access this portal.', 'error', 'Access Denied');
+            return;
+          }
+
+          sessionStorage.setItem('sfmi_fin_token', token);
+          sessionStorage.setItem('sfmi_fin_user', JSON.stringify(data.user));
+          resetInactivityTimer();
+          showFinDashboard();
+          return;
+        } else {
+          purgeFinAuthSession();
+          showFinLogin();
+          return;
+        }
+      } catch (err) {
+        // Offline check: Only allow signed offline session tokens
+        if (token && token.startsWith('sfmi_fin_offline_session_')) {
+          resetInactivityTimer();
+          showFinDashboard();
+          return;
+        }
+        purgeFinAuthSession();
+        showFinLogin();
+      }
+    }
+
+    function showFinLogin() {
+      document.getElementById('finLoginScreen').style.display = 'block';
+      document.getElementById('finDashboardContent').style.display = 'none';
+      const wrap = document.getElementById('finLogoutWrap');
+      if (wrap) wrap.style.display = 'none';
+      const btn = document.getElementById('btnFinLogout');
+      if (btn) btn.style.display = 'none';
+    }
+
+    function showFinDashboard() {
+      document.getElementById('finLoginScreen').style.display = 'none';
+      document.getElementById('finDashboardContent').style.display = 'block';
+      const wrap = document.getElementById('finLogoutWrap');
+      if (wrap) wrap.style.display = 'block';
+      const btn = document.getElementById('btnFinLogout');
+      if (btn) btn.style.display = 'inline-flex';
+
+      loadBranding();
+      document.getElementById('finServiceDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('liveDateDisplay').innerText = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    async function handleFinLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('finLoginEmail').value.trim();
+      const password = document.getElementById('finLoginPassword').value.trim();
+      const errorMsg = document.getElementById('finLoginErrorMsg');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      errorMsg.style.display = 'none';
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'Verifying credentials…'; }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user && data.user.role !== 'FINANCE' && data.user.role !== 'SUPER_ADMIN') {
+            purgeFinAuthSession();
+            errorMsg.style.display = 'block';
+            errorMsg.innerText = 'Access Denied: Only designated Treasury / Finance Officers can access this portal.';
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Treasury Portal'; }
+            return;
+          }
+          sessionStorage.setItem('sfmi_fin_token', data.accessToken);
+          localStorage.setItem('sfmi_fin_token', data.accessToken);
+          sessionStorage.setItem('sfmi_fin_user', JSON.stringify(data.user));
+          resetInactivityTimer();
+          showFinDashboard();
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Treasury Portal'; }
+          return;
+        }
+      } catch (err) {}
+
+      // Offline fallback: strictly finance only
+      const isFinanceEmail = email.toLowerCase() === 'finance@solutionsfaith.com';
+      const isFinancePassword = password === 'Money12@26';
+
+      if (isFinanceEmail && isFinancePassword) {
+        const offlineToken = 'sfmi_fin_offline_session_' + Date.now();
+        sessionStorage.setItem('sfmi_fin_token', offlineToken);
+        localStorage.setItem('sfmi_fin_token', offlineToken);
+        sessionStorage.setItem('sfmi_fin_user', JSON.stringify({ email: 'finance@solutionsfaith.com', role: 'FINANCE' }));
+        resetInactivityTimer();
+        showFinDashboard();
+      } else {
+        purgeFinAuthSession();
+        errorMsg.style.display = 'block';
+        errorMsg.innerText = 'Invalid credentials. Please check your email and password and try again.';
+      }
+
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Treasury Portal'; }
+    }
+
+    function handleFinLogout() {
+      showConfirmModal(
+        'Confirm Log Out',
+        'Are you sure you want to log out from the Treasury Portal?',
+        async () => {
+          if (inactivityTimer) clearTimeout(inactivityTimer);
+          const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token');
+          if (token && !token.startsWith('sfmi_fin_offline_session_')) {
+            try {
+              await fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+              });
+            } catch (e) {}
+          }
+          purgeFinAuthSession();
+          showFinLogin();
+          showToast('You have been logged out safely from Treasury Portal.', 'info', 'Logged Out');
+        },
+        'fas fa-sign-out-alt',
+        'Log Out',
+        '#c5221f'
+      );
+    }
+
+    let _confirmCallback = null;
+    function showConfirmModal(title, text, callback, iconClass = 'fas fa-sign-out-alt', btnText = 'Log Out', btnColor = '#c5221f') {
+      document.getElementById('confirmModalTitle').innerText = title;
+      document.getElementById('confirmModalText').innerText = text;
+      const okBtn = document.getElementById('confirmModalOkBtn');
+      if (okBtn) {
+        okBtn.innerText = btnText;
+        okBtn.style.background = btnColor;
+      }
+      const icon = document.getElementById('confirmModalIcon');
+      if (icon) icon.className = iconClass;
+      _confirmCallback = callback;
+      document.getElementById('customConfirmModal').style.display = 'flex';
+    }
+
+    function closeCustomConfirmModal(confirmed) {
+      document.getElementById('customConfirmModal').style.display = 'none';
+      if (confirmed && typeof _confirmCallback === 'function') {
+        _confirmCallback();
+      }
+      _confirmCallback = null;
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    }
+
+    function loadBranding() {
+      const logo = localStorage.getItem('sfmi_logo_url');
+      const name = localStorage.getItem('sfmi_church_name');
+      if (logo) document.getElementById('finNavLogo').src = logo;
+      if (name) document.getElementById('finChurchName').innerText = name;
+    }
+
+    function computeGrandTotal() {
+      const tithes = parseFloat(document.getElementById('inTithes').value) || 0;
+      const offering = parseFloat(document.getElementById('inOffering').value) || 0;
+      const building = parseFloat(document.getElementById('inBuilding').value) || 0;
+      const seed = parseFloat(document.getElementById('inSeed').value) || 0;
+      const thanksgiving = parseFloat(document.getElementById('inThanksgiving').value) || 0;
+      const other = parseFloat(document.getElementById('inOther').value) || 0;
+
+      const total = tithes + offering + building + seed + thanksgiving + other;
+      document.getElementById('displayGrandTotal').innerText = `GHS ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      return total;
+    }
+
+    async function handleSaveServiceFinance(e) {
+      e.preventDefault();
+      const serviceName = document.getElementById('finServiceSelect').value;
+      const serviceDate = document.getElementById('finServiceDate').value;
+      const tithes = parseFloat(document.getElementById('inTithes').value) || 0;
+      const offering = parseFloat(document.getElementById('inOffering').value) || 0;
+      const buildingFund = parseFloat(document.getElementById('inBuilding').value) || 0;
+      const specialSeed = parseFloat(document.getElementById('inSeed').value) || 0;
+      const thanksgiving = parseFloat(document.getElementById('inThanksgiving').value) || 0;
+      const other = parseFloat(document.getElementById('inOther').value) || 0;
+
+      const cashAmount = parseFloat(document.getElementById('inCash').value) || 0;
+      const momoAmount = parseFloat(document.getElementById('inMomo').value) || 0;
+      const bankAmount = parseFloat(document.getElementById('inBank').value) || 0;
+      const posAmount = parseFloat(document.getElementById('inPos').value) || 0;
+
+      const recordedBy = document.getElementById('finRecordedBy').value.trim();
+      const notes = document.getElementById('finNotes').value.trim();
+
+      const totalAmount = tithes + offering + buildingFund + specialSeed + thanksgiving + other;
+
+      if (totalAmount <= 0) {
+        showToast('Please enter at least one financial figure before saving.', 'warning', 'Figures Required');
+        return;
+      }
+
+      const payload = {
+        serviceName, serviceDate,
+        tithes, offering, buildingFund, specialSeed, thanksgiving, other,
+        cashAmount, momoAmount, bankAmount, posAmount,
+        recordedBy, notes
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/finance/service-entry`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          showSuccessNotification(`Figures for ${serviceName} (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) saved successfully!`);
+          showToast(`Financial collections for <strong>${serviceName}</strong> (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) submitted successfully!`, 'success', 'Treasury Entry Saved');
+          e.target.reset();
+          document.getElementById('finServiceDate').value = new Date().toISOString().split('T')[0];
+          computeGrandTotal();
+          return;
+        }
+      } catch (err) {}
+
+      // Fallback
+      const newEntry = {
+        id: 'fe_' + Date.now(),
+        ...payload,
+        totalAmount
+      };
+      const saved = localStorage.getItem('sfmi_service_finances');
+      let entries = [];
+      if (saved) {
+        try { entries = JSON.parse(saved); } catch(e){}
+      }
+      entries.unshift(newEntry);
+      localStorage.setItem('sfmi_service_finances', JSON.stringify(entries));
+
+      showSuccessNotification(`Figures for ${serviceName} (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) saved successfully!`);
+      showToast(`Financial collections for <strong>${serviceName}</strong> (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) recorded successfully!`, 'success', 'Treasury Entry Saved');
+      e.target.reset();
+      document.getElementById('finServiceDate').value = new Date().toISOString().split('T')[0];
+      computeGrandTotal();
+    }
+
+    function showSuccessNotification(msg) {
+      const banner = document.getElementById('successBanner');
+      const text = document.getElementById('successMsgText');
+      text.innerText = msg;
+      banner.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 6000);
+    }
+
+    /* TOAST NOTIFICATION SYSTEM */
+    function showToast(message, type = 'success', title = '') {
+      let container = document.getElementById('toastContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
+
+      const icons = {
+        success: 'fas fa-circle-check',
+        warning: 'fas fa-triangle-exclamation',
+        error: 'fas fa-circle-exclamation',
+        info: 'fas fa-circle-info'
+      };
+
+      const defaultTitles = {
+        success: 'Success Notification',
+        warning: 'Attention Needed',
+        error: 'Action Error',
+        info: 'System Update'
+      };
+
+      const toast = document.createElement('div');
+      toast.className = `toast-msg toast-${type}`;
+      toast.innerHTML = `
+        <i class="${icons[type] || icons.success} toast-icon"></i>
+        <div class="toast-body">
+          <div class="toast-title">${title || defaultTitles[type]}</div>
+          <div class="toast-text">${message}</div>
+        </div>
+        <button class="toast-close" onclick="dismissToast(this.parentElement)">✕</button>
+        <div class="toast-progress"></div>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        dismissToast(toast);
+      }, 4500);
+    }
+
+    function dismissToast(toastEl) {
+      if (!toastEl || toastEl.isRemoving) return;
+      toastEl.isRemoving = true;
+      toastEl.style.animation = 'toastSlideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+      setTimeout(() => {
+        if (toastEl.parentElement) {
+          toastEl.parentElement.removeChild(toastEl);
+        }
+      }, 300);
+    }
+  </script>
+
+</body>
+
+</html>

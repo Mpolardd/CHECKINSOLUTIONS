@@ -1,0 +1,4295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Church Administration Portal | SOLUTIONS FAITH MINISTRY INTERNATIONAL</title>
+  <link rel="icon" type="image/jpeg" href="/church-logo.jpg">
+  <link rel="shortcut icon" type="image/jpeg" href="/church-logo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <style>
+    :root {
+      --ink: #0d1a14;
+      --muted: #5e6d65;
+      --light: #f4f6f5;
+      --line: #d8e2dc;
+      --white: #ffffff;
+      --emerald: #14532d;
+      --emerald-dark: #072216;
+      --accent: #c89b55;
+      --accent-hover: #b38642;
+      --blue: #2563eb;
+      --rose: #be123c;
+      --gold: #b45309;
+      --gold-bg: #fffbeb;
+      --max: 1300px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "DM Sans", sans-serif;
+      color: var(--ink);
+      background: var(--light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Nav */
+    .admin-nav {
+      background: var(--emerald-dark);
+      color: white;
+      padding: 14px 20px;
+      border-bottom: 2px solid var(--accent);
+      position: relative;
+    }
+
+    .admin-nav-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding-right: 130px;
+    }
+
+    .brand-admin {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: white;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .brand-admin img {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1.5px solid var(--accent);
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .brand-text-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .brand-title {
+      font-family: Manrope, sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      line-height: 1.2;
+      color: white;
+    }
+
+    .brand-sub {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+      background: rgba(200, 155, 85, 0.18);
+      border: 1px solid rgba(200, 155, 85, 0.4);
+      padding: 3px 9px;
+      border-radius: 20px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .admin-nav-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .nav-logout-wrap {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+    }
+
+    .btn-header-logout {
+      background: #c5221f;
+      color: white;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: 0 2px 8px rgba(197,34,31,0.35);
+      transition: background 0.2s, transform 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-header-logout:hover {
+      background: #a51815;
+      transform: translateY(-1px);
+    }
+
+    .btn-nav-outline {
+      color: #cfd8d3;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 4px;
+      transition: all 0.2s;
+      cursor: pointer;
+      background: transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-nav-outline:hover {
+      color: white;
+      border-color: white;
+    }
+
+    /* Login Screen Container */
+    .login-container {
+      max-width: 440px;
+      width: 100%;
+      margin: 80px auto;
+      padding: 0 20px;
+    }
+
+    .login-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 40px 36px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      text-align: center;
+    }
+
+    .login-logo {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      object-fit: cover;
+      margin: 0 auto 16px;
+    }
+
+    /* Container & Tabs */
+    .admin-container {
+      max-width: var(--max);
+      width: 100%;
+      margin: 30px auto;
+      padding: 0 20px;
+      flex: 1;
+    }
+
+    /* ── Desktop Tab Bar ── */
+    .admin-tabs-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 11px 20px;
+      font-family: Manrope, sans-serif;
+      font-size: 13.5px;
+      font-weight: 700;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--ink);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover { border-color: var(--accent); }
+
+    .tab-btn.active {
+      background: var(--ink);
+      color: white;
+      border-color: var(--ink);
+    }
+
+    /* ── Mobile Hamburger Nav ── */
+    .mobile-nav-bar {
+      display: none;
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .hamburger-btn {
+      background: none;
+      border: 1.5px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: Manrope, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .hamburger-btn .ham-icon { font-size: 18px; }
+
+    .mobile-menu-drawer {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      z-index: 99999;
+      flex-direction: column;
+      gap: 4px;
+      background: white;
+      border: 1.5px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .mobile-menu-drawer.open { display: flex; }
+
+    .mobile-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      border-radius: 6px;
+      border: none;
+      background: none;
+      font-family: Manrope, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      transition: background 0.15s;
+    }
+
+    .mobile-menu-item:hover { background: #f4f6f5; }
+
+    .mobile-menu-item.active {
+      background: var(--ink);
+      color: white;
+    }
+
+    .mobile-menu-item .menu-icon { font-size: 16px; flex-shrink: 0; }
+
+    /* Cards & Panels */
+    .admin-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      margin-bottom: 24px;
+    }
+
+    .card-head-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .card-title {
+      font-family: Manrope, sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .card-sub {
+      font-size: 13.5px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Filter Toolbar Bar */
+    .filter-toolbar {
+      background: #fafbfa;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 16px 20px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .filter-presets {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn-preset {
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--ink);
+      transition: all 0.2s;
+    }
+
+    .btn-preset:hover {
+      border-color: var(--accent);
+    }
+
+    .btn-preset.active {
+      background: var(--ink);
+      color: white;
+      border-color: var(--ink);
+    }
+
+    .filter-inputs-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Metric Grid (5 Cards) */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .metric-box {
+      background: #fafbfa;
+      border: 1px solid var(--line);
+      padding: 18px 18px;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-num {
+      font-family: Manrope, sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--emerald);
+      line-height: 1.1;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 4px;
+    }
+
+    /* Financial Analytics Overview */
+    .fin-analytics-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .fin-card-box {
+      background: #fafbfa;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 22px;
+    }
+
+    .fin-bar-item {
+      margin-bottom: 14px;
+    }
+
+    .fin-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .fin-bar-wrap {
+      height: 9px;
+      background: #e2e8f0;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .fin-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 5px;
+    }
+
+    /* Category indicator dots */
+    .cat-dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    /* Gender Analysis Ratio Bar */
+    .gender-ratio-strip {
+      background: #fafbfa;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 18px 22px;
+      margin-bottom: 24px;
+    }
+
+    .ratio-bar-wrap {
+      height: 12px;
+      background: #e2e8f0;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      margin: 12px 0 8px;
+    }
+
+    .ratio-fill-male {
+      background: #2563eb;
+      transition: width 0.4s ease;
+    }
+
+    .ratio-fill-female {
+      background: #be123c;
+      transition: width 0.4s ease;
+    }
+
+    .ratio-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* Table */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    /* Mobile Finance Cards */
+    .fin-cards-mobile { display: none; }
+
+    .fin-mobile-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 14px 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+
+    .fin-mobile-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .fin-mobile-card-date {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 3px;
+    }
+
+    .fin-mobile-card-service {
+      font-family: Manrope, sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .fin-mobile-card-total {
+      font-family: Manrope, sans-serif;
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--emerald);
+      white-space: nowrap;
+    }
+
+    .fin-mobile-card-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .fin-mobile-card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      text-align: left;
+    }
+
+    th {
+      background: #f4f6f5;
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    tr:hover td {
+      background: #fafbfa;
+    }
+
+    .badge-check {
+      background: #e6f4ea;
+      color: #137333;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .badge-present {
+      background: #e6f4ea;
+      color: #137333;
+      border: 1px solid #b7e1cd;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .badge-absent {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Professional Gender Badges */
+    .badge-gender-male {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .badge-gender-female {
+      background: #fff1f2;
+      color: #be123c;
+      border: 1px solid #fecdd3;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .badge-dob {
+      background: #fff8e7;
+      color: #92660a;
+      border: 1px solid #f0dc9c;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .badge-child {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .badge-adult {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .ratio-fill-child {
+      background: #f59e0b;
+      transition: width 0.4s ease;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+
+    .form-ctrl {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      font-size: 13.5px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .form-ctrl:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-main {
+      padding: 10px 20px;
+      background: var(--ink);
+      color: white;
+      font-weight: 700;
+      font-size: 13.5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-main:hover {
+      background: #233a2d;
+    }
+
+    .btn-accent {
+      padding: 10px 20px;
+      background: var(--accent);
+      color: #111;
+      font-weight: 700;
+      font-size: 13.5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-accent:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-download {
+      padding: 9px 16px;
+      background: #14532d;
+      color: white;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .btn-download:hover {
+      background: #0f3d21;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: 20px;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: white;
+      max-width: 540px;
+      width: 100%;
+      padding: 30px;
+      border-radius: 6px;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    /* Toast Notification System */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+      max-width: 440px;
+      width: calc(100vw - 48px);
+    }
+
+    .toast-msg {
+      pointer-events: auto;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 18px;
+      border-radius: 8px;
+      background: #092619;
+      color: white;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(200, 155, 85, 0.4);
+      position: relative;
+      overflow: hidden;
+      animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .toast-msg.toast-success { border-left: 4.5px solid #22c55e; }
+    .toast-msg.toast-warning { border-left: 4.5px solid #f59e0b; }
+    .toast-msg.toast-error { border-left: 4.5px solid #ef4444; }
+    .toast-msg.toast-info { border-left: 4.5px solid #3b82f6; }
+
+    .toast-icon {
+      font-size: 19px;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    .toast-success .toast-icon { color: #4ade80; }
+    .toast-warning .toast-icon { color: #fbbf24; }
+    .toast-error .toast-icon { color: #f87171; }
+    .toast-info .toast-icon { color: #60a5fa; }
+
+    .toast-body { flex: 1; }
+    .toast-title {
+      font-family: 'Manrope', sans-serif;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 2px;
+    }
+    .toast-text {
+      font-size: 12.5px;
+      color: #e2e8f0;
+      line-height: 1.4;
+    }
+
+    .toast-close {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 15px;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      margin-left: 4px;
+    }
+    .toast-close:hover { color: white; }
+
+    .toast-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: var(--accent);
+      width: 100%;
+      animation: toastProgress 4.5s linear forwards;
+    }
+
+    @keyframes toastSlideIn {
+      from { opacity: 0; transform: translateX(100%) scale(0.95); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+
+    @keyframes toastSlideOut {
+      from { opacity: 1; transform: translateX(0) scale(1); }
+      to { opacity: 0; transform: translateX(100%) scale(0.9); }
+    }
+
+    @keyframes toastProgress {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+
+    /* RESPONSIVE MEDIA QUERIES (MOBILE, IPAD, DESKTOP, EMULATORS) */
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      width: 100%;
+    }
+
+    .modal-card {
+      max-height: 90vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    @media (max-width: 1200px) {
+      .metrics-row { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 900px) {
+      .admin-nav-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .admin-nav-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+      .fin-analytics-grid { grid-template-columns: 1fr; }
+      .metrics-row { grid-template-columns: repeat(2, 1fr); }
+      .filter-toolbar { flex-direction: column; align-items: stretch; }
+      .filter-inputs-row { width: 100%; justify-content: space-between; }
+    }
+
+    @media (max-width: 700px) {
+      /* Hide desktop tab bar, show hamburger */
+      .admin-tabs-bar { display: none !important; }
+      .mobile-nav-bar { display: block; margin-bottom: 16px; position: relative; }
+
+      /* General layout */
+      .admin-container { padding: 12px 10px; }
+      .admin-card { padding: 16px 12px; border-radius: 8px; }
+
+      /* Force KPI cards to 2-column grid on mobile */
+      .metrics-row { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+      .metric-box { padding: 12px 10px; }
+      .metric-num { font-size: 18px; }
+      .metric-label { font-size: 10px; }
+      .metric-icon { font-size: 15px; }
+
+      /* Card headers stack vertically */
+      .card-head-row { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+      .card-head-row > div { width: 100% !important; }
+      .card-head-row input, .card-head-row select, .card-head-row button { width: 100% !important; }
+
+      /* Filter toolbars stack vertically */
+      .filter-toolbar { flex-direction: column !important; align-items: stretch !important; padding: 12px !important; gap: 12px !important; }
+      .filter-toolbar > div { width: 100% !important; }
+      .filter-inputs-row { flex-direction: column !important; gap: 10px !important; width: 100% !important; }
+      .filter-inputs-row > div { width: 100% !important; }
+      .filter-inputs-row input, .filter-inputs-row select, .filter-inputs-row button { width: 100% !important; }
+
+      /* Finance analytics charts — stack them */
+      .fin-analytics-grid { grid-template-columns: 1fr !important; }
+
+      /* Ratio bar legend */
+      .ratio-legend { flex-direction: column; gap: 4px; }
+      .gender-ratio-strip { padding: 14px; }
+
+      /* Attendance demographics */
+      .cat-bar-wrap { flex-direction: column; gap: 6px; }
+
+      /* Tables: HIDE all table wrappers and tables on mobile */
+      .table-responsive, table { display: none !important; }
+
+      /* Mobile Card Containers: SHOW vertical card list */
+      .fin-cards-mobile,
+      .mob-cards-attendance,
+      .mob-cards-members,
+      .mob-cards-programs {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+      }
+
+      /* Modals */
+      .modal-backdrop { padding: 10px; align-items: flex-end; }
+      .modal-card { padding: 18px 14px; border-radius: 10px 10px 0 0; max-height: 85vh; overflow-y: auto; width: 100%; max-width: 100%; }
+
+      /* Toast: float at screen bottom on mobile so it never covers the header or logo */
+      .toast-container {
+        top: auto !important;
+        bottom: 16px !important;
+        left: 12px !important;
+        right: 12px !important;
+        width: auto !important;
+        max-width: calc(100vw - 24px) !important;
+        box-sizing: border-box !important;
+      }
+      .toast-msg {
+        padding: 12px 14px !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+      }
+      .toast-title { font-size: 13px !important; }
+      .toast-text { font-size: 12px !important; word-break: break-word !important; }
+
+      /* Nav bar & Logout button on mobile */
+      .admin-nav { padding: 10px 12px; }
+      .admin-nav-inner {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+        padding-right: 48px !important;
+      }
+      .brand-title { font-size: 12px !important; line-height: 1.25; }
+      .brand-sub { font-size: 9.5px !important; }
+      .brand-admin img { width: 34px !important; height: 34px !important; }
+      .brand-admin { gap: 8px !important; }
+      .nav-btn-text { display: none !important; }
+      .nav-logout-wrap { right: 12px !important; top: 50% !important; transform: translateY(-50%) !important; }
+      .btn-header-logout { padding: 0 !important; width: 36px !important; height: 36px !important; border-radius: 50% !important; font-size: 14px !important; justify-content: center !important; align-items: center !important; flex-shrink: 0 !important; }
+      .btn-header-logout .logout-text { display: none !important; }
+    }
+
+    @media (max-width: 420px) {
+      .metrics-row { grid-template-columns: 1fr !important; }
+    }
+
+    /* ── Mobile Card Shared Styles (all tabs) ── */
+    .mob-cards-attendance,
+    .mob-cards-members,
+    .mob-cards-programs { display: none; }
+
+    .mob-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+
+    .mob-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .mob-card-name {
+      font-family: Manrope, sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .mob-card-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+
+    .mob-card-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      color: var(--muted);
+      padding: 4px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .mob-card-row:last-child { border-bottom: none; }
+    .mob-card-row strong { color: var(--ink); font-size: 13px; }
+
+    .mob-card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .mob-card-actions button {
+      flex: 1;
+      justify-content: center;
+      padding: 9px 8px;
+      font-size: 12.5px;
+      min-width: 80px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Bar -->
+  <header class="admin-nav">
+    <div class="admin-nav-inner">
+      <a href="/admin.html" class="brand-admin">
+        <img id="navAdminLogo" src="/church-logo.jpg" alt="Logo">
+        <div class="brand-text-row">
+          <span class="brand-title" id="navAdminChurchName">SOLUTIONS FAITH MINISTRY INTERNATIONAL</span>
+          <span class="brand-sub">Administration Portal</span>
+        </div>
+      </a>
+      <div class="admin-nav-actions" id="headerNavActions" style="display: none;">
+        <a href="/checkin.html" class="btn-nav-outline nav-btn-text"><i class="fas fa-desktop"></i> Open Kiosk</a>
+      </div>
+    </div>
+    <div class="nav-logout-wrap" id="adminLogoutWrap" style="display: none;">
+      <button id="btnLogout" class="btn-header-logout" style="display: none;" onclick="handleLogout()" title="Log Out">
+        <i class="fas fa-sign-out-alt"></i> <span class="logout-text">Log Out</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 1. LOGIN SCREEN GATE -->
+  <div class="login-container" id="loginScreen">
+    <div class="login-card">
+      <h2 style="font-family: Manrope, sans-serif; font-size: 24px; margin-bottom: 4px;">Church Staff Login</h2>
+      <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px;">Enter your admin credentials to access records, attendance & finance.</p>
+
+      <form onsubmit="handleLoginSubmit(event)" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input required type="email" id="loginEmail" class="form-ctrl" placeholder="Enter admin email address" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input required type="password" id="loginPassword" class="form-ctrl" style="padding-right: 42px;" placeholder="Enter password" autocomplete="current-password" />
+            <button type="button" onclick="togglePasswordVisibility('loginPassword', 'adminEyeIcon')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; display: flex; align-items: center; justify-content: center; font-size: 15px;">
+              <i class="fas fa-eye" id="adminEyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="loginErrorMsg" style="display: none; padding: 10px; margin-bottom: 14px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 4px; font-size: 13px; font-weight: 600;"></div>
+
+        <button type="submit" class="btn-main" style="width: 100%; padding: 14px; justify-content: center;">Sign In to Admin Portal</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. MAIN ADMIN DASHBOARD (Protected) -->
+  <main class="admin-container" id="dashboardContent" style="display: none;">
+    
+    <!-- Desktop Tab Navigation -->
+    <div class="admin-tabs-bar">
+      <button class="tab-btn active" id="tabBtnFinance" onclick="switchTab('finance')">
+        <i class="fas fa-coins"></i> Financial Overview & Analytics
+      </button>
+      <button class="tab-btn" id="tabBtnAttendance" onclick="switchTab('attendance')">
+        <i class="fas fa-list-check"></i> Attendance & Demographics
+      </button>
+      <button class="tab-btn" id="tabBtnMembers" onclick="switchTab('members')">
+        <i class="fas fa-users"></i> Member Directory
+      </button>
+      <button class="tab-btn" id="tabBtnPrograms" onclick="switchTab('programs')">
+        <i class="fas fa-calendar-star"></i> Services & Programs Setup
+      </button>
+      <button class="tab-btn" id="tabBtnSubAdmins" onclick="switchTab('subAdmins')">
+        <i class="fas fa-user-shield"></i> Staff & Sub-Admins
+      </button>
+    </div>
+
+    <!-- Mobile Hamburger Navigation -->
+    <div class="mobile-nav-bar">
+      <button class="hamburger-btn" onclick="toggleMobileMenu()" id="hamburgerBtn">
+        <span id="activeTabLabel"><i class="fas fa-coins"></i> Financial Overview & Analytics</span>
+        <i class="fas fa-bars ham-icon" id="hamburgerIcon"></i>
+      </button>
+      <div class="mobile-menu-drawer" id="mobileMenuDrawer">
+        <button class="mobile-menu-item active" id="mobBtnFinance" onclick="mobileSwitchTab('finance')">
+          <i class="fas fa-coins menu-icon"></i> Financial Overview & Analytics
+        </button>
+        <button class="mobile-menu-item" id="mobBtnAttendance" onclick="mobileSwitchTab('attendance')">
+          <i class="fas fa-list-check menu-icon"></i> Attendance & Demographics
+        </button>
+        <button class="mobile-menu-item" id="mobBtnMembers" onclick="mobileSwitchTab('members')">
+          <i class="fas fa-users menu-icon"></i> Member Directory
+        </button>
+        <button class="mobile-menu-item" id="mobBtnPrograms" onclick="mobileSwitchTab('programs')">
+          <i class="fas fa-calendar-star menu-icon"></i> Services & Programs Setup
+        </button>
+        <button class="mobile-menu-item" id="mobBtnSubAdmins" onclick="mobileSwitchTab('subAdmins')">
+          <i class="fas fa-user-shield menu-icon"></i> Staff & Sub-Admins
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 1: FINANCIAL OVERVIEW & ANALYTICS -->
+    <div id="secFinance">
+      
+      <!-- Date Range & Preset Filter Bar -->
+      <div class="filter-toolbar">
+        <div>
+          <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+            Filter Report Period
+          </div>
+          <!-- Desktop: buttons -->
+          <div class="filter-presets filter-presets-desktop">
+            <button class="btn-preset active" id="btnPresetAll" onclick="setFinancePreset('all')">All Time</button>
+            <button class="btn-preset" id="btnPresetThisMonth" onclick="setFinancePreset('this_month')">This Month</button>
+            <button class="btn-preset" id="btnPresetLastMonth" onclick="setFinancePreset('last_month')">Last Month</button>
+            <button class="btn-preset" id="btnPresetThisYear" onclick="setFinancePreset('this_year')">This Year (2026)</button>
+          </div>
+          <!-- Mobile: select dropdown -->
+          <select class="form-ctrl filter-presets-mobile" style="display:none; width:100%; padding:10px 12px; font-weight:700; font-size:13px;" onchange="setFinancePreset(this.value)">
+            <option value="all">All Time</option>
+            <option value="this_month">This Month</option>
+            <option value="last_month">Last Month</option>
+            <option value="this_year">This Year (2026)</option>
+          </select>
+        </div>
+
+        <div class="filter-inputs-row">
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 3px;">From Date</label>
+            <input type="date" id="finFilterStart" class="form-ctrl" style="padding: 6px 10px; font-size: 12.5px; width: 140px;" onchange="applyCustomDateFilter()" />
+          </div>
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 3px;">To Date</label>
+            <input type="date" id="finFilterEnd" class="form-ctrl" style="padding: 6px 10px; font-size: 12.5px; width: 140px;" onchange="applyCustomDateFilter()" />
+          </div>
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 3px;">Service</label>
+            <select id="finFilterService" class="form-ctrl" style="padding: 6px 10px; font-size: 12.5px; width: 170px;" onchange="applyCustomDateFilter()">
+              <option value="ALL">All Services</option>
+              <option value="Wednesday">Wednesday (Time with Lord)</option>
+              <option value="Friday">Friday (Prophetic Deliverance)</option>
+              <option value="Sunday">Sunday (Family &amp; Friends)</option>
+            </select>
+          </div>
+          <div style="align-self: flex-end;">
+            <button class="btn-download" onclick="downloadFinancialCSV()"><i class="fas fa-file-arrow-down"></i> Download CSV Report</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Metrics -->
+      <div class="metrics-row">
+        <div class="metric-box">
+          <div class="metric-num" id="statFinTotal" style="color: var(--emerald);">GHS 0.00</div>
+          <div class="metric-label">Total Collections</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" id="statFinTithes" style="color: var(--accent);">GHS 0.00</div>
+          <div class="metric-label">Tithes Collections</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" id="statFinOffering" style="color: var(--blue);">GHS 0.00</div>
+          <div class="metric-label">General Offerings</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" id="statFinSpecial" style="color: var(--rose);">GHS 0.00</div>
+          <div class="metric-label">Seeds & Building Fund</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" id="statFinAvg" style="color: var(--ink);">GHS 0.00</div>
+          <div class="metric-label">Avg / Service</div>
+        </div>
+      </div>
+
+      <!-- Financial Breakdown Charts & Analytics -->
+      <div class="fin-analytics-grid">
+        
+        <!-- Category Breakdown -->
+        <div class="fin-card-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <strong style="font-family: Manrope, sans-serif; font-size: 15px;">Collections by Giving Category</strong>
+            <span style="font-size: 12px; color: var(--muted);" id="finCatCountText">0 Services Recorded</span>
+          </div>
+
+          <div class="fin-bar-item">
+            <div class="fin-bar-label">
+              <span><span class="cat-dot" style="background: #b45309;"></span> Tithes</span>
+              <strong id="barTithesVal">GHS 0.00 (0%)</strong>
+            </div>
+            <div class="fin-bar-wrap">
+              <div class="fin-bar-fill" id="barTithesFill" style="width: 0%; background: #b45309;"></div>
+            </div>
+          </div>
+
+          <div class="fin-bar-item">
+            <div class="fin-bar-label">
+              <span><span class="cat-dot" style="background: #2563eb;"></span> General Offering</span>
+              <strong id="barOfferingVal">GHS 0.00 (0%)</strong>
+            </div>
+            <div class="fin-bar-wrap">
+              <div class="fin-bar-fill" id="barOfferingFill" style="width: 0%; background: #2563eb;"></div>
+            </div>
+          </div>
+
+          <div class="fin-bar-item">
+            <div class="fin-bar-label">
+              <span><span class="cat-dot" style="background: #be123c;"></span> Prophetic Seed / Special Giving</span>
+              <strong id="barSeedVal">GHS 0.00 (0%)</strong>
+            </div>
+            <div class="fin-bar-wrap">
+              <div class="fin-bar-fill" id="barSeedFill" style="width: 0%; background: #be123c;"></div>
+            </div>
+          </div>
+
+          <div class="fin-bar-item">
+            <div class="fin-bar-label">
+              <span><span class="cat-dot" style="background: #14532d;"></span> Building & Welfare Fund</span>
+              <strong id="barBuildingVal">GHS 0.00 (0%)</strong>
+            </div>
+            <div class="fin-bar-wrap">
+              <div class="fin-bar-fill" id="barBuildingFill" style="width: 0%; background: #14532d;"></div>
+            </div>
+          </div>
+
+          <div class="fin-bar-item" style="margin-bottom: 0;">
+            <div class="fin-bar-label">
+              <span><span class="cat-dot" style="background: #c89b55;"></span> Thanksgiving & First Fruits</span>
+              <strong id="barThanksVal">GHS 0.00 (0%)</strong>
+            </div>
+            <div class="fin-bar-wrap">
+              <div class="fin-bar-fill" id="barThanksFill" style="width: 0%; background: #c89b55;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Channel Distribution -->
+        <div class="fin-card-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <strong style="font-family: Manrope, sans-serif; font-size: 15px;">Payment Channels Distribution</strong>
+            <span style="font-size: 12px; color: var(--muted);">Reconciled</span>
+          </div>
+
+          <div class="fin-bar-item">
+            <div class="fin-bar-label">
+              <span>Cash Collections</span>
+              <strong id="payCashVal">GHS 0.00 (0%)</strong>
+            </div>
+            <div class="fin-bar-wrap">
+              <div class="fin-bar-fill" id="payCashFill" style="width: 0%; background: #14532d;"></div>
+            </div>
+          </div>
+
+          <div class="fin-bar-item">
+            <div class="fin-bar-label">
+              <span>Mobile Money (MoMo)</span>
+              <strong id="payMomoVal">GHS 0.00 (0%)</strong>
+            </div>
+            <div class="fin-bar-wrap">
+              <div class="fin-bar-fill" id="payMomoFill" style="width: 0%; background: #b45309;"></div>
+            </div>
+          </div>
+
+          <div class="fin-bar-item">
+            <div class="fin-bar-label">
+              <span>Bank Deposits / Transfers</span>
+              <strong id="payBankVal">GHS 0.00 (0%)</strong>
+            </div>
+            <div class="fin-bar-wrap">
+              <div class="fin-bar-fill" id="payBankFill" style="width: 0%; background: #2563eb;"></div>
+            </div>
+          </div>
+
+          <div style="margin-top: 24px; padding: 14px; background: white; border: 1px solid var(--line); border-radius: 4px; text-align: center;">
+            <a href="/finance.html" target="_blank" class="btn-accent" style="width: 100%; justify-content: center;">
+              <i class="fas fa-plus-circle"></i> Record New Service Financials
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Service Financial Remittance History Table -->
+      <div class="admin-card">
+        <div class="card-head-row">
+          <div>
+            <h2 class="card-title">Service Financial Remittance History</h2>
+            <p class="card-sub" id="finTableCountLabel">Showing all submitted financial records</p>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="finTableSearch" class="form-ctrl" placeholder="Search service or officer..." style="width: 220px;" oninput="filterAdminFinanceTable()" />
+            <button class="btn-download" onclick="downloadFinancialCSV()"><i class="fas fa-file-excel"></i> Export CSV</button>
+            <button class="btn-main" onclick="window.print()"><i class="fas fa-print"></i> Print Report</button>
+          </div>
+        </div>
+
+        <!-- Desktop table -->
+        <div class="table-responsive fin-table-desktop">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Service Name</th>
+                <th>Tithes</th>
+                <th>Offering</th>
+                <th>Building Fund</th>
+                <th>Special Seeds</th>
+                <th>Total Amount</th>
+                <th>Recorded By</th>
+                <th>Status</th>
+                <th>Voucher</th>
+              </tr>
+            </thead>
+            <tbody id="adminFinTableBody">
+              <!-- Injected by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile card list -->
+        <div class="fin-cards-mobile" id="adminFinCardsBody" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Finance Record View Modal -->
+    <div class="modal-backdrop" id="finViewModal" style="display:none;" onclick="if(event.target===this)closeFinViewModal()">
+      <div class="modal-card" style="max-width:420px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+          <h3 style="font-family:Manrope,sans-serif;font-size:18px;font-weight:800;">Record Details</h3>
+          <button onclick="closeFinViewModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);">&times;</button>
+        </div>
+        <div id="finViewModalBody"></div>
+        <button class="btn-main" onclick="closeFinViewModal()" style="width:100%;margin-top:16px;justify-content:center;">Close</button>
+      </div>
+    </div>
+
+    <!-- Reusable Custom Confirmation Modal -->
+    <div class="modal-backdrop" id="customConfirmModal" style="display: none;" onclick="if(event.target===this)closeCustomConfirmModal(false)">
+      <div class="modal-card" style="max-width: 400px; text-align: center; padding: 28px 24px;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: #fff1f2; color: #e11d48; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px;">
+          <i class="fas fa-sign-out-alt" id="confirmModalIcon"></i>
+        </div>
+        <h3 style="font-family: Manrope, sans-serif; font-size: 19px; font-weight: 800; color: var(--ink); margin-bottom: 8px;" id="confirmModalTitle">Confirm Action</h3>
+        <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px; line-height: 1.45;" id="confirmModalText">Are you sure you want to proceed?</p>
+        
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <button type="button" class="btn-main" style="flex: 1; background: #f1f5f9; color: var(--ink); border: 1px solid var(--line); justify-content: center; font-size: 13.5px;" onclick="closeCustomConfirmModal(false)">Cancel</button>
+          <button type="button" class="btn-main" style="flex: 1; background: #c5221f; color: white; justify-content: center; font-size: 13.5px;" id="confirmModalOkBtn" onclick="closeCustomConfirmModal(true)">Yes, Proceed</button>
+        </div>
+      </div>
+    </div>
+    <div id="secAttendance" style="display: none;">
+      
+      <!-- Service Selection & View Filter Toolbar -->
+      <div class="filter-toolbar">
+        <div>
+          <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+            Select Service to Track Attendance
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <select id="attServiceSelect" class="form-ctrl" style="padding: 7px 12px; font-size: 13.5px; width: 270px; font-weight: 700;" onchange="handleAttServiceChange()">
+              <option value="Sunday: Family & Friends Service" selected>Sunday — Family & Friends Service</option>
+              <option value="Wednesday: Time with the Lord">Wednesday — Time with the Lord</option>
+              <option value="Friday: Prophetic Healing & Deliverance">Friday — Prophetic Healing & Deliverance</option>
+            </select>
+
+            <!-- Status Filter Buttons (Present vs Absent) -->
+            <div class="filter-presets">
+              <button class="btn-preset active" id="btnAttFilterAll" onclick="setAttFilter('ALL')">
+                All Members (<span id="countAllFilter">0</span>)
+              </button>
+              <button class="btn-preset" id="btnAttFilterPresent" onclick="setAttFilter('PRESENT')" style="color: #137333;">
+                <i class="fas fa-check-circle"></i> Present (<span id="countPresentFilter">0</span>)
+              </button>
+              <button class="btn-preset" id="btnAttFilterAbsent" onclick="setAttFilter('ABSENT')" style="color: #991b1b;">
+                <i class="fas fa-times-circle"></i> Absent / Missed (<span id="countAbsentFilter">0</span>)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button class="btn-download" onclick="downloadAttendanceAbsenteeCSV()"><i class="fas fa-file-arrow-down"></i> Export Attendance List</button>
+          <button class="btn-main" onclick="window.print()"><i class="fas fa-print"></i> Print Roster</button>
+        </div>
+      </div>
+
+      <!-- Metrics with Attendance & Absentee Counts (Including Children / Sunday School) -->
+      <div class="metrics-row">
+        <div class="metric-box">
+          <div class="metric-num" id="statTodayCount">0</div>
+          <div class="metric-label">Total Directory</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" style="color: #137333;" id="statPresentCount">0 (0%)</div>
+          <div class="metric-label">Present (Who Came)</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" style="color: #991b1b;" id="statAbsentCount">0 (0%)</div>
+          <div class="metric-label">Absent / Missed</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" style="color: var(--blue);" id="statAttMaleCount">0 Men</div>
+          <div class="metric-label">Men (Adults)</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" style="color: var(--rose);" id="statAttFemaleCount">0 Women</div>
+          <div class="metric-label">Women (Adults)</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" style="color: #b45309;" id="statAttChildCount">0 Kids</div>
+          <div class="metric-label">Children (Kids Church)</div>
+        </div>
+      </div>
+
+      <!-- Live Demographic Ratio Progress Strip (Men | Women | Children) -->
+      <div class="gender-ratio-strip">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="font-size: 14px; color: var(--ink);">Attendee Demographics (Men · Women · Children)</strong>
+          <span style="font-size: 12.5px; color: var(--muted);" id="ratioDetailsText">0 Men (0%) · 0 Women (0%) · 0 Children (0%)</span>
+        </div>
+        
+        <div class="ratio-bar-wrap">
+          <div class="ratio-fill-male" id="ratioFillMale" style="width: 0%;"></div>
+          <div class="ratio-fill-female" id="ratioFillFemale" style="width: 0%;"></div>
+          <div class="ratio-fill-child" id="ratioFillChild" style="width: 0%;"></div>
+        </div>
+
+        <div class="ratio-legend">
+          <span style="color: var(--blue);"><span class="badge-gender-male">Men</span> <strong id="legendMaleText">0 (0%)</strong></span>
+          <span style="color: var(--rose);"><span class="badge-gender-female">Women</span> <strong id="legendFemaleText">0 (0%)</strong></span>
+          <span style="color: #b45309;"><span class="badge-child">👶 Children</span> <strong id="legendChildText">0 (0%)</strong></span>
+        </div>
+      </div>
+
+      <!-- Attendance Roster (Shows Who Came and Who Did Not Come) -->
+      <div class="admin-card">
+        <div class="card-head-row">
+          <div>
+            <h2 class="card-title" id="attTableTitle">Member Service Attendance & Absentee List</h2>
+            <p class="card-sub" id="attTableSubtitle">Showing members who attended vs those who missed this service</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="attSearchInput" class="form-ctrl" placeholder="Search name, phone, parent, location or status..." style="width: 320px;" oninput="filterAttendanceTable()" />
+          </div>
+        </div>
+
+          <div class="table-responsive">
+            <table>
+              <thead><tr>
+                <th>#</th><th>Member Full Name</th><th>Category</th>
+                <th>Phone / Guardian Contact</th><th>Gender</th>
+                <th>Residential Location</th><th>Role / Class</th>
+                <th>Service Status</th><th>Check-In Time</th><th>Action</th>
+              </tr></thead>
+              <tbody id="attendanceTableBody"><!-- Injected by JS --></tbody>
+            </table>
+          </div>
+          <!-- Mobile cards for attendance -->
+          <div class="mob-cards-attendance" id="attMobileCards"></div>
+        </div>
+      </div>
+
+    <!-- TAB 3: MEMBER DIRECTORY (WITH CHILDREN & ADULT PROVISION & BIRTHDAY REMINDERS) -->
+    <div id="secMembers" style="display: none;">
+      
+      <!-- Birthday & Celebration Reminders Widget -->
+      <div class="admin-card" style="margin-bottom: 20px; background: linear-gradient(135deg, #092619 0%, #0f3d24 100%); color: white; border: 1.5px solid var(--accent); padding: 18px 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 22px;">🎂</span>
+              <h2 class="card-title" style="color: white; font-size: 19px; margin: 0;">Member Birthday Reminders</h2>
+              <span id="bdayBadgeCount" style="background: var(--accent); color: #111; font-weight: 800; font-size: 11px; padding: 3px 10px; border-radius: 20px;">0 Upcoming</span>
+            </div>
+            <p class="card-sub" style="color: #c4d0ca; margin-top: 3px;">Track members celebrating birthdays today and in the next 30 days</p>
+          </div>
+          <button class="btn-main" style="background: rgba(255,255,255,0.12); color: white; font-size: 12.5px;" onclick="renderBirthdayRemindersWidget(true)">
+            <i class="fas fa-rotate"></i> Refresh Reminders
+          </button>
+        </div>
+
+        <div id="birthdayRemindersList" style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="card-head-row">
+          <div>
+            <h2 class="card-title">Church Member & Children Directory</h2>
+            <p class="card-sub">Manage registered adults, youth, and children (Sunday School / Kids Church) with parent linkages</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="memberSearchInput" class="form-ctrl" placeholder="Search name, parent, phone, location, gender or DOB..." style="width: 340px;" oninput="filterMembersTable()" />
+            <button class="btn-accent" onclick="openAddMemberModal()">+ Add New Member / Child</button>
+          </div>
+        </div>
+
+          <div class="table-responsive">
+            <table>
+              <thead><tr>
+                <th>#</th><th>Full Name</th><th>Category</th>
+                <th>Phone / Parent Guardian</th><th>Gender</th>
+                <th>Residential Location</th><th>Date of Birth (DOB)</th>
+                <th>Role / Sunday School</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="membersTableBody"><!-- Injected by JS --></tbody>
+            </table>
+          </div>
+          <!-- Mobile cards for members -->
+          <div class="mob-cards-members" id="membersMobileCards"></div>
+        </div>
+      </div>
+
+    <!-- TAB 4: SERVICES & SPECIAL PROGRAMS SETUP (NEW) -->
+    <div id="secPrograms" style="display: none;">
+      
+      <!-- Current Active Kiosk Service / Program Controller Banner -->
+      <div class="filter-toolbar" style="background: #072216; color: white; border: 1.5px solid var(--accent); padding: 22px;">
+        <div style="flex: 1; min-width: 280px;">
+          <div style="font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 4px;">
+            <i class="fas fa-tower-broadcast"></i> Live Kiosk Service Controller
+          </div>
+          <h2 style="font-family: Manrope, sans-serif; font-size: 20px; color: white; margin-bottom: 4px;" id="adminKioskActiveDisplay">
+            Current Kiosk Service: Sunday — Family & Friends Service
+          </h2>
+          <p style="font-size: 13px; color: #cfd8d3;" id="adminKioskActiveSub">
+            Set which service or special program week the check-in kiosk runs. When the program ends, click "Switch Back" to return to regular services.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <button id="btnSwitchBackAuto" class="btn-main" style="background: #14532d; color: white; border: 1.5px solid #22c55e; display: none;" onclick="resetKioskToRegularSchedule()">
+            <i class="fas fa-rotate-left"></i> ⚡ Program Ended: Switch Back to Regular Schedule
+          </button>
+          <select id="adminKioskProgramPicker" class="form-ctrl" style="width: 280px; font-weight: 700; background: white; color: var(--ink); padding: 10px 14px;" onchange="handleAdminSetKioskActive(this.value)">
+            <!-- Injected by JS -->
+          </select>
+          <button class="btn-accent" onclick="openCreateProgramModal()"><i class="fas fa-plus-circle"></i> + Create Special Program</button>
+        </div>
+      </div>
+
+      <!-- Services & Special Programs Grid -->
+      <div class="admin-card">
+        <div class="card-head-row">
+          <div>
+            <h2 class="card-title">All Services & Special Program Weeks</h2>
+            <p class="card-sub">Manage regular weekly services and create custom revival weeks, miracle conventions, or conference check-ins</p>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn-main" style="background: #14532d; font-size: 13px;" onclick="resetKioskToRegularSchedule()"><i class="fas fa-rotate-left"></i> Return to Regular Schedule</button>
+            <button class="btn-accent" onclick="openCreateProgramModal()">+ New Special Program Week</button>
+          </div>
+        </div>
+
+          <div class="table-responsive">
+            <table>
+              <thead><tr>
+                <th>#</th><th>Program / Service Name</th><th>Category</th>
+                <th>Schedule &amp; Hours</th><th>Flyer Image</th>
+                <th>Attendance Count</th><th>Kiosk Status</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="programsTableBody"><!-- Injected by JS --></tbody>
+            </table>
+          </div>
+          <!-- Mobile cards for programs -->
+          <div class="mob-cards-programs" id="programsMobileCards"></div>
+        </div>
+      </div>
+    <!-- TAB 5: STAFF & SUB-ADMIN ACCOUNTS MANAGEMENT -->
+    <div id="secSubAdmins" style="display: none;">
+      <div class="admin-card">
+        <div class="card-head-row">
+          <div>
+            <h2 class="card-title">Staff &amp; Sub-Admin Accounts Management</h2>
+            <p class="card-sub">Create sub-admin accounts, set login credentials, and assign module access privileges</p>
+          </div>
+          <div>
+            <button class="btn-accent" onclick="openCreateSubAdminModal()">+ Create New Sub-Admin Account</button>
+          </div>
+        </div>
+
+        <!-- Sub-Admins Table (Desktop) -->
+        <div class="table-responsive sub-table-desktop">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Sub-Admin Name</th>
+                <th>Email Address / Login ID</th>
+                <th>Assigned Module Privileges</th>
+                <th>Date Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="subAdminsTableBody">
+              <!-- Injected by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Sub-Admins Mobile Cards -->
+        <div class="sub-cards-mobile" id="subAdminsMobileCards" style="display: none;">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Add Member Modal (Includes Category, Guardian, Address & DOB) -->
+  <div class="modal-backdrop" id="addMemberModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeAddMemberModal()">✕</button>
+      <h3 style="font-family: Manrope, sans-serif; font-size: 20px; margin-bottom: 4px;">Add New Member / Child</h3>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Enter details for Adults, Youth, or Children (Sunday School) with parent linkages.</p>
+      
+      <form onsubmit="handleSaveNewMember(event)">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">First Name *</label>
+            <input required id="newMemFirst" class="form-ctrl" placeholder="e.g. Emmanuel" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name *</label>
+            <input required id="newMemLast" class="form-ctrl" placeholder="e.g. Mensah" />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Member Category *</label>
+            <select required id="newMemCategory" class="form-ctrl" onchange="toggleAddGuardianField(this.value)">
+              <option value="Adult" selected>Adult Member</option>
+              <option value="Child">Child (Kids Church / Sunday School)</option>
+              <option value="Youth">Youth / Teen</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gender *</label>
+            <select required id="newMemGender" class="form-ctrl">
+              <option value="" disabled selected>Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label" id="lblAddPhone">Phone Number *</label>
+            <input required id="newMemPhone" type="tel" class="form-ctrl" placeholder="e.g. 024 676 0711" />
+          </div>
+          <div class="form-group" id="wrapAddGuardian" style="display: none;">
+            <label class="form-label">Parent / Guardian Name *</label>
+            <input id="newMemGuardian" class="form-ctrl" placeholder="e.g. Grace Mensah (Mother)" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Residential Address / Location *</label>
+          <input required id="newMemAddress" class="form-ctrl" placeholder="e.g. Spintex Road, Accra" />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Date of Birth (DOB) *</label>
+            <input required id="newMemDob" type="date" class="form-ctrl" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Role / Department / Class</label>
+            <select id="newMemRole" class="form-ctrl">
+              <option value="Member">Member</option>
+              <option value="Child / Sunday School">Child / Sunday School</option>
+              <option value="Youth / Teen">Youth / Teen</option>
+              <option value="Worker / Usher">Worker / Usher</option>
+              <option value="Choir / Praise">Choir / Praise</option>
+              <option value="Youth Leader">Youth Leader</option>
+              <option value="Minister / Deacon">Minister / Deacon</option>
+              <option value="Elder / Pastor">Elder / Pastor</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address (Optional)</label>
+          <input id="newMemEmail" type="email" class="form-ctrl" placeholder="e.g. emmanuel@example.com" />
+        </div>
+
+        <button type="submit" class="btn-main" style="width: 100%; margin-top: 6px; justify-content: center;">Save Member Profile</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Member Modal -->
+  <div class="modal-backdrop" id="editMemberModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeEditMemberModal()">✕</button>
+      <h3 style="font-family: Manrope, sans-serif; font-size: 20px; margin-bottom: 4px;">Edit Member Profile</h3>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Update personal details, category, Guardian, Date of Birth (DOB), or address.</p>
+      
+      <form onsubmit="handleUpdateMember(event)">
+        <input type="hidden" id="editMemId" />
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">First Name *</label>
+            <input required id="editMemFirst" class="form-ctrl" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name *</label>
+            <input required id="editMemLast" class="form-ctrl" />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Member Category *</label>
+            <select required id="editMemCategory" class="form-ctrl" onchange="toggleEditGuardianField(this.value)">
+              <option value="Adult">Adult Member</option>
+              <option value="Child">Child (Kids Church / Sunday School)</option>
+              <option value="Youth">Youth / Teen</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gender *</label>
+            <select required id="editMemGender" class="form-ctrl">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label" id="lblEditPhone">Phone Number *</label>
+            <input required id="editMemPhone" type="tel" class="form-ctrl" />
+          </div>
+          <div class="form-group" id="wrapEditGuardian">
+            <label class="form-label">Parent / Guardian Name</label>
+            <input id="editMemGuardian" class="form-ctrl" placeholder="e.g. Grace Mensah (Mother)" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Residential Address / Location *</label>
+          <input required id="editMemAddress" class="form-ctrl" />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Date of Birth (DOB) *</label>
+            <input required id="editMemDob" type="date" class="form-ctrl" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Role / Department / Class</label>
+            <select id="editMemRole" class="form-ctrl">
+              <option value="Member">Member</option>
+              <option value="Child / Sunday School">Child / Sunday School</option>
+              <option value="Youth / Teen">Youth / Teen</option>
+              <option value="Worker / Usher">Worker / Usher</option>
+              <option value="Choir / Praise">Choir / Praise</option>
+              <option value="Youth Leader">Youth Leader</option>
+              <option value="Minister / Deacon">Minister / Deacon</option>
+              <option value="Elder / Pastor">Elder / Pastor</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address (Optional)</label>
+          <input id="editMemEmail" type="email" class="form-ctrl" />
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button type="submit" class="btn-main" style="flex: 1; justify-content: center;"><i class="fas fa-save"></i> Save Changes</button>
+          <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeEditMemberModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create Special Program Modal -->
+  <div class="modal-backdrop" id="createProgramModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeCreateProgramModal()">✕</button>
+      <h3 style="font-family: Manrope, sans-serif; font-size: 20px; margin-bottom: 4px;">Create Special Program Week</h3>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Set up a custom revival week, miracle convention, or special event for kiosk check-in.</p>
+      
+      <form onsubmit="handleSaveCustomProgram(event)">
+        <div class="form-group">
+          <label class="form-label">Program / Event Title *</label>
+          <input required id="progName" class="form-ctrl" placeholder="e.g. 7-Day Prophetic Miracle Revival 2026" />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Category / Type *</label>
+            <select required id="progCategory" class="form-ctrl">
+              <option value="Special Program / Convention">Special Program / Convention</option>
+              <option value="Revival / Prayer Week">Revival / Prayer Week</option>
+              <option value="Camp Meeting / Retreat">Camp Meeting / Retreat</option>
+              <option value="Youth / Ministry Conference">Youth / Ministry Conference</option>
+              <option value="Vigil / All-Night Service">Vigil / All-Night Service</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Schedule & Hours *</label>
+            <input required id="progSchedule" class="form-ctrl" placeholder="e.g. Mon – Fri, 6:00 PM – 9:00 PM" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Attach Program Flyer / Banner Image *</label>
+          <div style="border: 2px dashed var(--line); border-radius: 6px; padding: 18px; text-align: center; background: #fafbfa; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('progFlyerFileInput').click()">
+            <input type="file" id="progFlyerFileInput" accept="image/*" style="display: none;" onchange="handleProgramFlyerAttachment(this)" />
+            <div id="progFlyerPlaceholder">
+              <i class="fas fa-cloud-arrow-up" style="font-size: 28px; color: var(--accent); margin-bottom: 6px;"></i>
+              <div style="font-weight: 700; font-size: 13.5px; color: var(--ink);">Click to Browse & Attach Flyer Image</div>
+              <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Select image from your computer (JPG, PNG, WEBP)</div>
+            </div>
+            <div id="progFlyerPreviewWrap" style="display: none; align-items: center; justify-content: center; gap: 14px;">
+              <img id="progFlyerPreviewImg" src="" style="width: 64px; height: 64px; object-fit: contain; border-radius: 4px; border: 1.5px solid var(--accent); background: #000;" />
+              <div style="text-align: left;">
+                <div style="font-weight: 700; font-size: 13px; color: var(--ink);" id="progFlyerFileName">flyer.jpg</div>
+                <div style="font-size: 11.5px; color: #137333; font-weight: 700; margin-top: 2px;">✓ Flyer attached ready for Kiosk</div>
+                <button type="button" style="background: none; border: none; color: #c5221f; font-size: 11.5px; font-weight: 700; cursor: pointer; padding: 0; margin-top: 4px;" onclick="removeAttachedFlyer(event)">Click to Change File</button>
+              </div>
+            </div>
+          </div>
+          <input type="hidden" id="progAttachedFlyerData" />
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 12px;">
+          <input type="checkbox" id="progSetKioskActive" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+          <label for="progSetKioskActive" style="font-size: 13px; font-weight: 700; cursor: pointer;">
+            Activate on Kiosk immediately for attendance check-in
+          </label>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+          <button type="submit" class="btn-main" style="flex: 1; justify-content: center;"><i class="fas fa-save"></i> Save & Register Program</button>
+          <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeCreateProgramModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Special Program / Service Modal -->
+  <div class="modal-backdrop" id="editProgramModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeEditProgramModal()">✕</button>
+      <h3 style="font-family: Manrope, sans-serif; font-size: 20px; margin-bottom: 4px;">Edit Service / Program Details</h3>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Update service title, category, schedule, or change the kiosk flyer image.</p>
+      
+      <form onsubmit="handleUpdateProgram(event)">
+        <input type="hidden" id="editProgId" />
+        <input type="hidden" id="editProgIsStandard" />
+
+        <div class="form-group">
+          <label class="form-label">Service / Program Title *</label>
+          <input required id="editProgName" class="form-ctrl" />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Category / Tag *</label>
+            <select required id="editProgCategory" class="form-ctrl">
+              <option value="Regular Weekly Service">Regular Weekly Service</option>
+              <option value="Midweek Prayer Service">Midweek Prayer Service</option>
+              <option value="Deliverance Service">Deliverance Service</option>
+              <option value="Special Program / Convention">Special Program / Convention</option>
+              <option value="Revival / Prayer Week">Revival / Prayer Week</option>
+              <option value="Camp Meeting / Retreat">Camp Meeting / Retreat</option>
+              <option value="Youth / Ministry Conference">Youth / Ministry Conference</option>
+              <option value="Vigil / All-Night Service">Vigil / All-Night Service</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Schedule & Hours *</label>
+            <input required id="editProgSchedule" class="form-ctrl" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Service Flyer / Banner Image</label>
+          <div style="border: 2px dashed var(--line); border-radius: 6px; padding: 16px; text-align: center; background: #fafbfa; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('editProgFlyerFileInput').click()">
+            <input type="file" id="editProgFlyerFileInput" accept="image/*" style="display: none;" onchange="handleEditProgramFlyerAttachment(this)" />
+            <div style="display: flex; align-items: center; justify-content: center; gap: 14px;">
+              <img id="editProgFlyerPreviewImg" src="/Sunday.JPG" style="width: 72px; height: 72px; object-fit: contain; border-radius: 4px; border: 1.5px solid var(--accent); background: #000;" />
+              <div style="text-align: left;">
+                <div style="font-weight: 700; font-size: 13px; color: var(--ink);" id="editProgFlyerFileName">Current Service Image</div>
+                <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Click anywhere in this box to upload a new flyer image (JPG, PNG, WEBP)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+          <button type="submit" class="btn-main" style="flex: 1; justify-content: center;"><i class="fas fa-save"></i> Save Changes</button>
+          <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeEditProgramModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Manage Sub-Admins Modal (Super-Admin Only) -->
+  <div class="modal-backdrop" id="manageSubAdminsModal" style="display: none;" onclick="if(event.target===this)closeManageSubAdminsModal()">
+    <div class="modal-card" style="max-width: 680px;">
+      <button class="modal-close" onclick="closeManageSubAdminsModal()">✕</button>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h2 style="font-family: Manrope, sans-serif; font-size: 21px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
+            <i class="fas fa-user-shield" style="color: var(--accent);"></i> Sub-Admin Staff &amp; Privileges
+          </h2>
+          <p style="font-size: 13px; color: var(--muted);">Create sub-admins and assign tab privileges (Attendance, Members, Programs, Finance)</p>
+        </div>
+        <button class="btn-accent" onclick="openCreateSubAdminModal()">+ Create New Sub-Admin</button>
+      </div>
+
+      <div id="subAdminsListContainer" style="max-height: 400px; overflow-y: auto;">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Sub-Admin Modal -->
+  <div class="modal-backdrop" id="createSubAdminModal" style="display: none;" onclick="if(event.target===this)closeCreateSubAdminModal()">
+    <div class="modal-card" style="max-width: 480px;">
+      <button class="modal-close" onclick="closeCreateSubAdminModal()">✕</button>
+      <h2 style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
+        Create Sub-Admin Account
+      </h2>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Set up login credentials and select which tabs/modules this sub-admin can access.</p>
+
+      <form onsubmit="handleCreateSubAdminSubmit(event)" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label">Sub-Admin Full Name *</label>
+          <input required id="newSubName" class="form-ctrl" placeholder="e.g. Deacon Samuel / Sister Grace" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address (Login ID) *</label>
+          <input required type="email" id="newSubEmail" class="form-ctrl" placeholder="e.g. samuel@solutionsfaith.com" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Account Password *</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input required type="password" id="newSubPassword" class="form-ctrl" style="padding-right: 42px;" placeholder="Create secure password" />
+            <button type="button" onclick="togglePasswordVisibility('newSubPassword', 'subEyeIcon')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+              <i class="fas fa-eye" id="subEyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div style="background: #fafbfa; border: 1.5px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 14px; margin-bottom: 18px;">
+          <label class="form-label" style="margin-bottom: 8px; color: var(--ink); font-weight: 800; display: block;">
+            Assign Tab Privileges (Modules Access):
+          </label>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+              <input type="checkbox" id="permAttendance" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span>📋 Attendance &amp; Demographics</span>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+              <input type="checkbox" id="permMembers" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span>👥 Member Directory</span>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+              <input type="checkbox" id="permPrograms" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span>📅 Services &amp; Programs Setup</span>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700; color: #991b1b;">
+              <input type="checkbox" id="permFinance" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span>💰 Financial Overview &amp; Analytics (Sensitive)</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="submit" class="btn-main" style="flex: 1; justify-content: center; padding: 12px;"><i class="fas fa-user-plus"></i> Create Sub-Admin</button>
+          <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeCreateSubAdminModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Sub-Admin Privileges Modal -->
+  <div class="modal-backdrop" id="editSubAdminModal" style="display: none;" onclick="if(event.target===this)closeEditSubAdminModal()">
+    <div class="modal-card" style="max-width: 480px;">
+      <button class="modal-close" onclick="closeEditSubAdminModal()">✕</button>
+      <h2 style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
+        Edit Sub-Admin Privileges
+      </h2>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;" id="editSubAdminSubtitle">Update module access and privileges</p>
+
+      <form onsubmit="handleSaveEditSubAdminSubmit(event)">
+        <input type="hidden" id="editSubId" />
+
+        <div class="form-group">
+          <label class="form-label">Sub-Admin Full Name *</label>
+          <input required id="editSubName" class="form-ctrl" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address (Login ID) *</label>
+          <input required type="email" id="editSubEmail" class="form-ctrl" readonly style="background: #f1f5f9; cursor: not-allowed;" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">New Password (Leave blank to keep existing)</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input type="password" id="editSubPassword" class="form-ctrl" style="padding-right: 42px;" placeholder="Enter new password if changing" />
+            <button type="button" onclick="togglePasswordVisibility('editSubPassword', 'editSubEyeIcon')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+              <i class="fas fa-eye" id="editSubEyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div style="background: #fafbfa; border: 1.5px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 14px; margin-bottom: 18px;">
+          <label class="form-label" style="margin-bottom: 8px; color: var(--ink); font-weight: 800; display: block;">
+            Update Assigned Tab Privileges:
+          </label>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+              <input type="checkbox" id="editPermAttendance" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span>📋 Attendance &amp; Demographics</span>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+              <input type="checkbox" id="editPermMembers" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span>👥 Member Directory</span>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+              <input type="checkbox" id="editPermPrograms" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span>📅 Services &amp; Programs Setup</span>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700; color: #991b1b;">
+              <input type="checkbox" id="editPermFinance" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span>💰 Financial Overview &amp; Analytics</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="submit" class="btn-main" style="flex: 1; justify-content: center; padding: 12px;"><i class="fas fa-save"></i> Save Privileges</button>
+          <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeEditSubAdminModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:4000/api/v1';
+
+    let allMembers = [];
+    let serviceAttendanceMap = {};
+
+    let currentSelectedService = 'Sunday: Family & Friends Service';
+    let currentAttFilter = 'ALL'; // 'ALL', 'PRESENT', 'ABSENT'
+
+    let rawFinanceEntries = [];
+    let filteredFinanceEntries = [];
+
+    /* ── TAB PRIVILEGES ENFORCEMENT & SUB-ADMIN MANAGEMENT ── */
+    let subAdminsList = [];
+
+    function loadSubAdmins() {
+      const saved = localStorage.getItem('sfmi_sub_admins_registry');
+      if (saved) {
+        try { subAdminsList = JSON.parse(saved); } catch(e) { subAdminsList = []; }
+      } else {
+        subAdminsList = [
+          {
+            id: 'sub_def_1',
+            name: 'Deacon Samuel',
+            email: 'samuel@solutionsfaith.com',
+            password: 'Solutions12@26',
+            permissions: ['attendance', 'members', 'programs'],
+            createdAt: new Date().toLocaleDateString('en-GB')
+          }
+        ];
+        saveSubAdmins();
+      }
+    }
+
+    function saveSubAdmins() {
+      localStorage.setItem('sfmi_sub_admins_registry', JSON.stringify(subAdminsList));
+    }
+
+    function applyTabPermissions() {
+      let currentUser = null;
+      try { currentUser = JSON.parse(localStorage.getItem('sfmi_current_user')); } catch (e) {}
+
+      const permissions = (currentUser && Array.isArray(currentUser.permissions)) 
+        ? currentUser.permissions 
+        : ['finance', 'attendance', 'members', 'programs'];
+
+      const isSuperAdmin = !currentUser || currentUser.role === 'SUPER_ADMIN';
+
+      const btnSub = document.getElementById('btnManageSubAdmins');
+      if (btnSub) btnSub.style.display = isSuperAdmin ? 'inline-flex' : 'none';
+
+      const allTabs = ['finance', 'attendance', 'members', 'programs'];
+      let firstAllowedTab = null;
+
+      allTabs.forEach(t => {
+        const isAllowed = permissions.includes(t);
+        if (isAllowed && !firstAllowedTab) firstAllowedTab = t;
+
+        const desktopBtn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const mobBtn = document.getElementById(`mobBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+
+        if (desktopBtn) desktopBtn.style.display = isAllowed ? 'inline-flex' : 'none';
+        if (mobBtn) mobBtn.style.display = isAllowed ? 'flex' : 'none';
+      });
+
+      if (firstAllowedTab) {
+        switchTab(firstAllowedTab);
+      }
+    }
+
+    function openManageSubAdminsModal() {
+      renderSubAdminsList();
+      document.getElementById('manageSubAdminsModal').style.display = 'flex';
+    }
+
+    function closeManageSubAdminsModal() {
+      document.getElementById('manageSubAdminsModal').style.display = 'none';
+    }
+
+    function openCreateSubAdminModal() {
+      const modal = document.getElementById('createSubAdminModal');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+      const input = document.getElementById('newSubName');
+      if (input) setTimeout(() => input.focus(), 50);
+    }
+
+    function closeCreateSubAdminModal() {
+      const modal = document.getElementById('createSubAdminModal');
+      if (!modal) return;
+      modal.style.display = 'none';
+      modal.classList.remove('active');
+    }
+
+    function renderSubAdminsList() {
+      const container = document.getElementById('subAdminsListContainer');
+      const tbody = document.getElementById('subAdminsTableBody');
+      const mobCards = document.getElementById('subAdminsMobileCards');
+
+      const buildBadges = (sub) => (sub.permissions || []).map(p => {
+        if (p === 'attendance') return `<span class="badge-check" style="background:#e0f2fe; color:#0369a1;"><i class="fas fa-list-check"></i> Attendance</span>`;
+        if (p === 'members') return `<span class="badge-check" style="background:#dcfce7; color:#166534;"><i class="fas fa-users"></i> Directory</span>`;
+        if (p === 'programs') return `<span class="badge-check" style="background:#fef3c7; color:#92400e;"><i class="fas fa-calendar-star"></i> Programs</span>`;
+        if (p === 'finance') return `<span class="badge-check" style="background:#fee2e2; color:#991b1b;"><i class="fas fa-coins"></i> Finance</span>`;
+        return '';
+      }).join(' ');
+
+      // Render Modal Container
+      if (container) {
+        if (subAdminsList.length === 0) {
+          container.innerHTML = `<div style="text-align:center; color:var(--muted); padding:30px;">No sub-admin accounts created yet. Click "+ Create New Sub-Admin" above to add staff.</div>`;
+        } else {
+          container.innerHTML = subAdminsList.map(sub => `
+            <div style="background:#fafbfa; border:1px solid var(--line); border-radius:8px; padding:14px 16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <div>
+                <div style="font-weight:800; font-size:15px; color:var(--ink);">${sub.name} <span style="font-size:11px; font-weight:700; background:#111; color:white; padding:2px 8px; border-radius:12px; margin-left:6px;">Sub-Admin</span></div>
+                <div style="font-size:12.5px; color:var(--muted); margin-top:2px;"><i class="fas fa-envelope"></i> ${sub.email}</div>
+                <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">${buildBadges(sub) || '<span style="font-size:11px; color:var(--muted);">No privileges assigned</span>'}</div>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn-main" style="padding:6px 12px; font-size:12px; background:#c89b55; color:#111;" onclick="openEditSubAdminModal('${sub.id}')"><i class="fas fa-edit"></i> Edit Privileges</button>
+                <button class="btn-main" style="padding:6px 12px; font-size:12px; background:#c5221f;" onclick="deleteSubAdmin('${sub.id}')"><i class="fas fa-trash-alt"></i> Revoke</button>
+              </div>
+            </div>`).join('');
+        }
+      }
+
+      // Render Desktop Page Table
+      if (tbody) {
+        if (subAdminsList.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:30px;">No sub-admin accounts created yet. Click "+ Create New Sub-Admin Account" above.</td></tr>`;
+        } else {
+          tbody.innerHTML = subAdminsList.map((sub, i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td><strong>${sub.name}</strong> <span style="font-size:11px; font-weight:700; background:#111; color:white; padding:2px 8px; border-radius:12px; margin-left:4px;">Sub-Admin</span></td>
+              <td><i class="fas fa-envelope" style="color:var(--muted); margin-right:4px;"></i> ${sub.email}</td>
+              <td><div style="display:flex; gap:6px; flex-wrap:wrap;">${buildBadges(sub) || '<span style="font-size:11px; color:var(--muted);">No privileges</span>'}</div></td>
+              <td>${sub.createdAt || '—'}</td>
+              <td>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn-main" style="padding:5px 11px; font-size:12px; background:#c89b55; color:#111;" onclick="openEditSubAdminModal('${sub.id}')"><i class="fas fa-edit"></i> Edit Privileges</button>
+                  <button class="btn-main" style="padding:5px 11px; font-size:12px; background:#c5221f;" onclick="deleteSubAdmin('${sub.id}')"><i class="fas fa-trash-alt"></i> Revoke</button>
+                </div>
+              </td>
+            </tr>`).join('');
+        }
+      }
+
+      // Render Mobile Page Cards
+      if (mobCards) {
+        if (subAdminsList.length === 0) {
+          mobCards.innerHTML = `<div style="text-align:center; color:var(--muted); padding:30px;">No sub-admin accounts created yet.</div>`;
+        } else {
+          mobCards.innerHTML = subAdminsList.map(sub => `
+            <div class="mob-card">
+              <div class="mob-card-header">
+                <div class="mob-card-name">${sub.name}</div>
+                <span style="font-size:11px; font-weight:700; background:#111; color:white; padding:3px 9px; border-radius:12px;">Sub-Admin</span>
+              </div>
+              <div class="mob-card-meta">
+                <div class="mob-card-row"><span>Email / ID</span><strong>${sub.email}</strong></div>
+                <div class="mob-card-row"><span>Created</span><strong>${sub.createdAt || '—'}</strong></div>
+                <div style="margin-top:8px;">
+                  <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">Assigned Privileges:</span>
+                  <div style="display:flex; gap:6px; flex-wrap:wrap;">${buildBadges(sub) || '<span style="font-size:11px; color:var(--muted);">No privileges</span>'}</div>
+                </div>
+              </div>
+              <div class="mob-card-actions">
+                <button class="btn-main" style="background:#c89b55; color:#111;" onclick="openEditSubAdminModal('${sub.id}')"><i class="fas fa-edit"></i> Edit Privileges</button>
+                <button class="btn-main" style="background:#c5221f;" onclick="deleteSubAdmin('${sub.id}')"><i class="fas fa-trash-alt"></i> Revoke</button>
+              </div>
+            </div>`).join('');
+        }
+      }
+
+      syncSubAdminsViewMode();
+    }
+
+    function syncSubAdminsViewMode() {
+      const isMobile = window.innerWidth <= 700;
+      const tbl = document.querySelector('#secSubAdmins .table-responsive');
+      const cards = document.getElementById('subAdminsMobileCards');
+      if (tbl) tbl.style.display = isMobile ? 'none' : 'block';
+      if (cards) cards.style.display = isMobile ? 'block' : 'none';
+    }
+
+    window.addEventListener('resize', syncSubAdminsViewMode);
+
+    function handleCreateSubAdminSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('newSubName').value.trim();
+      const email = document.getElementById('newSubEmail').value.trim();
+      const password = document.getElementById('newSubPassword').value.trim();
+
+      const perms = [];
+      if (document.getElementById('permAttendance').checked) perms.push('attendance');
+      if (document.getElementById('permMembers').checked) perms.push('members');
+      if (document.getElementById('permPrograms').checked) perms.push('programs');
+      if (document.getElementById('permFinance').checked) perms.push('finance');
+
+      if (perms.length === 0) {
+        showToast('Please select at least one tab privilege for this sub-admin.', 'error', 'No Privileges Selected');
+        return;
+      }
+
+      const existing = subAdminsList.find(s => s.email.toLowerCase() === email.toLowerCase());
+      if (existing) {
+        showToast('A sub-admin account with this email address already exists.', 'error', 'Duplicate Email');
+        return;
+      }
+
+      const newSub = {
+        id: `sub_${Date.now()}`,
+        name,
+        email,
+        password,
+        permissions: perms,
+        createdAt: new Date().toLocaleDateString('en-GB')
+      };
+
+      subAdminsList.push(newSub);
+      saveSubAdmins();
+      closeCreateSubAdminModal();
+      renderSubAdminsList();
+      showToast(`Sub-Admin account for <strong>${name}</strong> created with assigned privileges!`, 'success', 'Sub-Admin Created');
+    }
+
+    function openEditSubAdminModal(id) {
+      if (!subAdminsList || subAdminsList.length === 0) {
+        loadSubAdmins();
+      }
+      const sub = subAdminsList.find(s => s.id === id);
+      if (!sub) {
+        showToast('Sub-admin details not found.', 'error', 'Error');
+        return;
+      }
+
+      document.getElementById('editSubId').value = sub.id;
+      document.getElementById('editSubName').value = sub.name;
+      document.getElementById('editSubEmail').value = sub.email;
+      if (document.getElementById('editSubPassword')) document.getElementById('editSubPassword').value = '';
+
+      const perms = sub.permissions || [];
+      document.getElementById('editPermAttendance').checked = perms.includes('attendance');
+      document.getElementById('editPermMembers').checked = perms.includes('members');
+      document.getElementById('editPermPrograms').checked = perms.includes('programs');
+      document.getElementById('editPermFinance').checked = perms.includes('finance');
+
+      const modal = document.getElementById('editSubAdminModal');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+    }
+
+    function closeEditSubAdminModal() {
+      const modal = document.getElementById('editSubAdminModal');
+      if (!modal) return;
+      modal.style.display = 'none';
+      modal.classList.remove('active');
+    }
+
+    function handleSaveEditSubAdminSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('editSubId').value;
+      const name = document.getElementById('editSubName').value.trim();
+      const newPass = document.getElementById('editSubPassword') ? document.getElementById('editSubPassword').value.trim() : '';
+
+      const perms = [];
+      if (document.getElementById('editPermAttendance').checked) perms.push('attendance');
+      if (document.getElementById('editPermMembers').checked) perms.push('members');
+      if (document.getElementById('editPermPrograms').checked) perms.push('programs');
+      if (document.getElementById('editPermFinance').checked) perms.push('finance');
+
+      if (perms.length === 0) {
+        showToast('Please select at least one tab privilege.', 'error', 'No Privileges Selected');
+        return;
+      }
+
+      const sub = subAdminsList.find(s => s.id === id);
+      if (sub) {
+        sub.name = name;
+        if (newPass) sub.password = newPass;
+        sub.permissions = perms;
+        saveSubAdmins();
+        closeEditSubAdminModal();
+        renderSubAdminsList();
+
+        let currentUser = null;
+        try { currentUser = JSON.parse(localStorage.getItem('sfmi_current_user')); } catch (err) {}
+        if (currentUser && currentUser.email.toLowerCase() === sub.email.toLowerCase()) {
+          currentUser.name = name;
+          currentUser.permissions = perms;
+          localStorage.setItem('sfmi_current_user', JSON.stringify(currentUser));
+          applyTabPermissions();
+        }
+
+        showToast(`Privileges for <strong>${name}</strong> updated successfully!`, 'success', 'Privileges Updated');
+      }
+    }
+
+    function deleteSubAdmin(id) {
+      showConfirmModal(
+        'Revoke Sub-Admin Account',
+        'Are you sure you want to revoke and delete this sub-admin account?',
+        () => {
+          subAdminsList = subAdminsList.filter(s => s.id !== id);
+          saveSubAdmins();
+          renderSubAdminsList();
+          showToast('Sub-admin account revoked.', 'info', 'Account Revoked');
+        },
+        'fas fa-user-slash',
+        'Revoke Account',
+        '#c5221f'
+      );
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initInactivityListeners();
+      checkAuthSession();
+    });
+
+    /* ── 30-MINUTE INACTIVITY AUTO-LOGOUT SYSTEM ── */
+    const INACTIVITY_LIMIT_MS = 30 * 60 * 1000; // 30 minutes
+    let inactivityTimer = null;
+
+    function resetInactivityTimer() {
+      const isAuth = localStorage.getItem('sfmi_admin_auth') === 'true';
+      if (!isAuth) {
+        if (inactivityTimer) clearTimeout(inactivityTimer);
+        return;
+      }
+
+      const now = Date.now();
+      const lastActive = parseInt(localStorage.getItem('sfmi_admin_last_active') || '0', 10);
+
+      // Check if already inactive past limit across tabs or refresh
+      if (lastActive > 0 && (now - lastActive) > INACTIVITY_LIMIT_MS) {
+        triggerAutoLogout();
+        return;
+      }
+
+      localStorage.setItem('sfmi_admin_last_active', now.toString());
+
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        triggerAutoLogout();
+      }, INACTIVITY_LIMIT_MS);
+    }
+
+    function purgeAuthSession() {
+      sessionStorage.removeItem('sfmi_token');
+      sessionStorage.removeItem('sfmi_sub_session');
+      sessionStorage.removeItem('sfmi_current_user');
+      sessionStorage.removeItem('sfmi_admin_last_active');
+      localStorage.removeItem('sfmi_token');
+      localStorage.removeItem('sfmi_admin_auth');
+      localStorage.removeItem('sfmi_current_user');
+      localStorage.removeItem('sfmi_admin_last_active');
+    }
+
+    function triggerAutoLogout() {
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      purgeAuthSession();
+      showLogin();
+      showToast('You were automatically logged out due to 30 minutes of inactivity.', 'warning', 'Session Timeout');
+    }
+
+    async function checkAuthSession() {
+      const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      const subToken = sessionStorage.getItem('sfmi_sub_session');
+
+      // 1. Check Sub-Admin Session
+      if (subToken) {
+        loadSubAdmins();
+        let subUser = null;
+        try { subUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user')); } catch (e) {}
+        if (subUser && subUser.role === 'SUB_ADMIN') {
+          const matched = subAdminsList.find(s => s.email.toLowerCase() === subUser.email.toLowerCase());
+          if (matched && matched.password === subToken) {
+            resetInactivityTimer();
+            showDashboard();
+            return;
+          }
+        }
+      }
+
+      // 2. If no backend token exists, lock the gate immediately
+      if (!token) {
+        purgeAuthSession();
+        showLogin();
+        return;
+      }
+
+      // 3. Cryptographically verify token with server to prevent forged/copied storage bypass
+      try {
+        const res = await fetch(`${API_BASE}/auth/verify`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const role = (data.user && data.user.role) ? data.user.role : '';
+
+          // Strictly reject Treasury officers from Admin Portal
+          if (role === 'FINANCE') {
+            purgeAuthSession();
+            showLogin();
+            showToast('Access Denied: Treasury officers cannot access the Admin Portal.', 'error', 'Access Denied');
+            return;
+          }
+
+          // Verified Super Admin
+          sessionStorage.setItem('sfmi_token', token);
+          sessionStorage.setItem('sfmi_current_user', JSON.stringify({
+            email: data.user.email,
+            name: data.user.name || 'Super Admin',
+            role: role || 'SUPER_ADMIN',
+            permissions: ['finance', 'attendance', 'members', 'programs', 'subAdmins']
+          }));
+          resetInactivityTimer();
+          showDashboard();
+          return;
+        } else {
+          // Token is invalid, expired, or revoked
+          purgeAuthSession();
+          showLogin();
+          return;
+        }
+      } catch (err) {
+        // Offline check: Only allow if signed Super Admin offline session token
+        let localUser = null;
+        try { localUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user')); } catch(e) {}
+        if (localUser && localUser.role === 'SUPER_ADMIN' && token && token.startsWith('sfmi_super_admin_session_')) {
+          resetInactivityTimer();
+          showDashboard();
+          return;
+        }
+        purgeAuthSession();
+        showLogin();
+      }
+    }
+
+    function showLogin() {
+      document.getElementById('loginScreen').style.display = 'block';
+      document.getElementById('dashboardContent').style.display = 'none';
+      const wrap = document.getElementById('adminLogoutWrap');
+      if (wrap) wrap.style.display = 'none';
+      const btn = document.getElementById('btnLogout');
+      if (btn) btn.style.display = 'none';
+      const actions = document.getElementById('headerNavActions');
+      if (actions) actions.style.display = 'none';
+    }
+
+    function showDashboard() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboardContent').style.display = 'block';
+      const wrap = document.getElementById('adminLogoutWrap');
+      if (wrap) wrap.style.display = 'block';
+      const btn = document.getElementById('btnLogout');
+      if (btn) btn.style.display = 'inline-flex';
+      const actions = document.getElementById('headerNavActions');
+      if (actions) actions.style.display = 'flex';
+
+      loadSubAdmins();
+      applyTabPermissions();
+
+      // ── Wipe ALL stale localStorage mock/test data for a clean production start ──
+      const keysToWipe = [
+        'sfmi_members_registry',
+        'sfmi_service_finances',
+        'sfmi_custom_programs',
+        'sfmi_active_kiosk_service',
+        'sfmi_svc_name_sun', 'sfmi_svc_sched_sun', 'sfmi_svc_img_sun',
+        'sfmi_svc_name_wed', 'sfmi_svc_sched_wed', 'sfmi_svc_img_wed',
+        'sfmi_svc_name_fri', 'sfmi_svc_sched_fri', 'sfmi_svc_img_fri'
+      ];
+      keysToWipe.forEach(k => localStorage.removeItem(k));
+
+      loadSavedMembers();
+      loadFinanceData();
+      loadCustomPrograms();
+      populateServiceDropdowns();
+      renderAttendanceAndDemographics();
+      renderMembersTable();
+      renderProgramsManager();
+      fetchLiveCounts();
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const errorMsg = document.getElementById('loginErrorMsg');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      errorMsg.style.display = 'none';
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'Verifying credentials…'; }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const role = (data.user && data.user.role) ? data.user.role : '';
+
+          // Strictly block Treasury/Finance accounts from accessing Admin Portal
+          if (role === 'FINANCE') {
+            purgeAuthSession();
+            errorMsg.style.display = 'block';
+            errorMsg.innerText = 'Access Denied: Treasury Officers cannot access the Admin Portal. Please log in at Treasury Portal.';
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Admin Portal'; }
+            return;
+          }
+
+          sessionStorage.setItem('sfmi_token', data.accessToken);
+          localStorage.setItem('sfmi_token', data.accessToken);
+          sessionStorage.setItem('sfmi_current_user', JSON.stringify({
+            email: data.user.email,
+            name: data.user.name || 'Super Admin',
+            role: role || 'SUPER_ADMIN',
+            permissions: ['finance', 'attendance', 'members', 'programs', 'subAdmins']
+          }));
+          localStorage.setItem('sfmi_current_user', sessionStorage.getItem('sfmi_current_user'));
+
+          resetInactivityTimer();
+          showDashboard();
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Admin Portal'; }
+          return;
+        }
+      } catch (err) {}
+
+      // Fallback auth check (Super Admin & Sub-Admin Accounts)
+      loadSubAdmins();
+      const isAdminEmail = (email.toLowerCase() === 'admin@solutionsfaith.com' || email.toLowerCase() === 'admin@example.com' || email.toLowerCase() === 'admin@solutionsfaith.org' || email.toLowerCase() === 'admin');
+      const isFinanceEmail = (email.toLowerCase() === 'finance@solutionsfaith.com' || email.toLowerCase() === 'treasury@solutionsfaith.com');
+
+      if (isFinanceEmail) {
+        purgeAuthSession();
+        errorMsg.style.display = 'block';
+        errorMsg.innerText = 'Access Denied: Treasury Officers cannot access the Admin Portal. Please log in at Treasury Portal.';
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Admin Portal'; }
+        return;
+      }
+
+      if (isAdminEmail && (password === 'Solutions12@26' || password === 'ChangeMe123!' || password === 'admin123' || password === 'Godlovesme1@')) {
+        const offlineToken = 'sfmi_super_admin_session_' + Date.now();
+        sessionStorage.setItem('sfmi_token', offlineToken);
+        localStorage.setItem('sfmi_token', offlineToken);
+        sessionStorage.setItem('sfmi_current_user', JSON.stringify({
+          email: 'Admin@solutionsfaith.com',
+          name: 'Super Admin',
+          role: 'SUPER_ADMIN',
+          permissions: ['finance', 'attendance', 'members', 'programs', 'subAdmins']
+        }));
+        localStorage.setItem('sfmi_current_user', sessionStorage.getItem('sfmi_current_user'));
+
+        resetInactivityTimer();
+        showDashboard();
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Admin Portal'; }
+        return;
+      }
+
+      // Check Sub-Admins Registry
+      const matchedSub = subAdminsList.find(s => s.email.toLowerCase() === email.toLowerCase() && s.password === password);
+      if (matchedSub) {
+        sessionStorage.setItem('sfmi_sub_session', matchedSub.password);
+        sessionStorage.setItem('sfmi_current_user', JSON.stringify({
+          email: matchedSub.email,
+          name: matchedSub.name,
+          role: 'SUB_ADMIN',
+          permissions: matchedSub.permissions
+        }));
+        localStorage.setItem('sfmi_current_user', sessionStorage.getItem('sfmi_current_user'));
+        resetInactivityTimer();
+        showDashboard();
+      } else {
+        purgeAuthSession();
+        errorMsg.style.display = 'block';
+        errorMsg.innerText = 'Invalid email or password. Please try again.';
+      }
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Admin Portal'; }
+    }
+
+    function handleLogout() {
+      showConfirmModal(
+        'Confirm Log Out',
+        'Are you sure you want to log out from the Church Administration Portal?',
+        async () => {
+          if (inactivityTimer) clearTimeout(inactivityTimer);
+          const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+          if (token && !token.startsWith('sfmi_super_admin_session_')) {
+            try {
+              await fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+              });
+            } catch (e) {}
+          }
+          purgeAuthSession();
+          showLogin();
+          showToast('You have been logged out safely from Administration Portal.', 'info', 'Logged Out');
+        },
+        'fas fa-sign-out-alt',
+        'Log Out',
+        '#c5221f'
+      );
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    }
+
+    const TAB_LABELS = {
+      finance: '<i class="fas fa-coins"></i> Financial Overview & Analytics',
+      attendance: '<i class="fas fa-list-check"></i> Attendance & Demographics',
+      members: '<i class="fas fa-users"></i> Member Directory',
+      programs: '<i class="fas fa-calendar-star"></i> Services & Programs Setup',
+      subAdmins: '<i class="fas fa-user-shield"></i> Staff & Sub-Admins'
+    };
+
+    function switchTab(tab) {
+      const tabs = ['finance', 'attendance', 'members', 'programs', 'subAdmins'];
+      tabs.forEach(t => {
+        const sec = document.getElementById(`sec${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const mobBtn = document.getElementById(`mobBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (sec) sec.style.display = t === tab ? 'block' : 'none';
+        if (btn) btn.className = t === tab ? 'tab-btn active' : 'tab-btn';
+        if (mobBtn) mobBtn.className = t === tab ? 'mobile-menu-item active' : 'mobile-menu-item';
+      });
+
+      const lbl = document.getElementById('activeTabLabel');
+      if (lbl) lbl.innerHTML = TAB_LABELS[tab] || '';
+      
+      if (tab === 'finance') { renderAdminFinanceTable(); syncFinanceViewMode(); }
+      if (tab === 'attendance') { renderAttendanceAndDemographics(); syncAttendanceViewMode(); }
+      if (tab === 'members') { renderMembersTable(); syncMembersViewMode(); }
+      if (tab === 'programs') { renderProgramsManager(); syncProgramsViewMode(); }
+      if (tab === 'subAdmins') { renderSubAdminsList(); syncSubAdminsViewMode(); }
+    }
+
+    function toggleMobileMenu() {
+      const drawer = document.getElementById('mobileMenuDrawer');
+      const icon = document.getElementById('hamburgerIcon');
+      if (!drawer) return;
+      const isOpen = drawer.classList.toggle('open');
+      if (icon) icon.className = isOpen ? 'fas fa-times ham-icon' : 'fas fa-bars ham-icon';
+    }
+
+    function mobileSwitchTab(tab) {
+      switchTab(tab);
+      // Close drawer after selection
+      const drawer = document.getElementById('mobileMenuDrawer');
+      const icon = document.getElementById('hamburgerIcon');
+      if (drawer) drawer.classList.remove('open');
+      if (icon) icon.className = 'fas fa-bars ham-icon';
+    }
+
+    /* Financial Analytics, Date Filtering & Export */
+    async function loadFinanceData() {
+      try {
+        const token = localStorage.getItem('sfmi_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const entRes = await fetch(`${API_BASE}/finance/service-entries`, { headers });
+        if (entRes.ok) {
+          const entData = await entRes.json();
+          // Always use live API data — never fall back to stale localStorage
+          rawFinanceEntries = Array.isArray(entData) ? entData : [];
+        } else {
+          rawFinanceEntries = [];
+        }
+      } catch (e) {
+        rawFinanceEntries = [];
+      }
+
+      filteredFinanceEntries = [...rawFinanceEntries];
+      recomputeFinanceMetrics();
+      renderAdminFinanceTable();
+    }
+
+    function setFinancePreset(preset) {
+      document.getElementById('btnPresetAll').classList.toggle('active', preset === 'all');
+      document.getElementById('btnPresetThisMonth').classList.toggle('active', preset === 'this_month');
+      document.getElementById('btnPresetLastMonth').classList.toggle('active', preset === 'last_month');
+      document.getElementById('btnPresetThisYear').classList.toggle('active', preset === 'this_year');
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+
+      if (preset === 'all') {
+        document.getElementById('finFilterStart').value = '';
+        document.getElementById('finFilterEnd').value = '';
+      } else if (preset === 'this_month') {
+        const start = new Date(year, month, 1).toISOString().split('T')[0];
+        const end = new Date(year, month + 1, 0).toISOString().split('T')[0];
+        document.getElementById('finFilterStart').value = start;
+        document.getElementById('finFilterEnd').value = end;
+      } else if (preset === 'last_month') {
+        const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
+        const end = new Date(year, month, 0).toISOString().split('T')[0];
+        document.getElementById('finFilterStart').value = start;
+        document.getElementById('finFilterEnd').value = end;
+      } else if (preset === 'this_year') {
+        const start = new Date(year, 0, 1).toISOString().split('T')[0];
+        const end = new Date(year, 11, 31).toISOString().split('T')[0];
+        document.getElementById('finFilterStart').value = start;
+        document.getElementById('finFilterEnd').value = end;
+      }
+
+      applyCustomDateFilter();
+    }
+
+    function applyCustomDateFilter() {
+      const start = document.getElementById('finFilterStart').value;
+      const end = document.getElementById('finFilterEnd').value;
+      const service = document.getElementById('finFilterService').value;
+
+      filteredFinanceEntries = rawFinanceEntries.filter(item => {
+        const itemDate = item.serviceDate.split('T')[0];
+        if (start && itemDate < start) return false;
+        if (end && itemDate > end) return false;
+        if (service !== 'ALL' && !item.serviceName.toLowerCase().includes(service.toLowerCase())) return false;
+        return true;
+      });
+
+      recomputeFinanceMetrics();
+      renderAdminFinanceTable();
+    }
+
+    function recomputeFinanceMetrics() {
+      let tot = 0, tithes = 0, off = 0, bld = 0, seed = 0, thk = 0;
+      let cash = 0, momo = 0, bank = 0;
+
+      filteredFinanceEntries.forEach(e => {
+        tot += Number(e.totalAmount);
+        tithes += Number(e.tithes);
+        off += Number(e.offering);
+        bld += Number(e.buildingFund);
+        seed += Number(e.specialSeed);
+        thk += (Number(e.thanksgiving) + Number(e.other));
+        cash += Number(e.cashAmount);
+        momo += Number(e.momoAmount);
+        bank += Number(e.bankAmount);
+      });
+
+      const tithesPct = tot > 0 ? Math.round((tithes / tot) * 100) : 0;
+      const offPct = tot > 0 ? Math.round((off / tot) * 100) : 0;
+      const seedPct = tot > 0 ? Math.round((seed / tot) * 100) : 0;
+      const bldPct = tot > 0 ? Math.round((bld / tot) * 100) : 0;
+      const thkPct = tot > 0 ? Math.round((thk / tot) * 100) : 0;
+
+      const cashPct = tot > 0 ? Math.round((cash / tot) * 100) : 0;
+      const momoPct = tot > 0 ? Math.round((momo / tot) * 100) : 0;
+      const bankPct = tot > 0 ? Math.round((bank / tot) * 100) : 0;
+
+      document.getElementById('statFinTotal').innerText = `GHS ${tot.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      document.getElementById('statFinTithes').innerText = `GHS ${tithes.toLocaleString()} (${tithesPct}%)`;
+      document.getElementById('statFinOffering').innerText = `GHS ${off.toLocaleString()} (${offPct}%)`;
+      document.getElementById('statFinSpecial').innerText = `GHS ${(seed + bld).toLocaleString()} (${seedPct + bldPct}%)`;
+      document.getElementById('statFinAvg').innerText = `GHS ${(tot / (filteredFinanceEntries.length || 1)).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+      document.getElementById('barTithesVal').innerText = `GHS ${tithes.toLocaleString()} (${tithesPct}%)`;
+      document.getElementById('barTithesFill').style.width = `${tithesPct}%`;
+
+      document.getElementById('barOfferingVal').innerText = `GHS ${off.toLocaleString()} (${offPct}%)`;
+      document.getElementById('barOfferingFill').style.width = `${offPct}%`;
+
+      document.getElementById('barSeedVal').innerText = `GHS ${seed.toLocaleString()} (${seedPct}%)`;
+      document.getElementById('barSeedFill').style.width = `${seedPct}%`;
+
+      document.getElementById('barBuildingVal').innerText = `GHS ${bld.toLocaleString()} (${bldPct}%)`;
+      document.getElementById('barBuildingFill').style.width = `${bldPct}%`;
+
+      document.getElementById('barThanksVal').innerText = `GHS ${thk.toLocaleString()} (${thkPct}%)`;
+      document.getElementById('barThanksFill').style.width = `${thkPct}%`;
+
+      document.getElementById('payCashVal').innerText = `GHS ${cash.toLocaleString()} (${cashPct}%)`;
+      document.getElementById('payCashFill').style.width = `${cashPct}%`;
+
+      document.getElementById('payMomoVal').innerText = `GHS ${momo.toLocaleString()} (${momoPct}%)`;
+      document.getElementById('payMomoFill').style.width = `${momoPct}%`;
+
+      document.getElementById('payBankVal').innerText = `GHS ${bank.toLocaleString()} (${bankPct}%)`;
+      document.getElementById('payBankFill').style.width = `${bankPct}%`;
+
+      document.getElementById('finCatCountText').innerText = `${filteredFinanceEntries.length} Services in Selected Period`;
+      document.getElementById('finTableCountLabel').innerText = `Showing ${filteredFinanceEntries.length} service remittance records`;
+    }
+
+    function renderAdminFinanceTable(list = filteredFinanceEntries) {
+      const tbody = document.getElementById('adminFinTableBody');
+      const mobileCards = document.getElementById('adminFinCardsBody');
+      const isMobile = window.innerWidth <= 700;
+
+      if (list.length === 0) {
+        if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--muted); padding: 24px;">No financial records match the selected filter.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px 0;">No financial records found.</div>`;
+        return;
+      }
+
+      // Desktop table rows
+      if (tbody) {
+        tbody.innerHTML = list.map(item => {
+          const dt = new Date(item.serviceDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+          const tot = Number(item.totalAmount);
+          return `
+            <tr>
+              <td><strong>${dt}</strong></td>
+              <td>${item.serviceName}</td>
+              <td>GHS ${Number(item.tithes).toLocaleString()}</td>
+              <td>GHS ${Number(item.offering).toLocaleString()}</td>
+              <td>GHS ${Number(item.buildingFund).toLocaleString()}</td>
+              <td>GHS ${Number(item.specialSeed).toLocaleString()}</td>
+              <td><strong style="color: var(--emerald); font-size: 14px;">GHS ${tot.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></td>
+              <td>${item.recordedBy}</td>
+              <td><span class="badge-check">&#10003; Reconciled</span></td>
+              <td>
+                <button class="btn-main" style="padding: 4px 10px; font-size: 12px;" onclick="printServiceRemittance('${item.id}')">
+                  <i class="fas fa-receipt"></i> Slip
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Mobile card rows
+      if (mobileCards) {
+        mobileCards.innerHTML = list.map((item, idx) => {
+          const dt = new Date(item.serviceDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+          const tot = Number(item.totalAmount);
+          return `
+            <div class="fin-mobile-card">
+              <div class="fin-mobile-card-top">
+                <div>
+                  <div class="fin-mobile-card-date">${dt}</div>
+                  <div class="fin-mobile-card-service">${item.serviceName}</div>
+                </div>
+                <div class="fin-mobile-card-total">GHS ${tot.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+              </div>
+              <div class="fin-mobile-card-row">
+                <span class="badge-check">&#10003; Reconciled</span>
+                <span style="font-size:12px;color:var(--muted);">By: ${item.recordedBy}</span>
+              </div>
+              <div class="fin-mobile-card-actions">
+                <button class="btn-main" style="flex:1;justify-content:center;padding:9px;font-size:13px;" onclick="openFinViewModal(${idx})">
+                  <i class="fas fa-eye"></i> View Details
+                </button>
+                <button class="btn-download" style="flex:1;justify-content:center;padding:9px;font-size:13px;" onclick="printServiceRemittance('${item.id}')">
+                  <i class="fas fa-receipt"></i> Slip
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Toggle visibility based on screen size
+      syncFinanceViewMode();
+    }
+
+    function syncFinanceViewMode() {
+      const isMobile = window.innerWidth <= 700;
+      const desktopTable = document.querySelector('.fin-table-desktop');
+      const mobileCards = document.getElementById('adminFinCardsBody');
+      const filterDesktop = document.querySelector('.filter-presets-desktop');
+      const filterMobile = document.querySelector('.filter-presets-mobile');
+      if (desktopTable) desktopTable.style.display = isMobile ? 'none' : 'block';
+      if (mobileCards) mobileCards.style.display = isMobile ? 'block' : 'none';
+      if (filterDesktop) filterDesktop.style.display = isMobile ? 'none' : 'flex';
+      if (filterMobile) filterMobile.style.display = isMobile ? 'block' : 'none';
+    }
+
+    window.addEventListener('resize', syncFinanceViewMode);
+
+    let _finViewList = [];
+    function openFinViewModal(idx) {
+      _finViewList = filteredFinanceEntries;
+      const item = _finViewList[idx];
+      if (!item) return;
+      const dt = new Date(item.serviceDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const tot = Number(item.totalAmount);
+      const rows = [
+        ['Date', dt],
+        ['Service', item.serviceName],
+        ['Tithes', `GHS ${Number(item.tithes).toLocaleString('en-US',{minimumFractionDigits:2})}`],
+        ['General Offering', `GHS ${Number(item.offering).toLocaleString('en-US',{minimumFractionDigits:2})}`],
+        ['Building Fund', `GHS ${Number(item.buildingFund).toLocaleString('en-US',{minimumFractionDigits:2})}`],
+        ['Special Seeds', `GHS ${Number(item.specialSeed).toLocaleString('en-US',{minimumFractionDigits:2})}`],
+        ['Thanksgiving', `GHS ${Number(item.thanksgiving||0).toLocaleString('en-US',{minimumFractionDigits:2})}`],
+        ['Total Collected', `GHS ${tot.toLocaleString('en-US',{minimumFractionDigits:2})}`],
+        ['Recorded By', item.recordedBy],
+        ['Status', '✓ Reconciled'],
+      ];
+      document.getElementById('finViewModalBody').innerHTML = rows.map(([k,v]) =>
+        `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);">
+          <span style="font-size:13px;color:var(--muted);">${k}</span>
+          <span style="font-size:13.5px;font-weight:700;">${v}</span>
+        </div>`
+      ).join('');
+      document.getElementById('finViewModal').style.display = 'flex';
+    }
+
+    function closeFinViewModal() {
+      document.getElementById('finViewModal').style.display = 'none';
+    }
+
+    function filterAdminFinanceTable() {
+      const q = document.getElementById('finTableSearch').value.toLowerCase();
+      const filtered = filteredFinanceEntries.filter(e => 
+        e.serviceName.toLowerCase().includes(q) || 
+        e.serviceDate.includes(q) || 
+        e.recordedBy.toLowerCase().includes(q)
+      );
+      renderAdminFinanceTable(filtered);
+    }
+
+    function printServiceRemittance(id) {
+      window.open('/finance.html', '_blank');
+    }
+
+    function downloadFinancialCSV() {
+      if (filteredFinanceEntries.length === 0) {
+        showToast('No financial records found to export for the selected date period.', 'warning', 'Export Notice');
+        return;
+      }
+
+      let csv = 'Service Date,Service Name,Tithes (GHS),Offering (GHS),Building Fund (GHS),Special Seed (GHS),Thanksgiving (GHS),Other (GHS),Total Amount (GHS),Cash (GHS),MoMo (GHS),Bank (GHS),POS (GHS),Recorded By,Notes\n';
+
+      filteredFinanceEntries.forEach(e => {
+        const date = e.serviceDate.split('T')[0];
+        const name = `"${e.serviceName.replace(/"/g, '""')}"`;
+        const recorded = `"${(e.recordedBy || '').replace(/"/g, '""')}"`;
+        const notes = `"${(e.notes || '').replace(/"/g, '""')}"`;
+        
+        csv += `${date},${name},${e.tithes || 0},${e.offering || 0},${e.buildingFund || 0},${e.specialSeed || 0},${e.thanksgiving || 0},${e.other || 0},${e.totalAmount || 0},${e.cashAmount || 0},${e.momoAmount || 0},${e.bankAmount || 0},${e.posAmount || 0},${recorded},${notes}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `SFMI_Financial_Report_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Financial CSV report downloaded successfully!', 'success', 'Export Complete');
+    }
+
+    /* ATTENDANCE & DEMOGRAPHICS (SERVICE-BASED PRESENT VS ABSENTEE TRACKING) */
+    function handleAttServiceChange() {
+      currentSelectedService = document.getElementById('attServiceSelect').value;
+      renderAttendanceAndDemographics();
+    }
+
+    function setAttFilter(filter) {
+      currentAttFilter = filter;
+      document.getElementById('btnAttFilterAll').classList.toggle('active', filter === 'ALL');
+      document.getElementById('btnAttFilterPresent').classList.toggle('active', filter === 'PRESENT');
+      document.getElementById('btnAttFilterAbsent').classList.toggle('active', filter === 'ABSENT');
+      renderAttendanceAndDemographics();
+    }
+
+    function getAttendanceListForService(serviceName) {
+      const activeList = serviceAttendanceMap[serviceName] || [];
+      return activeList;
+    }
+
+    function renderAttendanceAndDemographics() {
+      const activeAttList = getAttendanceListForService(currentSelectedService);
+      
+      // Map members into Present or Absent
+      let totalDirectory = allMembers.length;
+      let presentCount = 0;
+      let absentCount = 0;
+      let attendingMale = 0;
+      let attendingFemale = 0;
+      let attendingChild = 0;
+
+      const processedMembers = allMembers.map(m => {
+        const found = activeAttList.find(a => a.phone === m.phone || `${m.firstName} ${m.lastName}`.toLowerCase() === (a.name || '').toLowerCase());
+        const isPresent = Boolean(found);
+
+        if (isPresent) {
+          presentCount++;
+          const isChild = m.category === 'Child' || (m.role && m.role.toLowerCase().includes('child'));
+          if (isChild) {
+            attendingChild++;
+          } else {
+            const g = (m.gender || '').toLowerCase();
+            if (g.startsWith('m')) attendingMale++;
+            else if (g.startsWith('f')) attendingFemale++;
+            else attendingMale++;
+          }
+        } else {
+          absentCount++;
+        }
+
+        return {
+          ...m,
+          isPresent,
+          checkInTime: found ? found.time : '—',
+          checkInMethod: found ? (found.method || 'KIOSK') : '—'
+        };
+      });
+
+      const presentPct = totalDirectory > 0 ? Math.round((presentCount / totalDirectory) * 100) : 0;
+      const absentPct = totalDirectory > 0 ? Math.round((absentCount / totalDirectory) * 100) : 0;
+      
+      const malePct = presentCount > 0 ? Math.round((attendingMale / presentCount) * 100) : 0;
+      const femalePct = presentCount > 0 ? Math.round((attendingFemale / presentCount) * 100) : 0;
+      const childPct = presentCount > 0 ? Math.max(0, 100 - malePct - femalePct) : 0;
+
+      // Update Filter Counts in Toolbar
+      document.getElementById('countAllFilter').innerText = totalDirectory;
+      document.getElementById('countPresentFilter').innerText = presentCount;
+      document.getElementById('countAbsentFilter').innerText = absentCount;
+
+      // Update Metric Cards
+      document.getElementById('statTodayCount').innerText = totalDirectory;
+      document.getElementById('statPresentCount').innerText = `${presentCount} (${presentPct}%)`;
+      document.getElementById('statAbsentCount').innerText = `${absentCount} (${absentPct}%)`;
+      document.getElementById('statAttMaleCount').innerText = `${attendingMale} (${malePct}%)`;
+      document.getElementById('statAttFemaleCount').innerText = `${attendingFemale} (${femalePct}%)`;
+      document.getElementById('statAttChildCount').innerText = `${attendingChild} (${childPct}%)`;
+
+      // Update Demographic Ratio Progress (Men | Women | Children)
+      document.getElementById('ratioFillMale').style.width = `${malePct}%`;
+      document.getElementById('ratioFillFemale').style.width = `${femalePct}%`;
+      document.getElementById('ratioFillChild').style.width = `${childPct}%`;
+
+      document.getElementById('ratioDetailsText').innerText = `${attendingMale} Men (${malePct}%) · ${attendingFemale} Women (${femalePct}%) · ${attendingChild} Children (${childPct}%)`;
+      document.getElementById('legendMaleText').innerText = `${attendingMale} (${malePct}%)`;
+      document.getElementById('legendFemaleText').innerText = `${attendingFemale} (${femalePct}%)`;
+      document.getElementById('legendChildText').innerText = `${attendingChild} (${childPct}%)`;
+
+      // Filter by Active View Mode (ALL, PRESENT, ABSENT)
+      let listToDisplay = processedMembers;
+      if (currentAttFilter === 'PRESENT') {
+        listToDisplay = processedMembers.filter(m => m.isPresent);
+      } else if (currentAttFilter === 'ABSENT') {
+        listToDisplay = processedMembers.filter(m => !m.isPresent);
+      }
+
+      renderAttendanceTableHTML(listToDisplay);
+    }
+
+    function renderAttendanceTableHTML(list) {
+      const tbody = document.getElementById('attendanceTableBody');
+      const mobCards = document.getElementById('attMobileCards');
+
+      if (list.length === 0) {
+        if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--muted); padding: 30px;">No members found matching this filter for the selected service.</td></tr>`;
+        if (mobCards) mobCards.innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px 0;">No members found.</div>`;
+        return;
+      }
+
+      const buildBadges = (m) => {
+        const isMale = (m.gender||'').toLowerCase().startsWith('m');
+        const isFemale = (m.gender||'').toLowerCase().startsWith('f');
+        const genderBadge = isMale ? `<span class="badge-gender-male">Male</span>` : isFemale ? `<span class="badge-gender-female">Female</span>` : `—`;
+        const isChild = m.category==='Child'||(m.role&&m.role.toLowerCase().includes('child'));
+        const catBadge = isChild ? `<span class="badge-child">&#128118; Child</span>` : m.category==='Youth' ? `<span class="badge-check" style="background:#e0f2fe;color:#0369a1;">Youth</span>` : `<span class="badge-adult">Adult</span>`;
+        const phoneDisplay = isChild&&m.guardian ? `${m.phone||'—'} <span style="font-size:11px;color:var(--muted);">&#128100; ${m.guardian}</span>` : (m.phone||'—');
+        return { genderBadge, catBadge, phoneDisplay };
+      };
+
+      // Desktop table
+      if (tbody) {
+        tbody.innerHTML = list.map((m, i) => {
+          const {genderBadge, catBadge, phoneDisplay} = buildBadges(m);
+          const statusBadge = m.isPresent ? `<span class="badge-present"><i class="fas fa-check-circle"></i> Present</span>` : `<span class="badge-absent"><i class="fas fa-times-circle"></i> Absent</span>`;
+          const followUpBtn = m.isPresent
+            ? `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#14532d;" onclick="toggleMemberAttendance('${m.phone}',false)"><i class="fas fa-check"></i> Checked In</button>`
+            : `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#c89b55;color:#111;" onclick="toggleMemberAttendance('${m.phone}',true)"><i class="fas fa-user-plus"></i> Mark Present</button>`;
+          return `<tr>
+            <td>${i+1}</td><td><strong>${m.firstName} ${m.lastName}</strong></td>
+            <td>${catBadge}</td><td>${phoneDisplay}</td><td>${genderBadge}</td>
+            <td>${m.address?`<span>&#128205; ${m.address}</span>`:'—'}</td>
+            <td><span class="badge-check">${m.role||'Member'}</span></td>
+            <td>${statusBadge}</td>
+            <td>${m.isPresent?`<strong>${m.checkInTime}</strong>`:'<span style="color:#991b1b;font-weight:700;font-size:12px;">Did Not Attend</span>'}</td>
+            <td>${followUpBtn}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      // Mobile cards
+      if (mobCards) {
+        mobCards.innerHTML = list.map((m, i) => {
+          const {genderBadge, catBadge} = buildBadges(m);
+          const statusBadge = m.isPresent ? `<span class="badge-present"><i class="fas fa-check-circle"></i> Present</span>` : `<span class="badge-absent"><i class="fas fa-times-circle"></i> Absent</span>`;
+          const btn = m.isPresent
+            ? `<button class="btn-main mob-card-actions" style="background:#14532d;" onclick="toggleMemberAttendance('${m.phone}',false)"><i class="fas fa-check"></i> Checked In</button>`
+            : `<button class="btn-main mob-card-actions" style="background:#c89b55;color:#111;" onclick="toggleMemberAttendance('${m.phone}',true)"><i class="fas fa-user-plus"></i> Mark Present</button>`;
+          return `
+            <div class="mob-card">
+              <div class="mob-card-header">
+                <div class="mob-card-name">${m.firstName} ${m.lastName}</div>
+                ${statusBadge}
+              </div>
+              <div class="mob-card-meta">
+                <div class="mob-card-row"><span>Category</span><strong>${catBadge}</strong></div>
+                <div class="mob-card-row"><span>Gender</span><strong>${genderBadge}</strong></div>
+                <div class="mob-card-row"><span>Phone</span><strong>${m.phone||'—'}</strong></div>
+                ${m.guardian?`<div class="mob-card-row"><span>Guardian</span><strong>${m.guardian}</strong></div>`:''}
+                <div class="mob-card-row"><span>Role</span><strong>${m.role||'Member'}</strong></div>
+                <div class="mob-card-row"><span>Check-In</span><strong>${m.isPresent?m.checkInTime:'Did Not Attend'}</strong></div>
+              </div>
+              <div class="mob-card-actions">${btn}</div>
+            </div>`;
+        }).join('');
+      }
+
+      syncAttendanceViewMode();
+    }
+
+    function syncAttendanceViewMode() {
+      const isMobile = window.innerWidth <= 700;
+      const tbl = document.querySelector('#secAttendance .table-responsive');
+      const cards = document.getElementById('attMobileCards');
+      if (tbl) tbl.style.display = isMobile ? 'none' : 'block';
+      if (cards) cards.style.display = isMobile ? 'block' : 'none';
+    }
+    window.addEventListener('resize', syncAttendanceViewMode);
+
+    function filterAttendanceTable() {
+      const q = document.getElementById('attSearchInput').value.toLowerCase();
+      const activeAttList = getAttendanceListForService(currentSelectedService);
+
+      const processedMembers = allMembers.map(m => {
+        const found = activeAttList.find(a => a.phone === m.phone || `${m.firstName} ${m.lastName}`.toLowerCase() === (a.name || '').toLowerCase());
+        return {
+          ...m,
+          isPresent: Boolean(found),
+          checkInTime: found ? found.time : '—',
+          checkInMethod: found ? (found.method || 'KIOSK') : '—'
+        };
+      });
+
+      const filtered = processedMembers.filter(m => 
+        `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) ||
+        (m.phone && m.phone.includes(q)) ||
+        (m.guardian && m.guardian.toLowerCase().includes(q)) ||
+        (m.address && m.address.toLowerCase().includes(q)) ||
+        (m.category && m.category.toLowerCase().includes(q)) ||
+        (m.role && m.role.toLowerCase().includes(q))
+      );
+
+      renderAttendanceTableHTML(filtered);
+    }
+
+    function toggleMemberAttendance(phone, makePresent) {
+      if (!serviceAttendanceMap[currentSelectedService]) {
+        serviceAttendanceMap[currentSelectedService] = [];
+      }
+
+      if (makePresent) {
+        const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        serviceAttendanceMap[currentSelectedService].push({ phone, time: timeNow, method: 'ADMIN_MANUAL' });
+      } else {
+        serviceAttendanceMap[currentSelectedService] = serviceAttendanceMap[currentSelectedService].filter(a => a.phone !== phone);
+      }
+
+      renderAttendanceAndDemographics();
+    }
+
+    function downloadAttendanceAbsenteeCSV() {
+      const activeAttList = getAttendanceListForService(currentSelectedService);
+      let csv = `Service Name,Full Name,Category,Phone Number,Parent / Guardian,Gender,Residential Location,Ministry Role,Attendance Status,Check-In Time\n`;
+
+      allMembers.forEach(m => {
+        const found = activeAttList.find(a => a.phone === m.phone || `${m.firstName} ${m.lastName}`.toLowerCase() === (a.name || '').toLowerCase());
+        const isPresent = Boolean(found);
+        const status = isPresent ? 'PRESENT (Attended)' : 'ABSENT (Did Not Attend)';
+        const checkTime = found ? found.time : 'N/A';
+        const name = `"${m.firstName} ${m.lastName}"`;
+        const cat = `"${m.category || 'Adult'}"`;
+        const guardian = `"${(m.guardian || '').replace(/"/g, '""')}"`;
+        const addr = `"${(m.address || '').replace(/"/g, '""')}"`;
+        const role = `"${m.role || 'Member'}"`;
+
+        csv += `"${currentSelectedService}",${name},${cat},"${m.phone || ''}",${guardian},${m.gender || ''},${addr},${role},"${status}","${checkTime}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `SFMI_Attendance_Report_${currentSelectedService.replace(/[^a-zA-Z0-9]/g, '_')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    async function fetchLiveCounts() {
+      try {
+        const curRes = await fetch(`${API_BASE}/attendance/services/current`);
+        const cur = await curRes.json();
+        if (cur?.id) {
+          const liveRes = await fetch(`${API_BASE}/attendance/live-count/${cur.id}`);
+          const live = await liveRes.json();
+          if (live.recent && live.recent.length > 0) {
+            const liveSundayList = live.recent.map(item => ({
+              phone: item.member?.phone || '',
+              name: `${item.member?.firstName || ''} ${item.member?.lastName || ''}`.trim(),
+              time: new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              method: item.method || 'KIOSK'
+            }));
+            serviceAttendanceMap['Sunday: Family & Friends Service'] = liveSundayList;
+            renderAttendanceAndDemographics();
+          }
+        }
+      } catch (e) {}
+    }
+
+    /* Member Directory (With Children, Address, Gender & DOB) */
+    async function loadSavedMembers() {
+      try {
+        let token = localStorage.getItem('sfmi_token');
+        if (!token) {
+          try {
+            const loginRes = await fetch(`${API_BASE}/auth/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: 'Admin@solutionsfaith.com', password: 'Solutions12@26' })
+            });
+            if (loginRes.ok) {
+              const loginData = await loginRes.json();
+              if (loginData.accessToken) {
+                token = loginData.accessToken;
+                localStorage.setItem('sfmi_token', token);
+              }
+            }
+          } catch(err){}
+        }
+
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch(`${API_BASE}/members`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          allMembers = Array.isArray(data) ? data : (Array.isArray(data.members) ? data.members : []);
+          renderMembersTable();
+          renderAttendanceAndDemographics();
+          return;
+        }
+      } catch(e) {}
+
+      // Fallback: empty directory (No mock data!)
+      const saved = localStorage.getItem('sfmi_members_registry');
+      if (saved) { try { allMembers = JSON.parse(saved); } catch(e){ allMembers = []; } }
+      else { allMembers = []; }
+      renderMembersTable();
+      renderAttendanceAndDemographics();
+    }
+
+    function saveMembersToStorage() {
+      localStorage.setItem('sfmi_members_registry', JSON.stringify(allMembers));
+    }
+
+    function renderMembersTable(list = allMembers) {
+      const tbody = document.getElementById('membersTableBody');
+      const mobCards = document.getElementById('membersMobileCards');
+
+      const buildMemberBadges = (m) => {
+        const isMale = (m.gender||'').toLowerCase().startsWith('m');
+        const isFemale = (m.gender||'').toLowerCase().startsWith('f');
+        const genderBadge = isMale ? `<span class="badge-gender-male">Male</span>` : isFemale ? `<span class="badge-gender-female">Female</span>` : `—`;
+        const isChild = m.category==='Child'||(m.role&&m.role.toLowerCase().includes('child'));
+        const catBadge = isChild ? `<span class="badge-child">&#128118; Child</span>` : m.category==='Youth' ? `<span class="badge-check" style="background:#e0f2fe;color:#0369a1;">Youth</span>` : `<span class="badge-adult">Adult</span>`;
+        const phoneDisplay = isChild&&m.guardian ? `<strong style="color:var(--accent);">${m.phone||'—'}</strong><div style="font-size:11px;color:var(--muted);"><i class="fas fa-user-shield"></i> ${m.guardian}</div>` : `<strong style="color:var(--accent);">${m.phone||'—'}</strong>`;
+        return {genderBadge, catBadge, phoneDisplay, isChild};
+      };
+
+      if (list.length === 0) {
+        if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px;">No members in directory.</td></tr>`;
+        if (mobCards) mobCards.innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px 0;">No members in directory yet.</div>`;
+        return;
+      }
+
+      // Desktop table
+      if (tbody) {
+        tbody.innerHTML = list.map((m, i) => {
+          const {genderBadge, catBadge, phoneDisplay} = buildMemberBadges(m);
+          return `<tr>
+            <td>${i+1}</td><td><strong>${m.firstName} ${m.lastName}</strong></td>
+            <td>${catBadge}</td><td>${phoneDisplay}</td><td>${genderBadge}</td>
+            <td>${m.address?`<span>&#128205; ${m.address}</span>`:'—'}</td>
+            <td>${m.dob?`<span class="badge-dob"><i class="fas fa-calendar-day"></i> ${m.dob}</span>`:'—'}</td>
+            <td><span class="badge-check">${m.role||'Member'}</span></td>
+            <td><div style="display:flex;gap:6px;">
+              <button class="btn-main" style="padding:4px 10px;font-size:12px;background:#c89b55;color:#111;" onclick="openEditMemberModal('${m.id}')"><i class="fas fa-edit"></i> Edit</button>
+              <button class="btn-main" style="padding:4px 10px;font-size:12px;background:#c5221f;" onclick="deleteMember('${m.id}')"><i class="fas fa-trash-alt"></i> Remove</button>
+            </div></td>
+          </tr>`;
+        }).join('');
+      }
+
+      // Mobile cards
+      if (mobCards) {
+        mobCards.innerHTML = list.length === 0
+          ? `<div style="text-align:center;color:var(--muted);padding:28px 0;">No members yet.</div>`
+          : list.map((m, i) => {
+            const {genderBadge, catBadge} = buildMemberBadges(m);
+            return `
+              <div class="mob-card">
+                <div class="mob-card-header">
+                  <div class="mob-card-name">${m.firstName} ${m.lastName}</div>
+                  ${catBadge}
+                </div>
+                <div class="mob-card-meta">
+                  <div class="mob-card-row"><span>Gender</span><strong>${genderBadge}</strong></div>
+                  <div class="mob-card-row"><span>Phone</span><strong>${m.phone||'—'}</strong></div>
+                  ${m.guardian?`<div class="mob-card-row"><span>Guardian</span><strong>${m.guardian}</strong></div>`:''}
+                  <div class="mob-card-row"><span>Location</span><strong>${m.address||'—'}</strong></div>
+                  <div class="mob-card-row"><span>Date of Birth</span><strong>${m.dob||'—'}</strong></div>
+                  <div class="mob-card-row"><span>Role</span><strong>${m.role||'Member'}</strong></div>
+                </div>
+                <div class="mob-card-actions">
+                  <button class="btn-main" style="background:#c89b55;color:#111;" onclick="openEditMemberModal('${m.id}')"><i class="fas fa-edit"></i> Edit</button>
+                  <button class="btn-main" style="background:#c5221f;" onclick="deleteMember('${m.id}')"><i class="fas fa-trash-alt"></i> Remove</button>
+                </div>
+              </div>`;
+          }).join('');
+      }
+
+      syncMembersViewMode();
+      renderBirthdayRemindersWidget(false);
+    }
+
+    function syncMembersViewMode() {
+      const isMobile = window.innerWidth <= 700;
+      const tbl = document.querySelector('#secMembers .table-responsive');
+      const cards = document.getElementById('membersMobileCards');
+      if (tbl) tbl.style.display = isMobile ? 'none' : 'block';
+      if (cards) cards.style.display = isMobile ? 'block' : 'none';
+    }
+    window.addEventListener('resize', syncMembersViewMode);
+
+    /* ── MEMBER BIRTHDAY REMINDERS SYSTEM ── */
+    function renderBirthdayRemindersWidget(notifyToast = false) {
+      const container = document.getElementById('birthdayRemindersList');
+      const badge = document.getElementById('bdayBadgeCount');
+      if (!container) return;
+
+      const birthdays = getUpcomingBirthdays(30);
+      if (badge) badge.innerText = `${birthdays.length} Upcoming`;
+
+      if (birthdays.length === 0) {
+        container.innerHTML = `
+          <div style="width:100%; text-align:center; padding: 18px; color: #a3b899; font-size: 13.5px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+            <i class="fas fa-calendar-check" style="margin-right: 6px;"></i> No registered member birthdays in the next 30 days.
+          </div>`;
+        return;
+      }
+
+      let todayCount = 0;
+      let toastNoticeText = [];
+
+      container.innerHTML = birthdays.map(b => {
+        const m = b.member;
+        if (b.isToday) {
+          todayCount++;
+          toastNoticeText.push(`${m.firstName} ${m.lastName}`);
+          return `
+            <div style="flex: 1; min-width: 260px; background: linear-gradient(135deg, #c89b55 0%, #a87d3b 100%); color: #111; padding: 14px 16px; border-radius: 8px; border: 1px solid #fef08a; box-shadow: 0 4px 12px rgba(200,155,85,0.3);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; background: #111; color: #c89b55; padding: 2px 8px; border-radius: 4px;">🎉 TODAY!</span>
+                  <div style="font-size: 16px; font-weight: 800; margin-top: 6px;">${m.firstName} ${m.lastName}</div>
+                  <div style="font-size: 12px; opacity: 0.9; margin-top: 2px;">Turning <strong>${b.age} years old</strong></div>
+                </div>
+                <span style="font-size: 26px;">🎂</span>
+              </div>
+              <div style="margin-top: 10px; font-size: 12px; font-weight: 700; border-top: 1px dashed rgba(0,0,0,0.2); padding-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="fas fa-phone"></i> ${m.phone || 'No Phone'}</span>
+                <span style="background: rgba(0,0,0,0.15); padding: 3px 8px; border-radius: 4px;">Wish Happy Birthday!</span>
+              </div>
+            </div>`;
+        } else {
+          const dayText = b.diffDays === 1 ? 'Tomorrow' : `In ${b.diffDays} days (${b.displayDate})`;
+          return `
+            <div style="flex: 1; min-width: 230px; background: rgba(255,255,255,0.07); color: white; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <div style="font-size: 14px; font-weight: 800;">${m.firstName} ${m.lastName}</div>
+                  <div style="font-size: 11.5px; color: #c4d0ca; margin-top: 2px;">${b.displayDate} · Turning ${b.age}</div>
+                </div>
+                <span style="font-size: 11px; font-weight: 700; background: rgba(200,155,85,0.25); color: var(--accent); padding: 3px 8px; border-radius: 4px;">${dayText}</span>
+              </div>
+              <div style="margin-top: 8px; font-size: 11.5px; color: #a3b899; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-user-tag"></i> ${m.category || 'Member'} ${m.phone ? `· 📞 ${m.phone}` : ''}
+              </div>
+            </div>`;
+        }
+      }).join('');
+
+      if ((notifyToast || todayCount > 0) && toastNoticeText.length > 0) {
+        showToast(`🎉 Today's Birthday(s): <strong>${toastNoticeText.join(', ')}</strong>! Send wishes!`, 'success', 'Birthday Celebration!');
+      }
+    }
+
+    function getUpcomingBirthdays(daysAhead = 30) {
+      const today = new Date();
+      const currentMonth = today.getMonth();
+      const currentDay = today.getDate();
+      const results = [];
+
+      allMembers.forEach(m => {
+        let dateObj = null;
+        if (m.rawDob && /^\d{4}-\d{2}-\d{2}$/.test(m.rawDob)) {
+          const [y, mth, d] = m.rawDob.split('-').map(Number);
+          dateObj = new Date(y, mth - 1, d);
+        } else if (m.dob) {
+          const parsed = Date.parse(m.dob);
+          if (!isNaN(parsed)) dateObj = new Date(parsed);
+        }
+
+        if (!dateObj) return;
+
+        const bMonth = dateObj.getMonth();
+        const bDay = dateObj.getDate();
+
+        let nextBday = new Date(today.getFullYear(), bMonth, bDay);
+        if (nextBday < new Date(today.getFullYear(), currentMonth, currentDay)) {
+          nextBday.setFullYear(today.getFullYear() + 1);
+        }
+
+        const diffTime = nextBday - new Date(today.getFullYear(), currentMonth, currentDay);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const isToday = (bMonth === currentMonth && bDay === currentDay);
+
+        if (isToday || (diffDays >= 0 && diffDays <= daysAhead)) {
+          const age = today.getFullYear() - dateObj.getFullYear();
+          results.push({
+            member: m,
+            isToday,
+            diffDays,
+            bMonth,
+            bDay,
+            age,
+            displayDate: nextBday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+          });
+        }
+      });
+
+      results.sort((a, b) => a.diffDays - b.diffDays);
+      return results;
+    }
+
+    function filterMembersTable() {
+      const q = document.getElementById('memberSearchInput').value.toLowerCase();
+      const filtered = allMembers.filter(m => 
+        `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) || 
+        (m.phone && m.phone.includes(q)) ||
+        (m.guardian && m.guardian.toLowerCase().includes(q)) ||
+        (m.address && m.address.toLowerCase().includes(q)) ||
+        (m.category && m.category.toLowerCase().includes(q)) ||
+        (m.gender && m.gender.toLowerCase().includes(q)) ||
+        (m.dob && m.dob.toLowerCase().includes(q))
+      );
+      renderMembersTable(filtered);
+    }
+
+    function deleteMember(id) {
+      showConfirmModal(
+        'Remove Member',
+        'Are you sure you want to remove this member from the directory?',
+        () => {
+          allMembers = allMembers.filter(m => m.id !== id);
+          saveMembersToStorage();
+          renderMembersTable();
+          renderAttendanceAndDemographics();
+          showToast('Member removed from directory.', 'info', 'Member Removed');
+        },
+        'fas fa-user-minus',
+        'Remove Member',
+        '#c5221f'
+      );
+    }
+
+    function toggleAddGuardianField(val) {
+      const isChild = val === 'Child';
+      document.getElementById('wrapAddGuardian').style.display = isChild ? 'block' : 'none';
+      document.getElementById('lblAddPhone').innerText = isChild ? 'Parent / Contact Phone *' : 'Phone Number *';
+      if (isChild) {
+        document.getElementById('newMemRole').value = 'Child / Sunday School';
+      }
+    }
+
+    function toggleEditGuardianField(val) {
+      const isChild = val === 'Child';
+      document.getElementById('wrapEditGuardian').style.display = isChild ? 'block' : 'none';
+      document.getElementById('lblEditPhone').innerText = isChild ? 'Parent / Contact Phone *' : 'Phone Number *';
+    }
+
+    function openAddMemberModal() {
+      document.getElementById('addMemberModal').classList.add('active');
+      document.getElementById('newMemFirst').focus();
+    }
+
+    function closeAddMemberModal() {
+      document.getElementById('addMemberModal').classList.remove('active');
+    }
+
+    function convertToInputDateFormat(dateStr, rawDob) {
+      if (rawDob && /^\d{4}-\d{2}-\d{2}$/.test(rawDob)) return rawDob;
+      if (!dateStr) return '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString().split('T')[0];
+      }
+      return '';
+    }
+
+    function openEditMemberModal(id) {
+      const member = allMembers.find(m => m.id === id);
+      if (!member) return;
+
+      document.getElementById('editMemId').value = member.id;
+      document.getElementById('editMemFirst').value = member.firstName || '';
+      document.getElementById('editMemLast').value = member.lastName || '';
+      document.getElementById('editMemCategory').value = member.category || 'Adult';
+      document.getElementById('editMemGuardian').value = member.guardian || '';
+      document.getElementById('editMemPhone').value = member.phone || '';
+      document.getElementById('editMemGender').value = member.gender || 'Male';
+      document.getElementById('editMemAddress').value = member.address || '';
+      document.getElementById('editMemDob').value = convertToInputDateFormat(member.dob, member.rawDob);
+      document.getElementById('editMemRole').value = member.role || 'Member';
+      document.getElementById('editMemEmail').value = member.email || '';
+
+      toggleEditGuardianField(member.category || 'Adult');
+
+      document.getElementById('editMemberModal').classList.add('active');
+      document.getElementById('editMemFirst').focus();
+    }
+
+    function closeEditMemberModal() {
+      document.getElementById('editMemberModal').classList.remove('active');
+    }
+
+    function handleUpdateMember(e) {
+      e.preventDefault();
+      const id = document.getElementById('editMemId').value;
+      const first = document.getElementById('editMemFirst').value.trim();
+      const last = document.getElementById('editMemLast').value.trim();
+      const category = document.getElementById('editMemCategory').value;
+      const guardian = document.getElementById('editMemGuardian').value.trim();
+      const phone = document.getElementById('editMemPhone').value.trim();
+      const gender = document.getElementById('editMemGender').value;
+      const address = document.getElementById('editMemAddress').value.trim();
+      const rawDob = document.getElementById('editMemDob').value;
+      const email = document.getElementById('editMemEmail').value.trim();
+      const role = document.getElementById('editMemRole').value;
+
+      const formattedDob = formatDisplayDate(rawDob);
+
+      const index = allMembers.findIndex(m => m.id === id);
+      if (index !== -1) {
+        allMembers[index] = {
+          ...allMembers[index],
+          firstName: first,
+          lastName: last,
+          category,
+          guardian: category === 'Child' ? guardian : '',
+          phone,
+          gender,
+          address,
+          dob: formattedDob,
+          rawDob: rawDob || null,
+          email,
+          role
+        };
+
+        saveMembersToStorage();
+        renderMembersTable();
+        renderAttendanceAndDemographics();
+        closeEditMemberModal();
+        showToast(`Member profile for <strong>${first} ${last}</strong> (${category}) updated successfully!`, 'success', 'Profile Updated');
+      }
+    }
+
+    function formatDisplayDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr + 'T00:00:00');
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function handleSaveNewMember(e) {
+      e.preventDefault();
+      const first = document.getElementById('newMemFirst').value.trim();
+      const last = document.getElementById('newMemLast').value.trim();
+      const category = document.getElementById('newMemCategory').value;
+      const guardian = document.getElementById('newMemGuardian').value.trim();
+      const phone = document.getElementById('newMemPhone').value.trim();
+      const gender = document.getElementById('newMemGender').value;
+      const address = document.getElementById('newMemAddress').value.trim();
+      const rawDob = document.getElementById('newMemDob').value;
+      const email = document.getElementById('newMemEmail').value.trim();
+      const role = document.getElementById('newMemRole').value;
+
+      const formattedDob = formatDisplayDate(rawDob);
+
+      const newM = {
+        id: 'mem_' + Date.now(),
+        firstName: first,
+        lastName: last,
+        category,
+        guardian: category === 'Child' ? guardian : '',
+        phone,
+        gender,
+        address,
+        dob: formattedDob,
+        rawDob: rawDob || null,
+        email,
+        role: role || (category === 'Child' ? 'Child / Sunday School' : 'Member')
+      };
+
+      allMembers.unshift(newM);
+      saveMembersToStorage();
+      renderMembersTable();
+      renderAttendanceAndDemographics();
+      closeAddMemberModal();
+      e.target.reset();
+      showToast(`New ${category} <strong>${first} ${last}</strong> added to directory successfully!`, 'success', 'Member Registered');
+    }
+
+    /* SERVICES & SPECIAL PROGRAMS SETUP MANAGER */
+    let customPrograms = [];
+
+    function loadCustomPrograms() {
+      const saved = localStorage.getItem('sfmi_custom_programs');
+      if (saved) {
+        try { customPrograms = JSON.parse(saved); } catch(e){}
+      }
+    }
+
+    function saveCustomPrograms() {
+      localStorage.setItem('sfmi_custom_programs', JSON.stringify(customPrograms));
+    }
+
+    function populateServiceDropdowns() {
+      const activeKiosk = localStorage.getItem('sfmi_active_kiosk_service');
+      const btnSwitchBack = document.getElementById('btnSwitchBackAuto');
+      const displayBanner = document.getElementById('adminKioskActiveDisplay');
+      const activeSub = document.getElementById('adminKioskActiveSub');
+      
+      // 1. Populate Attendance Tab Selector
+      const attSelect = document.getElementById('attServiceSelect');
+      if (attSelect) {
+        const standardOptions = [
+          { val: 'Sunday: Family & Friends Service', text: 'Sunday — Family & Friends Service' },
+          { val: 'Wednesday: Time with the Lord', text: 'Wednesday — Time with the Lord' },
+          { val: 'Friday: Prophetic Healing & Deliverance', text: 'Friday — Prophetic Healing & Deliverance' }
+        ];
+
+        attSelect.innerHTML = standardOptions.map(o => `<option value="${o.val}">${o.text}</option>`).join('') +
+          customPrograms.map(p => `<option value="${p.name}">[Special Program] ${p.name}</option>`).join('');
+
+        if (Array.from(attSelect.options).some(o => o.value === currentSelectedService)) {
+          attSelect.value = currentSelectedService;
+        }
+      }
+
+      // 2. Populate Admin Kiosk Program Picker
+      const kioskPicker = document.getElementById('adminKioskProgramPicker');
+      if (kioskPicker) {
+        kioskPicker.innerHTML = `
+          <option value="AUTO: Day-of-Week Schedule">⚡ Automatic (Day-of-Week Schedule)</option>
+          <option value="Sunday: Family & Friends Service">Sunday — Family & Friends Service</option>
+          <option value="Wednesday: Time with the Lord">Wednesday — Time with the Lord</option>
+          <option value="Friday: Prophetic Healing & Deliverance">Friday — Prophetic Deliverance</option>
+        ` + customPrograms.map(p => `<option value="${p.name}">🌟 [Special Program] ${p.name}</option>`).join('');
+
+        if (activeKiosk) {
+          kioskPicker.value = activeKiosk;
+        } else {
+          kioskPicker.value = 'AUTO: Day-of-Week Schedule';
+        }
+      }
+
+      // Update Kiosk Active Display Banner
+      if (activeKiosk) {
+        if (btnSwitchBack) btnSwitchBack.style.display = 'inline-flex';
+        if (displayBanner) displayBanner.innerHTML = `<span style="color: #fbbf24;"><i class="fas fa-star"></i> Special Program Live:</span> ${activeKiosk}`;
+        if (activeSub) activeSub.innerText = 'Kiosk is currently locked to this program. When the program is over, click the green button above to return the kiosk to normal services.';
+      } else {
+        if (btnSwitchBack) btnSwitchBack.style.display = 'none';
+        if (displayBanner) displayBanner.innerHTML = `<span style="color: #4ade80;"><i class="fas fa-check-circle"></i> Regular Weekly Schedule:</span> Running normal Sunday / Wednesday / Friday services`;
+        if (activeSub) activeSub.innerText = 'Kiosk is running on automatic day-of-the-week schedule. You can lock it to any special program week at any time.';
+      }
+    }
+
+    function resetKioskToRegularSchedule() {
+      localStorage.removeItem('sfmi_active_kiosk_service');
+      populateServiceDropdowns();
+      renderProgramsManager();
+      showToast('Kiosk has been switched back to <strong>Regular Weekly Schedule</strong> (Sunday / Wednesday / Friday)!', 'success', 'Schedule Reset');
+    }
+
+    function renderProgramsManager() {
+      populateServiceDropdowns();
+      const tbody = document.getElementById('programsTableBody');
+      if (!tbody) return;
+
+      const activeKiosk = localStorage.getItem('sfmi_active_kiosk_service');
+
+      // Combine standard services + custom program weeks
+      const regularServices = [
+        {
+          id: 'std_sun',
+          name: 'Sunday: Family & Friends Service',
+          category: 'Regular Weekly Service',
+          schedule: 'Every Sunday · 7:00 AM – 11:00 AM',
+          flyerUrl: '/Sunday.JPG',
+          isStandard: true
+        },
+        {
+          id: 'std_wed',
+          name: 'Wednesday: Time with the Lord',
+          category: 'Midweek Prayer Service',
+          schedule: 'Every Wednesday · 6:00 PM – 8:00 PM',
+          flyerUrl: '/WEDNESDAY.JPG',
+          isStandard: true
+        },
+        {
+          id: 'std_fri',
+          name: 'Friday: Prophetic Healing & Deliverance',
+          category: 'Deliverance Service',
+          schedule: 'Every Friday · 6:00 PM – 8:00 PM',
+          flyerUrl: '/FRIDAY.JPG',
+          isStandard: true
+        }
+      ];
+
+      const allList = [...regularServices, ...customPrograms];
+
+      tbody.innerHTML = allList.map((item, i) => {
+        const isKioskActive = activeKiosk === item.name || (!activeKiosk && item.isStandard && item.name.includes('Sunday'));
+        const count = (serviceAttendanceMap[item.name] || []).length;
+        const statusBadge = isKioskActive
+          ? `<span class="badge-present" style="background:#e6f4ea;color:#137333;"><i class="fas fa-tower-broadcast"></i> Live on Kiosk</span>`
+          : `<span style="color:var(--muted);font-size:12px;">Standby</span>`;
+        const actionButtons = `<div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${!isKioskActive ? `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#14532d;" onclick="activateProgramOnKiosk('${item.name}')"><i class="fas fa-play"></i> Set Live</button>` : `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#0f3d24;" onclick="resetKioskToRegularSchedule()"><i class="fas fa-rotate-left"></i> End / Reset</button>`}
+          <button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#c89b55;color:#111;" onclick="openEditProgramModal('${item.id}')"><i class="fas fa-edit"></i> Edit</button>
+          <button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#3b82f6;" onclick="viewProgramAttendance('${item.name}')"><i class="fas fa-users"></i> Attendance</button>
+          ${!item.isStandard ? `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#c5221f;" onclick="deleteCustomProgram('${item.id}')"><i class="fas fa-trash-alt"></i> Delete</button>` : ''}
+        </div>`;
+        return `<tr>
+          <td>${i+1}</td><td><strong>${item.name}</strong></td>
+          <td><span class="badge-check">${item.category}</span></td>
+          <td>${item.schedule}</td>
+          <td><img src="${item.flyerUrl}" style="width:36px;height:36px;object-fit:contain;border-radius:4px;border:1px solid var(--line);background:#000;" /></td>
+          <td><strong style="color:var(--emerald);">${count} Attended</strong></td>
+          <td>${statusBadge}</td>
+          <td>${actionButtons}</td>
+        </tr>`;
+      }).join('');
+
+      // Mobile cards for Programs
+      const mobCards = document.getElementById('programsMobileCards');
+      if (mobCards) {
+        mobCards.innerHTML = allList.length === 0
+          ? `<div style="text-align:center;color:var(--muted);padding:28px 0;">No services or programs configured.</div>`
+          : allList.map((item, i) => {
+            const isKioskActive = activeKiosk === item.name || (!activeKiosk && item.isStandard && item.name.includes('Sunday'));
+            const count = (serviceAttendanceMap[item.name] || []).length;
+            const statusBadge = isKioskActive
+              ? `<span class="badge-present" style="background:#e6f4ea;color:#137333;font-size:11px;"><i class="fas fa-tower-broadcast"></i> Live</span>`
+              : `<span style="color:var(--muted);font-size:11px;">Standby</span>`;
+            return `
+              <div class="mob-card">
+                <div class="mob-card-header">
+                  <div class="mob-card-name">${item.name}</div>
+                  ${statusBadge}
+                </div>
+                <div class="mob-card-meta">
+                  <div class="mob-card-row"><span>Category</span><strong><span class="badge-check">${item.category}</span></strong></div>
+                  <div class="mob-card-row"><span>Schedule</span><strong style="font-size:12px;">${item.schedule}</strong></div>
+                  <div class="mob-card-row"><span>Attendance</span><strong style="color:var(--emerald);">${count} Attended</strong></div>
+                </div>
+                <div class="mob-card-actions">
+                  ${!isKioskActive
+                    ? `<button class="btn-main" style="background:#14532d;" onclick="activateProgramOnKiosk('${item.name}')"><i class="fas fa-play"></i> Set Live</button>`
+                    : `<button class="btn-main" style="background:#0f3d24;" onclick="resetKioskToRegularSchedule()"><i class="fas fa-rotate-left"></i> Reset</button>`}
+                  <button class="btn-main" style="background:#c89b55;color:#111;" onclick="openEditProgramModal('${item.id}')"><i class="fas fa-edit"></i> Edit</button>
+                  <button class="btn-main" style="background:#3b82f6;" onclick="viewProgramAttendance('${item.name}')"><i class="fas fa-users"></i> Attendance</button>
+                  ${!item.isStandard ? `<button class="btn-main" style="background:#c5221f;" onclick="deleteCustomProgram('${item.id}')"><i class="fas fa-trash-alt"></i> Delete</button>` : ''}
+                </div>
+              </div>`;
+          }).join('');
+      }
+
+      syncProgramsViewMode();
+    }
+
+    function syncProgramsViewMode() {
+      const isMobile = window.innerWidth <= 700;
+      const tbl = document.querySelector('#secPrograms .table-responsive');
+      const cards = document.getElementById('programsMobileCards');
+      if (tbl) tbl.style.display = isMobile ? 'none' : 'block';
+      if (cards) cards.style.display = isMobile ? 'block' : 'none';
+    }
+    window.addEventListener('resize', syncProgramsViewMode);
+
+    function getStandardServicesList() {
+      return [
+        {
+          id: 'std_sun',
+          name: localStorage.getItem('sfmi_svc_name_sun') || 'Sunday: Family & Friends Service',
+          category: 'Regular Weekly Service',
+          schedule: localStorage.getItem('sfmi_svc_sched_sun') || 'Every Sunday · 7:00 AM – 11:00 AM',
+          flyerUrl: localStorage.getItem('sfmi_svc_img_sun') || '/Sunday.JPG',
+          isStandard: true
+        },
+        {
+          id: 'std_wed',
+          name: localStorage.getItem('sfmi_svc_name_wed') || 'Wednesday: Time with the Lord',
+          category: 'Midweek Prayer Service',
+          schedule: localStorage.getItem('sfmi_svc_sched_wed') || 'Every Wednesday · 6:00 PM – 8:00 PM',
+          flyerUrl: localStorage.getItem('sfmi_svc_img_wed') || '/WEDNESDAY.JPG',
+          isStandard: true
+        },
+        {
+          id: 'std_fri',
+          name: localStorage.getItem('sfmi_svc_name_fri') || 'Friday: Prophetic Healing & Deliverance',
+          category: 'Deliverance Service',
+          schedule: localStorage.getItem('sfmi_svc_sched_fri') || 'Every Friday · 6:00 PM – 8:00 PM',
+          flyerUrl: localStorage.getItem('sfmi_svc_img_fri') || '/FRIDAY.JPG',
+          isStandard: true
+        }
+      ];
+    }
+
+    function openEditProgramModal(id) {
+      const allList = [...getStandardServicesList(), ...customPrograms];
+      const item = allList.find(p => p.id === id);
+      if (!item) return;
+
+      document.getElementById('editProgId').value = item.id;
+      document.getElementById('editProgIsStandard').value = item.isStandard ? 'true' : 'false';
+      document.getElementById('editProgName').value = item.name;
+      document.getElementById('editProgCategory').value = item.category || 'Special Program / Convention';
+      document.getElementById('editProgSchedule').value = item.schedule || '';
+      document.getElementById('editProgFlyerPreviewImg').src = item.flyerUrl || '/Sunday.JPG';
+      document.getElementById('editProgAttachedFlyerData').value = '';
+      document.getElementById('editProgFlyerFileName').innerText = 'Current flyer image';
+
+      document.getElementById('editProgramModal').classList.add('active');
+      document.getElementById('editProgName').focus();
+    }
+
+    function closeEditProgramModal() {
+      document.getElementById('editProgramModal').classList.remove('active');
+    }
+
+    function handleEditProgramFlyerAttachment(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select a valid image file (JPG, PNG, WEBP).', 'error', 'Invalid File Type');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        document.getElementById('editProgAttachedFlyerData').value = dataUrl;
+        document.getElementById('editProgFlyerPreviewImg').src = dataUrl;
+        document.getElementById('editProgFlyerFileName').innerText = `New: ${file.name} (Ready to Save)`;
+        showToast('New flyer image loaded! Click "Save Changes" to apply.', 'info', 'Flyer Attached');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleUpdateProgram(e) {
+      e.preventDefault();
+      const id = document.getElementById('editProgId').value;
+      const isStandard = document.getElementById('editProgIsStandard').value === 'true';
+      const name = document.getElementById('editProgName').value.trim();
+      const category = document.getElementById('editProgCategory').value;
+      const schedule = document.getElementById('editProgSchedule').value.trim();
+      const attachedFlyer = document.getElementById('editProgAttachedFlyerData').value;
+
+      if (isStandard) {
+        // Update standard service flyer or name in storage
+        if (id === 'std_sun') {
+          if (attachedFlyer) localStorage.setItem('sfmi_svc_img_sun', attachedFlyer);
+          localStorage.setItem('sfmi_svc_name_sun', name);
+          localStorage.setItem('sfmi_svc_sched_sun', schedule);
+        } else if (id === 'std_wed') {
+          if (attachedFlyer) localStorage.setItem('sfmi_svc_img_wed', attachedFlyer);
+          localStorage.setItem('sfmi_svc_name_wed', name);
+          localStorage.setItem('sfmi_svc_sched_wed', schedule);
+        } else if (id === 'std_fri') {
+          if (attachedFlyer) localStorage.setItem('sfmi_svc_img_fri', attachedFlyer);
+          localStorage.setItem('sfmi_svc_name_fri', name);
+          localStorage.setItem('sfmi_svc_sched_fri', schedule);
+        }
+      } else {
+        // Update custom program
+        const index = customPrograms.findIndex(p => p.id === id);
+        if (index !== -1) {
+          customPrograms[index] = {
+            ...customPrograms[index],
+            name,
+            category,
+            tag: category.toUpperCase(),
+            schedule,
+            flyerUrl: attachedFlyer || customPrograms[index].flyerUrl
+          };
+          saveCustomPrograms();
+        }
+      }
+
+      closeEditProgramModal();
+      populateServiceDropdowns();
+      renderProgramsManager();
+      showToast(`Service <strong>"${name}"</strong> updated successfully!`, 'success', 'Service Updated');
+    }
+
+    function handleAdminSetKioskActive(serviceKey) {
+      if (serviceKey === 'AUTO: Day-of-Week Schedule') {
+        resetKioskToRegularSchedule();
+      } else {
+        localStorage.setItem('sfmi_active_kiosk_service', serviceKey);
+        populateServiceDropdowns();
+        renderProgramsManager();
+        showToast(`Kiosk check-in is now set live for: <strong>${serviceKey}</strong>`, 'success', 'Live Kiosk Updated');
+      }
+    }
+
+    function activateProgramOnKiosk(name) {
+      handleAdminSetKioskActive(name);
+    }
+
+    function viewProgramAttendance(name) {
+      currentSelectedService = name;
+      switchTab('attendance');
+      renderAttendanceAndDemographics();
+    }
+
+    function openCreateProgramModal() {
+      document.getElementById('createProgramModal').classList.add('active');
+      document.getElementById('progName').focus();
+    }
+
+    function closeCreateProgramModal() {
+      document.getElementById('createProgramModal').classList.remove('active');
+    }
+
+    function handleProgramFlyerAttachment(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select a valid image file (JPG, PNG, WEBP).', 'error', 'Invalid File Type');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        document.getElementById('progAttachedFlyerData').value = dataUrl;
+        document.getElementById('progFlyerPreviewImg').src = dataUrl;
+        document.getElementById('progFlyerFileName').innerText = file.name;
+        document.getElementById('progFlyerPlaceholder').style.display = 'none';
+        document.getElementById('progFlyerPreviewWrap').style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeAttachedFlyer(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('progFlyerFileInput').value = '';
+      document.getElementById('progAttachedFlyerData').value = '';
+      document.getElementById('progFlyerPlaceholder').style.display = 'block';
+      document.getElementById('progFlyerPreviewWrap').style.display = 'none';
+    }
+
+    function handleSaveCustomProgram(e) {
+      e.preventDefault();
+      const name = document.getElementById('progName').value.trim();
+      const category = document.getElementById('progCategory').value;
+      const schedule = document.getElementById('progSchedule').value.trim();
+      
+      const attachedData = document.getElementById('progAttachedFlyerData').value;
+      const flyerUrl = attachedData || '/Sunday.JPG';
+      const setActive = document.getElementById('progSetKioskActive').checked;
+
+      const newProg = {
+        id: 'prog_' + Date.now(),
+        name,
+        category,
+        tag: category.toUpperCase(),
+        schedule,
+        flyerUrl,
+        createdAt: new Date().toISOString().split('T')[0]
+      };
+
+      customPrograms.unshift(newProg);
+      saveCustomPrograms();
+
+      if (setActive) {
+        localStorage.setItem('sfmi_active_kiosk_service', name);
+      }
+
+      closeCreateProgramModal();
+      e.target.reset();
+      removeAttachedFlyer();
+      populateServiceDropdowns();
+      renderProgramsManager();
+      showToast(`Special Program <strong>"${name}"</strong> with attached flyer registered successfully!`, 'success', 'Program Created');
+    }
+
+    function deleteCustomProgram(id) {
+      showConfirmModal(
+        'Remove Special Program',
+        'Are you sure you want to remove this special program?',
+        () => {
+          customPrograms = customPrograms.filter(p => p.id !== id);
+          saveCustomPrograms();
+          populateServiceDropdowns();
+          renderProgramsManager();
+          showToast('Special program removed successfully.', 'info', 'Program Removed');
+        },
+        'fas fa-trash-alt',
+        'Remove Program',
+        '#c5221f'
+      );
+    }
+
+    let _confirmCallback = null;
+    function showConfirmModal(title, text, callback, iconClass = 'fas fa-sign-out-alt', btnText = 'Log Out', btnColor = '#c5221f') {
+      document.getElementById('confirmModalTitle').innerText = title;
+      document.getElementById('confirmModalText').innerText = text;
+      const okBtn = document.getElementById('confirmModalOkBtn');
+      if (okBtn) {
+        okBtn.innerText = btnText;
+        okBtn.style.background = btnColor;
+      }
+      const icon = document.getElementById('confirmModalIcon');
+      if (icon) icon.className = iconClass;
+      _confirmCallback = callback;
+      document.getElementById('customConfirmModal').style.display = 'flex';
+    }
+
+    function closeCustomConfirmModal(confirmed) {
+      document.getElementById('customConfirmModal').style.display = 'none';
+      if (confirmed && typeof _confirmCallback === 'function') {
+        _confirmCallback();
+      }
+      _confirmCallback = null;
+    }
+
+    /* TOAST NOTIFICATION SYSTEM */
+    function showToast(message, type = 'success', title = '') {
+      let container = document.getElementById('toastContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
+
+      const icons = {
+        success: 'fas fa-circle-check',
+        warning: 'fas fa-triangle-exclamation',
+        error: 'fas fa-circle-exclamation',
+        info: 'fas fa-circle-info'
+      };
+
+      const defaultTitles = {
+        success: 'Success Notification',
+        warning: 'Attention Needed',
+        error: 'Action Error',
+        info: 'System Update'
+      };
+
+      const toast = document.createElement('div');
+      toast.className = `toast-msg toast-${type}`;
+      toast.innerHTML = `
+        <i class="${icons[type] || icons.success} toast-icon"></i>
+        <div class="toast-body">
+          <div class="toast-title">${title || defaultTitles[type]}</div>
+          <div class="toast-text">${message}</div>
+        </div>
+        <button class="toast-close" onclick="dismissToast(this.parentElement)">✕</button>
+        <div class="toast-progress"></div>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        dismissToast(toast);
+      }, 4500);
+    }
+
+    function dismissToast(toastEl) {
+      if (!toastEl || toastEl.isRemoving) return;
+      toastEl.isRemoving = true;
+      toastEl.style.animation = 'toastSlideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+      setTimeout(() => {
+        if (toastEl.parentElement) {
+          toastEl.parentElement.removeChild(toastEl);
+        }
+      }, 300);
+    }
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,273 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  FINANCE
+  PASTORAL
+  REGISTRATION
+  USHER
+  EVENT_MANAGER
+  MEMBER
+  KIOSK
+}
+
+enum CheckinMethod {
+  KIOSK
+  QR_CODE
+  FAMILY
+  MANUAL
+  MOBILE
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  REVERSAL
+}
+
+enum CelebrationType {
+  BIRTHDAY
+  ANNIVERSARY
+  GRADUATION
+  OTHER
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(MEMBER)
+  memberId     String?  @unique
+  member       Member?  @relation(fields: [memberId], references: [id])
+  refreshTokens RefreshToken[]
+  auditLogs    AuditLog[] @relation("AuditActor")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, expiresAt])
+}
+
+model Household {
+  id        String   @id @default(cuid())
+  name      String
+  members   Member[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Member {
+  id            String   @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String?
+  phone         String?
+  gender        String?
+  address       String?
+  dateOfBirth   DateTime?
+  anniversary   DateTime?
+  photoUrl      String?
+  active        Boolean  @default(true)
+  deletedAt     DateTime?
+  householdId   String?
+  household     Household? @relation(fields: [householdId], references: [id])
+  user          User?
+  attendance    Attendance[]
+  transactions  FinancialTransaction[] @relation("MemberTransactions")
+  pledges       Pledge[]
+  celebrations  Celebration[]
+  outOfTown     OutOfTown?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@index([lastName, firstName])
+  @@index([phone])
+  @@index([email])
+}
+
+model ServiceType {
+  id          String   @id @default(cuid())
+  name        String
+  dayOfWeek   Int
+  startTime   String
+  endTime     String
+  active      Boolean  @default(true)
+  kioskEnabled Boolean @default(true)
+  services    Service[]
+}
+
+model Service {
+  id            String @id @default(cuid())
+  serviceTypeId String
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+  serviceDate   DateTime
+  startsAt      DateTime
+  endsAt        DateTime?
+  active        Boolean @default(true)
+  attendance    Attendance[]
+  createdAt     DateTime @default(now())
+  @@unique([serviceTypeId, serviceDate])
+  @@index([serviceDate])
+}
+
+model KioskDevice {
+  id            String @id @default(cuid())
+  name          String
+  location      String?
+  tokenHash     String @unique
+  active        Boolean @default(true)
+  sessions      KioskSession[]
+  createdAt     DateTime @default(now())
+}
+
+model KioskSession {
+  id          String @id @default(cuid())
+  deviceId    String
+  device      KioskDevice @relation(fields: [deviceId], references: [id])
+  checkedInCount Int @default(0)
+  lastActivity DateTime @default(now())
+  active      Boolean @default(true)
+  @@index([deviceId, active])
+}
+
+model Attendance {
+  id            String        @id @default(cuid())
+  memberId      String
+  serviceId     String
+  method        CheckinMethod @default(MANUAL)
+  kioskSessionId String?
+  checkedInAt   DateTime      @default(now())
+  checkedOutAt  DateTime?
+  durationMinutes Int?
+  member        Member        @relation(fields: [memberId], references: [id])
+  service       Service       @relation(fields: [serviceId], references: [id])
+  @@unique([memberId, serviceId])
+  @@index([serviceId, checkedInAt])
+}
+
+model FinancialAccount {
+  id          String @id @default(cuid())
+  name        String
+  code        String @unique
+  active      Boolean @default(true)
+  transactions FinancialTransaction[]
+}
+
+model FinancialTransaction {
+  id          String @id @default(cuid())
+  accountId   String
+  memberId    String?
+  type        TransactionType
+  amount      Decimal @db.Decimal(14,2)
+  reference   String? @unique
+  description String?
+  postedAt    DateTime @default(now())
+  account     FinancialAccount @relation(fields: [accountId], references: [id])
+  member      Member? @relation("MemberTransactions", fields: [memberId], references: [id])
+  @@index([accountId, postedAt])
+  @@index([memberId, postedAt])
+}
+
+model Pledge {
+  id          String @id @default(cuid())
+  memberId    String
+  title       String
+  amount      Decimal @db.Decimal(14,2)
+  paidAmount  Decimal @default(0) @db.Decimal(14,2)
+  dueDate     DateTime?
+  active      Boolean @default(true)
+  member      Member @relation(fields: [memberId], references: [id])
+}
+
+model Celebration {
+  id        String @id @default(cuid())
+  memberId String
+  type      CelebrationType
+  date      DateTime
+  title     String?
+  active    Boolean @default(true)
+  member    Member @relation(fields: [memberId], references: [id])
+  reminders Reminder[]
+  @@index([date, type])
+}
+
+model Reminder {
+  id            String @id @default(cuid())
+  celebrationId String?
+  title         String
+  message       String
+  scheduledFor  DateTime
+  status        ReminderStatus @default(PENDING)
+  channel       String @default("in_app")
+  celebration   Celebration? @relation(fields: [celebrationId], references: [id])
+  createdAt     DateTime @default(now())
+  @@index([status, scheduledFor])
+}
+
+model OutOfTown {
+  id        String @id @default(cuid())
+  memberId  String @unique
+  startsAt  DateTime
+  endsAt    DateTime
+  note      String?
+  member    Member @relation(fields: [memberId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  actor     User? @relation("AuditActor", fields: [actorId], references: [id])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model ServiceFinance {
+  id              String   @id @default(cuid())
+  serviceName     String
+  serviceDate     DateTime
+  tithes          Decimal  @default(0) @db.Decimal(14,2)
+  offering        Decimal  @default(0) @db.Decimal(14,2)
+  buildingFund    Decimal  @default(0) @db.Decimal(14,2)
+  specialSeed     Decimal  @default(0) @db.Decimal(14,2)
+  thanksgiving    Decimal  @default(0) @db.Decimal(14,2)
+  other           Decimal  @default(0) @db.Decimal(14,2)
+  totalAmount     Decimal  @db.Decimal(14,2)
+  cashAmount      Decimal  @default(0) @db.Decimal(14,2)
+  momoAmount      Decimal  @default(0) @db.Decimal(14,2)
+  bankAmount      Decimal  @default(0) @db.Decimal(14,2)
+  posAmount       Decimal  @default(0) @db.Decimal(14,2)
+  recordedBy      String
+  notes           String?
+  status          String   @default("CONFIRMED")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([serviceDate])
+}
