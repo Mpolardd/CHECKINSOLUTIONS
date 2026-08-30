@@ -44,10 +44,34 @@ router.get('/', requireAuth, async (req, res, next) => {
     }
     const rows = await prisma.member.findMany({
       where,
-      take: 300,
+      take: 500,
       orderBy: { createdAt: 'desc' }
     });
-    res.json(rows);
+
+    const memberIds = rows.map(r => r.id);
+    const guestLogs = await prisma.auditLog.findMany({
+      where: {
+        action: 'VISITOR_REGISTRATION',
+        entityId: { in: memberIds }
+      }
+    });
+    const guestIds = new Set(guestLogs.map(l => l.entityId));
+
+    const result = rows.map(r => {
+      const isGuest = guestIds.has(r.id) ||
+                      (r.category && r.category.toLowerCase().includes('visitor')) ||
+                      (r.category && r.category.toLowerCase().includes('guest')) ||
+                      (r.role && r.role.toLowerCase().includes('visitor')) ||
+                      (r.role && r.role.toLowerCase().includes('first timer'));
+      return {
+        ...r,
+        isGuest: Boolean(isGuest),
+        category: isGuest ? (r.category || 'Visitor / Guest') : (r.category || 'Adult'),
+        role: isGuest ? (r.role || 'Visitor / First Timer') : (r.role || 'Member')
+      };
+    });
+
+    res.json(result);
   } catch (e) {
     next(e);
   }

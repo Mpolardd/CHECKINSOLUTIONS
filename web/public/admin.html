@@ -3650,15 +3650,58 @@
                 name: `${fName} ${lName}`.trim(),
                 gender: item.member?.gender || '',
                 address: item.member?.address || '',
+                category: item.member?.category || (item.isGuest ? 'Visitor / Guest' : 'Adult'),
+                role: item.member?.role || (item.isGuest ? 'Visitor / First Timer' : 'Member'),
+                guardian: item.member?.guardian || '',
                 time: new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 method: item.method || 'KIOSK',
                 isGuest: Boolean(item.isGuest)
               };
             });
+
+            // Merge any active attendee/guest into allMembers directory if not already there
+            let modifiedDirectory = false;
+            liveList.forEach(att => {
+              const attPhoneNorm = normalizePhoneClient(att.phone);
+              const attFullName = att.name.toLowerCase();
+              const foundIndex = allMembers.findIndex(m => 
+                (att.memberId && m.id && att.memberId === m.id) ||
+                (att.phone && m.phone && (att.phone.trim() === m.phone.trim() || (attPhoneNorm && normalizePhoneClient(m.phone) === attPhoneNorm))) ||
+                (attFullName && `${m.firstName} ${m.lastName}`.trim().toLowerCase() === attFullName)
+              );
+
+              if (foundIndex >= 0) {
+                if (att.isGuest && !allMembers[foundIndex].isGuest) {
+                  allMembers[foundIndex].isGuest = true;
+                  if (!allMembers[foundIndex].category || allMembers[foundIndex].category === 'Adult') allMembers[foundIndex].category = 'Visitor / Guest';
+                  if (!allMembers[foundIndex].role || allMembers[foundIndex].role === 'Member') allMembers[foundIndex].role = 'Visitor / First Timer';
+                  modifiedDirectory = true;
+                }
+              } else if (att.name) {
+                allMembers.unshift({
+                  id: att.memberId || ('guest_' + Math.random().toString(36).substr(2, 9)),
+                  firstName: att.firstName || 'Visitor',
+                  lastName: att.lastName || 'Guest',
+                  phone: att.phone || '',
+                  gender: att.gender || 'Not specified',
+                  address: att.address || '',
+                  category: att.category || 'Visitor / Guest',
+                  role: att.role || 'Visitor / First Timer',
+                  guardian: att.guardian || '',
+                  isGuest: Boolean(att.isGuest)
+                });
+                modifiedDirectory = true;
+              }
+            });
+
             const serviceKey = currentSelectedService || 'Sunday: Family & Friends Service';
             serviceAttendanceMap[serviceKey] = liveList;
             serviceAttendanceMap['Sunday: Family & Friends Service'] = liveList;
             renderAttendanceAndDemographics();
+            if (modifiedDirectory) {
+              updateDirectoryCounts();
+              filterMembersTable();
+            }
           }
         }
       } catch (e) {}
