@@ -17,20 +17,77 @@ router.get('/search', async(req,res,next)=>{
  }catch(e){next(e)}
 });
 
-router.post('/checkin',async(req,res,next)=>{
- try{
-  const b=z.object({memberId:z.string(),serviceId:z.string(),method:z.enum(['KIOSK','QR_CODE','FAMILY','MANUAL','MOBILE']).default('KIOSK')}).parse(req.body);
-  const attendance=await prisma.$transaction(async(tx)=>{
-   const member=await tx.member.findFirst({where:{id:b.memberId,active:true,deletedAt:null}});
-   if(!member) {const e=new Error('Member not found or inactive');e.status=404;throw e;}
-   const service=await tx.service.findUnique({where:{id:b.serviceId}});
-   if(!service||!service.active){const e=new Error('Service unavailable');e.status=400;throw e;}
-   const existing=await tx.attendance.findUnique({where:{memberId_serviceId:{memberId:b.memberId,serviceId:b.serviceId}}});
-   if(existing){const e=new Error('Already checked in');e.status=409;throw e;}
-   return tx.attendance.create({data:{memberId:b.memberId,serviceId:b.serviceId,method:b.method}});
-  });
-  res.status(201).json({success:true,attendance});
- }catch(e){next(e)}
+router.post('/checkin', async (req, res, next) => {
+  try {
+    const b = z.object({
+      memberId: z.string().optional(),
+      phone: z.string().optional(),
+      serviceId: z.string().optional(),
+      serviceName: z.string().optional(),
+      method: z.enum(['KIOSK', 'QR_CODE', 'FAMILY', 'MANUAL', 'MOBILE']).default('KIOSK')
+    }).parse(req.body);
+
+    const result = await prisma.$transaction(async (tx) => {
+      let member = null;
+      if (b.memberId) {
+        member = await tx.member.findFirst({ where: { id: b.memberId, active: true, deletedAt: null } });
+      }
+      if (!member && b.phone) {
+        member = await tx.member.findFirst({ where: { phone: b.phone, active: true, deletedAt: null } });
+      }
+      if (!member) {
+        const e = new Error('Member not found or inactive');
+        e.status = 404;
+        throw e;
+      }
+
+      // Resolve targetServiceId
+      let targetServiceId = b.serviceId;
+      if (!targetServiceId) {
+        let matched = null;
+        if (b.serviceName) {
+          const prefix = b.serviceName.split(':')[0].trim();
+          matched = await tx.service.findFirst({
+            where: { serviceType: { name: { contains: prefix, mode: 'insensitive' } }, active: true },
+            orderBy: { startsAt: 'desc' }
+          });
+        }
+        if (!matched) {
+          matched = await tx.service.findFirst({ where: { active: true }, orderBy: { startsAt: 'desc' } });
+        }
+        if (matched) targetServiceId = matched.id;
+      }
+
+      if (!targetServiceId) {
+        let svcType = await tx.serviceType.findFirst({ where: { active: true } });
+        if (!svcType) {
+          svcType = await tx.serviceType.create({
+            data: { name: 'Family & Friends Service (Sunday)', dayOfWeek: 0, startTime: '07:00', endTime: '11:00' }
+          });
+        }
+        const newSvc = await tx.service.create({
+          data: { serviceTypeId: svcType.id, serviceDate: new Date(), startsAt: new Date(), active: true }
+        });
+        targetServiceId = newSvc.id;
+      }
+
+      const existing = await tx.attendance.findUnique({
+        where: { memberId_serviceId: { memberId: member.id, serviceId: targetServiceId } }
+      });
+      if (existing) {
+        return { attendance: existing, member, alreadyCheckedIn: true };
+      }
+
+      const attendance = await tx.attendance.create({
+        data: { memberId: member.id, serviceId: targetServiceId, method: b.method }
+      });
+      return { attendance, member, alreadyCheckedIn: false };
+    });
+
+    res.status(200).json({ success: true, attendance: result.attendance, member: result.member, alreadyCheckedIn: result.alreadyCheckedIn });
+  } catch (e) {
+    next(e);
+  }
 });
 
 router.post('/family-checkin',async(req,res,next)=>{

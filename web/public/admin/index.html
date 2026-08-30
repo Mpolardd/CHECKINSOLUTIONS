@@ -3208,6 +3208,7 @@
     function handleAttServiceChange() {
       currentSelectedService = document.getElementById('attServiceSelect').value;
       renderAttendanceAndDemographics();
+      fetchLiveCounts();
     }
 
     function setAttFilter(filter) {
@@ -3458,13 +3459,15 @@
           const liveRes = await fetch(`${API_BASE}/attendance/live-count/${cur.id}`);
           const live = await liveRes.json();
           if (live.recent && live.recent.length > 0) {
-            const liveSundayList = live.recent.map(item => ({
+            const liveList = live.recent.map(item => ({
               phone: item.member?.phone || '',
               name: `${item.member?.firstName || ''} ${item.member?.lastName || ''}`.trim(),
               time: new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               method: item.method || 'KIOSK'
             }));
-            serviceAttendanceMap['Sunday: Family & Friends Service'] = liveSundayList;
+            const serviceKey = currentSelectedService || 'Sunday: Family & Friends Service';
+            serviceAttendanceMap[serviceKey] = liveList;
+            serviceAttendanceMap['Sunday: Family & Friends Service'] = liveList;
             renderAttendanceAndDemographics();
           }
         }

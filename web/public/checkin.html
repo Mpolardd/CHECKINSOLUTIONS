@@ -669,7 +669,7 @@
           <p style="font-size: 13.5px; color: var(--muted);">Type your first name, last name, or phone number to check in</p>
 
           <div class="input-wrapper">
-            <input type="text" id="searchInput" class="search-input" placeholder="e.g. Emmanuel Mensah or 024..." autofocus autocomplete="off" oninput="handleSearch(this.value)" />
+            <input type="text" id="searchInput" class="search-input" placeholder="e.g. Kelvin or 055..." autofocus autocomplete="off" oninput="handleSearch(this.value)" />
           </div>
         </div>
 
@@ -694,15 +694,15 @@
       <div class="terminal-content" id="viewConfirm" style="display: none;">
         <div class="confirm-box">
           <div class="kicker">Step 2: Confirm Details</div>
-          <h2 style="font-family: Manrope, sans-serif; font-size: 22px; margin-bottom: 4px;" id="confirmMemberName">Member Name</h2>
+          <h2 style="font-family: Manrope, sans-serif; font-size: 22px; margin-bottom: 4px;" id="confirmMemberName">—</h2>
           <p style="font-size: 13.5px; color: var(--muted);">Please verify your details before check-in</p>
 
           <div class="confirm-details">
             <div style="margin-bottom: 4px;"><strong>Service:</strong> <span id="confirmServiceName">Family & Friends Service</span></div>
-            <div style="margin-bottom: 4px;"><strong>Phone:</strong> <span id="confirmPhone">024 000 0000</span></div>
-            <div style="margin-bottom: 4px;"><strong>Gender:</strong> <span id="confirmGender">Male</span></div>
-            <div style="margin-bottom: 4px;"><strong>Location / Address:</strong> <span id="confirmAddress">Spintex Road, Accra</span></div>
-            <div><strong>Date & Time:</strong> <span id="confirmTime">Today, 08:30 AM</span></div>
+            <div style="margin-bottom: 4px;"><strong>Phone:</strong> <span id="confirmPhone">—</span></div>
+            <div style="margin-bottom: 4px;"><strong>Gender:</strong> <span id="confirmGender">—</span></div>
+            <div style="margin-bottom: 4px;"><strong>Location / Address:</strong> <span id="confirmAddress">—</span></div>
+            <div><strong>Date & Time:</strong> <span id="confirmTime">—</span></div>
           </div>
 
           <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
@@ -720,8 +720,8 @@
             <div class="pass-type">Official Attendance Pass Ticket</div>
           </div>
 
-          <div class="pass-name" id="passName">Emmanuel Mensah</div>
-          <div class="pass-meta" id="passDetails">Sunday Service · 29 Aug 2026, 08:45 AM</div>
+          <div class="pass-name" id="passName">—</div>
+          <div class="pass-meta" id="passDetails">—</div>
           <div class="pass-meta" id="passLocation" style="font-weight: 600; color: var(--ink); margin-top: -6px;"></div>
 
           <div class="pass-scripture" id="passScripture">
@@ -792,6 +792,7 @@
     let autoResetTimer = null;
 
     let mockMembers = [];
+    let currentSearchMatches = [];
 
     const SCRIPTURES = [
       { text: "The Lord bless you and keep you; the Lord make his face shine upon you and be gracious to you.", ref: "Numbers 6:24-25" },
@@ -940,7 +941,8 @@
       } else {
         noRes.style.display = 'none';
         grid.style.display = 'grid';
-        grid.innerHTML = matches.map(m => {
+        currentSearchMatches = matches;
+        grid.innerHTML = matches.map((m, idx) => {
           const isMale = (m.gender || '').toLowerCase().startsWith('m');
           const isFemale = (m.gender || '').toLowerCase().startsWith('f');
           const genderBadge = isMale 
@@ -950,7 +952,7 @@
             : '';
 
           return `
-            <div class="member-card" onclick='selectMemberForCheckin(${JSON.stringify(m)})'>
+            <div class="member-card" onclick="selectMemberByIndex(${idx})">
               <div>
                 <div class="member-name">${m.firstName} ${m.lastName}</div>
                 <div class="member-phone"><i class="fas fa-phone-alt" style="font-size: 11px; margin-right: 4px;"></i>${m.phone}</div>
@@ -963,6 +965,13 @@
             </div>
           `;
         }).join('');
+      }
+    }
+
+    function selectMemberByIndex(index) {
+      const member = currentSearchMatches[index];
+      if (member) {
+        selectMemberForCheckin(member);
       }
     }
 
@@ -994,16 +1003,24 @@
       if (!selectedMember) return;
 
       try {
-        await fetch(`${API_BASE}/attendance/checkin`, {
+        const checkinRes = await fetch(`${API_BASE}/attendance/checkin`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             memberId: selectedMember.id,
+            phone: selectedMember.phone,
             serviceName: currentServiceName,
             gender: selectedMember.gender,
-            address: selectedMember.address
+            address: selectedMember.address,
+            method: 'KIOSK'
           })
         });
+        if (checkinRes.ok) {
+          const checkinData = await checkinRes.json();
+          if (checkinData.member) {
+            selectedMember = { ...selectedMember, ...checkinData.member };
+          }
+        }
       } catch (err) {}
 
       // Record in local service attendance map
@@ -1115,7 +1132,7 @@
       };
 
       try {
-        await fetch(`${API_BASE}/attendance/quick-register-checkin`, {
+        const regRes = await fetch(`${API_BASE}/attendance/quick-register-checkin`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1123,6 +1140,12 @@
             serviceName: currentServiceName
           })
         });
+        if (regRes.ok) {
+          const regData = await regRes.json();
+          if (regData.member && regData.member.id) {
+            newMember.id = regData.member.id;
+          }
+        }
       } catch (err) {}
 
       // Save into member registry
