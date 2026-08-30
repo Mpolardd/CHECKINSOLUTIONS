@@ -2926,7 +2926,7 @@
       if (lbl) lbl.innerHTML = TAB_LABELS[tab] || '';
       
       if (tab === 'finance') { renderAdminFinanceTable(); syncFinanceViewMode(); }
-      if (tab === 'attendance') { renderAttendanceAndDemographics(); syncAttendanceViewMode(); }
+      if (tab === 'attendance') { renderAttendanceAndDemographics(); syncAttendanceViewMode(); fetchLiveCounts(); }
       if (tab === 'members') { renderMembersTable(); syncMembersViewMode(); }
       if (tab === 'programs') { renderProgramsManager(); syncProgramsViewMode(); }
       if (tab === 'subAdmins') { renderSubAdminsList(); syncSubAdminsViewMode(); }
@@ -3309,7 +3309,8 @@
         );
         const isPresent = Boolean(found) || Boolean(m.isGuest);
 
-        const isGuest = Boolean(m.isGuest) ||
+        const isGuest = (found && Boolean(found.isGuest)) ||
+                        Boolean(m.isGuest) ||
                         m.category === 'Visitor' ||
                         m.category === 'Visitor / First-Timer' ||
                         m.category === 'Visitor / Guest' ||
@@ -3571,7 +3572,8 @@
               gender: item.member?.gender || '',
               address: item.member?.address || '',
               time: new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              method: item.method || 'KIOSK'
+              method: item.method || 'KIOSK',
+              isGuest: Boolean(item.isGuest)
             }));
             const serviceKey = currentSelectedService || 'Sunday: Family & Friends Service';
             serviceAttendanceMap[serviceKey] = liveList;

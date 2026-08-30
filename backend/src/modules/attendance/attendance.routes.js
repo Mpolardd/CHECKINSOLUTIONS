@@ -112,7 +112,19 @@ router.get('/live-count/:serviceId', async (req, res, next) => {
   try {
     const attendees = await prisma.attendance.findMany({
       where: { serviceId: req.params.serviceId },
-      include: { member: { select: { id: true, firstName: true, lastName: true, phone: true, gender: true } } },
+      include: {
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            gender: true,
+            address: true,
+            createdAt: true
+          }
+        }
+      },
       orderBy: { checkedInAt: 'desc' }
     });
 
@@ -120,14 +132,42 @@ router.get('/live-count/:serviceId', async (req, res, next) => {
     let maleCount = 0;
     let femaleCount = 0;
 
+    const memberIds = attendees.map(a => a.memberId);
+    const guestLogs = await prisma.auditLog.findMany({
+      where: {
+        action: 'VISITOR_REGISTRATION',
+        entityId: { in: memberIds }
+      }
+    });
+    const guestIds = new Set(guestLogs.map(l => l.entityId));
+
+    // Also: Any attendee whose member record was created on the service date or has only 1 attendance in total
+    const attendanceCounts = await prisma.attendance.groupBy({
+      by: ['memberId'],
+      where: { memberId: { in: memberIds } },
+      _count: { id: true }
+    });
+    attendanceCounts.forEach(c => {
+      if (c._count.id <= 1) {
+        guestIds.add(c.memberId);
+      }
+    });
+
     attendees.forEach(a => {
       const g = (a.member?.gender || '').toUpperCase();
       if (g.startsWith('M')) maleCount++;
       else if (g.startsWith('F')) femaleCount++;
+      if (a.member?.createdAt && new Date(a.member.createdAt).toDateString() === new Date(a.checkedInAt).toDateString()) {
+        guestIds.add(a.memberId);
+      }
     });
 
-    const last = attendees[0] || null;
-    const recent = attendees.slice(0, 50);
+    const enrichedRecent = attendees.slice(0, 100).map(a => ({
+      ...a,
+      isGuest: guestIds.has(a.memberId)
+    }));
+
+    const last = enrichedRecent[0] || null;
 
     res.json({
       count,
@@ -137,7 +177,7 @@ router.get('/live-count/:serviceId', async (req, res, next) => {
       malePct: count > 0 ? Math.round((maleCount / count) * 100) : 0,
       femalePct: count > 0 ? Math.round((femaleCount / count) * 100) : 0,
       lastCheckedIn: last,
-      recent
+      recent: enrichedRecent
     });
   } catch (e) { next(e); }
 });
@@ -296,6 +336,20 @@ router.post('/quick-register-checkin', async (req, res, next) => {
               memberId: member.id,
               serviceId: targetServiceId,
               method: 'KIOSK'
+            }
+          });
+
+          await tx.auditLog.create({
+            data: {
+              action: 'VISITOR_REGISTRATION',
+              entity: 'MEMBER',
+              entityId: member.id,
+              metadata: {
+                category: body.category || 'Visitor',
+                guardian: body.guardian || null,
+                isGuest: true,
+                serviceName: body.serviceName || null
+              }
             }
           });
         }
