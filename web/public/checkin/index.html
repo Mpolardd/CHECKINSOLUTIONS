@@ -637,7 +637,7 @@
       </a>
       <div style="display: flex; align-items: center; gap: 8px;">
         <span style="font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em;">Active Service:</span>
-        <select id="kioskServiceSelector" class="kiosk-service-select" onchange="applySelectedService(this.value)">
+        <select id="kioskServiceSelector" class="kiosk-service-select" aria-label="Active Church Service Selection" onchange="applySelectedService(this.value)">
           <option value="Sunday: Family & Friends Service">Sunday — Family & Friends Service</option>
           <option value="Wednesday: Time with the Lord">Wednesday — Time with the Lord</option>
           <option value="Friday: Prophetic Healing & Deliverance">Friday — Prophetic Deliverance</option>
@@ -669,7 +669,7 @@
           <p style="font-size: 13.5px; color: var(--muted);">Type your first name, last name, or phone number to check in</p>
 
           <div class="input-wrapper">
-            <input type="text" id="searchInput" class="search-input" placeholder="e.g. Kelvin or 055..." autofocus autocomplete="off" oninput="handleSearch(this.value)" />
+            <input type="text" id="searchInput" class="search-input" aria-label="Search your name or phone number" placeholder="e.g. Kelvin or 055..." autofocus autocomplete="off" oninput="handleSearch(this.value)" />
           </div>
         </div>
 
@@ -747,17 +747,17 @@
 
       <form onsubmit="handleRegisterSubmit(event)">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <input required id="regFirstName" class="form-input" placeholder="First Name *" />
-          <input required id="regLastName" class="form-input" placeholder="Last Name *" />
+          <input required id="regFirstName" class="form-input" aria-label="First Name" placeholder="First Name *" />
+          <input required id="regLastName" class="form-input" aria-label="Last Name" placeholder="Last Name *" />
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <select required id="regCategory" class="form-input" style="padding: 11px 10px; font-weight: 600;" onchange="toggleRegGuardian(this.value)">
+          <select required id="regCategory" class="form-input" aria-label="Attendee Category" style="padding: 11px 10px; font-weight: 600;" onchange="toggleRegGuardian(this.value)">
             <option value="Adult" selected>Adult</option>
             <option value="Child">Child (Sunday School / Kids Church)</option>
             <option value="Youth">Youth / Teen</option>
           </select>
-          <select required id="regGender" class="form-input" style="padding: 11px 10px; font-weight: 600;">
+          <select required id="regGender" class="form-input" aria-label="Gender" style="padding: 11px 10px; font-weight: 600;">
             <option value="" disabled selected>Select Gender *</option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
@@ -765,12 +765,12 @@
         </div>
 
         <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 10px;">
-          <input required id="regPhone" type="tel" class="form-input" placeholder="Phone Number *" />
-          <input id="regGuardian" class="form-input" placeholder="Parent / Guardian Name" style="display: none;" />
+          <input required id="regPhone" type="tel" class="form-input" aria-label="Phone Number" placeholder="Phone Number *" />
+          <input id="regGuardian" class="form-input" aria-label="Parent or Guardian Name" placeholder="Parent / Guardian Name" style="display: none;" />
         </div>
 
-        <input required id="regAddress" class="form-input" placeholder="Residential Address / Location * (e.g. Spintex, East Legon)" />
-        <input id="regEmail" type="email" class="form-input" placeholder="Email Address (Optional)" />
+        <input required id="regAddress" class="form-input" aria-label="Residential Address / Location" placeholder="Residential Address / Location * (e.g. Spintex, East Legon)" />
+        <input id="regEmail" type="email" class="form-input" aria-label="Email Address" placeholder="Email Address (Optional)" />
         
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 4px; justify-content: center;">Register & Check In</button>
       </form>

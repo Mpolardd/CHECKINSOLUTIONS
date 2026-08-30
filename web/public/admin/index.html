@@ -1134,11 +1134,11 @@
 
       <form onsubmit="handleLoginSubmit(event)" autocomplete="off">
         <div class="form-group">
-          <label class="form-label">Email Address</label>
+          <label for="loginEmail" class="form-label">Email Address</label>
           <input required type="email" id="loginEmail" class="form-ctrl" placeholder="Enter admin email address" autocomplete="off" />
         </div>
         <div class="form-group">
-          <label class="form-label">Password</label>
+          <label for="loginPassword" class="form-label">Password</label>
           <div style="position: relative; display: flex; align-items: center;">
             <input required type="password" id="loginPassword" class="form-ctrl" style="padding-right: 42px;" placeholder="Enter password" autocomplete="current-password" />
             <button type="button" onclick="togglePasswordVisibility('loginPassword', 'adminEyeIcon')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; display: flex; align-items: center; justify-content: center; font-size: 15px;">
@@ -1218,7 +1218,7 @@
             <button class="btn-preset" id="btnPresetThisYear" onclick="setFinancePreset('this_year')">This Year (2026)</button>
           </div>
           <!-- Mobile: select dropdown -->
-          <select class="form-ctrl filter-presets-mobile" style="display:none; width:100%; padding:10px 12px; font-weight:700; font-size:13px;" onchange="setFinancePreset(this.value)">
+          <select class="form-ctrl filter-presets-mobile" aria-label="Filter presets" style="display:none; width:100%; padding:10px 12px; font-weight:700; font-size:13px;" onchange="setFinancePreset(this.value)">
             <option value="all">All Time</option>
             <option value="this_month">This Month</option>
             <option value="last_month">Last Month</option>
@@ -1228,15 +1228,15 @@
 
         <div class="filter-inputs-row">
           <div>
-            <label style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 3px;">From Date</label>
+            <label for="finFilterStart" style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 3px;">From Date</label>
             <input type="date" id="finFilterStart" class="form-ctrl" style="padding: 6px 10px; font-size: 12.5px; width: 140px;" onchange="applyCustomDateFilter()" />
           </div>
           <div>
-            <label style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 3px;">To Date</label>
+            <label for="finFilterEnd" style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 3px;">To Date</label>
             <input type="date" id="finFilterEnd" class="form-ctrl" style="padding: 6px 10px; font-size: 12.5px; width: 140px;" onchange="applyCustomDateFilter()" />
           </div>
           <div>
-            <label style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 3px;">Service</label>
+            <label for="finFilterService" style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 3px;">Service</label>
             <select id="finFilterService" class="form-ctrl" style="padding: 6px 10px; font-size: 12.5px; width: 170px;" onchange="applyCustomDateFilter()">
               <option value="ALL">All Services</option>
               <option value="Wednesday">Wednesday (Time with Lord)</option>
@@ -1389,7 +1389,7 @@
             <p class="card-sub" id="finTableCountLabel">Showing all submitted financial records</p>
           </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <input type="text" id="finTableSearch" class="form-ctrl" placeholder="Search service or officer..." style="width: 220px;" oninput="filterAdminFinanceTable()" />
+            <input type="text" id="finTableSearch" class="form-ctrl" aria-label="Search financial records" placeholder="Search service or officer..." style="width: 220px;" oninput="filterAdminFinanceTable()" />
             <button class="btn-download" onclick="downloadFinancialCSV()"><i class="fas fa-file-excel"></i> Export CSV</button>
             <button class="btn-main" onclick="window.print()"><i class="fas fa-print"></i> Print Report</button>
           </div>
@@ -1459,7 +1459,7 @@
             Select Service to Track Attendance
           </div>
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <select id="attServiceSelect" class="form-ctrl" style="padding: 7px 12px; font-size: 13.5px; width: 270px; font-weight: 700;" onchange="handleAttServiceChange()">
+            <select id="attServiceSelect" class="form-ctrl" aria-label="Select Service for Attendance" style="padding: 7px 12px; font-size: 13.5px; width: 270px; font-weight: 700;" onchange="handleAttServiceChange()">
               <option value="Sunday: Family & Friends Service" selected>Sunday — Family & Friends Service</option>
               <option value="Wednesday: Time with the Lord">Wednesday — Time with the Lord</option>
               <option value="Friday: Prophetic Healing & Deliverance">Friday — Prophetic Healing & Deliverance</option>
@@ -1542,7 +1542,7 @@
             <p class="card-sub" id="attTableSubtitle">Showing members who attended vs those who missed this service</p>
           </div>
           <div style="display: flex; gap: 10px;">
-            <input type="text" id="attSearchInput" class="form-ctrl" placeholder="Search name, phone, parent, location or status..." style="width: 320px;" oninput="filterAttendanceTable()" />
+            <input type="text" id="attSearchInput" class="form-ctrl" aria-label="Search attendee name or phone" placeholder="Search name, phone, parent, location or status..." style="width: 320px;" oninput="filterAttendanceTable()" />
           </div>
         </div>
 
@@ -1593,7 +1593,7 @@
             <p class="card-sub">Manage registered adults, youth, and children (Sunday School / Kids Church) with parent linkages</p>
           </div>
           <div style="display: flex; gap: 10px;">
-            <input type="text" id="memberSearchInput" class="form-ctrl" placeholder="Search name, parent, phone, location, gender or DOB..." style="width: 340px;" oninput="filterMembersTable()" />
+            <input type="text" id="memberSearchInput" class="form-ctrl" aria-label="Search member directory" placeholder="Search name, parent, phone, location, gender or DOB..." style="width: 340px;" oninput="filterMembersTable()" />
             <button class="btn-accent" onclick="openAddMemberModal()">+ Add New Member / Child</button>
           </div>
         </div>
@@ -1635,7 +1635,7 @@
           <button id="btnSwitchBackAuto" class="btn-main" style="background: #14532d; color: white; border: 1.5px solid #22c55e; display: none;" onclick="resetKioskToRegularSchedule()">
             <i class="fas fa-rotate-left"></i> ⚡ Program Ended: Switch Back to Regular Schedule
           </button>
-          <select id="adminKioskProgramPicker" class="form-ctrl" style="width: 280px; font-weight: 700; background: white; color: var(--ink); padding: 10px 14px;" onchange="handleAdminSetKioskActive(this.value)">
+          <select id="adminKioskProgramPicker" class="form-ctrl" aria-label="Select active kiosk program" style="width: 280px; font-weight: 700; background: white; color: var(--ink); padding: 10px 14px;" onchange="handleAdminSetKioskActive(this.value)">
             <!-- Injected by JS -->
           </select>
           <button class="btn-accent" onclick="openCreateProgramModal()"><i class="fas fa-plus-circle"></i> + Create Special Program</button>
@@ -1726,18 +1726,18 @@
       <form onsubmit="handleSaveNewMember(event)">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
-            <label class="form-label">First Name *</label>
+            <label for="newMemFirst" class="form-label">First Name *</label>
             <input required id="newMemFirst" class="form-ctrl" placeholder="e.g. Emmanuel" />
           </div>
           <div class="form-group">
-            <label class="form-label">Last Name *</label>
+            <label for="newMemLast" class="form-label">Last Name *</label>
             <input required id="newMemLast" class="form-ctrl" placeholder="e.g. Mensah" />
           </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
-            <label class="form-label">Member Category *</label>
+            <label for="newMemCategory" class="form-label">Member Category *</label>
             <select required id="newMemCategory" class="form-ctrl" onchange="toggleAddGuardianField(this.value)">
               <option value="Adult" selected>Adult Member</option>
               <option value="Child">Child (Kids Church / Sunday School)</option>
@@ -1745,7 +1745,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Gender *</label>
+            <label for="newMemGender" class="form-label">Gender *</label>
             <select required id="newMemGender" class="form-ctrl">
               <option value="" disabled selected>Select Gender</option>
               <option value="Male">Male</option>
@@ -1756,27 +1756,27 @@
 
         <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 12px;">
           <div class="form-group">
-            <label class="form-label" id="lblAddPhone">Phone Number *</label>
+            <label for="newMemPhone" class="form-label" id="lblAddPhone">Phone Number *</label>
             <input required id="newMemPhone" type="tel" class="form-ctrl" placeholder="e.g. 024 676 0711" />
           </div>
           <div class="form-group" id="wrapAddGuardian" style="display: none;">
-            <label class="form-label">Parent / Guardian Name *</label>
+            <label for="newMemGuardian" class="form-label">Parent / Guardian Name *</label>
             <input id="newMemGuardian" class="form-ctrl" placeholder="e.g. Grace Mensah (Mother)" />
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Residential Address / Location *</label>
+          <label for="newMemAddress" class="form-label">Residential Address / Location *</label>
           <input required id="newMemAddress" class="form-ctrl" placeholder="e.g. Spintex Road, Accra" />
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
-            <label class="form-label">Date of Birth (DOB) *</label>
+            <label for="newMemDob" class="form-label">Date of Birth (DOB) *</label>
             <input required id="newMemDob" type="date" class="form-ctrl" />
           </div>
           <div class="form-group">
-            <label class="form-label">Role / Department / Class</label>
+            <label for="newMemRole" class="form-label">Role / Department / Class</label>
             <select id="newMemRole" class="form-ctrl">
               <option value="Member">Member</option>
               <option value="Child / Sunday School">Child / Sunday School</option>
@@ -1791,7 +1791,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Email Address (Optional)</label>
+          <label for="newMemEmail" class="form-label">Email Address (Optional)</label>
           <input id="newMemEmail" type="email" class="form-ctrl" placeholder="e.g. emmanuel@example.com" />
         </div>
 
@@ -1811,18 +1811,18 @@
         <input type="hidden" id="editMemId" />
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
-            <label class="form-label">First Name *</label>
+            <label for="editMemFirst" class="form-label">First Name *</label>
             <input required id="editMemFirst" class="form-ctrl" />
           </div>
           <div class="form-group">
-            <label class="form-label">Last Name *</label>
+            <label for="editMemLast" class="form-label">Last Name *</label>
             <input required id="editMemLast" class="form-ctrl" />
           </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
-            <label class="form-label">Member Category *</label>
+            <label for="editMemCategory" class="form-label">Member Category *</label>
             <select required id="editMemCategory" class="form-ctrl" onchange="toggleEditGuardianField(this.value)">
               <option value="Adult">Adult Member</option>
               <option value="Child">Child (Kids Church / Sunday School)</option>
@@ -1830,7 +1830,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Gender *</label>
+            <label for="editMemGender" class="form-label">Gender *</label>
             <select required id="editMemGender" class="form-ctrl">
               <option value="Male">Male</option>
               <option value="Female">Female</option>
@@ -1840,27 +1840,27 @@
 
         <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 12px;">
           <div class="form-group">
-            <label class="form-label" id="lblEditPhone">Phone Number *</label>
+            <label for="editMemPhone" class="form-label" id="lblEditPhone">Phone Number *</label>
             <input required id="editMemPhone" type="tel" class="form-ctrl" />
           </div>
           <div class="form-group" id="wrapEditGuardian">
-            <label class="form-label">Parent / Guardian Name</label>
+            <label for="editMemGuardian" class="form-label">Parent / Guardian Name</label>
             <input id="editMemGuardian" class="form-ctrl" placeholder="e.g. Grace Mensah (Mother)" />
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Residential Address / Location *</label>
+          <label for="editMemAddress" class="form-label">Residential Address / Location *</label>
           <input required id="editMemAddress" class="form-ctrl" />
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
-            <label class="form-label">Date of Birth (DOB) *</label>
+            <label for="editMemDob" class="form-label">Date of Birth (DOB) *</label>
             <input required id="editMemDob" type="date" class="form-ctrl" />
           </div>
           <div class="form-group">
-            <label class="form-label">Role / Department / Class</label>
+            <label for="editMemRole" class="form-label">Role / Department / Class</label>
             <select id="editMemRole" class="form-ctrl">
               <option value="Member">Member</option>
               <option value="Child / Sunday School">Child / Sunday School</option>
@@ -1875,7 +1875,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Email Address (Optional)</label>
+          <label for="editMemEmail" class="form-label">Email Address (Optional)</label>
           <input id="editMemEmail" type="email" class="form-ctrl" />
         </div>
 
@@ -1896,13 +1896,13 @@
       
       <form onsubmit="handleSaveCustomProgram(event)">
         <div class="form-group">
-          <label class="form-label">Program / Event Title *</label>
+          <label for="progName" class="form-label">Program / Event Title *</label>
           <input required id="progName" class="form-ctrl" placeholder="e.g. 7-Day Prophetic Miracle Revival 2026" />
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
-            <label class="form-label">Category / Type *</label>
+            <label for="progCategory" class="form-label">Category / Type *</label>
             <select required id="progCategory" class="form-ctrl">
               <option value="Special Program / Convention">Special Program / Convention</option>
               <option value="Revival / Prayer Week">Revival / Prayer Week</option>
@@ -1912,13 +1912,13 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Schedule & Hours *</label>
+            <label for="progSchedule" class="form-label">Schedule & Hours *</label>
             <input required id="progSchedule" class="form-ctrl" placeholder="e.g. Mon – Fri, 6:00 PM – 9:00 PM" />
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Attach Program Flyer / Banner Image *</label>
+          <label for="progFlyerFileInput" class="form-label">Attach Program Flyer / Banner Image *</label>
           <div style="border: 2px dashed var(--line); border-radius: 6px; padding: 18px; text-align: center; background: #fafbfa; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('progFlyerFileInput').click()">
             <input type="file" id="progFlyerFileInput" accept="image/*" style="display: none;" onchange="handleProgramFlyerAttachment(this)" />
             <div id="progFlyerPlaceholder">
@@ -1939,7 +1939,7 @@
         </div>
 
         <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 12px;">
-          <input type="checkbox" id="progSetKioskActive" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+          <input type="checkbox" id="progSetKioskActive" aria-label="Set active on kiosk" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
           <label for="progSetKioskActive" style="font-size: 13px; font-weight: 700; cursor: pointer;">
             Activate on Kiosk immediately for attendance check-in
           </label>
@@ -1965,13 +1965,13 @@
         <input type="hidden" id="editProgIsStandard" />
 
         <div class="form-group">
-          <label class="form-label">Service / Program Title *</label>
+          <label for="editProgName" class="form-label">Service / Program Title *</label>
           <input required id="editProgName" class="form-ctrl" />
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
-            <label class="form-label">Category / Tag *</label>
+            <label for="editProgCategory" class="form-label">Category / Tag *</label>
             <select required id="editProgCategory" class="form-ctrl">
               <option value="Regular Weekly Service">Regular Weekly Service</option>
               <option value="Midweek Prayer Service">Midweek Prayer Service</option>
@@ -1984,13 +1984,13 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Schedule & Hours *</label>
+            <label for="editProgSchedule" class="form-label">Schedule & Hours *</label>
             <input required id="editProgSchedule" class="form-ctrl" />
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Service Flyer / Banner Image</label>
+          <label for="editProgFlyerFileInput" class="form-label">Service Flyer / Banner Image</label>
           <div style="border: 2px dashed var(--line); border-radius: 6px; padding: 16px; text-align: center; background: #fafbfa; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('editProgFlyerFileInput').click()">
             <input type="file" id="editProgFlyerFileInput" accept="image/*" style="display: none;" onchange="handleEditProgramFlyerAttachment(this)" />
             <div style="display: flex; align-items: center; justify-content: center; gap: 14px;">
@@ -2042,17 +2042,17 @@
 
       <form onsubmit="handleCreateSubAdminSubmit(event)" autocomplete="off">
         <div class="form-group">
-          <label class="form-label">Sub-Admin Full Name *</label>
+          <label for="newSubName" class="form-label">Sub-Admin Full Name *</label>
           <input required id="newSubName" class="form-ctrl" placeholder="e.g. Deacon Samuel / Sister Grace" />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Email Address (Login ID) *</label>
+          <label for="newSubEmail" class="form-label">Email Address (Login ID) *</label>
           <input required type="email" id="newSubEmail" class="form-ctrl" placeholder="e.g. samuel@solutionsfaith.com" />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Account Password *</label>
+          <label for="newSubPassword" class="form-label">Account Password *</label>
           <div style="position: relative; display: flex; align-items: center;">
             <input required type="password" id="newSubPassword" class="form-ctrl" style="padding-right: 42px;" placeholder="Create secure password" />
             <button type="button" onclick="togglePasswordVisibility('newSubPassword', 'subEyeIcon')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
@@ -2067,18 +2067,18 @@
           </label>
 
           <div style="display: flex; flex-direction: column; gap: 10px;">
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
-              <input type="checkbox" id="permAttendance" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+            <label for="permAttendance" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="permAttendance" aria-label="Attendance Check-In Privilege" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span>📋 Attendance &amp; Demographics</span>
             </label>
 
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
-              <input type="checkbox" id="permMembers" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+            <label for="permMembers" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="permMembers" aria-label="Member Directory Privilege" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span>👥 Member Directory</span>
             </label>
 
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
-              <input type="checkbox" id="permPrograms" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+            <label for="permPrograms" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="permPrograms" aria-label="Programs Management Privilege" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span>📅 Services &amp; Programs Setup</span>
             </label>
           </div>
@@ -2105,17 +2105,17 @@
         <input type="hidden" id="editSubId" />
 
         <div class="form-group">
-          <label class="form-label">Sub-Admin Full Name *</label>
+          <label for="editSubName" class="form-label">Sub-Admin Full Name *</label>
           <input required id="editSubName" class="form-ctrl" />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Email Address (Login ID) *</label>
+          <label for="editSubEmail" class="form-label">Email Address (Login ID) *</label>
           <input required type="email" id="editSubEmail" class="form-ctrl" readonly style="background: #f1f5f9; cursor: not-allowed;" />
         </div>
 
         <div class="form-group">
-          <label class="form-label">New Password (Leave blank to keep existing)</label>
+          <label for="editSubPassword" class="form-label">New Password (Leave blank to keep existing)</label>
           <div style="position: relative; display: flex; align-items: center;">
             <input type="password" id="editSubPassword" class="form-ctrl" style="padding-right: 42px;" placeholder="Enter new password if changing" />
             <button type="button" onclick="togglePasswordVisibility('editSubPassword', 'editSubEyeIcon')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
@@ -2130,18 +2130,18 @@
           </label>
 
           <div style="display: flex; flex-direction: column; gap: 10px;">
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
-              <input type="checkbox" id="editPermAttendance" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+            <label for="editPermAttendance" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="editPermAttendance" aria-label="Edit Attendance Check-In Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span>📋 Attendance &amp; Demographics</span>
             </label>
 
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
-              <input type="checkbox" id="editPermMembers" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+            <label for="editPermMembers" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="editPermMembers" aria-label="Edit Member Directory Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span>👥 Member Directory</span>
             </label>
 
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
-              <input type="checkbox" id="editPermPrograms" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+            <label for="editPermPrograms" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="editPermPrograms" aria-label="Edit Programs Management Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span>📅 Services &amp; Programs Setup</span>
             </label>
           </div>
