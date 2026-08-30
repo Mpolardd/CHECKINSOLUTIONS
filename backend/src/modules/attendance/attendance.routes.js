@@ -1,20 +1,49 @@
-const router=require('express').Router();
-const prisma=require('../../config/prisma');
-const {z}=require('zod');
-const {requireAuth,requireRoles}=require('../../middleware/auth');
+const router = require('express').Router();
+const prisma = require('../../config/prisma');
+const jwt = require('jsonwebtoken');
+const { z } = require('zod');
+const { requireAuth, requireRoles } = require('../../middleware/auth');
+const { normalizePhone } = require('../../utils/phone');
 
-router.get('/search', async(req,res,next)=>{
- try{
-  const q=String(req.query.q||'').trim();
-  if(q.length<2)return res.json([]);
-  const rows=await prisma.member.findMany({
-   where:{active:true,deletedAt:null,OR:[
-    {firstName:{contains:q,mode:'insensitive'}},{lastName:{contains:q,mode:'insensitive'}},
-    {phone:{contains:q}}
-   ]},select:{id:true,firstName:true,lastName:true,phone:true,gender:true,address:true,dateOfBirth:true,email:true,photoUrl:true,householdId:true},take:20
-  });
-  res.json(rows);
- }catch(e){next(e)}
+router.get('/search', async (req, res, next) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    if (q.length < 2) return res.json([]);
+    const normalized = normalizePhone(q);
+    const searchConditions = [
+      { firstName: { contains: q, mode: 'insensitive' } },
+      { lastName: { contains: q, mode: 'insensitive' } },
+      { phone: { contains: q } }
+    ];
+    if (normalized && normalized !== q) {
+      searchConditions.push({ phone: { contains: normalized } });
+    }
+
+    const rows = await prisma.member.findMany({
+      where: {
+        active: true,
+        deletedAt: null,
+        OR: searchConditions
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        gender: true,
+        address: true,
+        category: true,
+        role: true,
+        guardian: true,
+        dateOfBirth: true,
+        email: true,
+        photoUrl: true,
+        householdId: true
+      },
+      take: 20
+    });
+    res.json(rows);
+  } catch (e) { next(e); }
 });
 
 router.post('/checkin', async (req, res, next) => {
@@ -27,13 +56,20 @@ router.post('/checkin', async (req, res, next) => {
       method: z.enum(['KIOSK', 'QR_CODE', 'FAMILY', 'MANUAL', 'MOBILE']).default('KIOSK')
     }).parse(req.body);
 
+    const normPhone = normalizePhone(b.phone);
+
     const result = await prisma.$transaction(async (tx) => {
       let member = null;
       if (b.memberId) {
         member = await tx.member.findFirst({ where: { id: b.memberId, active: true, deletedAt: null } });
       }
-      if (!member && b.phone) {
-        member = await tx.member.findFirst({ where: { phone: b.phone, active: true, deletedAt: null } });
+      if (!member && (normPhone || b.phone)) {
+        const phoneQueries = [];
+        if (normPhone) phoneQueries.push({ phone: normPhone });
+        if (b.phone && b.phone !== normPhone) phoneQueries.push({ phone: b.phone });
+        member = await tx.member.findFirst({
+          where: { active: true, deletedAt: null, OR: phoneQueries }
+        });
       }
       if (!member) {
         const e = new Error('Member not found or inactive');
@@ -90,22 +126,22 @@ router.post('/checkin', async (req, res, next) => {
   }
 });
 
-router.post('/family-checkin',async(req,res,next)=>{
- try{
-  const b=z.object({householdId:z.string(),memberIds:z.array(z.string()).min(1),serviceId:z.string()}).parse(req.body);
-  const result=await prisma.$transaction(async(tx)=>{
-   const members=await tx.member.findMany({where:{id:{in:b.memberIds},householdId:b.householdId,active:true,deletedAt:null}});
-   const valid=new Set(members.map(m=>m.id));
-   const created=[];
-   for(const id of b.memberIds){
-    if(!valid.has(id)) continue;
-    const exists=await tx.attendance.findUnique({where:{memberId_serviceId:{memberId:id,serviceId:b.serviceId}}});
-    if(!exists) created.push(await tx.attendance.create({data:{memberId:id,serviceId:b.serviceId,method:'FAMILY'}}));
-   }
-   return created;
-  });
-  res.status(201).json({success:true,checkedInCount:result.length,members:result});
- }catch(e){next(e)}
+router.post('/family-checkin', async (req, res, next) => {
+  try {
+    const b = z.object({ householdId: z.string(), memberIds: z.array(z.string()).min(1), serviceId: z.string() }).parse(req.body);
+    const result = await prisma.$transaction(async (tx) => {
+      const members = await tx.member.findMany({ where: { id: { in: b.memberIds }, householdId: b.householdId, active: true, deletedAt: null } });
+      const valid = new Set(members.map(m => m.id));
+      const created = [];
+      for (const id of b.memberIds) {
+        if (!valid.has(id)) continue;
+        const exists = await tx.attendance.findUnique({ where: { memberId_serviceId: { memberId: id, serviceId: b.serviceId } } });
+        if (!exists) created.push(await tx.attendance.create({ data: { memberId: id, serviceId: b.serviceId, method: 'FAMILY' } }));
+      }
+      return created;
+    });
+    res.status(201).json({ success: true, checkedInCount: result.length, members: result });
+  } catch (e) { next(e); }
 });
 
 router.get('/live-count/:serviceId', async (req, res, next) => {
@@ -121,6 +157,9 @@ router.get('/live-count/:serviceId', async (req, res, next) => {
             phone: true,
             gender: true,
             address: true,
+            category: true,
+            role: true,
+            guardian: true,
             createdAt: true
           }
         }
@@ -147,12 +186,46 @@ router.get('/live-count/:serviceId', async (req, res, next) => {
       else if (g.startsWith('F')) femaleCount++;
     });
 
-    const enrichedRecent = attendees.slice(0, 100).map(a => ({
-      ...a,
-      isGuest: guestIds.has(a.memberId)
-    }));
+    // Check if requester is an authenticated administrator
+    let isAdmin = false;
+    const authHeader = req.headers.authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
+      try {
+        const decoded = jwt.verify(authHeader.slice(7), process.env.JWT_ACCESS_SECRET || 'church_mgmt_secret_dev_fallback_only');
+        if (decoded.role === 'SUPER_ADMIN' || decoded.role === 'ADMIN') {
+          isAdmin = true;
+        }
+      } catch (e) {}
+    }
 
-    const last = enrichedRecent[0] || null;
+    const sanitizedRecent = attendees.slice(0, 100).map(a => {
+      const isGuest = guestIds.has(a.memberId);
+      if (isAdmin) {
+        return {
+          id: a.id,
+          memberId: a.memberId,
+          serviceId: a.serviceId,
+          method: a.method,
+          checkedInAt: a.checkedInAt,
+          isGuest,
+          member: a.member
+        };
+      }
+      // Public / Kiosk sanitized view (no home address, masked phone)
+      return {
+        id: a.id,
+        method: a.method,
+        checkedInAt: a.checkedInAt,
+        isGuest,
+        member: {
+          firstName: a.member?.firstName || '',
+          lastName: a.member?.lastName ? `${a.member.lastName.charAt(0)}.` : '',
+          gender: a.member?.gender || ''
+        }
+      };
+    });
+
+    const last = sanitizedRecent[0] || null;
 
     res.json({
       count,
@@ -162,7 +235,7 @@ router.get('/live-count/:serviceId', async (req, res, next) => {
       malePct: count > 0 ? Math.round((maleCount / count) * 100) : 0,
       femalePct: count > 0 ? Math.round((femaleCount / count) * 100) : 0,
       lastCheckedIn: last,
-      recent: enrichedRecent
+      recent: sanitizedRecent
     });
   } catch (e) { next(e); }
 });
@@ -174,32 +247,57 @@ router.get('/service-types', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.get('/services', async (req, res, next) => {
+router.post('/services', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
   try {
-    const services = await prisma.service.findMany({
-      where: { active: true },
-      include: { serviceType: true, _count: { select: { attendance: true } } },
-      orderBy: { startsAt: 'desc' },
-      take: 20
+    const b = z.object({
+      serviceTypeId: z.string(),
+      serviceDate: z.string(),
+      startsAt: z.string(),
+      endsAt: z.string().optional()
+    }).parse(req.body);
+
+    const s = await prisma.service.create({
+      data: {
+        serviceTypeId: b.serviceTypeId,
+        serviceDate: new Date(b.serviceDate),
+        startsAt: new Date(b.startsAt),
+        endsAt: b.endsAt ? new Date(b.endsAt) : null,
+        active: true
+      },
+      include: { serviceType: true }
     });
-    res.json(services);
+    res.status(201).json(s);
   } catch (e) { next(e); }
 });
 
 router.get('/services/current', async (req, res, next) => {
   try {
     const now = new Date();
-    const start = new Date(now); start.setHours(0, 0, 0, 0);
-    const end = new Date(now); end.setHours(23, 59, 59, 999);
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
     let service = await prisma.service.findFirst({
-      where: { serviceDate: { gte: start, lte: end }, active: true },
+      where: {
+        active: true,
+        startsAt: { lte: now },
+        OR: [{ endsAt: null }, { endsAt: { gte: now } }]
+      },
       include: { serviceType: true },
-      orderBy: { startsAt: 'asc' }
+      orderBy: { startsAt: 'desc' }
     });
 
     if (!service) {
-      // Find default service type matching today or fallback to any active service type
+      service = await prisma.service.findFirst({
+        where: {
+          serviceDate: { gte: start, lte: end },
+          active: true
+        },
+        include: { serviceType: true },
+        orderBy: { startsAt: 'desc' }
+      });
+    }
+
+    if (!service) {
       const todayDay = now.getDay();
       let serviceType = await prisma.serviceType.findFirst({ where: { dayOfWeek: todayDay, active: true } });
       if (!serviceType) {
@@ -228,7 +326,6 @@ router.get('/services/current', async (req, res, next) => {
           include: { serviceType: true }
         });
       } else {
-        // Fallback to most recent service in database
         service = await prisma.service.findFirst({
           where: { active: true },
           include: { serviceType: true },
@@ -256,20 +353,27 @@ router.post('/quick-register-checkin', async (req, res, next) => {
       serviceName: z.string().optional()
     }).parse(req.body);
 
+    const normPhone = normalizePhone(body.phone);
+
     const result = await prisma.$transaction(async (tx) => {
-      // Find or create member
       let member = null;
-      if (body.phone) {
-        member = await tx.member.findFirst({ where: { phone: body.phone, active: true, deletedAt: null } });
+      if (normPhone || body.phone) {
+        const phoneQueries = [];
+        if (normPhone) phoneQueries.push({ phone: normPhone });
+        if (body.phone && body.phone !== normPhone) phoneQueries.push({ phone: body.phone });
+        member = await tx.member.findFirst({ where: { active: true, deletedAt: null, OR: phoneQueries } });
       }
       if (!member) {
         member = await tx.member.create({
           data: {
             firstName: body.firstName.trim(),
             lastName: body.lastName.trim(),
-            phone: body.phone?.trim() || null,
+            phone: normPhone || body.phone?.trim() || null,
             gender: body.gender?.trim() || null,
             address: body.address?.trim() || null,
+            category: body.category || 'Visitor / Guest',
+            role: 'Visitor / First Timer',
+            guardian: body.guardian?.trim() || null,
             email: body.email?.trim() || null
           }
         });
@@ -281,7 +385,8 @@ router.post('/quick-register-checkin', async (req, res, next) => {
             lastName: body.lastName.trim(),
             gender: body.gender?.trim() || member.gender,
             address: body.address?.trim() || member.address,
-            email: body.email?.trim() || member.email
+            email: body.email?.trim() || member.email,
+            guardian: body.guardian?.trim() || member.guardian
           }
         });
       }
@@ -348,4 +453,3 @@ router.post('/quick-register-checkin', async (req, res, next) => {
 });
 
 module.exports = router;
-

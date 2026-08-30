@@ -4,13 +4,22 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
 const prisma = require('../../config/prisma');
+const { requireAuth, requireRoles } = require('../../middleware/auth');
+
+// Fail safely on startup if JWT secrets are missing
+if (!process.env.JWT_ACCESS_SECRET || process.env.JWT_ACCESS_SECRET.trim().length < 16) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('[SECURITY FATAL] JWT_ACCESS_SECRET is missing or insufficiently secure in production.');
+  }
+}
 
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
 
 function accessToken(user) {
+  const secret = process.env.JWT_ACCESS_SECRET || 'church_mgmt_secret_dev_fallback_only';
   return jwt.sign(
     { sub: user.id, role: user.role, memberId: user.memberId || null },
-    process.env.JWT_ACCESS_SECRET,
+    secret,
     { expiresIn: `${process.env.ACCESS_TOKEN_MINUTES || 15}m` }
   );
 }
@@ -34,6 +43,16 @@ router.post('/login', async (req, res, next) => {
 
     const user = await prisma.user.findUnique({ where: { email: body.email.toLowerCase() } });
     if (!user || !(await bcrypt.compare(body.password, user.passwordHash))) {
+      // Log failed login attempt
+      try {
+        await prisma.auditLog.create({
+          data: {
+            action: 'LOGIN_FAILURE',
+            entity: 'AUTH',
+            metadata: { email: body.email.toLowerCase(), ip: req.ip || req.headers['x-forwarded-for'] || null }
+          }
+        });
+      } catch (e) {}
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
@@ -52,6 +71,19 @@ router.post('/login', async (req, res, next) => {
         if (Array.isArray(log.metadata.permissions)) permissions = log.metadata.permissions;
       }
     }
+
+    // Log successful login
+    try {
+      await prisma.auditLog.create({
+        data: {
+          actorId: user.id,
+          action: 'LOGIN_SUCCESS',
+          entity: 'USER',
+          entityId: user.id,
+          metadata: { email: user.email, role: user.role }
+        }
+      });
+    } catch (e) {}
 
     res.json({
       accessToken: accessToken(user),
@@ -104,7 +136,8 @@ router.get('/verify', async (req, res) => {
     if (!token) {
       return res.status(401).json({ error: 'No authorization token provided' });
     }
-    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    const secret = process.env.JWT_ACCESS_SECRET || 'church_mgmt_secret_dev_fallback_only';
+    const decoded = jwt.verify(token, secret);
     const user = await prisma.user.findUnique({
       where: { id: decoded.sub },
       select: { id: true, email: true, role: true, memberId: true }
@@ -145,9 +178,9 @@ router.get('/verify', async (req, res) => {
   }
 });
 
-// ── Sub-Admin Cloud Persistence Endpoints ──
+// ── Sub-Admin Cloud Persistence Endpoints (Strictly Protected for Super Admin Only) ──
 
-router.get('/subadmins', async (req, res) => {
+router.get('/subadmins', requireAuth, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const subAdminUsers = await prisma.user.findMany({
       where: { role: 'ADMIN' },
@@ -177,17 +210,17 @@ router.get('/subadmins', async (req, res) => {
   }
 });
 
-router.post('/subadmins', async (req, res) => {
+router.post('/subadmins', requireAuth, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { name, email, password, permissions } = req.body || {};
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
 
-    const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
     if (existing) {
       return res.status(400).json({ error: 'An account with this email address already exists' });
     }
@@ -195,7 +228,7 @@ router.post('/subadmins', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
-        email: email.toLowerCase(),
+        email: email.toLowerCase().trim(),
         passwordHash,
         role: 'ADMIN'
       }
@@ -207,20 +240,21 @@ router.post('/subadmins', async (req, res) => {
 
     await prisma.auditLog.create({
       data: {
+        actorId: req.user?.userId || null,
         action: 'CREATE_SUB_ADMIN',
         entity: 'SUB_ADMIN_PROFILE',
         entityId: user.id,
         metadata: {
-          name,
+          name: name.trim(),
           email: user.email,
           permissions: allowedPerms
         }
       }
     });
 
-    res.json({
+    res.status(201).json({
       id: user.id,
-      name,
+      name: name.trim(),
       email: user.email,
       permissions: allowedPerms,
       createdAt: user.createdAt.toLocaleDateString('en-GB')
@@ -230,7 +264,7 @@ router.post('/subadmins', async (req, res) => {
   }
 });
 
-router.put('/subadmins/:id', async (req, res) => {
+router.put('/subadmins/:id', requireAuth, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, password, permissions } = req.body || {};
@@ -240,7 +274,7 @@ router.put('/subadmins/:id', async (req, res) => {
       return res.status(404).json({ error: 'Sub-admin not found' });
     }
 
-    if (password && password.trim().length >= 6) {
+    if (password && password.trim().length >= 8) {
       const passwordHash = await bcrypt.hash(password.trim(), 10);
       await prisma.user.update({
         where: { id },
@@ -254,11 +288,12 @@ router.put('/subadmins/:id', async (req, res) => {
 
     await prisma.auditLog.create({
       data: {
+        actorId: req.user?.userId || null,
         action: 'UPDATE_SUB_ADMIN',
         entity: 'SUB_ADMIN_PROFILE',
         entityId: user.id,
         metadata: {
-          name: name || user.email.split('@')[0],
+          name: (name || user.email.split('@')[0]).trim(),
           email: user.email,
           permissions: allowedPerms
         }
@@ -267,7 +302,7 @@ router.put('/subadmins/:id', async (req, res) => {
 
     res.json({
       id: user.id,
-      name: name || user.email.split('@')[0],
+      name: (name || user.email.split('@')[0]).trim(),
       email: user.email,
       permissions: allowedPerms
     });
@@ -276,7 +311,7 @@ router.put('/subadmins/:id', async (req, res) => {
   }
 });
 
-router.delete('/subadmins/:id', async (req, res) => {
+router.delete('/subadmins/:id', requireAuth, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
     const { id } = req.params;
     const user = await prisma.user.findUnique({ where: { id } });
@@ -287,6 +322,17 @@ router.delete('/subadmins/:id', async (req, res) => {
     await prisma.refreshToken.deleteMany({ where: { userId: id } });
     await prisma.auditLog.deleteMany({ where: { entityId: id } });
     await prisma.user.delete({ where: { id } });
+
+    // Log deletion
+    await prisma.auditLog.create({
+      data: {
+        actorId: req.user?.userId || null,
+        action: 'DELETE_SUB_ADMIN',
+        entity: 'USER',
+        entityId: id,
+        metadata: { deletedEmail: user.email }
+      }
+    });
 
     res.json({ success: true, message: 'Sub-admin revoked successfully' });
   } catch (err) {

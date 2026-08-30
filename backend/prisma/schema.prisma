@@ -88,6 +88,9 @@ model Member {
   phone         String?
   gender        String?
   address       String?
+  category      String?  @default("Adult")
+  role          String?  @default("Member")
+  guardian      String?
   dateOfBirth   DateTime?
   anniversary   DateTime?
   photoUrl      String?

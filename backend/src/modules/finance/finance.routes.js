@@ -29,46 +29,84 @@ const serviceFinanceSchema = z.object({
   notes: z.string().optional()
 });
 
-// Accounts
-router.get('/accounts', async (req, res, next) => {
+// Accounts List - Protected for Finance and Administrators
+router.get('/accounts', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     res.json(await prisma.financialAccount.findMany({ where: { active: true }, orderBy: { name: 'asc' } }));
   } catch (e) { next(e); }
 });
 
-// Record Service Financial Figures (POST /api/v1/finance/service-entry)
-router.post('/service-entry', async (req, res, next) => {
+// Record Service Financial Figures - Atomic creation with ledger cross-posting
+router.post('/service-entry', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const b = serviceFinanceSchema.parse(req.body);
     const computedTotal = (b.tithes + b.offering + b.buildingFund + b.specialSeed + b.thanksgiving + b.other);
 
-    const entry = await prisma.serviceFinance.create({
-      data: {
-        serviceName: b.serviceName,
-        serviceDate: new Date(b.serviceDate),
-        tithes: b.tithes,
-        offering: b.offering,
-        buildingFund: b.buildingFund,
-        specialSeed: b.specialSeed,
-        thanksgiving: b.thanksgiving,
-        other: b.other,
-        totalAmount: computedTotal,
-        cashAmount: b.cashAmount,
-        momoAmount: b.momoAmount,
-        bankAmount: b.bankAmount,
-        posAmount: b.posAmount,
-        recordedBy: b.recordedBy,
-        notes: b.notes || null,
-        status: 'CONFIRMED'
+    const result = await prisma.$transaction(async (tx) => {
+      const entry = await tx.serviceFinance.create({
+        data: {
+          serviceName: b.serviceName,
+          serviceDate: new Date(b.serviceDate),
+          tithes: b.tithes,
+          offering: b.offering,
+          buildingFund: b.buildingFund,
+          specialSeed: b.specialSeed,
+          thanksgiving: b.thanksgiving,
+          other: b.other,
+          totalAmount: computedTotal,
+          cashAmount: b.cashAmount,
+          momoAmount: b.momoAmount,
+          bankAmount: b.bankAmount,
+          posAmount: b.posAmount,
+          recordedBy: b.recordedBy,
+          notes: b.notes || null,
+          status: 'CONFIRMED'
+        }
+      });
+
+      // Synchronize with double-entry ledger account
+      let generalAccount = await tx.financialAccount.findUnique({ where: { code: 'GENERAL_COLLECTIONS' } });
+      if (!generalAccount) {
+        generalAccount = await tx.financialAccount.create({
+          data: { name: 'General Collections & Offerings', code: 'GENERAL_COLLECTIONS', active: true }
+        });
       }
+
+      const txRef = `SVC-${entry.id.slice(-8).toUpperCase()}`;
+      await tx.financialTransaction.create({
+        data: {
+          accountId: generalAccount.id,
+          type: 'INCOME',
+          amount: computedTotal,
+          reference: txRef,
+          description: `Service Collections: ${b.serviceName} (${b.serviceDate}) - Recorded by ${b.recordedBy}`
+        }
+      });
+
+      // Audit Log for financial entry
+      await tx.auditLog.create({
+        data: {
+          actorId: req.user?.userId || null,
+          action: 'RECORD_SERVICE_FINANCE',
+          entity: 'SERVICE_FINANCE',
+          entityId: entry.id,
+          metadata: {
+            serviceName: b.serviceName,
+            totalAmount: computedTotal,
+            recordedBy: b.recordedBy
+          }
+        }
+      });
+
+      return entry;
     });
 
-    res.status(201).json({ success: true, entry });
+    res.status(201).json({ success: true, entry: result });
   } catch (e) { next(e); }
 });
 
-// Get List of Service Financial Entries (GET /api/v1/finance/service-entries)
-router.get('/service-entries', async (req, res, next) => {
+// Get List of Service Financial Entries - Protected
+router.get('/service-entries', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const entries = await prisma.serviceFinance.findMany({
       orderBy: { serviceDate: 'desc' },
@@ -78,8 +116,8 @@ router.get('/service-entries', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Get Comprehensive Financial Analytics (GET /api/v1/finance/analytics)
-router.get('/analytics', async (req, res, next) => {
+// Get Comprehensive Financial Analytics - Protected
+router.get('/analytics', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const entries = await prisma.serviceFinance.findMany({
       orderBy: { serviceDate: 'asc' }
@@ -153,8 +191,8 @@ router.get('/analytics', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Generic Transactions CRUD
-router.post('/transactions', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
+// Generic Transactions CRUD - Protected
+router.post('/transactions', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const b = financial.parse(req.body);
     const tx = await prisma.financialTransaction.create({
@@ -171,7 +209,7 @@ router.post('/transactions', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', '
   } catch (e) { next(e); }
 });
 
-router.get('/transactions', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
+router.get('/transactions', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const rows = await prisma.financialTransaction.findMany({
       include: { account: true, member: { select: { firstName: true, lastName: true } } },
@@ -182,7 +220,7 @@ router.get('/transactions', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'F
   } catch (e) { next(e); }
 });
 
-router.get('/summary', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
+router.get('/summary', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const rows = await prisma.financialTransaction.findMany({ select: { type: true, amount: true } });
     let income = 0, expense = 0;

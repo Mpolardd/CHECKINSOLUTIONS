@@ -2183,11 +2183,22 @@
       return isLocal ? 'http://localhost:4000/api/v1' : '/api/v1';
     })();
 
+    // Centralized safe HTML sanitizer to prevent XSS attacks in dynamic tables
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     let allMembers = [];
     let serviceAttendanceMap = {};
 
     let currentSelectedService = 'Sunday: Family & Friends Service';
-    let currentAttFilter = 'ALL'; // 'ALL', 'PRESENT', 'ABSENT'
+    let currentAttFilter = 'ALL'; // 'ALL', 'PRESENT', 'ABSENT', 'GUEST'
 
     let rawFinanceEntries = [];
     let filteredFinanceEntries = [];
@@ -2197,10 +2208,13 @@
 
     async function loadSubAdmins() {
       try {
-        const res = await fetch(`${API_BASE}/auth/subadmins`);
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const res = await fetch(`${API_BASE}/auth/subadmins`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
         if (res.ok) {
           const cloudList = await res.json();
-          if (Array.isArray(cloudList) && cloudList.length > 0) {
+          if (Array.isArray(cloudList)) {
             subAdminsList = cloudList;
             saveSubAdmins();
             renderSubAdminsList();
@@ -2213,16 +2227,7 @@
       if (saved) {
         try { subAdminsList = JSON.parse(saved); } catch(e) { subAdminsList = []; }
       } else {
-        subAdminsList = [
-          {
-            id: 'sub_def_1',
-            name: 'Deacon Samuel',
-            email: 'samuel@solutionsfaith.com',
-            password: 'Solutions12@26',
-            permissions: ['attendance', 'members', 'programs'],
-            createdAt: new Date().toLocaleDateString('en-GB')
-          }
-        ];
+        subAdminsList = [];
         saveSubAdmins();
       }
       renderSubAdminsList();
@@ -2349,10 +2354,10 @@
           tbody.innerHTML = subAdminsList.map((sub, i) => `
             <tr>
               <td>${i + 1}</td>
-              <td><strong>${sub.name}</strong> <span style="font-size:11px; font-weight:700; background:#111; color:white; padding:2px 8px; border-radius:12px; margin-left:4px;">Sub-Admin</span></td>
-              <td><i class="fas fa-envelope" style="color:var(--muted); margin-right:4px;"></i> ${sub.email}</td>
+              <td><strong>${escapeHtml(sub.name)}</strong> <span style="font-size:11px; font-weight:700; background:#111; color:white; padding:2px 8px; border-radius:12px; margin-left:4px;">Sub-Admin</span></td>
+              <td><i class="fas fa-envelope" style="color:var(--muted); margin-right:4px;"></i> ${escapeHtml(sub.email)}</td>
               <td><div style="display:flex; gap:6px; flex-wrap:wrap;">${buildBadges(sub) || '<span style="font-size:11px; color:var(--muted);">No privileges</span>'}</div></td>
-              <td>${sub.createdAt || '—'}</td>
+              <td>${escapeHtml(sub.createdAt) || '—'}</td>
               <td>
                 <div style="display:flex; gap:6px;">
                   <button class="btn-main" style="padding:5px 11px; font-size:12px; background:#c89b55; color:#111;" onclick="openEditSubAdminModal('${sub.id}')"><i class="fas fa-edit"></i> Edit Privileges</button>
@@ -2371,12 +2376,12 @@
           mobCards.innerHTML = subAdminsList.map(sub => `
             <div class="mob-card">
               <div class="mob-card-header">
-                <div class="mob-card-name">${sub.name}</div>
+                <div class="mob-card-name">${escapeHtml(sub.name)}</div>
                 <span style="font-size:11px; font-weight:700; background:#111; color:white; padding:3px 9px; border-radius:12px;">Sub-Admin</span>
               </div>
               <div class="mob-card-meta">
-                <div class="mob-card-row"><span>Email / ID</span><strong>${sub.email}</strong></div>
-                <div class="mob-card-row"><span>Created</span><strong>${sub.createdAt || '—'}</strong></div>
+                <div class="mob-card-row"><span>Email / ID</span><strong>${escapeHtml(sub.email)}</strong></div>
+                <div class="mob-card-row"><span>Created</span><strong>${escapeHtml(sub.createdAt) || '—'}</strong></div>
                 <div style="margin-top:8px;">
                   <span style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">Assigned Privileges:</span>
                   <div style="display:flex; gap:6px; flex-wrap:wrap;">${buildBadges(sub) || '<span style="font-size:11px; color:var(--muted);">No privileges</span>'}</div>
@@ -2424,9 +2429,13 @@
 
       // Persist in Cloud Database
       try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         const res = await fetch(`${API_BASE}/auth/subadmins`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ name, email, password, permissions: perms })
         });
 
@@ -2437,7 +2446,7 @@
           saveSubAdmins();
           closeCreateSubAdminModal();
           renderSubAdminsList();
-          showToast(`Sub-Admin account for <strong>${name}</strong> saved to Cloud Database! They can log in immediately at /admin.`, 'success', 'Sub-Admin Created');
+          showToast(`Sub-Admin account for <strong>${escapeHtml(name)}</strong> saved to Cloud Database! They can log in immediately at /admin.`, 'success', 'Sub-Admin Created');
           if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Sub-Admin'; }
           return;
         } else {
@@ -2463,7 +2472,7 @@
       saveSubAdmins();
       closeCreateSubAdminModal();
       renderSubAdminsList();
-      showToast(`Sub-Admin account for <strong>${name}</strong> created!`, 'success', 'Sub-Admin Created');
+      showToast(`Sub-Admin account for <strong>${escapeHtml(name)}</strong> created!`, 'success', 'Sub-Admin Created');
       if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Sub-Admin'; }
     }
 
@@ -2517,9 +2526,13 @@
       }
 
       try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         await fetch(`${API_BASE}/auth/subadmins/${id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ name, password: newPass, permissions: perms })
         });
       } catch (err) {}
@@ -2543,7 +2556,7 @@
           applyTabPermissions();
         }
 
-        showToast(`Privileges for <strong>${name}</strong> updated successfully!`, 'success', 'Privileges Updated');
+        showToast(`Privileges for <strong>${escapeHtml(name)}</strong> updated successfully!`, 'success', 'Privileges Updated');
       }
     }
 
@@ -2553,7 +2566,11 @@
         'Are you sure you want to revoke and delete this sub-admin account?',
         async () => {
           try {
-            await fetch(`${API_BASE}/auth/subadmins/${id}`, { method: 'DELETE' });
+            const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+            await fetch(`${API_BASE}/auth/subadmins/${id}`, {
+              method: 'DELETE',
+              headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
           } catch (e) {}
           subAdminsList = subAdminsList.filter(s => s.id !== id);
           saveSubAdmins();
@@ -3426,7 +3443,7 @@
           ? `<span style="background:#fffbeb; color:#b45309; font-weight:800; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;"><i class="fas fa-handshake"></i> First Timer</span>`
           : `<span class="badge-check">${m.role||'Member'}</span>`;
 
-        const phoneDisplay = isChild&&m.guardian ? `${m.phone||'—'} <span style="font-size:11px;color:var(--muted);">&#128100; ${m.guardian}</span>` : (m.phone||'—');
+        const phoneDisplay = isChild&&m.guardian ? `${escapeHtml(m.phone)||'—'} <span style="font-size:11px;color:var(--muted);">&#128100; ${escapeHtml(m.guardian)}</span>` : (escapeHtml(m.phone)||'—');
         return { genderBadge, catBadge, phoneDisplay, roleDisplay, isGuest };
       };
 
@@ -3439,9 +3456,9 @@
             ? `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#14532d;" onclick="toggleMemberAttendance('${m.phone}',false)"><i class="fas fa-check"></i> Checked In</button>`
             : `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#c89b55;color:#111;" onclick="toggleMemberAttendance('${m.phone}',true)"><i class="fas fa-user-plus"></i> Mark Present</button>`;
           return `<tr>
-            <td>${i+1}</td><td><strong>${m.firstName} ${m.lastName}</strong></td>
+            <td>${i+1}</td><td><strong>${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</strong></td>
             <td>${catBadge}</td><td>${phoneDisplay}</td><td>${genderBadge}</td>
-            <td>${m.address?`<span>&#128205; ${m.address}</span>`:'—'}</td>
+            <td>${m.address?`<span>&#128205; ${escapeHtml(m.address)}</span>`:'—'}</td>
             <td>${roleDisplay}</td>
             <td>${statusBadge}</td>
             <td>${m.isPresent?`<strong>${m.checkInTime}</strong>`:'<span style="color:#991b1b;font-weight:700;font-size:12px;">Did Not Attend</span>'}</td>
@@ -3461,14 +3478,14 @@
           return `
             <div class="mob-card">
               <div class="mob-card-header">
-                <div class="mob-card-name">${m.firstName} ${m.lastName}</div>
+                <div class="mob-card-name">${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</div>
                 ${statusBadge}
               </div>
               <div class="mob-card-meta">
                 <div class="mob-card-row"><span>Category</span><strong>${catBadge}</strong></div>
                 <div class="mob-card-row"><span>Gender</span><strong>${genderBadge}</strong></div>
                 <div class="mob-card-row"><span>Phone</span><strong>${phoneDisplay}</strong></div>
-                ${m.guardian?`<div class="mob-card-row"><span>Guardian</span><strong>${m.guardian}</strong></div>`:''}
+                ${m.guardian?`<div class="mob-card-row"><span>Guardian</span><strong>${escapeHtml(m.guardian)}</strong></div>`:''}
                 <div class="mob-card-row"><span>Role</span><strong>${roleDisplay}</strong></div>
                 <div class="mob-card-row"><span>Check-In</span><strong>${m.isPresent?m.checkInTime:'Did Not Attend'}</strong></div>
               </div>
@@ -3652,7 +3669,7 @@
           ? `<span style="background:#fffbeb; color:#b45309; font-weight:800; padding:2px 8px; border-radius:4px; border:1px solid #fde68a;"><i class="fas fa-handshake"></i> First Timer</span>`
           : `<span class="badge-check">${m.role||'Member'}</span>`;
 
-        const phoneDisplay = isChild&&m.guardian ? `<strong style="color:var(--accent);">${m.phone||'—'}</strong><div style="font-size:11px;color:var(--muted);"><i class="fas fa-user-shield"></i> ${m.guardian}</div>` : `<strong style="color:var(--accent);">${m.phone||'—'}</strong>`;
+        const phoneDisplay = isChild&&m.guardian ? `<strong style="color:var(--accent);">${escapeHtml(m.phone)||'—'}</strong><div style="font-size:11px;color:var(--muted);"><i class="fas fa-user-shield"></i> ${escapeHtml(m.guardian)}</div>` : `<strong style="color:var(--accent);">${escapeHtml(m.phone)||'—'}</strong>`;
         return {genderBadge, catBadge, phoneDisplay, roleDisplay, isChild, isGuest};
       };
 
@@ -3665,12 +3682,12 @@
       // Desktop table
       if (tbody) {
         tbody.innerHTML = list.map((m, i) => {
-          const {genderBadge, catBadge, phoneDisplay, roleDisplay} = buildMemberBadges(m);
+          const {genderBadge, catBadge, phoneDisplay, roleDisplay} = buildBadges(m);
           return `<tr>
-            <td>${i+1}</td><td><strong>${m.firstName} ${m.lastName}</strong></td>
+            <td>${i+1}</td><td><strong>${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</strong></td>
             <td>${catBadge}</td><td>${phoneDisplay}</td><td>${genderBadge}</td>
-            <td>${m.address?`<span>&#128205; ${m.address}</span>`:'—'}</td>
-            <td>${m.dob?`<span class="badge-dob"><i class="fas fa-calendar-day"></i> ${m.dob}</span>`:'—'}</td>
+            <td>${m.address?`<span>&#128205; ${escapeHtml(m.address)}</span>`:'—'}</td>
+            <td>${m.dob?`<span class="badge-dob"><i class="fas fa-calendar-day"></i> ${escapeHtml(m.dob)}</span>`:'—'}</td>
             <td>${roleDisplay}</td>
             <td><div style="display:flex;gap:6px;">
               <button class="btn-main" style="padding:4px 10px;font-size:12px;background:#c89b55;color:#111;" onclick="openEditMemberModal('${m.id}')"><i class="fas fa-edit"></i> Edit</button>
@@ -3689,15 +3706,15 @@
             return `
               <div class="mob-card">
                 <div class="mob-card-header">
-                  <div class="mob-card-name">${m.firstName} ${m.lastName}</div>
+                  <div class="mob-card-name">${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</div>
                   ${catBadge}
                 </div>
                 <div class="mob-card-meta">
                   <div class="mob-card-row"><span>Gender</span><strong>${genderBadge}</strong></div>
-                  <div class="mob-card-row"><span>Phone</span><strong>${m.phone||'—'}</strong></div>
-                  ${m.guardian?`<div class="mob-card-row"><span>Guardian</span><strong>${m.guardian}</strong></div>`:''}
-                  <div class="mob-card-row"><span>Location</span><strong>${m.address||'—'}</strong></div>
-                  <div class="mob-card-row"><span>Date of Birth</span><strong>${m.dob||'—'}</strong></div>
+                  <div class="mob-card-row"><span>Phone</span><strong>${escapeHtml(m.phone)||'—'}</strong></div>
+                  ${m.guardian?`<div class="mob-card-row"><span>Guardian</span><strong>${escapeHtml(m.guardian)}</strong></div>`:''}
+                  <div class="mob-card-row"><span>Location</span><strong>${escapeHtml(m.address)||'—'}</strong></div>
+                  <div class="mob-card-row"><span>Date of Birth</span><strong>${escapeHtml(m.dob)||'—'}</strong></div>
                   <div class="mob-card-row"><span>Role</span><strong>${m.role||'Member'}</strong></div>
                 </div>
                 <div class="mob-card-actions">
