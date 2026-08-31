@@ -1131,16 +1131,14 @@
             selectedMember = { ...selectedMember, ...checkinData.member };
           }
           if (checkinData.alreadyCheckedIn) {
-            isDuplicate = true;
-            if (checkinData.attendance && checkinData.attendance.checkedInAt) {
-              checkinTimeStr = new Date(checkinData.attendance.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            }
             showToast(`Notice: <strong>${escapeHtml(selectedMember.firstName)} ${escapeHtml(selectedMember.lastName)}</strong> is ALREADY checked in for today's service!`, 'warning', 'Already Checked In');
+            setTimeout(() => { cancelConfirm(); }, 2500);
+            return;
           }
         }
       } catch (err) {}
 
-      showPassScreen(selectedMember, isDuplicate, checkinTimeStr);
+      showPassScreen(selectedMember, false, null);
     }
 
     function showPassScreen(member, isDuplicate = false, checkedInTime = null) {
