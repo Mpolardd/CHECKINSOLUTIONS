@@ -423,6 +423,34 @@ router.post('/services', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), asyn
   } catch (e) { next(e); }
 });
 
+router.get('/services', async (req, res, next) => {
+  try {
+    const { serviceTypeId, date } = req.query;
+
+    const where = { active: true };
+    if (serviceTypeId) where.serviceTypeId = serviceTypeId;
+    if (date) {
+      const d = new Date(String(date));
+      if (!Number.isNaN(d.getTime())) {
+        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+        where.serviceDate = { gte: start, lte: end };
+      }
+    }
+
+    const services = await prisma.service.findMany({
+      where,
+      include: { serviceType: true },
+      orderBy: [
+        { serviceDate: 'desc' },
+        { startsAt: 'desc' }
+      ]
+    });
+
+    res.json(services);
+  } catch (e) { next(e); }
+});
+
 router.get('/services/current', async (req, res, next) => {
   try {
     const now = new Date();
