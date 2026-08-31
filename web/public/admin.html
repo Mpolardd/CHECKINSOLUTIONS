@@ -3423,10 +3423,6 @@
       } catch (err) {
         console.error('Failed loading attendance history report:', err);
       }
-    }
-
-    function filterHistoricalAttendanceReportTable() {
-      const search = (document.getElementById('repAttSearch')?.value || '').trim().toLowerCase();
     let compiledAttSessionsMap = {};
 
     function filterHistoricalAttendanceReportTable() {
