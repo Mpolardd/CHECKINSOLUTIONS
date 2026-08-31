@@ -1255,8 +1255,11 @@
 
       closeRegisterModal();
       e.target.reset();
-      showToast(`Welcome <strong>${escapeHtml(firstName)} ${escapeHtml(lastName)}</strong> (${category})! Your details have been registered in Supabase.`, 'success', 'Visitor Registered');
-      selectMemberForCheckin(newMember);
+      selectedMember = newMember;
+      document.getElementById('viewSearch').style.display = 'none';
+      document.getElementById('viewConfirm').style.display = 'none';
+      showToast(`Welcome <strong>${escapeHtml(firstName)} ${escapeHtml(lastName)}</strong> (${category})! You are checked in.`, 'success', 'Visitor Check-In Complete');
+      showPassScreen(newMember, false, null);
     }
 
     /* TOAST NOTIFICATION SYSTEM */
