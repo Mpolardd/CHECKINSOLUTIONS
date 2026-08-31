@@ -283,30 +283,57 @@ router.get('/live-count/:serviceId', async (req, res, next) => {
 router.get('/by-service-name', async (req, res, next) => {
   try {
     const rawName = String(req.query.name || '').trim();
-    if (!rawName) return res.json({ count: 0, recent: [] });
+    const dateParam = String(req.query.date || '').trim();
 
-    const prefix = rawName.split(':')[0].trim();
+    let serviceIds = null;
 
-    const matchingServices = await prisma.service.findMany({
-      where: {
+    if (rawName && rawName.toUpperCase() !== 'ALL') {
+      const prefix = rawName.split(':')[0].trim();
+      const whereService = {
         OR: [
           { serviceType: { name: { contains: prefix, mode: 'insensitive' } } },
           { serviceType: { name: { contains: rawName, mode: 'insensitive' } } }
         ]
-      },
-      select: { id: true }
-    });
+      };
+      if (dateParam) {
+        const d = new Date(dateParam);
+        if (!Number.isNaN(d.getTime())) {
+          const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+          const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+          whereService.serviceDate = { gte: start, lte: end };
+        }
+      }
 
-    const serviceIds = matchingServices.map(s => s.id);
-    if (serviceIds.length === 0) {
-      return res.json({ count: 0, maleCount: 0, femaleCount: 0, recent: [] });
+      const matchingServices = await prisma.service.findMany({
+        where: whereService,
+        select: { id: true }
+      });
+
+      serviceIds = matchingServices.map(s => s.id);
+      if (serviceIds.length === 0) {
+        return res.json({ count: 0, maleCount: 0, femaleCount: 0, recent: [] });
+      }
+    }
+
+    const attendanceWhere = {
+      member: { active: true, deletedAt: null }
+    };
+
+    if (serviceIds !== null) {
+      attendanceWhere.serviceId = { in: serviceIds };
+    }
+
+    if (dateParam) {
+      const d = new Date(dateParam);
+      if (!Number.isNaN(d.getTime())) {
+        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+        const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+        attendanceWhere.checkedInAt = { gte: start, lte: end };
+      }
     }
 
     const attendees = await prisma.attendance.findMany({
-      where: {
-        serviceId: { in: serviceIds },
-        member: { active: true, deletedAt: null }
-      },
+      where: attendanceWhere,
       include: {
         member: {
           select: {

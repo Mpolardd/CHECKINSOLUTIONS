@@ -1566,14 +1566,22 @@
       <div class="filter-toolbar">
         <div>
           <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
-            Select Service to Track Attendance
+            Select Service &amp; Date to Track Attendance &amp; Demographics
           </div>
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <select id="attServiceSelect" class="form-ctrl" aria-label="Select Service for Attendance" style="padding: 7px 12px; font-size: 13.5px; width: 270px; font-weight: 700;" onchange="handleAttServiceChange()">
+              <option value="ALL">All Services</option>
               <option value="Sunday: Family & Friends Service" selected>Sunday — Family & Friends Service</option>
               <option value="Wednesday: Time with the Lord">Wednesday — Time with the Lord</option>
               <option value="Friday: Prophetic Healing & Deliverance">Friday — Prophetic Healing & Deliverance</option>
             </select>
+
+            <!-- Service Date Picker -->
+            <div style="display: flex; align-items: center; gap: 6px; background: white; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px;">
+              <i class="fas fa-calendar-alt" style="color: var(--muted); font-size: 13px;"></i>
+              <input type="date" id="attDateSelect" class="form-ctrl" style="border: none; padding: 2px 4px; font-size: 13px; font-weight: 600; width: 140px;" onchange="handleAttServiceChange()" title="Filter Attendance by Service Date" />
+              <button type="button" class="btn-preset" style="padding: 2px 8px; font-size: 11px; font-weight: 700;" onclick="document.getElementById('attDateSelect').value=''; handleAttServiceChange();" title="View All Dates">All Dates</button>
+            </div>
 
             <!-- Status Filter Buttons (Present vs Absent vs Guests) -->
             <div class="filter-presets">
@@ -3371,11 +3379,16 @@
     }
 
     function getAttendanceListForService(serviceName) {
+      const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value : '';
+      if (selectedDate && serviceAttendanceMap[`${serviceName}_${selectedDate}`]) {
+        return serviceAttendanceMap[`${serviceName}_${selectedDate}`];
+      }
       const activeList = serviceAttendanceMap[serviceName] || [];
       return activeList;
     }
 
     function renderAttendanceAndDemographics() {
+      const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value : '';
       const activeAttList = getAttendanceListForService(currentSelectedService);
       
       // Combine all directory members + any active check-ins (e.g. newly registered visitors/guests)
@@ -3709,7 +3722,14 @@
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
         const targetService = currentSelectedService || 'Sunday: Family & Friends Service';
-        const liveRes = await fetch(`${API_BASE}/attendance/by-service-name?name=${encodeURIComponent(targetService)}`, { headers });
+        const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value : '';
+
+        let apiUrl = `${API_BASE}/attendance/by-service-name?name=${encodeURIComponent(targetService)}`;
+        if (selectedDate) {
+          apiUrl += `&date=${encodeURIComponent(selectedDate)}`;
+        }
+
+        const liveRes = await fetch(apiUrl, { headers });
         if (liveRes.ok) {
           const live = await liveRes.json();
           if (live.recent && Array.isArray(live.recent)) {
@@ -3776,6 +3796,8 @@
               }
             });
 
+            const mapKey = selectedDate ? `${targetService}_${selectedDate}` : targetService;
+            serviceAttendanceMap[mapKey] = liveList;
             serviceAttendanceMap[targetService] = liveList;
             renderAttendanceAndDemographics();
             if (modifiedDirectory) {
