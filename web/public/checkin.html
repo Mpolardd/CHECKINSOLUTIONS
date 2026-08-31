@@ -920,6 +920,11 @@
       loadCustomPrograms();
       determineActiveService();
       loadBranding();
+
+      setInterval(() => {
+        loadCustomPrograms();
+        determineActiveService();
+      }, 4000);
     });
 
     function loadBranding() {

@@ -2859,6 +2859,14 @@
       renderMembersTable();
       renderProgramsManager();
       fetchLiveCounts();
+
+      if (window.livePollTimer) clearInterval(window.livePollTimer);
+      window.livePollTimer = setInterval(() => {
+        const dash = document.getElementById('dashboardContent');
+        if (dash && dash.style.display !== 'none') {
+          fetchLiveCounts();
+        }
+      }, 3000);
     }
 
     async function handleLoginSubmit(e) {
