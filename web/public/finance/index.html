@@ -1001,8 +1001,8 @@
     async function checkFinAuth() {
       const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token');
 
-      // 1. If offline Treasury session or Super Admin token, accept immediately
-      if (token && (token.startsWith('sfmi_fin_offline_session_') || token.startsWith('sfmi_super_admin_session_'))) {
+      // 1. If offline Treasury session, accept immediately
+      if (token && token.startsWith('sfmi_fin_offline_session_')) {
         resetInactivityTimer();
         showFinDashboard();
         return;
@@ -1015,11 +1015,11 @@
         return;
       }
 
-      // 3. Token exists - display dashboard immediately to eliminate login screen flash on page refresh
+      // 3. Token exists - display dashboard immediately
       resetInactivityTimer();
       showFinDashboard();
 
-      // 4. Silently verify token with backend API in background
+      // 4. Verify token with backend API
       try {
         const res = await fetch(`${API_BASE}/auth/verify`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -1029,10 +1029,10 @@
           const data = await res.json();
           const role = (data.user && data.user.role) ? data.user.role : '';
 
-          if (role !== 'FINANCE' && role !== 'SUPER_ADMIN') {
+          if (role !== 'FINANCE') {
             purgeFinAuthSession();
             showFinLogin();
-            showToast('Access Denied: Only Treasury / Finance Officers can access this portal.', 'error', 'Access Denied');
+            showToast('Access Denied: The Treasury Portal (/finance) is strictly reserved for Treasury Officers. System Administrators please use /admin.', 'error', 'Access Denied');
             return;
           }
 
@@ -1089,10 +1089,10 @@
 
         if (res.ok) {
           const data = await res.json();
-          if (data.user && data.user.role !== 'FINANCE' && data.user.role !== 'SUPER_ADMIN') {
+          if (data.user && data.user.role !== 'FINANCE') {
             purgeFinAuthSession();
             errorMsg.style.display = 'block';
-            errorMsg.innerText = 'Access Denied: Only designated Treasury / Finance Officers can access this portal.';
+            errorMsg.innerText = 'Access Denied: The Treasury Portal (/finance) is strictly reserved for Treasury & Finance Officers. Administrators please sign in at /admin.';
             if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Treasury Portal'; }
             return;
           }
