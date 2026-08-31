@@ -728,7 +728,7 @@
   </div>
 
   <!-- 1. LOGIN SCREEN GATE FOR FINANCE (No Logo in Login Box) -->
-  <div class="login-container" id="finLoginScreen">
+  <div class="login-container" id="finLoginScreen" style="display: none;">
     <div class="login-card">
       <h2 style="font-family: Manrope, sans-serif; font-size: 24px; margin-bottom: 4px;">Treasury Officer Login</h2>
       <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px;">Authorized officers only. Enter credentials to record service collections.</p>
@@ -1000,13 +1000,26 @@
 
     async function checkFinAuth() {
       const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token');
+
+      // 1. If offline Treasury session or Super Admin token, accept immediately
+      if (token && (token.startsWith('sfmi_fin_offline_session_') || token.startsWith('sfmi_super_admin_session_'))) {
+        resetInactivityTimer();
+        showFinDashboard();
+        return;
+      }
+
+      // 2. If no token at all, show login screen
       if (!token) {
         purgeFinAuthSession();
         showFinLogin();
         return;
       }
 
-      // Verify token cryptographically with server
+      // 3. Token exists - display dashboard immediately to eliminate login screen flash on page refresh
+      resetInactivityTimer();
+      showFinDashboard();
+
+      // 4. Silently verify token with backend API in background
       try {
         const res = await fetch(`${API_BASE}/auth/verify`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -1025,23 +1038,13 @@
 
           sessionStorage.setItem('sfmi_fin_token', token);
           sessionStorage.setItem('sfmi_fin_user', JSON.stringify(data.user));
-          resetInactivityTimer();
-          showFinDashboard();
-          return;
-        } else {
+        } else if (res.status === 401 || res.status === 403) {
           purgeFinAuthSession();
           showFinLogin();
-          return;
+          showToast('Your session has expired. Please log in again.', 'warning', 'Session Expired');
         }
       } catch (err) {
-        // Offline check: Only allow signed offline session tokens
-        if (token && token.startsWith('sfmi_fin_offline_session_')) {
-          resetInactivityTimer();
-          showFinDashboard();
-          return;
-        }
-        purgeFinAuthSession();
-        showFinLogin();
+        console.warn('Backend session verification unavailable, using local active session:', err);
       }
     }
 

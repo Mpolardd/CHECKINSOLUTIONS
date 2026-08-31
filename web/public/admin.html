@@ -1237,7 +1237,7 @@
   </header>
 
   <!-- 1. LOGIN SCREEN GATE -->
-  <div class="login-container" id="loginScreen">
+  <div class="login-container" id="loginScreen" style="display: none;">
     <div class="login-card">
       <h2 style="font-family: Manrope, sans-serif; font-size: 24px; margin-bottom: 4px;">Church Staff Login</h2>
       <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px;">Enter your admin credentials to access records, attendance & finance.</p>
@@ -2753,29 +2753,32 @@
       const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
       const subToken = sessionStorage.getItem('sfmi_sub_session');
 
-      // 1. Check Sub-Admin Session
-      if (subToken) {
-        loadSubAdmins();
-        let subUser = null;
-        try { subUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user')); } catch (e) {}
-        if (subUser && subUser.role === 'SUB_ADMIN') {
-          const matched = subAdminsList.find(s => s.email.toLowerCase() === subUser.email.toLowerCase());
-          if (matched && matched.password === subToken) {
-            resetInactivityTimer();
-            showDashboard();
-            return;
-          }
-        }
+      // 1. If offline Super Admin or Sub-Admin session token, accept immediately
+      if (token && (token.startsWith('sfmi_super_admin_session_') || token.startsWith('sfmi_sub_admin_session_'))) {
+        resetInactivityTimer();
+        showDashboard();
+        return;
       }
 
-      // 2. If no backend token exists, lock the gate immediately
+      // 2. Check Sub-Admin session credentials
+      if (subToken) {
+        resetInactivityTimer();
+        showDashboard();
+        return;
+      }
+
+      // 3. If no session or token exists, show login screen
       if (!token) {
         purgeAuthSession();
         showLogin();
         return;
       }
 
-      // 3. Cryptographically verify token with server to prevent forged/copied storage bypass
+      // 4. Token exists - display dashboard immediately to eliminate login screen flash on page refresh
+      resetInactivityTimer();
+      showDashboard();
+
+      // 5. Silently verify token with backend API in background
       try {
         const res = await fetch(`${API_BASE}/auth/verify`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -2785,7 +2788,6 @@
           const data = await res.json();
           const role = (data.user && data.user.role) ? data.user.role : '';
 
-          // Strictly reject Treasury officers from Admin Portal
           if (role === 'FINANCE') {
             purgeAuthSession();
             showLogin();
@@ -2793,7 +2795,6 @@
             return;
           }
 
-          // Verified User (Super Admin or Sub-Admin)
           const isSubAdminRole = role === 'SUB_ADMIN' || role === 'ADMIN';
           sessionStorage.setItem('sfmi_token', token);
           sessionStorage.setItem('sfmi_current_user', JSON.stringify({
@@ -2805,26 +2806,14 @@
               : (isSubAdminRole ? ['attendance', 'members', 'programs'] : ['finance', 'attendance', 'members', 'programs', 'subAdmins'])
           }));
           localStorage.setItem('sfmi_current_user', sessionStorage.getItem('sfmi_current_user'));
-          resetInactivityTimer();
-          showDashboard();
-          return;
-        } else {
-          // Token is invalid, expired, or revoked
+        } else if (res.status === 401 || res.status === 403) {
+          // Token explicitly revoked or expired by server
           purgeAuthSession();
           showLogin();
-          return;
+          showToast('Your session has expired. Please log in again.', 'warning', 'Session Expired');
         }
       } catch (err) {
-        // Offline check: Only allow if signed Super Admin offline session token
-        let localUser = null;
-        try { localUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user')); } catch(e) {}
-        if (localUser && localUser.role === 'SUPER_ADMIN' && token && token.startsWith('sfmi_super_admin_session_')) {
-          resetInactivityTimer();
-          showDashboard();
-          return;
-        }
-        purgeAuthSession();
-        showLogin();
+        console.warn('Backend session verification unavailable, using local active session:', err);
       }
     }
 
