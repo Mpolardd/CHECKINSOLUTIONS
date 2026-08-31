@@ -1284,6 +1284,9 @@
       <button class="tab-btn" id="tabBtnSubAdmins" onclick="switchTab('subAdmins')">
         <i class="fas fa-user-shield"></i> Staff & Sub-Admins
       </button>
+      <button class="tab-btn" id="tabBtnReports" onclick="switchTab('reports')">
+        <i class="fas fa-file-excel"></i> Historical Reports & Archives
+      </button>
     </div>
 
     <!-- Mobile Hamburger Navigation -->
@@ -1849,6 +1852,190 @@
         <!-- Sub-Admins Mobile Cards -->
         <div class="sub-cards-mobile" id="subAdminsMobileCards" style="display: none;">
           <!-- Injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: HISTORICAL REPORTS & EXPORT HUB -->
+    <div id="secReports" style="display: none;">
+      <!-- Section Title Header -->
+      <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h2 style="font-family: Manrope, sans-serif; font-size: 22px; font-weight: 800; color: var(--ink);">
+            <i class="fas fa-file-excel" style="color: #107c41; margin-right: 8px;"></i> Historical Reports &amp; Export Hub
+          </h2>
+          <p style="font-size: 13.5px; color: var(--muted); margin-top: 4px;">
+            Access full historical attendance check-in logs and financial analytics reports for past services. Download native Excel / CSV spreadsheets with 1-click.
+          </p>
+        </div>
+      </div>
+
+      <!-- Reports Navigation Sub-Tabs -->
+      <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 10px;">
+        <button class="btn-preset active" id="btnReportSubAtt" onclick="switchReportSubTab('ATTENDANCE')">
+          <i class="fas fa-clipboard-user"></i> Historical Attendance Check-Ins Report
+        </button>
+        <button class="btn-preset" id="btnReportSubFin" onclick="switchReportSubTab('FINANCE')">
+          <i class="fas fa-chart-line"></i> Services Financial Analytics Report
+        </button>
+      </div>
+
+      <!-- 1. ATTENDANCE HISTORICAL REPORT SECTION -->
+      <div id="repSubAttendance">
+        <!-- Filter Toolbar -->
+        <div class="filter-toolbar" style="margin-bottom: 20px; background: white; padding: 16px; border-radius: 8px; border: 1px solid var(--line);">
+          <div style="display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;">
+            <div>
+              <label class="form-label" style="font-size: 11px; text-transform: uppercase;">Service Type</label>
+              <select id="repAttServiceSelect" class="form-ctrl" style="padding: 7px 10px; font-size: 13px; width: 220px;" onchange="loadHistoricalAttendanceReport()">
+                <option value="ALL">All Services</option>
+                <option value="Sunday: Family &amp; Friends Service">Sunday — Family &amp; Friends</option>
+                <option value="Wednesday: Time with the Lord">Wednesday — Time with the Lord</option>
+                <option value="Friday: Prophetic Healing &amp; Deliverance">Friday — Prophetic Healing &amp; Deliverance</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 11px; text-transform: uppercase;">From Date</label>
+              <input type="date" id="repAttStartDate" class="form-ctrl" style="padding: 6px 10px; font-size: 13px; width: 150px;" onchange="loadHistoricalAttendanceReport()" />
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 11px; text-transform: uppercase;">To Date</label>
+              <input type="date" id="repAttEndDate" class="form-ctrl" style="padding: 6px 10px; font-size: 13px; width: 150px;" onchange="loadHistoricalAttendanceReport()" />
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 11px; text-transform: uppercase;">Search Member / Phone</label>
+              <input type="text" id="repAttSearch" class="form-ctrl" placeholder="Search name or phone..." style="padding: 7px 10px; font-size: 13px; width: 180px;" oninput="filterHistoricalAttendanceReportTable()" />
+            </div>
+            <div style="margin-left: auto; display: flex; gap: 8px;">
+              <button class="btn-main" style="background: #107c41;" onclick="downloadFullAttendanceExcel()"><i class="fas fa-file-excel"></i> Export Excel (.xlsx/.csv)</button>
+              <button class="btn-main" onclick="window.print()"><i class="fas fa-print"></i> Print Report</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendance Historical Metrics Summary Cards -->
+        <div class="metrics-row" style="margin-bottom: 20px;">
+          <div class="metric-box">
+            <div class="metric-num" id="repAttTotalLogs" style="color: var(--emerald);">0</div>
+            <div class="metric-label">Total Check-In Logs</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-num" id="repAttUniqueMembers" style="color: var(--accent);">0</div>
+            <div class="metric-label">Unique Members Attended</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-num" id="repAttGuests" style="color: #b45309;">0</div>
+            <div class="metric-label">First-Timer Guests</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-num" id="repAttMaleFemale" style="color: var(--ink);">0 M / 0 F</div>
+            <div class="metric-label">Male / Female Ratio</div>
+          </div>
+        </div>
+
+        <!-- Attendance Table -->
+        <div class="fin-card-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <strong style="font-family: Manrope, sans-serif; font-size: 16px;">Historical Attendance Check-In Log</strong>
+            <span style="font-size: 12.5px; color: var(--muted);" id="repAttCountText">0 Check-in records</span>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Check-In Timestamp</th>
+                  <th>Member Full Name</th>
+                  <th>Category</th>
+                  <th>Phone Number</th>
+                  <th>Gender</th>
+                  <th>Residential Location</th>
+                  <th>Service Name</th>
+                  <th>Check-In Method</th>
+                </tr>
+              </thead>
+              <tbody id="repAttTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. FINANCIAL HISTORICAL REPORT SECTION -->
+      <div id="repSubFinance" style="display: none;">
+        <!-- Filter Toolbar -->
+        <div class="filter-toolbar" style="margin-bottom: 20px; background: white; padding: 16px; border-radius: 8px; border: 1px solid var(--line);">
+          <div style="display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;">
+            <div>
+              <label class="form-label" style="font-size: 11px; text-transform: uppercase;">Service Type</label>
+              <select id="repFinServiceSelect" class="form-ctrl" style="padding: 7px 10px; font-size: 13px; width: 220px;" onchange="loadHistoricalFinanceReport()">
+                <option value="ALL">All Services</option>
+                <option value="Wednesday">Wednesday (Time with Lord)</option>
+                <option value="Friday">Friday (Prophetic Deliverance)</option>
+                <option value="Sunday">Sunday (Family &amp; Friends)</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 11px; text-transform: uppercase;">From Date</label>
+              <input type="date" id="repFinStartDate" class="form-ctrl" style="padding: 6px 10px; font-size: 13px; width: 150px;" onchange="loadHistoricalFinanceReport()" />
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 11px; text-transform: uppercase;">To Date</label>
+              <input type="date" id="repFinEndDate" class="form-ctrl" style="padding: 6px 10px; font-size: 13px; width: 150px;" onchange="loadHistoricalFinanceReport()" />
+            </div>
+            <div style="margin-left: auto; display: flex; gap: 8px;">
+              <button class="btn-main" style="background: #107c41;" onclick="downloadFullFinanceExcel()"><i class="fas fa-file-excel"></i> Export Excel (.xlsx/.csv)</button>
+              <button class="btn-main" onclick="window.print()"><i class="fas fa-print"></i> Print Financial Summary</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Financial Historical Metrics Cards -->
+        <div class="metrics-row" style="margin-bottom: 20px;">
+          <div class="metric-box">
+            <div class="metric-num" id="repFinGrandTotal" style="color: var(--emerald);">GHS 0.00</div>
+            <div class="metric-label">Grand Total Collections</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-num" id="repFinTithes" style="color: var(--accent);">GHS 0.00</div>
+            <div class="metric-label">Total Tithes</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-num" id="repFinOffering" style="color: #2563eb;">GHS 0.00</div>
+            <div class="metric-label">General Offering</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-num" id="repFinSeeds" style="color: #be123c;">GHS 0.00</div>
+            <div class="metric-label">Seeds &amp; Building Fund</div>
+          </div>
+        </div>
+
+        <!-- Financial History Table -->
+        <div class="fin-card-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <strong style="font-family: Manrope, sans-serif; font-size: 16px;">Historical Service Financial Collection Ledger</strong>
+            <span style="font-size: 12.5px; color: var(--muted);" id="repFinCountText">0 Services Recorded</span>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Service Date</th>
+                  <th>Service Name</th>
+                  <th>Tithes</th>
+                  <th>General Offering</th>
+                  <th>Building Fund</th>
+                  <th>Special Seeds</th>
+                  <th>Total Amount</th>
+                  <th>Payment Modes</th>
+                  <th>Recorded By</th>
+                </tr>
+              </thead>
+              <tbody id="repFinTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -3013,7 +3200,8 @@
       attendance: '<i class="fas fa-list-check"></i> Attendance & Demographics',
       members: '<i class="fas fa-users"></i> Member Directory',
       programs: '<i class="fas fa-calendar-star"></i> Services & Programs Setup',
-      subAdmins: '<i class="fas fa-user-shield"></i> Staff & Sub-Admins'
+      subAdmins: '<i class="fas fa-user-shield"></i> Staff & Sub-Admins',
+      reports: '<i class="fas fa-file-excel"></i> Historical Reports & Archives'
     };
 
     function switchTab(tab) {
@@ -3026,13 +3214,13 @@
       if (currentUser && currentUser.role === 'SUB_ADMIN') {
         const allowed = Array.isArray(currentUser.permissions) 
           ? currentUser.permissions.filter(p => p !== 'finance' && p !== 'subAdmins') 
-          : ['attendance', 'members', 'programs'];
+          : ['attendance', 'members', 'programs', 'reports'];
         if (tab === 'finance' || tab === 'subAdmins' || !allowed.includes(tab)) {
           tab = allowed[0] || 'attendance';
         }
       }
 
-      const tabs = ['finance', 'attendance', 'members', 'programs', 'subAdmins'];
+      const tabs = ['finance', 'attendance', 'members', 'programs', 'subAdmins', 'reports'];
       tabs.forEach(t => {
         const sec = document.getElementById(`sec${t.charAt(0).toUpperCase() + t.slice(1)}`);
         const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -3050,6 +3238,7 @@
       if (tab === 'members') { renderMembersTable(); syncMembersViewMode(); }
       if (tab === 'programs') { renderProgramsManager(); syncProgramsViewMode(); }
       if (tab === 'subAdmins') { renderSubAdminsList(); syncSubAdminsViewMode(); }
+      if (tab === 'reports') { initReportsHub(); }
     }
 
     function toggleMobileMenu() {
@@ -3067,6 +3256,330 @@
       const icon = document.getElementById('hamburgerIcon');
       if (drawer) drawer.classList.remove('open');
       if (icon) icon.className = 'fas fa-bars ham-icon';
+    }
+
+    /* ── HISTORICAL REPORTS & ARCHIVES HUB ── */
+    let currentReportSubTab = 'ATTENDANCE'; // 'ATTENDANCE' or 'FINANCE'
+    let rawAttReportData = [];
+    let rawFinReportData = [];
+
+    function switchReportSubTab(sub) {
+      currentReportSubTab = sub;
+      const attBtn = document.getElementById('btnReportSubAtt');
+      const finBtn = document.getElementById('btnReportSubFin');
+      const attSec = document.getElementById('repSubAttendance');
+      const finSec = document.getElementById('repSubFinance');
+
+      if (attBtn) attBtn.classList.toggle('active', sub === 'ATTENDANCE');
+      if (finBtn) finBtn.classList.toggle('active', sub === 'FINANCE');
+      if (attSec) attSec.style.display = sub === 'ATTENDANCE' ? 'block' : 'none';
+      if (finSec) finSec.style.display = sub === 'FINANCE' ? 'block' : 'none';
+
+      if (sub === 'ATTENDANCE') {
+        loadHistoricalAttendanceReport();
+      } else {
+        loadHistoricalFinanceReport();
+      }
+    }
+
+    function initReportsHub() {
+      switchReportSubTab(currentReportSubTab || 'ATTENDANCE');
+    }
+
+    async function loadHistoricalAttendanceReport() {
+      try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        const serviceName = document.getElementById('repAttServiceSelect') ? document.getElementById('repAttServiceSelect').value : 'ALL';
+        const startDate = document.getElementById('repAttStartDate') ? document.getElementById('repAttStartDate').value : '';
+        const endDate = document.getElementById('repAttEndDate') ? document.getElementById('repAttEndDate').value : '';
+
+        let query = `?serviceName=${encodeURIComponent(serviceName)}`;
+        if (startDate) query += `&startDate=${encodeURIComponent(startDate)}`;
+        if (endDate) query += `&endDate=${encodeURIComponent(endDate)}`;
+
+        const res = await fetch(`${API_BASE}/attendance/history${query}`, { headers });
+        if (res.ok) {
+          rawAttReportData = await res.json();
+          filterHistoricalAttendanceReportTable();
+        }
+      } catch (err) {
+        console.error('Failed loading attendance history report:', err);
+      }
+    }
+
+    function filterHistoricalAttendanceReportTable() {
+      const search = (document.getElementById('repAttSearch')?.value || '').trim().toLowerCase();
+      let list = [...rawAttReportData];
+
+      if (search) {
+        list = list.filter(item => {
+          const m = item.member || {};
+          const name = `${m.firstName || ''} ${m.lastName || ''}`.toLowerCase();
+          const phone = (m.phone || '').toLowerCase();
+          const location = (m.address || '').toLowerCase();
+          return name.includes(search) || phone.includes(search) || location.includes(search);
+        });
+      }
+
+      // Compute summary metrics
+      const totalLogs = list.length;
+      const uniqueMemberIds = new Set();
+      let guestCount = 0;
+      let maleCount = 0;
+      let femaleCount = 0;
+
+      list.forEach(item => {
+        if (item.memberId) uniqueMemberIds.add(item.memberId);
+        if (item.isGuest || item.member?.category === 'Visitor / Guest') guestCount++;
+        const g = (item.member?.gender || '').toLowerCase();
+        if (g.startsWith('m')) maleCount++;
+        else if (g.startsWith('f')) femaleCount++;
+      });
+
+      const totalLogsEl = document.getElementById('repAttTotalLogs');
+      if (totalLogsEl) totalLogsEl.innerText = totalLogs;
+      const uniqueEl = document.getElementById('repAttUniqueMembers');
+      if (uniqueEl) uniqueEl.innerText = uniqueMemberIds.size;
+      const guestEl = document.getElementById('repAttGuests');
+      if (guestEl) guestEl.innerText = guestCount;
+      const mfEl = document.getElementById('repAttMaleFemale');
+      if (mfEl) mfEl.innerText = `${maleCount} M / ${femaleCount} F`;
+      const countTextEl = document.getElementById('repAttCountText');
+      if (countTextEl) countTextEl.innerText = `${list.length} Check-in records shown`;
+
+      // Render table rows
+      const tbody = document.getElementById('repAttTableBody');
+      if (!tbody) return;
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--muted);">No check-in records found for selected filter criteria.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(item => {
+        const m = item.member || {};
+        const timestamp = new Date(item.checkedInAt || Date.now()).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+        const name = `${m.firstName || 'Visitor'} ${m.lastName || 'Guest'}`;
+        const category = m.category || (item.isGuest ? 'Visitor / Guest' : 'Adult');
+        const phone = m.phone || '—';
+        const gender = m.gender || '—';
+        const location = m.address ? m.address.replace(/^📍\s*/, '') : '—';
+        const serviceName = item.service?.serviceType?.name || item.serviceName || 'Sunday Service';
+        const method = item.method || 'KIOSK';
+
+        return `
+          <tr>
+            <td><strong>${timestamp}</strong></td>
+            <td><strong style="color: var(--ink);">${escapeHtml(name)}</strong></td>
+            <td><span class="badge ${item.isGuest ? 'badge-gold' : 'badge-emerald'}">${escapeHtml(category)}</span></td>
+            <td>${escapeHtml(phone)}</td>
+            <td>${escapeHtml(gender)}</td>
+            <td>📍 ${escapeHtml(location)}</td>
+            <td>${escapeHtml(serviceName)}</td>
+            <td><span class="badge badge-gray">${escapeHtml(method)}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function downloadFullAttendanceExcel() {
+      const search = (document.getElementById('repAttSearch')?.value || '').trim().toLowerCase();
+      let list = [...rawAttReportData];
+
+      if (search) {
+        list = list.filter(item => {
+          const m = item.member || {};
+          const name = `${m.firstName || ''} ${m.lastName || ''}`.toLowerCase();
+          const phone = (m.phone || '').toLowerCase();
+          return name.includes(search) || phone.includes(search);
+        });
+      }
+
+      if (list.length === 0) {
+        showToast('No attendance records available to export.', 'warning', 'Export Empty');
+        return;
+      }
+
+      let csv = '\uFEFF'; // Excel UTF-8 BOM for automatic column formatting in Microsoft Excel
+      csv += 'Check-In Timestamp,Full Name,Category,Phone Number,Gender,Residential Location,Service Name,Check-In Method\n';
+
+      list.forEach(item => {
+        const m = item.member || {};
+        const timestamp = `"${new Date(item.checkedInAt || Date.now()).toLocaleString()}"`;
+        const name = `"${(m.firstName || '') + ' ' + (m.lastName || '')}"`;
+        const category = `"${m.category || (item.isGuest ? 'Visitor / Guest' : 'Adult')}"`;
+        const phone = `"${m.phone || ''}"`;
+        const gender = `"${m.gender || ''}"`;
+        const location = `"${(m.address || '').replace(/^📍\s*/, '').replace(/"/g, '""')}"`;
+        const serviceName = `"${item.service?.serviceType?.name || item.serviceName || 'Sunday Service'}"`;
+        const method = `"${item.method || 'KIOSK'}"`;
+
+        csv += `${timestamp},${name},${category},${phone},${gender},${location},${serviceName},${method}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `SFMI_Historical_Attendance_Report_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Attendance Excel report downloaded successfully!', 'success', 'Export Complete');
+    }
+
+    async function loadHistoricalFinanceReport() {
+      try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        const res = await fetch(`${API_BASE}/finance/service-entries`, { headers });
+        if (res.ok) {
+          rawFinReportData = await res.json();
+          filterHistoricalFinanceReportTable();
+        }
+      } catch (err) {
+        console.error('Failed loading financial history report:', err);
+      }
+    }
+
+    function filterHistoricalFinanceReportTable() {
+      const serviceType = document.getElementById('repFinServiceSelect') ? document.getElementById('repFinServiceSelect').value : 'ALL';
+      const startDate = document.getElementById('repFinStartDate') ? document.getElementById('repFinStartDate').value : '';
+      const endDate = document.getElementById('repFinEndDate') ? document.getElementById('repFinEndDate').value : '';
+
+      let list = [...rawFinReportData];
+
+      if (serviceType && serviceType !== 'ALL') {
+        list = list.filter(e => (e.serviceName || '').toLowerCase().includes(serviceType.toLowerCase()));
+      }
+      if (startDate) {
+        const sTime = new Date(startDate).getTime();
+        list = list.filter(e => new Date(e.serviceDate).getTime() >= sTime);
+      }
+      if (endDate) {
+        const eTime = new Date(endDate).getTime() + 86399999;
+        list = list.filter(e => new Date(e.serviceDate).getTime() <= eTime);
+      }
+
+      let grandTotal = 0;
+      let totalTithes = 0;
+      let totalOffering = 0;
+      let totalSeeds = 0;
+
+      list.forEach(e => {
+        grandTotal += Number(e.totalAmount || 0);
+        totalTithes += Number(e.tithes || 0);
+        totalOffering += Number(e.offering || 0);
+        totalSeeds += Number(e.buildingFund || 0) + Number(e.specialSeed || 0);
+      });
+
+      const grandEl = document.getElementById('repFinGrandTotal');
+      if (grandEl) grandEl.innerText = `GHS ${grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      const tithesEl = document.getElementById('repFinTithes');
+      if (tithesEl) tithesEl.innerText = `GHS ${totalTithes.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      const offEl = document.getElementById('repFinOffering');
+      if (offEl) offEl.innerText = `GHS ${totalOffering.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      const seedsEl = document.getElementById('repFinSeeds');
+      if (seedsEl) seedsEl.innerText = `GHS ${totalSeeds.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      const countEl = document.getElementById('repFinCountText');
+      if (countEl) countEl.innerText = `${list.length} Service collections recorded`;
+
+      const tbody = document.getElementById('repFinTableBody');
+      if (!tbody) return;
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 24px; color: var(--muted);">No financial collection records found for selected date/service filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(e => {
+        const dateStr = new Date(e.serviceDate).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+        const name = e.serviceName || 'Sunday Service';
+        const tithes = Number(e.tithes || 0).toFixed(2);
+        const offering = Number(e.offering || 0).toFixed(2);
+        const building = Number(e.buildingFund || 0).toFixed(2);
+        const seeds = Number(e.specialSeed || 0).toFixed(2);
+        const total = Number(e.totalAmount || 0).toFixed(2);
+        const recordedBy = e.recordedBy || 'Treasury Officer';
+
+        const modes = [];
+        if (Number(e.cashAmount) > 0) modes.push(`Cash: GHS ${Number(e.cashAmount).toFixed(2)}`);
+        if (Number(e.momoAmount) > 0) modes.push(`MoMo: GHS ${Number(e.momoAmount).toFixed(2)}`);
+        if (Number(e.bankAmount) > 0) modes.push(`Bank: GHS ${Number(e.bankAmount).toFixed(2)}`);
+        const modeStr = modes.join(' · ') || 'Cash';
+
+        return `
+          <tr>
+            <td><strong>${dateStr}</strong></td>
+            <td><strong style="color: var(--ink);">${escapeHtml(name)}</strong></td>
+            <td>GHS ${tithes}</td>
+            <td>GHS ${offering}</td>
+            <td>GHS ${building}</td>
+            <td>GHS ${seeds}</td>
+            <td><strong style="color: var(--emerald);">GHS ${total}</strong></td>
+            <td><span style="font-size: 11.5px; color: var(--muted);">${escapeHtml(modeStr)}</span></td>
+            <td>${escapeHtml(recordedBy)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function downloadFullFinanceExcel() {
+      const serviceType = document.getElementById('repFinServiceSelect') ? document.getElementById('repFinServiceSelect').value : 'ALL';
+      const startDate = document.getElementById('repFinStartDate') ? document.getElementById('repFinStartDate').value : '';
+      const endDate = document.getElementById('repFinEndDate') ? document.getElementById('repFinEndDate').value : '';
+
+      let list = [...rawFinReportData];
+
+      if (serviceType && serviceType !== 'ALL') {
+        list = list.filter(e => (e.serviceName || '').toLowerCase().includes(serviceType.toLowerCase()));
+      }
+      if (startDate) {
+        const sTime = new Date(startDate).getTime();
+        list = list.filter(e => new Date(e.serviceDate).getTime() >= sTime);
+      }
+      if (endDate) {
+        const eTime = new Date(endDate).getTime() + 86399999;
+        list = list.filter(e => new Date(e.serviceDate).getTime() <= eTime);
+      }
+
+      if (list.length === 0) {
+        showToast('No financial collection records available to export.', 'warning', 'Export Empty');
+        return;
+      }
+
+      let csv = '\uFEFF'; // Excel UTF-8 BOM
+      csv += 'Service Date,Service Name,Tithes (GHS),General Offering (GHS),Building Fund (GHS),Special Seeds (GHS),Total Collection (GHS),Cash Amount,MoMo Amount,Bank Deposit,Recorded By,Notes\n';
+
+      list.forEach(e => {
+        const dateStr = `"${new Date(e.serviceDate).toLocaleDateString()}"`;
+        const name = `"${e.serviceName || 'Sunday Service'}"`;
+        const tithes = e.tithes || 0;
+        const offering = e.offering || 0;
+        const building = e.buildingFund || 0;
+        const seeds = e.specialSeed || 0;
+        const total = e.totalAmount || 0;
+        const cash = e.cashAmount || 0;
+        const momo = e.momoAmount || 0;
+        const bank = e.bankAmount || 0;
+        const recordedBy = `"${e.recordedBy || 'Treasury Officer'}"`;
+        const notes = `"${(e.notes || '').replace(/"/g, '""')}"`;
+
+        csv += `${dateStr},${name},${tithes},${offering},${building},${seeds},${total},${cash},${momo},${bank},${recordedBy},${notes}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `SFMI_Historical_Financial_Report_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Financial Overview Excel report downloaded successfully!', 'success', 'Export Complete');
     }
 
     /* Financial Analytics, Date Filtering & Export */

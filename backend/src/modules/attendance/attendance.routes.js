@@ -738,5 +738,76 @@ router.post('/clear', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.get('/history', async (req, res, next) => {
+  try {
+    const { startDate, endDate, serviceName, limit } = req.query;
+
+    const where = {
+      member: { active: true, deletedAt: null }
+    };
+
+    if (startDate || endDate) {
+      where.checkedInAt = {};
+      if (startDate) {
+        const s = new Date(startDate);
+        if (!Number.isNaN(s.getTime())) where.checkedInAt.gte = new Date(s.getFullYear(), s.getMonth(), s.getDate(), 0, 0, 0, 0);
+      }
+      if (endDate) {
+        const e = new Date(endDate);
+        if (!Number.isNaN(e.getTime())) where.checkedInAt.lte = new Date(e.getFullYear(), e.getMonth(), e.getDate(), 23, 59, 59, 999);
+      }
+    }
+
+    if (serviceName && serviceName.toUpperCase() !== 'ALL') {
+      const prefix = serviceName.split(':')[0].trim();
+      const svcs = await prisma.service.findMany({
+        where: {
+          OR: [
+            { serviceType: { name: { contains: prefix, mode: 'insensitive' } } },
+            { serviceType: { name: { contains: serviceName, mode: 'insensitive' } } }
+          ]
+        },
+        select: { id: true }
+      });
+      const svcIds = svcs.map(s => s.id);
+      where.serviceId = { in: svcIds };
+    }
+
+    const take = limit ? Math.min(parseInt(limit, 10), 1000) : 500;
+
+    const attendees = await prisma.attendance.findMany({
+      where,
+      include: {
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            gender: true,
+            address: true,
+            category: true,
+            role: true,
+            guardian: true
+          }
+        },
+        service: {
+          select: {
+            id: true,
+            serviceDate: true,
+            serviceType: {
+              select: { name: true }
+            }
+          }
+        }
+      },
+      orderBy: { checkedInAt: 'desc' },
+      take
+    });
+
+    res.json(attendees);
+  } catch (e) { next(e); }
+});
+
 module.exports = router;
 

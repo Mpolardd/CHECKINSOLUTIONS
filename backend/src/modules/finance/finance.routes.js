@@ -106,7 +106,7 @@ router.post('/service-entry', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'
 });
 
 // Get List of Service Financial Entries - Protected
-router.get('/service-entries', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
+router.get('/service-entries', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const entries = await prisma.serviceFinance.findMany({
       orderBy: { serviceDate: 'desc' },
@@ -117,7 +117,7 @@ router.get('/service-entries', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE
 });
 
 // Get Comprehensive Financial Analytics - Protected
-router.get('/analytics', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
+router.get('/analytics', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const entries = await prisma.serviceFinance.findMany({
       orderBy: { serviceDate: 'asc' }
