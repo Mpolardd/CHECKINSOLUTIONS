@@ -285,42 +285,31 @@ router.get('/by-service-name', async (req, res, next) => {
     const rawName = String(req.query.name || '').trim();
     const dateParam = String(req.query.date || '').trim();
 
-    let serviceIds = null;
-
-    if (rawName && rawName.toUpperCase() !== 'ALL') {
-      const prefix = rawName.split(':')[0].trim();
-      const whereService = {
-        OR: [
-          { serviceType: { name: { contains: prefix, mode: 'insensitive' } } },
-          { serviceType: { name: { contains: rawName, mode: 'insensitive' } } }
-        ]
-      };
-      if (dateParam) {
-        const d = new Date(dateParam);
-        if (!Number.isNaN(d.getTime())) {
-          const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
-          const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
-          whereService.serviceDate = { gte: start, lte: end };
-        }
-      }
-
-      const matchingServices = await prisma.service.findMany({
-        where: whereService,
-        select: { id: true }
-      });
-
-      serviceIds = matchingServices.map(s => s.id);
-      if (serviceIds.length === 0) {
-        return res.json({ count: 0, maleCount: 0, femaleCount: 0, recent: [] });
-      }
-    }
-
     const attendanceWhere = {
       member: { active: true, deletedAt: null }
     };
 
-    if (serviceIds !== null) {
-      attendanceWhere.serviceId = { in: serviceIds };
+    if (rawName && rawName.toUpperCase() !== 'ALL') {
+      const prefix = rawName.split(':')[0].trim();
+      const svcs = await prisma.service.findMany({
+        where: {
+          OR: [
+            { serviceType: { name: { contains: prefix, mode: 'insensitive' } } },
+            { serviceType: { name: { contains: rawName, mode: 'insensitive' } } }
+          ]
+        },
+        select: { id: true }
+      });
+      const svcIds = svcs.map(s => s.id);
+
+      const serviceOrConditions = [];
+      if (svcIds.length > 0) {
+        serviceOrConditions.push({ serviceId: { in: svcIds } });
+      }
+      serviceOrConditions.push({ serviceName: { contains: prefix, mode: 'insensitive' } });
+      serviceOrConditions.push({ serviceName: { contains: rawName, mode: 'insensitive' } });
+
+      attendanceWhere.OR = serviceOrConditions;
     }
 
     if (dateParam) {
@@ -328,6 +317,18 @@ router.get('/by-service-name', async (req, res, next) => {
       if (!Number.isNaN(d.getTime())) {
         const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
         const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+        attendanceWhere.checkedInAt = { gte: start, lte: end };
+      }
+    } else {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+      const todayCount = await prisma.attendance.count({
+        where: { ...attendanceWhere, checkedInAt: { gte: start, lte: end } }
+      });
+
+      if (todayCount > 0) {
         attendanceWhere.checkedInAt = { gte: start, lte: end };
       }
     }
@@ -350,14 +351,15 @@ router.get('/by-service-name', async (req, res, next) => {
           }
         }
       },
-      orderBy: { checkedInAt: 'desc' }
+      orderBy: { checkedInAt: 'desc' },
+      take: 1000
     });
 
     const count = attendees.length;
     let maleCount = 0;
     let femaleCount = 0;
 
-    const memberIds = attendees.map(a => a.memberId);
+    const memberIds = attendees.map(a => a.memberId).filter(Boolean);
     const guestLogs = await prisma.auditLog.findMany({
       where: {
         action: 'VISITOR_REGISTRATION',
