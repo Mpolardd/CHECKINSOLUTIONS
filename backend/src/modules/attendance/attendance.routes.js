@@ -302,14 +302,18 @@ router.get('/by-service-name', async (req, res, next) => {
       });
       const svcIds = svcs.map(s => s.id);
 
-      const serviceOrConditions = [];
       if (svcIds.length > 0) {
-        serviceOrConditions.push({ serviceId: { in: svcIds } });
+        attendanceWhere.serviceId = { in: svcIds };
+      } else {
+        attendanceWhere.service = {
+          serviceType: {
+            OR: [
+              { name: { contains: prefix, mode: 'insensitive' } },
+              { name: { contains: rawName, mode: 'insensitive' } }
+            ]
+          }
+        };
       }
-      serviceOrConditions.push({ serviceName: { contains: prefix, mode: 'insensitive' } });
-      serviceOrConditions.push({ serviceName: { contains: rawName, mode: 'insensitive' } });
-
-      attendanceWhere.OR = serviceOrConditions;
     }
 
     if (dateParam) {
