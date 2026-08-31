@@ -2363,6 +2363,7 @@
               </div>
             </div>
           </div>
+          <input type="hidden" id="editProgAttachedFlyerData" />
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 16px;">
@@ -5539,6 +5540,7 @@
           name: localStorage.getItem('sfmi_svc_name_sun') || 'Sunday: Family & Friends Service',
           category: 'Regular Weekly Service',
           schedule: localStorage.getItem('sfmi_svc_sched_sun') || 'Every Sunday · 7:00 AM – 11:00 AM',
+          cutoffTime: localStorage.getItem('sfmi_svc_cutoff_sun') || '11:00',
           flyerUrl: localStorage.getItem('sfmi_svc_img_sun') || '/Sunday.JPG',
           isStandard: true
         },
@@ -5547,6 +5549,7 @@
           name: localStorage.getItem('sfmi_svc_name_wed') || 'Wednesday: Time with the Lord',
           category: 'Midweek Prayer Service',
           schedule: localStorage.getItem('sfmi_svc_sched_wed') || 'Every Wednesday · 6:00 PM – 8:00 PM',
+          cutoffTime: localStorage.getItem('sfmi_svc_cutoff_wed') || '20:00',
           flyerUrl: localStorage.getItem('sfmi_svc_img_wed') || '/WEDNESDAY.JPG',
           isStandard: true
         },
@@ -5555,6 +5558,7 @@
           name: localStorage.getItem('sfmi_svc_name_fri') || 'Friday: Prophetic Healing & Deliverance',
           category: 'Deliverance Service',
           schedule: localStorage.getItem('sfmi_svc_sched_fri') || 'Every Friday · 6:00 PM – 8:00 PM',
+          cutoffTime: localStorage.getItem('sfmi_svc_cutoff_fri') || '20:00',
           flyerUrl: localStorage.getItem('sfmi_svc_img_fri') || '/FRIDAY.JPG',
           isStandard: true
         }
@@ -5562,25 +5566,42 @@
     }
 
     function openEditProgramModal(id) {
+      loadCustomPrograms();
       const allList = [...getStandardServicesList(), ...customPrograms];
       const item = allList.find(p => p.id === id);
-      if (!item) return;
+      if (!item) {
+        showToast('Service details could not be found.', 'error', 'Error');
+        return;
+      }
 
-      document.getElementById('editProgId').value = item.id;
-      document.getElementById('editProgIsStandard').value = item.isStandard ? 'true' : 'false';
-      document.getElementById('editProgName').value = item.name;
-      document.getElementById('editProgCategory').value = item.category || 'Special Program / Convention';
-      document.getElementById('editProgSchedule').value = item.schedule || '';
-      document.getElementById('editProgFlyerPreviewImg').src = item.flyerUrl || '/Sunday.JPG';
-      document.getElementById('editProgAttachedFlyerData').value = '';
-      document.getElementById('editProgFlyerFileName').innerText = 'Current flyer image';
+      const elId = document.getElementById('editProgId');
+      const elStd = document.getElementById('editProgIsStandard');
+      const elName = document.getElementById('editProgName');
+      const elCat = document.getElementById('editProgCategory');
+      const elSched = document.getElementById('editProgSchedule');
+      const elCutoff = document.getElementById('editProgCutoffTime');
+      const elImg = document.getElementById('editProgFlyerPreviewImg');
+      const elData = document.getElementById('editProgAttachedFlyerData');
+      const elFileLbl = document.getElementById('editProgFlyerFileName');
 
-      document.getElementById('editProgramModal').classList.add('active');
-      document.getElementById('editProgName').focus();
+      if (elId) elId.value = item.id;
+      if (elStd) elStd.value = item.isStandard ? 'true' : 'false';
+      if (elName) elName.value = item.name || '';
+      if (elCat) elCat.value = item.category || 'Special Program / Convention';
+      if (elSched) elSched.value = item.schedule || '';
+      if (elCutoff) elCutoff.value = item.cutoffTime || '11:30';
+      if (elImg) elImg.src = item.flyerUrl || '/Sunday.JPG';
+      if (elData) elData.value = '';
+      if (elFileLbl) elFileLbl.innerText = 'Current flyer image';
+
+      const modal = document.getElementById('editProgramModal');
+      if (modal) modal.classList.add('active');
+      if (elName) elName.focus();
     }
 
     function closeEditProgramModal() {
-      document.getElementById('editProgramModal').classList.remove('active');
+      const modal = document.getElementById('editProgramModal');
+      if (modal) modal.classList.remove('active');
     }
 
     function handleEditProgramFlyerAttachment(input) {
@@ -5595,9 +5616,13 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const dataUrl = e.target.result;
-        document.getElementById('editProgAttachedFlyerData').value = dataUrl;
-        document.getElementById('editProgFlyerPreviewImg').src = dataUrl;
-        document.getElementById('editProgFlyerFileName').innerText = `New: ${file.name} (Ready to Save)`;
+        const elData = document.getElementById('editProgAttachedFlyerData');
+        const elImg = document.getElementById('editProgFlyerPreviewImg');
+        const elLbl = document.getElementById('editProgFlyerFileName');
+
+        if (elData) elData.value = dataUrl;
+        if (elImg) elImg.src = dataUrl;
+        if (elLbl) elLbl.innerText = `New: ${file.name} (Ready to Save)`;
         showToast('New flyer image loaded! Click "Save Changes" to apply.', 'info', 'Flyer Attached');
       };
       reader.readAsDataURL(file);
@@ -5605,12 +5630,13 @@
 
     function handleUpdateProgram(e) {
       e.preventDefault();
-      const id = document.getElementById('editProgId').value;
-      const isStandard = document.getElementById('editProgIsStandard').value === 'true';
-      const name = document.getElementById('editProgName').value.trim();
-      const category = document.getElementById('editProgCategory').value;
-      const schedule = document.getElementById('editProgSchedule').value.trim();
-      const attachedFlyer = document.getElementById('editProgAttachedFlyerData').value;
+      const id = document.getElementById('editProgId')?.value;
+      const isStandard = document.getElementById('editProgIsStandard')?.value === 'true';
+      const name = (document.getElementById('editProgName')?.value || '').trim();
+      const category = document.getElementById('editProgCategory')?.value || 'Regular Weekly Service';
+      const schedule = (document.getElementById('editProgSchedule')?.value || '').trim();
+      const cutoffTime = document.getElementById('editProgCutoffTime')?.value || '11:30';
+      const attachedFlyer = document.getElementById('editProgAttachedFlyerData')?.value || '';
 
       if (isStandard) {
         // Update standard service flyer or name in storage
@@ -5618,14 +5644,17 @@
           if (attachedFlyer) localStorage.setItem('sfmi_svc_img_sun', attachedFlyer);
           localStorage.setItem('sfmi_svc_name_sun', name);
           localStorage.setItem('sfmi_svc_sched_sun', schedule);
+          localStorage.setItem('sfmi_svc_cutoff_sun', cutoffTime);
         } else if (id === 'std_wed') {
           if (attachedFlyer) localStorage.setItem('sfmi_svc_img_wed', attachedFlyer);
           localStorage.setItem('sfmi_svc_name_wed', name);
           localStorage.setItem('sfmi_svc_sched_wed', schedule);
+          localStorage.setItem('sfmi_svc_cutoff_wed', cutoffTime);
         } else if (id === 'std_fri') {
           if (attachedFlyer) localStorage.setItem('sfmi_svc_img_fri', attachedFlyer);
           localStorage.setItem('sfmi_svc_name_fri', name);
           localStorage.setItem('sfmi_svc_sched_fri', schedule);
+          localStorage.setItem('sfmi_svc_cutoff_fri', cutoffTime);
         }
       } else {
         // Update custom program
@@ -5637,6 +5666,7 @@
             category,
             tag: category.toUpperCase(),
             schedule,
+            cutoffTime,
             flyerUrl: attachedFlyer || customPrograms[index].flyerUrl
           };
           saveCustomPrograms();
@@ -5646,7 +5676,7 @@
       closeEditProgramModal();
       populateServiceDropdowns();
       renderProgramsManager();
-      showToast(`Service <strong>"${name}"</strong> updated successfully!`, 'success', 'Service Updated');
+      showToast(`Service <strong>"${escapeHtml(name)}"</strong> updated successfully!`, 'success', 'Service Updated');
     }
 
     function handleAdminSetKioskActive(serviceKey) {
