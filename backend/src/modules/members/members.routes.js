@@ -45,7 +45,10 @@ router.get('/', requireAuth, async (req, res, next) => {
     const rows = await prisma.member.findMany({
       where,
       take: 500,
-      orderBy: { createdAt: 'desc' }
+      orderBy: [
+        { firstName: 'asc' },
+        { lastName: 'asc' }
+      ]
     });
 
     const memberIds = rows.map(r => r.id);

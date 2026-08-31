@@ -3639,6 +3639,13 @@
         (m.role && m.role.toLowerCase().includes(q))
       );
 
+      // Sort Alphabetically A-Z by First Name then Last Name
+      filtered.sort((a, b) => {
+        const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase();
+        const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim().toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+
       renderAttendanceTableHTML(filtered);
     }
 
@@ -4119,6 +4126,13 @@
         (m.dob && m.dob.toLowerCase().includes(q)) ||
         (m.role && m.role.toLowerCase().includes(q))
       );
+
+      // Sort Alphabetically A-Z by First Name then Last Name
+      filtered.sort((a, b) => {
+        const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase();
+        const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim().toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
 
       updateDirectoryCounts();
       renderMembersTable(filtered);
