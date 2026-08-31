@@ -184,7 +184,10 @@ router.post('/family-checkin', async (req, res, next) => {
 router.get('/live-count/:serviceId', async (req, res, next) => {
   try {
     const attendees = await prisma.attendance.findMany({
-      where: { serviceId: req.params.serviceId },
+      where: {
+        serviceId: req.params.serviceId,
+        member: { active: true, deletedAt: null }
+      },
       include: {
         member: {
           select: {
@@ -300,7 +303,10 @@ router.get('/by-service-name', async (req, res, next) => {
     }
 
     const attendees = await prisma.attendance.findMany({
-      where: { serviceId: { in: serviceIds } },
+      where: {
+        serviceId: { in: serviceIds },
+        member: { active: true, deletedAt: null }
+      },
       include: {
         member: {
           select: {

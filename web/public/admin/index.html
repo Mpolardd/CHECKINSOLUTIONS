@@ -2322,6 +2322,7 @@
     }
 
     let allMembers = [];
+    const deletedMemberIds = new Set();
     let serviceAttendanceMap = {};
 
     let currentSelectedService = 'Sunday: Family & Friends Service';
@@ -3749,6 +3750,15 @@
               };
             });
 
+            // Filter out any locally or recently deleted members
+            liveList = liveList.filter(att => {
+              if (att.memberId && deletedMemberIds.has(att.memberId)) return false;
+              if (att.id && deletedMemberIds.has(att.id)) return false;
+              if (att.phone && deletedMemberIds.has(att.phone.trim())) return false;
+              if (att.name && deletedMemberIds.has(att.name.trim().toLowerCase())) return false;
+              return true;
+            });
+
             let modifiedDirectory = false;
             liveList.forEach(att => {
               const attPhoneNorm = normalizePhoneClient(att.phone);
@@ -4200,6 +4210,10 @@
             }
           }
 
+          const deletedObj = allMembers.find(m => m.id === id);
+          deletedMemberIds.add(id);
+          if (deletedObj && deletedObj.phone) deletedMemberIds.add(deletedObj.phone.trim());
+          if (deletedObj && deletedObj.firstName) deletedMemberIds.add(`${deletedObj.firstName} ${deletedObj.lastName}`.trim().toLowerCase());
           allMembers = allMembers.filter(m => m.id !== id);
           saveMembersToStorage();
           updateDirectoryCounts();

@@ -168,6 +168,8 @@ router.delete('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (
     const member = await prisma.member.findUnique({ where: { id: req.params.id } });
     if (!member) return res.status(404).json({ error: 'Member not found' });
 
+    await prisma.attendance.deleteMany({ where: { memberId: req.params.id } });
+
     await prisma.member.update({
       where: { id: req.params.id },
       data: { active: false, deletedAt: new Date() }
