@@ -1944,24 +1944,22 @@
           </div>
         </div>
 
-        <!-- Attendance Table -->
+        <!-- Compiled Service Attendance Reports Ledger -->
         <div class="fin-card-box">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-            <strong style="font-family: Manrope, sans-serif; font-size: 16px;">Historical Attendance Check-In Log</strong>
-            <span style="font-size: 12.5px; color: var(--muted);" id="repAttCountText">0 Check-in records</span>
+            <strong style="font-family: Manrope, sans-serif; font-size: 16px;"><i class="fas fa-clipboard-check" style="color: var(--accent); margin-right: 6px;"></i> Compiled Service Attendance Reports Ledger</strong>
+            <span style="font-size: 12.5px; color: var(--muted);" id="repAttCountText">0 Compiled Reports</span>
           </div>
           <div class="table-responsive">
             <table>
               <thead>
                 <tr>
-                  <th>Check-In Timestamp</th>
-                  <th>Member Full Name</th>
-                  <th>Category</th>
-                  <th>Phone Number</th>
-                  <th>Gender</th>
-                  <th>Residential Location</th>
-                  <th>Service Name</th>
-                  <th>Check-In Method</th>
+                  <th>#</th>
+                  <th>Service Date</th>
+                  <th>Compiled Service Title</th>
+                  <th>Total Attendance</th>
+                  <th>Demographics Ratio</th>
+                  <th>Actions (View &amp; Export)</th>
                 </tr>
               </thead>
               <tbody id="repAttTableBody">
@@ -2024,22 +2022,22 @@
         <!-- Financial History Table -->
         <div class="fin-card-box">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-            <strong style="font-family: Manrope, sans-serif; font-size: 16px;">Historical Service Financial Collection Ledger</strong>
+            <strong style="font-family: Manrope, sans-serif; font-size: 16px;"><i class="fas fa-file-invoice-dollar" style="color: var(--emerald); margin-right: 6px;"></i> Compiled Service Financial Collection Ledger</strong>
             <span style="font-size: 12.5px; color: var(--muted);" id="repFinCountText">0 Services Recorded</span>
           </div>
           <div class="table-responsive">
             <table>
               <thead>
                 <tr>
+                  <th>#</th>
                   <th>Service Date</th>
-                  <th>Service Name</th>
+                  <th>Compiled Service Title</th>
                   <th>Tithes</th>
                   <th>General Offering</th>
-                  <th>Building Fund</th>
-                  <th>Special Seeds</th>
-                  <th>Total Amount</th>
-                  <th>Payment Modes</th>
+                  <th>Seeds &amp; Building</th>
+                  <th>Grand Total</th>
                   <th>Recorded By</th>
+                  <th>Actions (View &amp; Export)</th>
                 </tr>
               </thead>
               <tbody id="repFinTableBody">
@@ -2515,6 +2513,91 @@
           <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeEditSubAdminModal()">Cancel</button>
         </div>
       </form>
+    </div>
+  <!-- Compiled Attendance Service Report View Modal -->
+  <div class="modal-backdrop" id="viewCompiledAttModal">
+    <div class="modal-card" style="max-width: 920px; width: 95%;">
+      <button class="modal-close" onclick="closeViewCompiledAttModal()">✕</button>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h3 id="compAttTitle" style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
+            Compiled Service Attendance Report
+          </h3>
+          <p id="compAttSub" style="font-size: 13px; color: var(--muted);">Service Date &amp; Demographics Overview</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-main" style="background: #107c41;" id="btnCompAttDownload"><i class="fas fa-file-excel"></i> Download Excel</button>
+          <button class="btn-main" onclick="window.print()"><i class="fas fa-print"></i> Print Report</button>
+        </div>
+      </div>
+
+      <!-- Metrics Row inside Modal -->
+      <div class="metrics-row" style="margin-bottom: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+        <div class="metric-box" style="padding: 10px;">
+          <div class="metric-num" id="compAttModalTotal" style="font-size: 20px; color: var(--emerald);">0</div>
+          <div class="metric-label" style="font-size: 11px;">Total Present</div>
+        </div>
+        <div class="metric-box" style="padding: 10px;">
+          <div class="metric-num" id="compAttModalGuests" style="font-size: 20px; color: #b45309;">0</div>
+          <div class="metric-label" style="font-size: 11px;">Guests</div>
+        </div>
+        <div class="metric-box" style="padding: 10px;">
+          <div class="metric-num" id="compAttModalMale" style="font-size: 20px; color: var(--accent);">0</div>
+          <div class="metric-label" style="font-size: 11px;">Men</div>
+        </div>
+        <div class="metric-box" style="padding: 10px;">
+          <div class="metric-num" id="compAttModalFemale" style="font-size: 20px; color: #be123c;">0</div>
+          <div class="metric-label" style="font-size: 11px;">Women</div>
+        </div>
+      </div>
+
+      <!-- Search input inside modal -->
+      <div style="margin-bottom: 12px;">
+        <input type="text" id="compAttModalSearch" class="form-ctrl" placeholder="Search member name or phone in this report..." style="padding: 8px 12px; font-size: 13px;" oninput="filterCompiledAttModalRoster()" />
+      </div>
+
+      <!-- Roster Table -->
+      <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Member Full Name</th>
+              <th>Category</th>
+              <th>Phone Number</th>
+              <th>Gender</th>
+              <th>Residential Location</th>
+              <th>Check-In Time</th>
+            </tr>
+          </thead>
+          <tbody id="compAttModalTableBody">
+            <!-- Injected via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compiled Financial Service Report View Modal -->
+  <div class="modal-backdrop" id="viewCompiledFinModal">
+    <div class="modal-card" style="max-width: 720px; width: 95%;">
+      <button class="modal-close" onclick="closeViewCompiledFinModal()">✕</button>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h3 id="compFinTitle" style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
+            Compiled Service Financial Report
+          </h3>
+          <p id="compFinSub" style="font-size: 13px; color: var(--muted);">Collection Ledger Details</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-main" style="background: #107c41;" id="btnCompFinDownload"><i class="fas fa-file-excel"></i> Download Excel</button>
+          <button class="btn-main" onclick="window.print()"><i class="fas fa-print"></i> Print Summary</button>
+        </div>
+      </div>
+
+      <div id="compFinContentWrap">
+        <!-- Injected via JS -->
+      </div>
     </div>
   </div>
 
@@ -3344,6 +3427,10 @@
 
     function filterHistoricalAttendanceReportTable() {
       const search = (document.getElementById('repAttSearch')?.value || '').trim().toLowerCase();
+    let compiledAttSessionsMap = {};
+
+    function filterHistoricalAttendanceReportTable() {
+      const search = (document.getElementById('repAttSearch')?.value || '').trim().toLowerCase();
       let list = [...rawAttReportData];
 
       if (search) {
@@ -3379,42 +3466,197 @@
       if (guestEl) guestEl.innerText = guestCount;
       const mfEl = document.getElementById('repAttMaleFemale');
       if (mfEl) mfEl.innerText = `${maleCount} M / ${femaleCount} F`;
-      const countTextEl = document.getElementById('repAttCountText');
-      if (countTextEl) countTextEl.innerText = `${list.length} Check-in records shown`;
 
-      // Render table rows
+      // Group into compiled service sessions
+      compiledAttSessionsMap = {};
+      list.forEach(item => {
+        const rawDate = item.checkedInAt ? item.checkedInAt.split('T')[0] : new Date().toISOString().split('T')[0];
+        const dateFormatted = new Date(item.checkedInAt || Date.now()).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+        const serviceName = item.service?.serviceType?.name || item.serviceName || 'Sunday Service';
+        const key = `${rawDate}_${serviceName}`;
+
+        if (!compiledAttSessionsMap[key]) {
+          compiledAttSessionsMap[key] = {
+            id: key,
+            dateRaw: rawDate,
+            dateFormatted,
+            serviceName,
+            totalLogs: 0,
+            maleCount: 0,
+            femaleCount: 0,
+            guestCount: 0,
+            logs: []
+          };
+        }
+
+        const sess = compiledAttSessionsMap[key];
+        sess.totalLogs++;
+        sess.logs.push(item);
+
+        if (item.isGuest || item.member?.category === 'Visitor / Guest') sess.guestCount++;
+        const g = (item.member?.gender || '').toLowerCase();
+        if (g.startsWith('m')) sess.maleCount++;
+        else if (g.startsWith('f')) sess.femaleCount++;
+      });
+
+      const sessionsList = Object.values(compiledAttSessionsMap);
+
+      const countTextEl = document.getElementById('repAttCountText');
+      if (countTextEl) countTextEl.innerText = `${sessionsList.length} Compiled Service Reports`;
+
       const tbody = document.getElementById('repAttTableBody');
       if (!tbody) return;
 
-      if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--muted);">No check-in records found for selected filter criteria.</td></tr>`;
+      if (sessionsList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 24px; color: var(--muted);">No compiled service check-in reports found.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = list.map(item => {
+      tbody.innerHTML = sessionsList.map((sess, idx) => {
+        const safeKey = escapeHtml(sess.id);
+        const name = escapeHtml(sess.serviceName);
+        const dateStr = escapeHtml(sess.dateFormatted);
+        const ratioStr = `${sess.maleCount} Men · ${sess.femaleCount} Women · ${sess.guestCount} Guests`;
+
+        return `
+          <tr>
+            <td>${idx + 1}</td>
+            <td><strong>${dateStr}</strong></td>
+            <td><strong style="color: var(--ink);">${name}</strong></td>
+            <td><strong style="color: var(--emerald);">${sess.totalLogs} Present</strong></td>
+            <td><span class="badge badge-gray">${ratioStr}</span></td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:var(--light); color:var(--ink); border:1px solid var(--line);" onclick="openViewCompiledAttendanceModal('${safeKey}')">
+                  <i class="fas fa-eye"></i> View Report
+                </button>
+                <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:#107c41;" onclick="downloadCompiledAttendanceSessionExcel('${safeKey}')">
+                  <i class="fas fa-file-excel"></i> Download Excel
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    let activeCompAttSession = null;
+
+    function openViewCompiledAttendanceModal(sessionKey) {
+      const sess = compiledAttSessionsMap[sessionKey];
+      if (!sess) {
+        showToast('Compiled report session not found.', 'error', 'Report Error');
+        return;
+      }
+
+      activeCompAttSession = sess;
+
+      document.getElementById('compAttTitle').innerText = `Compiled Attendance Report — ${sess.serviceName}`;
+      document.getElementById('compAttSub').innerText = `Service Date: ${sess.dateFormatted} · Total Present: ${sess.totalLogs}`;
+
+      document.getElementById('compAttModalTotal').innerText = sess.totalLogs;
+      document.getElementById('compAttModalGuests').innerText = sess.guestCount;
+      document.getElementById('compAttModalMale').innerText = sess.maleCount;
+      document.getElementById('compAttModalFemale').innerText = sess.femaleCount;
+
+      const btnDl = document.getElementById('btnCompAttDownload');
+      if (btnDl) btnDl.onclick = () => downloadCompiledAttendanceSessionExcel(sessionKey);
+
+      document.getElementById('compAttModalSearch').value = '';
+      filterCompiledAttModalRoster();
+
+      document.getElementById('viewCompiledAttModal').classList.add('active');
+    }
+
+    function closeViewCompiledAttModal() {
+      document.getElementById('viewCompiledAttModal').classList.remove('active');
+    }
+
+    function filterCompiledAttModalRoster() {
+      if (!activeCompAttSession) return;
+      const search = (document.getElementById('compAttModalSearch')?.value || '').trim().toLowerCase();
+      let logs = [...activeCompAttSession.logs];
+
+      if (search) {
+        logs = logs.filter(item => {
+          const m = item.member || {};
+          const name = `${m.firstName || ''} ${m.lastName || ''}`.toLowerCase();
+          const phone = (m.phone || '').toLowerCase();
+          return name.includes(search) || phone.includes(search);
+        });
+      }
+
+      const tbody = document.getElementById('compAttModalTableBody');
+      if (!tbody) return;
+
+      if (logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px; color: var(--muted);">No matching attendees found in this report.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = logs.map((item, idx) => {
         const m = item.member || {};
-        const timestamp = new Date(item.checkedInAt || Date.now()).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+        const timestamp = new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const name = `${m.firstName || 'Visitor'} ${m.lastName || 'Guest'}`;
         const category = m.category || (item.isGuest ? 'Visitor / Guest' : 'Adult');
         const phone = m.phone || '—';
         const gender = m.gender || '—';
         const location = m.address ? m.address.replace(/^📍\s*/, '') : '—';
-        const serviceName = item.service?.serviceType?.name || item.serviceName || 'Sunday Service';
-        const method = item.method || 'KIOSK';
 
         return `
           <tr>
-            <td><strong>${timestamp}</strong></td>
+            <td>${idx + 1}</td>
             <td><strong style="color: var(--ink);">${escapeHtml(name)}</strong></td>
             <td><span class="badge ${item.isGuest ? 'badge-gold' : 'badge-emerald'}">${escapeHtml(category)}</span></td>
             <td>${escapeHtml(phone)}</td>
             <td>${escapeHtml(gender)}</td>
             <td>📍 ${escapeHtml(location)}</td>
-            <td>${escapeHtml(serviceName)}</td>
-            <td><span class="badge badge-gray">${escapeHtml(method)}</span></td>
+            <td>${escapeHtml(timestamp)}</td>
           </tr>
         `;
       }).join('');
+    }
+
+    function downloadCompiledAttendanceSessionExcel(sessionKey) {
+      const sess = compiledAttSessionsMap[sessionKey];
+      if (!sess || !sess.logs.length) {
+        showToast('No session data available to export.', 'warning', 'Export Empty');
+        return;
+      }
+
+      let csv = '\uFEFF';
+      csv += `Official Compiled Service Attendance Report\n`;
+      csv += `Service Title,"${sess.serviceName}"\n`;
+      csv += `Service Date,"${sess.dateFormatted}"\n`;
+      csv += `Total Attended,${sess.totalLogs}\n`;
+      csv += `First-Timer Guests,${sess.guestCount}\n`;
+      csv += `Male Count,${sess.maleCount}\n`;
+      csv += `Female Count,${sess.femaleCount}\n\n`;
+
+      csv += `Check-In Timestamp,Full Name,Category,Phone Number,Gender,Residential Location,Check-In Method\n`;
+
+      sess.logs.forEach(item => {
+        const m = item.member || {};
+        const timestamp = `"${new Date(item.checkedInAt || Date.now()).toLocaleString()}"`;
+        const name = `"${(m.firstName || '') + ' ' + (m.lastName || '')}"`;
+        const category = `"${m.category || (item.isGuest ? 'Visitor / Guest' : 'Adult')}"`;
+        const phone = `"${m.phone || ''}"`;
+        const gender = `"${m.gender || ''}"`;
+        const location = `"${(m.address || '').replace(/^📍\s*/, '').replace(/"/g, '""')}"`;
+        const method = `"${item.method || 'KIOSK'}"`;
+
+        csv += `${timestamp},${name},${category},${phone},${gender},${location},${method}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `SFMI_Attendance_Report_${sess.serviceName.replace(/[^a-zA-Z0-9]/g, '_')}_${sess.dateRaw}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Compiled Service Attendance Excel report downloaded!', 'success', 'Export Complete');
     }
 
     function downloadFullAttendanceExcel() {
@@ -3518,7 +3760,7 @@
       const seedsEl = document.getElementById('repFinSeeds');
       if (seedsEl) seedsEl.innerText = `GHS ${totalSeeds.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
       const countEl = document.getElementById('repFinCountText');
-      if (countEl) countEl.innerText = `${list.length} Service collections recorded`;
+      if (countEl) countEl.innerText = `${list.length} Compiled Financial Service Reports`;
 
       const tbody = document.getElementById('repFinTableBody');
       if (!tbody) return;
@@ -3528,36 +3770,147 @@
         return;
       }
 
-      tbody.innerHTML = list.map(e => {
+      tbody.innerHTML = list.map((e, idx) => {
         const dateStr = new Date(e.serviceDate).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
         const name = e.serviceName || 'Sunday Service';
         const tithes = Number(e.tithes || 0).toFixed(2);
         const offering = Number(e.offering || 0).toFixed(2);
-        const building = Number(e.buildingFund || 0).toFixed(2);
-        const seeds = Number(e.specialSeed || 0).toFixed(2);
+        const seeds = (Number(e.buildingFund || 0) + Number(e.specialSeed || 0)).toFixed(2);
         const total = Number(e.totalAmount || 0).toFixed(2);
         const recordedBy = e.recordedBy || 'Treasury Officer';
-
-        const modes = [];
-        if (Number(e.cashAmount) > 0) modes.push(`Cash: GHS ${Number(e.cashAmount).toFixed(2)}`);
-        if (Number(e.momoAmount) > 0) modes.push(`MoMo: GHS ${Number(e.momoAmount).toFixed(2)}`);
-        if (Number(e.bankAmount) > 0) modes.push(`Bank: GHS ${Number(e.bankAmount).toFixed(2)}`);
-        const modeStr = modes.join(' · ') || 'Cash';
+        const safeId = escapeHtml(e.id);
 
         return `
           <tr>
+            <td>${idx + 1}</td>
             <td><strong>${dateStr}</strong></td>
             <td><strong style="color: var(--ink);">${escapeHtml(name)}</strong></td>
             <td>GHS ${tithes}</td>
             <td>GHS ${offering}</td>
-            <td>GHS ${building}</td>
             <td>GHS ${seeds}</td>
             <td><strong style="color: var(--emerald);">GHS ${total}</strong></td>
-            <td><span style="font-size: 11.5px; color: var(--muted);">${escapeHtml(modeStr)}</span></td>
             <td>${escapeHtml(recordedBy)}</td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:var(--light); color:var(--ink); border:1px solid var(--line);" onclick="openViewCompiledFinanceModal('${safeId}')">
+                  <i class="fas fa-eye"></i> View Ledger
+                </button>
+                <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:#107c41;" onclick="downloadSingleServiceFinanceExcel('${safeId}')">
+                  <i class="fas fa-file-excel"></i> Download Excel
+                </button>
+              </div>
+            </td>
           </tr>
         `;
       }).join('');
+    }
+
+    function openViewCompiledFinanceModal(entryId) {
+      const entry = rawFinReportData.find(e => String(e.id) === String(entryId));
+      if (!entry) {
+        showToast('Financial collection record not found.', 'error', 'Error');
+        return;
+      }
+
+      const dateStr = new Date(entry.serviceDate).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+      document.getElementById('compFinTitle').innerText = `Compiled Financial Report — ${entry.serviceName || 'Sunday Service'}`;
+      document.getElementById('compFinSub').innerText = `Service Date: ${dateStr} · Recorded by ${entry.recordedBy || 'Treasury Officer'}`;
+
+      const btnDl = document.getElementById('btnCompFinDownload');
+      if (btnDl) btnDl.onclick = () => downloadSingleServiceFinanceExcel(entryId);
+
+      const wrap = document.getElementById('compFinContentWrap');
+      if (wrap) {
+        const tithes = Number(entry.tithes || 0).toFixed(2);
+        const offering = Number(entry.offering || 0).toFixed(2);
+        const building = Number(entry.buildingFund || 0).toFixed(2);
+        const seeds = Number(entry.specialSeed || 0).toFixed(2);
+        const total = Number(entry.totalAmount || 0).toFixed(2);
+        const cash = Number(entry.cashAmount || 0).toFixed(2);
+        const momo = Number(entry.momoAmount || 0).toFixed(2);
+        const bank = Number(entry.bankAmount || 0).toFixed(2);
+
+        wrap.innerHTML = `
+          <div style="background: rgba(16, 124, 65, 0.08); border-left: 4px solid #107c41; padding: 14px 18px; border-radius: 8px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 12px; text-transform: uppercase; color: var(--muted); font-weight: 700;">Grand Total Collection</div>
+              <div style="font-size: 24px; font-weight: 800; color: #107c41;">GHS ${total}</div>
+            </div>
+            <span class="badge-present" style="background:#e6f4ea;color:#137333;font-size:12px;padding:4px 10px;"><i class="fas fa-check-circle"></i> Reconciled &amp; Approved</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px;">
+            <div style="background: white; border: 1px solid var(--line); border-radius: 8px; padding: 14px;">
+              <h4 style="font-size: 13.5px; font-weight: 800; color: var(--ink); margin-bottom: 10px;"><i class="fas fa-coins" style="color: var(--accent); margin-right: 6px;"></i> Fund Breakdown</h4>
+              <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px;">
+                <div style="display: flex; justify-content: space-between;"><span>Tithes:</span><strong>GHS ${tithes}</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>General Offering:</span><strong>GHS ${offering}</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>Building Fund:</span><strong>GHS ${building}</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>Special Seeds:</span><strong>GHS ${seeds}</strong></div>
+              </div>
+            </div>
+
+            <div style="background: white; border: 1px solid var(--line); border-radius: 8px; padding: 14px;">
+              <h4 style="font-size: 13.5px; font-weight: 800; color: var(--ink); margin-bottom: 10px;"><i class="fas fa-credit-card" style="color: #2563eb; margin-right: 6px;"></i> Payment Modes</h4>
+              <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px;">
+                <div style="display: flex; justify-content: space-between;"><span>Cash Collection:</span><strong>GHS ${cash}</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>MoMo (Mobile Money):</span><strong>GHS ${momo}</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>Bank Deposit:</span><strong>GHS ${bank}</strong></div>
+              </div>
+            </div>
+          </div>
+
+          ${entry.notes ? `
+            <div style="background: #fafbfa; border: 1px solid var(--line); padding: 12px 16px; border-radius: 8px; font-size: 13px;">
+              <strong>Officer Notes:</strong> ${escapeHtml(entry.notes)}
+            </div>
+          ` : ''}
+        `;
+      }
+
+      document.getElementById('viewCompiledFinModal').classList.add('active');
+    }
+
+    function closeViewCompiledFinModal() {
+      document.getElementById('viewCompiledFinModal').classList.remove('active');
+    }
+
+    function downloadSingleServiceFinanceExcel(entryId) {
+      const entry = rawFinReportData.find(e => String(e.id) === String(entryId));
+      if (!entry) {
+        showToast('Financial collection record not found.', 'error', 'Error');
+        return;
+      }
+
+      let csv = '\uFEFF';
+      csv += `Official Compiled Service Financial Collection Report\n`;
+      csv += `Service Title,"${entry.serviceName || 'Sunday Service'}"\n`;
+      csv += `Service Date,"${new Date(entry.serviceDate).toLocaleDateString()}"\n`;
+      csv += `Recorded By,"${entry.recordedBy || 'Treasury Officer'}"\n`;
+      csv += `Grand Total Collection (GHS),${entry.totalAmount || 0}\n\n`;
+
+      csv += `Category / Fund,Amount (GHS)\n`;
+      csv += `Tithes,${entry.tithes || 0}\n`;
+      csv += `General Offering,${entry.offering || 0}\n`;
+      csv += `Building Fund,${entry.buildingFund || 0}\n`;
+      csv += `Special Seeds,${entry.specialSeed || 0}\n\n`;
+
+      csv += `Payment Mode,Amount (GHS)\n`;
+      csv += `Cash,${entry.cashAmount || 0}\n`;
+      csv += `MoMo (Mobile Money),${entry.momoAmount || 0}\n`;
+      csv += `Bank Deposit,${entry.bankAmount || 0}\n\n`;
+
+      csv += `Notes,"${(entry.notes || '').replace(/"/g, '""')}"\n`;
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `SFMI_Financial_Report_${(entry.serviceName || 'Service').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date(entry.serviceDate).toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Compiled Financial Service Excel report downloaded!', 'success', 'Export Complete');
     }
 
     function downloadFullFinanceExcel() {
