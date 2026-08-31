@@ -544,27 +544,70 @@ router.post('/quick-register-checkin', async (req, res, next) => {
         });
       }
 
-      // Resolve Service ID
+      // Resolve Service ID strictly for today's active service
       let targetServiceId = body.serviceId;
       if (!targetServiceId) {
-        let matchedService = null;
+        let matched = null;
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
         if (body.serviceName) {
-          matchedService = await tx.service.findFirst({
-            where: { serviceType: { name: { contains: body.serviceName.split(':')[0], mode: 'insensitive' } }, active: true },
+          const prefix = body.serviceName.split(':')[0].trim();
+          matched = await tx.service.findFirst({
+            where: {
+              serviceType: { name: { contains: prefix, mode: 'insensitive' } },
+              serviceDate: { gte: startOfDay, lte: endOfDay },
+              active: true
+            },
             orderBy: { startsAt: 'desc' }
           });
         }
-        if (!matchedService) {
-          matchedService = await tx.service.findFirst({ where: { active: true }, orderBy: { startsAt: 'desc' } });
+        if (!matched) {
+          matched = await tx.service.findFirst({
+            where: {
+              serviceDate: { gte: startOfDay, lte: endOfDay },
+              active: true
+            },
+            orderBy: { startsAt: 'desc' }
+          });
         }
-        if (matchedService) {
-          targetServiceId = matchedService.id;
-        }
-      }
+        if (!matched) {
+          let svcType = null;
+          if (body.serviceName) {
+            const prefix = body.serviceName.split(':')[0].trim();
+            svcType = await tx.serviceType.findFirst({
+              where: { name: { contains: prefix, mode: 'insensitive' }, active: true }
+            });
+          }
+          if (!svcType) {
+            svcType = await tx.serviceType.findFirst({ where: { active: true } });
+          }
+          if (!svcType) {
+            svcType = await tx.serviceType.create({
+              data: { name: 'Family & Friends Service (Sunday)', dayOfWeek: 0, startTime: '07:00', endTime: '11:00' }
+            });
+          }
 
-      if (!targetServiceId) {
-        const anyService = await tx.service.findFirst({ where: { active: true } });
-        if (anyService) targetServiceId = anyService.id;
+          matched = await tx.service.findFirst({
+            where: {
+              serviceTypeId: svcType.id,
+              serviceDate: { gte: startOfDay, lte: endOfDay }
+            }
+          });
+
+          if (!matched) {
+            matched = await tx.service.create({
+              data: {
+                serviceTypeId: svcType.id,
+                serviceDate: startOfDay,
+                startsAt: new Date(),
+                active: true
+              }
+            });
+          }
+        }
+        targetServiceId = matched.id;
       }
 
       let attendance = null;

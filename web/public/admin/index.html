@@ -3446,13 +3446,7 @@
         });
         const isPresent = Boolean(found);
 
-        const isGuest = (found && Boolean(found.isGuest)) ||
-                        Boolean(m.isGuest) ||
-                        m.category === 'Visitor' ||
-                        m.category === 'Visitor / First-Timer' ||
-                        m.category === 'Visitor / Guest' ||
-                        (m.role && m.role.toLowerCase().includes('visitor')) ||
-                        (m.role && m.role.toLowerCase().includes('first timer'));
+        const isGuest = (found && Boolean(found.isGuest)) || isGuestMember(m);
 
         if (isPresent) {
           presentCount++;
