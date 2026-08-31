@@ -1913,6 +1913,17 @@
           </div>
         </div>
 
+        <!-- Completed Service Session Reports (Generated on End Check-In) -->
+        <div style="margin-bottom: 24px;">
+          <div style="font-size: 14.5px; font-weight: 800; color: var(--ink); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <span><i class="fas fa-flag-checkered" style="color: #c5221f;"></i> Completed Service Session Reports (<span id="archivedReportsCount">0</span>)</span>
+            <span style="font-size: 12px; color: var(--muted); font-weight: 500;">Generated automatically when service check-in ends</span>
+          </div>
+          <div id="archivedReportsCardList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px;">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
         <!-- Attendance Historical Metrics Summary Cards -->
         <div class="metrics-row" style="margin-bottom: 20px;">
           <div class="metric-box">
@@ -2276,6 +2287,16 @@
           </label>
         </div>
 
+        <div class="form-group" style="background: rgba(197, 34, 31, 0.04); padding: 12px; border-radius: 6px; border: 1px solid rgba(197, 34, 31, 0.18); margin-top: 10px;">
+          <label for="newProgCutoffTime" class="form-label" style="color: #c5221f; font-weight: 700;">
+            <i class="fas fa-flag-checkered"></i> End Check-In Rule (Cutoff Time)
+          </label>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="time" id="newProgCutoffTime" class="form-ctrl" style="width: 140px; font-weight: 700;" value="11:30" />
+            <span style="font-size: 12px; color: var(--muted);">Auto-close kiosk check-in &amp; compile report at cutoff time</span>
+          </div>
+        </div>
+
         <div style="display: flex; gap: 10px; margin-top: 16px;">
           <button type="submit" class="btn-main" style="flex: 1; justify-content: center;"><i class="fas fa-save"></i> Save & Register Program</button>
           <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeCreateProgramModal()">Cancel</button>
@@ -2289,7 +2310,7 @@
     <div class="modal-card">
       <button class="modal-close" onclick="closeEditProgramModal()">✕</button>
       <h3 style="font-family: Manrope, sans-serif; font-size: 20px; margin-bottom: 4px;">Edit Service / Program Details</h3>
-      <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Update service title, category, schedule, or change the kiosk flyer image.</p>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Update service title, category, schedule, cutoff rule or change kiosk flyer image.</p>
       
       <form onsubmit="handleUpdateProgram(event)">
         <input type="hidden" id="editProgId" />
@@ -2317,6 +2338,16 @@
           <div class="form-group">
             <label for="editProgSchedule" class="form-label">Schedule & Hours *</label>
             <input required id="editProgSchedule" class="form-ctrl" />
+          </div>
+        </div>
+
+        <div class="form-group" style="background: rgba(197, 34, 31, 0.04); padding: 12px; border-radius: 6px; border: 1px solid rgba(197, 34, 31, 0.18); margin-top: 10px;">
+          <label for="editProgCutoffTime" class="form-label" style="color: #c5221f; font-weight: 700;">
+            <i class="fas fa-flag-checkered"></i> End Check-In Rule (Cutoff Time)
+          </label>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="time" id="editProgCutoffTime" class="form-ctrl" style="width: 140px; font-weight: 700;" value="11:30" />
+            <span style="font-size: 12px; color: var(--muted);">Auto-close kiosk check-in &amp; compile report at cutoff time</span>
           </div>
         </div>
 
@@ -3287,6 +3318,7 @@
     }
 
     async function loadHistoricalAttendanceReport() {
+      renderArchivedCompletedServiceReports();
       try {
         const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -3580,6 +3612,267 @@
       link.click();
       document.body.removeChild(link);
       showToast('Financial Overview Excel report downloaded successfully!', 'success', 'Export Complete');
+    }
+
+    /* ── END CHECK-IN & AUTOMATIC REPORT GENERATION SYSTEM ── */
+    function renderArchivedCompletedServiceReports() {
+      let archived = [];
+      try {
+        archived = JSON.parse(localStorage.getItem('sfmi_archived_service_reports') || '[]');
+      } catch (e) {}
+
+      const countEl = document.getElementById('archivedReportsCount');
+      if (countEl) countEl.innerText = archived.length;
+
+      const container = document.getElementById('archivedReportsCardList');
+      if (!container) return;
+
+      if (archived.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1 / -1; background: #fafbfa; padding: 20px; border-radius: 8px; border: 1px dashed var(--line); text-align: center; color: var(--muted); font-size: 13px;">
+          <i class="fas fa-flag-checkered" style="font-size: 24px; color: var(--muted); margin-bottom: 6px; display: block;"></i>
+          No completed service reports generated yet. When a service check-in ends, the summary report will appear here automatically!
+        </div>`;
+        return;
+      }
+
+      container.innerHTML = archived.map(rep => {
+        const safeId = escapeHtml(rep.id);
+        const name = escapeHtml(rep.serviceName || 'Sunday Service');
+        const dateStr = escapeHtml(rep.dateFormatted || 'Recently Completed');
+        const total = rep.presentCount || 0;
+        const male = rep.maleCount || 0;
+        const female = rep.femaleCount || 0;
+        const child = rep.childCount || 0;
+        const guest = rep.guestCount || 0;
+
+        return `
+          <div style="background: white; border: 1.5px solid var(--line); border-radius: 8px; padding: 16px; transition: box-shadow 0.2s;" onmouseenter="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)'" onmouseleave="this.style.boxShadow='none'">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <div>
+                <strong style="font-family: Manrope, sans-serif; font-size: 15px; color: var(--ink); display: block;">${name}</strong>
+                <span style="font-size: 12px; color: var(--muted);"><i class="fas fa-clock"></i> Ended ${dateStr}</span>
+              </div>
+              <span class="badge-present" style="background:#e6f4ea;color:#137333;font-size:11.5px;padding:3px 8px;"><i class="fas fa-check-circle"></i> Completed</span>
+            </div>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0;">
+              <span class="badge badge-emerald" style="font-size: 12px; font-weight: 700;">${total} Total Attended</span>
+              <span class="badge badge-gold" style="font-size: 12px;">${guest} Guests</span>
+              <span class="badge badge-gray" style="font-size: 11.5px;">${male} Men · ${female} Women · ${child} Children</span>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 14px;">
+              <button class="btn-main" style="flex: 1; padding: 6px 10px; font-size: 12px; background: #107c41; justify-content: center;" onclick="downloadArchivedServiceReportExcel('${safeId}')">
+                <i class="fas fa-file-excel"></i> Export Excel
+              </button>
+              <button class="btn-main" style="padding: 6px 10px; font-size: 12px; background: var(--light); color: var(--ink); border: 1px solid var(--line); justify-content: center;" onclick="viewArchivedServiceReportRoster('${safeId}')">
+                <i class="fas fa-users"></i> View Roster
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function endCheckinAndGenerateReport(serviceName) {
+      const targetService = serviceName || currentSelectedService || 'Sunday: Family & Friends Service';
+
+      if (!confirm(`Are you sure you want to end check-ins for "${targetService}"?\n\nThis will finalize the service check-in session and automatically generate an official Attendance & Demographics report in the Reports section.`)) {
+        return;
+      }
+
+      // Compute statistics for targetService
+      const activeAttList = getAttendanceListForService(targetService);
+      let directoryList = [...allMembers];
+
+      activeAttList.forEach(att => {
+        const attPhone = (att.phone || '').trim();
+        const attNormPhone = normalizePhoneClient(attPhone);
+        const attName = (att.name || '').trim().toLowerCase();
+        const exists = directoryList.some(m => {
+          if (att.memberId && m.id && att.memberId === m.id) return true;
+          const mNormPhone = normalizePhoneClient(m.phone);
+          if (attNormPhone && mNormPhone && attNormPhone === mNormPhone) return true;
+          if (attName && `${m.firstName} ${m.lastName}`.trim().toLowerCase() === attName) return true;
+          return false;
+        });
+        if (!exists && att.name) {
+          const parts = att.name.split(' ');
+          directoryList.push({
+            id: att.memberId || ('guest_' + Math.random().toString(36).substr(2, 9)),
+            firstName: parts[0] || 'Visitor',
+            lastName: parts.slice(1).join(' ') || 'Guest',
+            phone: att.phone || '—',
+            gender: att.gender || 'Not specified',
+            address: att.address || '',
+            category: 'Visitor / Guest',
+            role: 'Visitor / First Timer',
+            isGuest: true
+          });
+        }
+      });
+
+      let presentCount = 0;
+      let absentCount = 0;
+      let maleCount = 0;
+      let femaleCount = 0;
+      let childCount = 0;
+      let guestCount = 0;
+
+      const roster = [];
+
+      directoryList.forEach(m => {
+        const mNormPhone = normalizePhoneClient(m.phone);
+        const mFullName = `${m.firstName} ${m.lastName}`.trim().toLowerCase();
+
+        const found = activeAttList.find(a => {
+          if (a.memberId && m.id && a.memberId === m.id) return true;
+          const aNormPhone = normalizePhoneClient(a.phone);
+          if (aNormPhone && mNormPhone && aNormPhone === mNormPhone) return true;
+          const aFullName = (a.name || `${a.firstName || ''} ${a.lastName || ''}`).trim().toLowerCase();
+          if (aFullName && aFullName === mFullName) return true;
+          return false;
+        });
+
+        const isPresent = Boolean(found);
+        const isGuest = (found && Boolean(found.isGuest)) || isGuestMember(m);
+
+        if (isPresent) {
+          presentCount++;
+          if (isGuest) guestCount++;
+          const isChild = m.category === 'Child' || (m.role && m.role.toLowerCase().includes('child'));
+          if (isChild) {
+            childCount++;
+          } else {
+            const g = (m.gender || '').toLowerCase();
+            if (g.startsWith('m')) maleCount++;
+            else if (g.startsWith('f')) femaleCount++;
+            else maleCount++;
+          }
+
+          roster.push({
+            name: `${m.firstName} ${m.lastName}`.trim(),
+            category: m.category || (isGuest ? 'Visitor / Guest' : 'Adult'),
+            phone: m.phone || '—',
+            gender: m.gender || '—',
+            location: m.address ? m.address.replace(/^📍\s*/, '') : '—',
+            time: found ? (found.time || 'Today') : 'Today',
+            method: found ? (found.method || 'KIOSK') : 'KIOSK',
+            isGuest
+          });
+        } else {
+          absentCount++;
+        }
+      });
+
+      const now = new Date();
+      const reportId = 'rep_sess_' + Date.now();
+      const dateFormatted = `${now.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' })} at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+      const newReport = {
+        id: reportId,
+        serviceName: targetService,
+        completedAt: now.toISOString(),
+        dateFormatted,
+        totalMembers: directoryList.length,
+        presentCount,
+        absentCount,
+        guestCount,
+        maleCount,
+        femaleCount,
+        childCount,
+        roster
+      };
+
+      let archivedReports = [];
+      try {
+        archivedReports = JSON.parse(localStorage.getItem('sfmi_archived_service_reports') || '[]');
+      } catch (e) {}
+
+      archivedReports.unshift(newReport);
+      localStorage.setItem('sfmi_archived_service_reports', JSON.stringify(archivedReports));
+
+      // Reset live kiosk if this service was live
+      const activeKiosk = localStorage.getItem('sfmi_active_kiosk_service');
+      if (activeKiosk === targetService) {
+        localStorage.removeItem('sfmi_active_kiosk_service');
+      }
+
+      showToast(`Check-In ended for "${targetService}"! Report compiled & archived in Reports section.`, 'success', 'Report Generated');
+
+      switchTab('reports');
+      switchReportSubTab('ATTENDANCE');
+      renderArchivedCompletedServiceReports();
+    }
+
+    function downloadArchivedServiceReportExcel(reportId) {
+      let archived = [];
+      try { archived = JSON.parse(localStorage.getItem('sfmi_archived_service_reports') || '[]'); } catch(e) {}
+      const rep = archived.find(r => r.id === reportId);
+      if (!rep) {
+        showToast('Archived report not found.', 'error', 'Report Error');
+        return;
+      }
+
+      let csv = '\uFEFF'; // Excel UTF-8 BOM
+      csv += `Official Attendance & Demographics Summary Report\n`;
+      csv += `Service Name,"${rep.serviceName}"\n`;
+      csv += `Completed Date,"${rep.dateFormatted}"\n`;
+      csv += `Total Directory Members,${rep.totalMembers}\n`;
+      csv += `Total Present,${rep.presentCount}\n`;
+      csv += `Total Absent,${rep.absentCount}\n`;
+      csv += `First-Timer Guests,${rep.guestCount}\n`;
+      csv += `Male Count,${rep.maleCount}\n`;
+      csv += `Female Count,${rep.femaleCount}\n`;
+      csv += `Children Count,${rep.childCount}\n\n`;
+
+      csv += `Full Name,Category,Phone Number,Gender,Residential Location,Check-In Time,Check-In Method\n`;
+
+      (rep.roster || []).forEach(m => {
+        const name = `"${m.name || ''}"`;
+        const category = `"${m.category || ''}"`;
+        const phone = `"${m.phone || ''}"`;
+        const gender = `"${m.gender || ''}"`;
+        const location = `"${(m.location || '').replace(/"/g, '""')}"`;
+        const time = `"${m.time || 'Today'}"`;
+        const method = `"${m.method || 'KIOSK'}"`;
+        csv += `${name},${category},${phone},${gender},${location},${time},${method}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `SFMI_Completed_Service_Report_${rep.serviceName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Completed Service Excel report downloaded successfully!', 'success', 'Export Complete');
+    }
+
+    function viewArchivedServiceReportRoster(reportId) {
+      let archived = [];
+      try { archived = JSON.parse(localStorage.getItem('sfmi_archived_service_reports') || '[]'); } catch(e) {}
+      const rep = archived.find(r => r.id === reportId);
+      if (!rep) return;
+
+      rawAttReportData = (rep.roster || []).map(r => ({
+        checkedInAt: rep.completedAt,
+        isGuest: r.isGuest,
+        method: r.method,
+        serviceName: rep.serviceName,
+        member: {
+          firstName: (r.name || '').split(' ')[0],
+          lastName: (r.name || '').split(' ').slice(1).join(' '),
+          phone: r.phone,
+          category: r.category,
+          gender: r.gender,
+          address: r.location
+        }
+      }));
+
+      filterHistoricalAttendanceReportTable();
+      showToast(`Showing roster for completed report: ${rep.serviceName}`, 'info', 'Roster Loaded');
     }
 
     /* Financial Analytics, Date Filtering & Export */
@@ -5174,11 +5467,13 @@
         const statusBadge = isKioskActive
           ? `<span class="badge-present" style="background:#e6f4ea;color:#137333;"><i class="fas fa-tower-broadcast"></i> Live on Kiosk</span>`
           : `<span style="color:var(--muted);font-size:12px;">Standby</span>`;
+        const safeName = item.name.replace(/'/g, "\\'");
         const actionButtons = `<div style="display:flex;gap:6px;flex-wrap:wrap;">
-          ${!isKioskActive ? `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#14532d;" onclick="activateProgramOnKiosk('${item.name}')"><i class="fas fa-play"></i> Set Live</button>` : `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#0f3d24;" onclick="resetKioskToRegularSchedule()"><i class="fas fa-rotate-left"></i> End / Reset</button>`}
+          ${!isKioskActive ? `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#14532d;" onclick="activateProgramOnKiosk('${safeName}')"><i class="fas fa-play"></i> Set Live</button>` : `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#0f3d24;" onclick="resetKioskToRegularSchedule()"><i class="fas fa-rotate-left"></i> Reset</button>`}
+          <button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#c5221f;color:white;" onclick="endCheckinAndGenerateReport('${safeName}')" title="End check-in session for this service and compile report"><i class="fas fa-flag-checkered"></i> End Check-In &amp; Report</button>
           <button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#c89b55;color:#111;" onclick="openEditProgramModal('${item.id}')"><i class="fas fa-edit"></i> Edit</button>
-          <button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#3b82f6;" onclick="viewProgramAttendance('${item.name}')"><i class="fas fa-users"></i> Attendance</button>
-          ${!item.isStandard ? `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#c5221f;" onclick="deleteCustomProgram('${item.id}')"><i class="fas fa-trash-alt"></i> Delete</button>` : ''}
+          <button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#3b82f6;" onclick="viewProgramAttendance('${safeName}')"><i class="fas fa-users"></i> Attendance</button>
+          ${!item.isStandard ? `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#991b1b;" onclick="deleteCustomProgram('${item.id}')"><i class="fas fa-trash-alt"></i> Delete</button>` : ''}
         </div>`;
         return `<tr>
           <td>${i+1}</td><td><strong>${item.name}</strong></td>
