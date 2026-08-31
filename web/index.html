@@ -1092,8 +1092,11 @@
       document.getElementById('searchInput').focus();
     }
 
-    async function proceedCheckIn() {
+    async function handleConfirmCheckIn() {
       if (!selectedMember) return;
+
+      let isDuplicate = false;
+      let checkinTimeStr = null;
 
       try {
         const checkinRes = await fetch(`${API_BASE}/attendance/checkin`, {
@@ -1113,26 +1116,38 @@
           if (checkinData.member) {
             selectedMember = { ...selectedMember, ...checkinData.member };
           }
+          if (checkinData.alreadyCheckedIn) {
+            isDuplicate = true;
+            if (checkinData.attendance && checkinData.attendance.checkedInAt) {
+              checkinTimeStr = new Date(checkinData.attendance.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+            showToast(`Notice: <strong>${escapeHtml(selectedMember.firstName)} ${escapeHtml(selectedMember.lastName)}</strong> is ALREADY checked in for today's service!`, 'warning', 'Already Checked In');
+          }
         }
       } catch (err) {}
 
-      showPassScreen(selectedMember);
+      showPassScreen(selectedMember, isDuplicate, checkinTimeStr);
     }
 
-    function showPassScreen(member) {
+    function showPassScreen(member, isDuplicate = false, checkedInTime = null) {
       document.getElementById('viewConfirm').style.display = 'none';
       document.getElementById('viewPass').style.display = 'block';
 
       const isChild = member.category === 'Child' || (member.role && member.role.toLowerCase().includes('child'));
-      const fullName = `${member.firstName} ${member.lastName}`;
-      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const fullName = `${escapeHtml(member.firstName)} ${escapeHtml(member.lastName)}`;
+      const timeStr = checkedInTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-      document.getElementById('passName').innerHTML = isChild 
+      let passHeader = isChild 
         ? `${fullName} <span style="font-size: 13px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-weight: 700; margin-left: 6px;"><i class="fa-solid fa-children" style="margin-right: 4px;"></i>Child / Sunday School</span>`
         : fullName;
 
-      document.getElementById('passDetails').innerText = `${currentServiceName} · ${dateStr}, ${timeStr}`;
+      if (isDuplicate) {
+        passHeader += ` <span style="font-size: 12px; background: #fffbeb; color: #b45309; border: 1.5px solid #fde68a; padding: 3px 9px; border-radius: 20px; font-weight: 800; margin-left: 8px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-clock-rotate-left"></i> Already Checked In (${timeStr})</span>`;
+      }
+
+      document.getElementById('passName').innerHTML = passHeader;
+      document.getElementById('passDetails').innerText = `${currentServiceName} · ${dateStr}, ${timeStr}${isDuplicate ? ' (First Checked In)' : ''}`;
       
       let locText = `Gender: ${member.gender || 'Not specified'}`;
       if (member.address) locText += ` · Location: ${member.address}`;

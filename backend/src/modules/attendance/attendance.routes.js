@@ -77,34 +77,71 @@ router.post('/checkin', async (req, res, next) => {
         throw e;
       }
 
-      // Resolve targetServiceId
+      // Resolve targetServiceId strictly for today's service date
       let targetServiceId = b.serviceId;
       if (!targetServiceId) {
         let matched = null;
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
         if (b.serviceName) {
           const prefix = b.serviceName.split(':')[0].trim();
           matched = await tx.service.findFirst({
-            where: { serviceType: { name: { contains: prefix, mode: 'insensitive' } }, active: true },
+            where: {
+              serviceType: { name: { contains: prefix, mode: 'insensitive' } },
+              serviceDate: { gte: startOfDay, lte: endOfDay },
+              active: true
+            },
             orderBy: { startsAt: 'desc' }
           });
         }
         if (!matched) {
-          matched = await tx.service.findFirst({ where: { active: true }, orderBy: { startsAt: 'desc' } });
-        }
-        if (matched) targetServiceId = matched.id;
-      }
-
-      if (!targetServiceId) {
-        let svcType = await tx.serviceType.findFirst({ where: { active: true } });
-        if (!svcType) {
-          svcType = await tx.serviceType.create({
-            data: { name: 'Family & Friends Service (Sunday)', dayOfWeek: 0, startTime: '07:00', endTime: '11:00' }
+          matched = await tx.service.findFirst({
+            where: {
+              serviceDate: { gte: startOfDay, lte: endOfDay },
+              active: true
+            },
+            orderBy: { startsAt: 'desc' }
           });
         }
-        const newSvc = await tx.service.create({
-          data: { serviceTypeId: svcType.id, serviceDate: new Date(), startsAt: new Date(), active: true }
-        });
-        targetServiceId = newSvc.id;
+        if (!matched) {
+          // Find or create service type
+          let svcType = null;
+          if (b.serviceName) {
+            const prefix = b.serviceName.split(':')[0].trim();
+            svcType = await tx.serviceType.findFirst({
+              where: { name: { contains: prefix, mode: 'insensitive' }, active: true }
+            });
+          }
+          if (!svcType) {
+            svcType = await tx.serviceType.findFirst({ where: { active: true } });
+          }
+          if (!svcType) {
+            svcType = await tx.serviceType.create({
+              data: { name: 'Family & Friends Service (Sunday)', dayOfWeek: 0, startTime: '07:00', endTime: '11:00' }
+            });
+          }
+
+          matched = await tx.service.findFirst({
+            where: {
+              serviceTypeId: svcType.id,
+              serviceDate: { gte: startOfDay, lte: endOfDay }
+            }
+          });
+
+          if (!matched) {
+            matched = await tx.service.create({
+              data: {
+                serviceTypeId: svcType.id,
+                serviceDate: startOfDay,
+                startsAt: new Date(),
+                active: true
+              }
+            });
+          }
+        }
+        targetServiceId = matched.id;
       }
 
       const existing = await tx.attendance.findUnique({
