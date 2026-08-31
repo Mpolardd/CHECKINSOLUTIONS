@@ -3402,7 +3402,7 @@
           if (attNormPhone && mNormPhone && attNormPhone === mNormPhone) return true;
           if (attPhone && m.phone && m.phone.trim() === attPhone) return true;
           const mName = `${m.firstName} ${m.lastName}`.trim().toLowerCase();
-          if (attName && (attName === mName || attName.startsWith(m.firstName.toLowerCase()))) return true;
+          if (attName && attName === mName) return true;
           return false;
         });
         if (!exists && att.name) {
@@ -3441,7 +3441,7 @@
           if (aNormPhone && mNormPhone && aNormPhone === mNormPhone) return true;
           if (a.phone && m.phone && a.phone.trim() === m.phone.trim()) return true;
           const aFullName = (a.name || `${a.firstName || ''} ${a.lastName || ''}`).trim().toLowerCase();
-          if (aFullName && (aFullName === mFullName || aFullName.startsWith(m.firstName.toLowerCase()))) return true;
+          if (aFullName && aFullName === mFullName) return true;
           return false;
         });
         const isPresent = Boolean(found);
