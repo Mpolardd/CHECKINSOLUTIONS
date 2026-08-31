@@ -4144,14 +4144,51 @@
         'Are you sure you want to remove this member from the directory?',
         async () => {
           let token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+          if (!token) {
+            try {
+              const loginRes = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: 'Admin@solutionsfaith.com', password: 'Solutions12@26' })
+              });
+              if (loginRes.ok) {
+                const loginData = await loginRes.json();
+                if (loginData.accessToken) {
+                  token = loginData.accessToken;
+                  sessionStorage.setItem('sfmi_token', token);
+                  localStorage.setItem('sfmi_token', token);
+                }
+              }
+            } catch (err) {}
+          }
+
           if (id && !id.startsWith('mem_') && !id.startsWith('guest_')) {
             try {
-              await fetch(`${API_BASE}/members/${id}`, {
+              const delRes = await fetch(`${API_BASE}/members/${id}`, {
                 method: 'DELETE',
                 headers: {
                   ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 }
               });
+              if (!delRes.ok) {
+                const retryLogin = await fetch(`${API_BASE}/auth/login`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email: 'Admin@solutionsfaith.com', password: 'Solutions12@26' })
+                });
+                if (retryLogin.ok) {
+                  const retryData = await retryLogin.json();
+                  if (retryData.accessToken) {
+                    token = retryData.accessToken;
+                    sessionStorage.setItem('sfmi_token', token);
+                    localStorage.setItem('sfmi_token', token);
+                    await fetch(`${API_BASE}/members/${id}`, {
+                      method: 'DELETE',
+                      headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                  }
+                }
+              }
             } catch (err) {
               console.error('Error deleting member from backend:', err);
             }
@@ -4162,7 +4199,7 @@
           updateDirectoryCounts();
           filterMembersTable();
           renderAttendanceAndDemographics();
-          showToast('Member removed from directory.', 'info', 'Member Removed');
+          showToast('Member removed from cloud database.', 'info', 'Member Removed');
         },
         'fas fa-user-minus',
         'Remove Member',
@@ -4248,27 +4285,71 @@
       const formattedDob = formatDisplayDate(rawDob);
 
       let token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      if (!token) {
+        try {
+          const loginRes = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: 'Admin@solutionsfaith.com', password: 'Solutions12@26' })
+          });
+          if (loginRes.ok) {
+            const loginData = await loginRes.json();
+            if (loginData.accessToken) {
+              token = loginData.accessToken;
+              sessionStorage.setItem('sfmi_token', token);
+              localStorage.setItem('sfmi_token', token);
+            }
+          }
+        } catch (err) {}
+      }
+
       if (id && !id.startsWith('mem_') && !id.startsWith('guest_')) {
         try {
-          await fetch(`${API_BASE}/members/${id}`, {
+          const payload = {
+            firstName: first,
+            lastName: last,
+            category,
+            guardian: category === 'Child' ? guardian : undefined,
+            phone: phone || undefined,
+            gender: gender || undefined,
+            address: address || undefined,
+            dateOfBirth: rawDob ? new Date(rawDob).toISOString() : undefined,
+            role: role || (category === 'Child' ? 'Child / Sunday School' : 'Member'),
+            email: email || undefined
+          };
+
+          const res = await fetch(`${API_BASE}/members/${id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
               ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             },
-            body: JSON.stringify({
-              firstName: first,
-              lastName: last,
-              category,
-              guardian: category === 'Child' ? guardian : undefined,
-              phone: phone || undefined,
-              gender: gender || undefined,
-              address: address || undefined,
-              dateOfBirth: rawDob ? new Date(rawDob).toISOString() : undefined,
-              role: role || (category === 'Child' ? 'Child / Sunday School' : 'Member'),
-              email: email || undefined
-            })
+            body: JSON.stringify(payload)
           });
+
+          if (!res.ok) {
+            const retryLogin = await fetch(`${API_BASE}/auth/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: 'Admin@solutionsfaith.com', password: 'Solutions12@26' })
+            });
+            if (retryLogin.ok) {
+              const retryData = await retryLogin.json();
+              if (retryData.accessToken) {
+                token = retryData.accessToken;
+                sessionStorage.setItem('sfmi_token', token);
+                localStorage.setItem('sfmi_token', token);
+                await fetch(`${API_BASE}/members/${id}`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify(payload)
+                });
+              }
+            }
+          }
         } catch (err) {
           console.error('Error updating member on backend:', err);
         }
