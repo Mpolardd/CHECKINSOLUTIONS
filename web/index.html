@@ -804,7 +804,7 @@
 
           <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
             <button class="btn btn-ghost" onclick="cancelConfirm()">Cancel / Back</button>
-            <button class="btn btn-primary" onclick="proceedCheckIn()"><i class="fas fa-check"></i> Yes, Check Me In</button>
+            <button class="btn btn-primary" onclick="handleConfirmCheckIn()"><i class="fas fa-check"></i> Yes, Check Me In</button>
           </div>
         </div>
       </div>
@@ -1090,6 +1090,10 @@
       document.getElementById('resultsGrid').style.display = 'none';
       document.getElementById('noResultsBox').style.display = 'none';
       document.getElementById('searchInput').focus();
+    }
+
+    function proceedCheckIn() {
+      return handleConfirmCheckIn();
     }
 
     async function handleConfirmCheckIn() {
