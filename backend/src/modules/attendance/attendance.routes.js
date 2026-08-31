@@ -489,4 +489,40 @@ router.post('/quick-register-checkin', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.post('/clear', async (req, res, next) => {
+  try {
+    const { serviceId, serviceName, clearAll } = req.body || {};
+    if (clearAll) {
+      await prisma.attendance.deleteMany({});
+    } else if (serviceId) {
+      await prisma.attendance.deleteMany({ where: { serviceId } });
+    } else {
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+      if (serviceName) {
+        const prefix = serviceName.split(':')[0].trim();
+        const svcs = await prisma.service.findMany({
+          where: { serviceType: { name: { contains: prefix, mode: 'insensitive' } } },
+          select: { id: true }
+        });
+        const svcIds = svcs.map(s => s.id);
+        if (svcIds.length > 0) {
+          await prisma.attendance.deleteMany({ where: { serviceId: { in: svcIds } } });
+        }
+        await prisma.attendance.deleteMany({
+          where: { checkedInAt: { gte: startOfDay, lte: endOfDay } }
+        });
+      } else {
+        await prisma.attendance.deleteMany({
+          where: { checkedInAt: { gte: startOfDay, lte: endOfDay } }
+        });
+      }
+    }
+    res.json({ success: true, message: 'Attendance records cleared successfully' });
+  } catch (e) { next(e); }
+});
+
 module.exports = router;
+

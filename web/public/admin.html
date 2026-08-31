@@ -1593,9 +1593,10 @@
           </div>
         </div>
 
-        <div style="display: flex; gap: 10px; align-items: center;">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
           <button class="btn-download" onclick="downloadAttendanceAbsenteeCSV()"><i class="fas fa-file-arrow-down"></i> Export Attendance List</button>
           <button class="btn-main" onclick="window.print()"><i class="fas fa-print"></i> Print Roster</button>
+          <button class="btn-main" style="background:#c5221f;" onclick="clearAttendanceData()"><i class="fas fa-trash-alt"></i> Reset / Clear Attendance Data</button>
         </div>
       </div>
 
@@ -4547,11 +4548,51 @@
       }
     }
 
-    function resetKioskToRegularSchedule() {
-      localStorage.removeItem('sfmi_active_kiosk_service');
-      populateServiceDropdowns();
-      renderProgramsManager();
-      showToast('Kiosk has been switched back to <strong>Regular Weekly Schedule</strong> (Sunday / Wednesday / Friday)!', 'success', 'Schedule Reset');
+    async function resetKioskToRegularSchedule(programName) {
+      if (confirm('End active program/service and clear its attendance records?')) {
+        try {
+          const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+          await fetch(`${API_BASE}/attendance/clear`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': token ? `Bearer ${token}` : ''
+            },
+            body: JSON.stringify({ serviceName: programName || currentSelectedService, clearAll: true })
+          });
+        } catch(e) {}
+        serviceAttendanceMap = {};
+        localStorage.removeItem('sfmi_active_kiosk_service');
+        populateServiceDropdowns();
+        renderAttendanceAndDemographics();
+        renderProgramsManager();
+        showToast('Kiosk reset to <strong>Regular Schedule</strong> and attendance list cleared!', 'success', 'Schedule Reset');
+      }
+    }
+
+    async function clearAttendanceData() {
+      if (!confirm(`Are you sure you want to clear all attendance records for "${currentSelectedService}"? This will reset all attendance counts to 0.`)) return;
+      try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const res = await fetch(`${API_BASE}/attendance/clear`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : ''
+          },
+          body: JSON.stringify({ serviceName: currentSelectedService, clearAll: true })
+        });
+        if (res.ok) {
+          serviceAttendanceMap = {};
+          renderAttendanceAndDemographics();
+          renderProgramsManager();
+          showToast('All attendance data has been cleared!', 'success', 'Data Cleared');
+        } else {
+          showToast('Failed to clear attendance data', 'error', 'Error');
+        }
+      } catch (e) {
+        showToast('Error connecting to server', 'error', 'Error');
+      }
     }
 
     function renderProgramsManager() {
