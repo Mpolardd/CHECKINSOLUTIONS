@@ -890,6 +890,16 @@
       return isLocal ? 'http://localhost:4000/api/v1' : '/api/v1';
     })();
 
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     let currentDay = 'Sunday';
     let currentServiceName = 'Family & Friends Service';
     let currentServiceTime = '7:00 AM – 11:00 AM';
