@@ -3435,7 +3435,7 @@
           if (aFullName && (aFullName === mFullName || aFullName.startsWith(m.firstName.toLowerCase()))) return true;
           return false;
         });
-        const isPresent = Boolean(found) || Boolean(m.isGuest);
+        const isPresent = Boolean(found);
 
         const isGuest = (found && Boolean(found.isGuest)) ||
                         Boolean(m.isGuest) ||
@@ -3716,10 +3716,9 @@
         const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-        const curRes = await fetch(`${API_BASE}/attendance/services/current`, { headers });
-        const cur = await curRes.json();
-        if (cur?.id) {
-          const liveRes = await fetch(`${API_BASE}/attendance/live-count/${cur.id}`, { headers });
+        const targetService = currentSelectedService || 'Sunday: Family & Friends Service';
+        const liveRes = await fetch(`${API_BASE}/attendance/by-service-name?name=${encodeURIComponent(targetService)}`, { headers });
+        if (liveRes.ok) {
           const live = await liveRes.json();
           if (live.recent && Array.isArray(live.recent)) {
             const liveList = live.recent.map(item => {
@@ -3742,7 +3741,6 @@
               };
             });
 
-            // Merge any active attendee/guest into allMembers directory if not already there
             let modifiedDirectory = false;
             liveList.forEach(att => {
               const attPhoneNorm = normalizePhoneClient(att.phone);
@@ -3777,9 +3775,7 @@
               }
             });
 
-            const serviceKey = currentSelectedService || 'Sunday: Family & Friends Service';
-            serviceAttendanceMap[serviceKey] = liveList;
-            serviceAttendanceMap['Sunday: Family & Friends Service'] = liveList;
+            serviceAttendanceMap[targetService] = liveList;
             renderAttendanceAndDemographics();
             if (modifiedDirectory) {
               updateDirectoryCounts();

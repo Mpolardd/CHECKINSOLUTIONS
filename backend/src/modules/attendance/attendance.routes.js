@@ -277,7 +277,117 @@ router.get('/live-count/:serviceId', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.get('/by-service-name', async (req, res, next) => {
+  try {
+    const rawName = String(req.query.name || '').trim();
+    if (!rawName) return res.json({ count: 0, recent: [] });
+
+    const prefix = rawName.split(':')[0].trim();
+
+    const matchingServices = await prisma.service.findMany({
+      where: {
+        OR: [
+          { serviceType: { name: { contains: prefix, mode: 'insensitive' } } },
+          { serviceType: { name: { contains: rawName, mode: 'insensitive' } } }
+        ]
+      },
+      select: { id: true }
+    });
+
+    const serviceIds = matchingServices.map(s => s.id);
+    if (serviceIds.length === 0) {
+      return res.json({ count: 0, maleCount: 0, femaleCount: 0, recent: [] });
+    }
+
+    const attendees = await prisma.attendance.findMany({
+      where: { serviceId: { in: serviceIds } },
+      include: {
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            gender: true,
+            address: true,
+            category: true,
+            role: true,
+            guardian: true,
+            createdAt: true
+          }
+        }
+      },
+      orderBy: { checkedInAt: 'desc' }
+    });
+
+    const count = attendees.length;
+    let maleCount = 0;
+    let femaleCount = 0;
+
+    const memberIds = attendees.map(a => a.memberId);
+    const guestLogs = await prisma.auditLog.findMany({
+      where: {
+        action: 'VISITOR_REGISTRATION',
+        entityId: { in: memberIds }
+      }
+    });
+    const guestIds = new Set(guestLogs.map(l => l.entityId));
+
+    attendees.forEach(a => {
+      const g = (a.member?.gender || '').toUpperCase();
+      if (g.startsWith('M')) maleCount++;
+      else if (g.startsWith('F')) femaleCount++;
+    });
+
+    let isAdmin = false;
+    const authHeader = req.headers.authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
+      try {
+        const decoded = jwt.verify(authHeader.slice(7), process.env.JWT_ACCESS_SECRET || 'church_mgmt_secret_dev_fallback_only');
+        if (decoded.role === 'SUPER_ADMIN' || decoded.role === 'ADMIN') {
+          isAdmin = true;
+        }
+      } catch (e) {}
+    }
+
+    const sanitizedRecent = attendees.slice(0, 100).map(a => {
+      const isGuest = guestIds.has(a.memberId);
+      if (isAdmin) {
+        return {
+          id: a.id,
+          memberId: a.memberId,
+          serviceId: a.serviceId,
+          method: a.method,
+          checkedInAt: a.checkedInAt,
+          isGuest,
+          member: a.member
+        };
+      }
+      return {
+        id: a.id,
+        method: a.method,
+        checkedInAt: a.checkedInAt,
+        isGuest,
+        member: {
+          firstName: a.member?.firstName || '',
+          lastName: a.member?.lastName ? `${a.member.lastName.charAt(0)}.` : '',
+          gender: a.member?.gender || ''
+        }
+      };
+    });
+
+    res.json({
+      count,
+      maleCount,
+      femaleCount,
+      otherCount: count - (maleCount + femaleCount),
+      recent: sanitizedRecent
+    });
+  } catch (e) { next(e); }
+});
+
 router.get('/service-types', async (req, res, next) => {
+
   try {
     const types = await prisma.serviceType.findMany({ where: { active: true }, orderBy: { dayOfWeek: 'asc' } });
     res.json(types);
