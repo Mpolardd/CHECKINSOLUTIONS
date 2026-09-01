@@ -5026,100 +5026,133 @@
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
         const targetService = currentSelectedService || 'Sunday: Family & Friends Service';
-        const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value : '';
+        const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value.trim() : '';
 
-        let apiUrl = `${API_BASE}/attendance/by-service-name?name=${encodeURIComponent(targetService)}`;
+        // Query database history to guarantee complete synchronization with the Reports Ledger
+        let histUrl = `${API_BASE}/attendance/history?limit=500`;
         if (selectedDate) {
-          apiUrl += `&date=${encodeURIComponent(selectedDate)}`;
+          histUrl += `&startDate=${encodeURIComponent(selectedDate)}&endDate=${encodeURIComponent(selectedDate)}`;
         }
 
-        const liveRes = await fetch(apiUrl, { headers });
-        if (liveRes.ok) {
-          const live = await liveRes.json();
-          if (live.recent && Array.isArray(live.recent)) {
-            const liveList = live.recent.map(item => {
-              const fName = item.member?.firstName || '';
-              const lName = item.member?.lastName || '';
-              return {
-                memberId: item.memberId || item.member?.id || null,
-                phone: item.member?.phone || '',
-                firstName: fName,
-                lastName: lName,
-                name: `${fName} ${lName}`.trim(),
-                gender: item.member?.gender || '',
-                address: item.member?.address || '',
-                category: item.member?.category || (item.isGuest ? 'Visitor / Guest' : 'Adult'),
-                role: item.member?.role || (item.isGuest ? 'Visitor / First Timer' : 'Member'),
-                guardian: item.member?.guardian || '',
-                time: new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                method: item.method || 'KIOSK',
-                isGuest: Boolean(item.isGuest)
-              };
-            });
+        let rawItems = [];
+        try {
+          const histRes = await fetch(histUrl, { headers });
+          if (histRes.ok) {
+            rawItems = await histRes.json();
+          }
+        } catch (hErr) {}
 
-            // Filter out any locally or recently deleted members
-            liveList = liveList.filter(att => {
-              if (att.memberId && deletedMemberIds.has(att.memberId)) return false;
-              if (att.id && deletedMemberIds.has(att.id)) return false;
-              if (att.phone && deletedMemberIds.has(att.phone.trim())) return false;
-              if (att.name && deletedMemberIds.has(att.name.trim().toLowerCase())) return false;
-              return true;
-            });
+        // Fallback / supplement with live endpoint
+        if (!Array.isArray(rawItems) || rawItems.length === 0) {
+          let apiUrl = `${API_BASE}/attendance/by-service-name?name=${encodeURIComponent(targetService)}`;
+          if (selectedDate) {
+            apiUrl += `&date=${encodeURIComponent(selectedDate)}`;
+          }
+          try {
+            const liveRes = await fetch(apiUrl, { headers });
+            if (liveRes.ok) {
+              const live = await liveRes.json();
+              if (live.recent && Array.isArray(live.recent)) {
+                rawItems = live.recent;
+              }
+            }
+          } catch (lErr) {}
+        }
 
-            let modifiedDirectory = false;
-            liveList.forEach(att => {
-              const attPhoneNorm = normalizePhoneClient(att.phone);
-              const attFullName = (att.name || '').trim().toLowerCase();
-              const foundIndex = allMembers.findIndex(m => 
+        if (Array.isArray(rawItems)) {
+          let liveList = rawItems.map(item => {
+            const fName = item.member?.firstName || '';
+            const lName = item.member?.lastName || '';
+            const rawDate = formatLocalDate(item.checkedInAt || Date.now());
+            const svcName = item.service?.serviceType?.name || item.serviceName || 'Sunday Service';
+            return {
+              id: item.id || item.memberId,
+              memberId: item.memberId || item.member?.id || null,
+              phone: item.member?.phone || '',
+              firstName: fName,
+              lastName: lName,
+              name: `${fName} ${lName}`.trim(),
+              gender: item.member?.gender || '',
+              address: item.member?.address || '',
+              category: item.member?.category || (item.isGuest ? 'Visitor / Guest' : 'Adult'),
+              role: item.member?.role || (item.isGuest ? 'Visitor / First Timer' : 'Member'),
+              guardian: item.member?.guardian || '',
+              time: new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              dateStr: rawDate,
+              serviceName: svcName,
+              method: item.method || 'KIOSK',
+              isGuest: Boolean(item.isGuest || item.member?.category === 'Visitor / Guest')
+            };
+          });
+
+          // Filter out any locally or recently deleted members
+          liveList = liveList.filter(att => {
+            if (att.memberId && deletedMemberIds.has(att.memberId)) return false;
+            if (att.id && deletedMemberIds.has(att.id)) return false;
+            if (att.phone && deletedMemberIds.has(att.phone.trim())) return false;
+            if (att.name && deletedMemberIds.has(att.name.trim().toLowerCase())) return false;
+            return true;
+          });
+
+          let modifiedDirectory = false;
+          liveList.forEach(att => {
+            const attPhoneNorm = normalizePhoneClient(att.phone);
+            const attFullName = (att.name || '').trim().toLowerCase();
+            const foundIndex = allMembers.findIndex(m => 
+              (att.memberId && m.id && att.memberId === m.id) ||
+              (att.phone && m.phone && (att.phone.trim() === m.phone.trim() || (attPhoneNorm && normalizePhoneClient(m.phone) === attPhoneNorm))) ||
+              (attFullName && `${m.firstName} ${m.lastName}`.trim().toLowerCase() === attFullName)
+            );
+
+            if (foundIndex >= 0) {
+              if (att.isGuest && !allMembers[foundIndex].isGuest) {
+                allMembers[foundIndex].isGuest = true;
+                if (!allMembers[foundIndex].category || allMembers[foundIndex].category === 'Adult') allMembers[foundIndex].category = 'Visitor / Guest';
+                if (!allMembers[foundIndex].role || allMembers[foundIndex].role === 'Member') allMembers[foundIndex].role = 'Visitor / First Timer';
+                modifiedDirectory = true;
+              }
+            } else if (att.name) {
+              const alreadyInDirectory = allMembers.some(m =>
                 (att.memberId && m.id && att.memberId === m.id) ||
                 (att.phone && m.phone && (att.phone.trim() === m.phone.trim() || (attPhoneNorm && normalizePhoneClient(m.phone) === attPhoneNorm))) ||
                 (attFullName && `${m.firstName} ${m.lastName}`.trim().toLowerCase() === attFullName)
               );
-
-              if (foundIndex >= 0) {
-                if (att.isGuest && !allMembers[foundIndex].isGuest) {
-                  allMembers[foundIndex].isGuest = true;
-                  if (!allMembers[foundIndex].category || allMembers[foundIndex].category === 'Adult') allMembers[foundIndex].category = 'Visitor / Guest';
-                  if (!allMembers[foundIndex].role || allMembers[foundIndex].role === 'Member') allMembers[foundIndex].role = 'Visitor / First Timer';
-                  modifiedDirectory = true;
-                }
-              } else if (att.name) {
-                const alreadyInDirectory = allMembers.some(m =>
-                  (att.memberId && m.id && att.memberId === m.id) ||
-                  (att.phone && m.phone && (att.phone.trim() === m.phone.trim() || (attPhoneNorm && normalizePhoneClient(m.phone) === attPhoneNorm))) ||
-                  (attFullName && `${m.firstName} ${m.lastName}`.trim().toLowerCase() === attFullName)
-                );
-                if (!alreadyInDirectory) {
-                  allMembers.unshift({
-                    id: att.memberId || ('guest_' + Math.random().toString(36).substr(2, 9)),
-                    firstName: att.firstName || 'Visitor',
-                    lastName: att.lastName || 'Guest',
-                    phone: att.phone || '',
-                    gender: att.gender || 'Not specified',
-                    address: att.address || '',
-                    category: att.category || 'Visitor / Guest',
-                    role: att.role || 'Visitor / First Timer',
-                    guardian: att.guardian || '',
-                    isGuest: Boolean(att.isGuest)
-                  });
-                  modifiedDirectory = true;
-                }
+              if (!alreadyInDirectory) {
+                allMembers.unshift({
+                  id: att.memberId || ('guest_' + Math.random().toString(36).substr(2, 9)),
+                  firstName: att.firstName || 'Visitor',
+                  lastName: att.lastName || 'Guest',
+                  phone: att.phone || '',
+                  gender: att.gender || 'Not specified',
+                  address: att.address || '',
+                  category: att.category || 'Visitor / Guest',
+                  role: att.role || 'Visitor / First Timer',
+                  guardian: att.guardian || '',
+                  isGuest: Boolean(att.isGuest)
+                });
+                modifiedDirectory = true;
               }
-            });
-
-            const mapKey = selectedDate ? `${targetService}_${selectedDate}` : targetService;
-            serviceAttendanceMap[mapKey] = liveList;
-            serviceAttendanceMap[targetService] = liveList;
-            serviceAttendanceMap['ALL'] = liveList;
-            renderAttendanceAndDemographics();
-            if (modifiedDirectory) {
-              updateDirectoryCounts();
-              filterMembersTable();
             }
-            renderProgramsManager();
+          });
+
+          const mapKey = selectedDate ? `${targetService}_${selectedDate}` : targetService;
+          serviceAttendanceMap[mapKey] = liveList;
+          serviceAttendanceMap[targetService] = liveList;
+          serviceAttendanceMap['ALL'] = liveList;
+          if (selectedDate) {
+            serviceAttendanceMap[`ALL_${selectedDate}`] = liveList;
           }
+
+          renderAttendanceAndDemographics();
+          if (modifiedDirectory) {
+            updateDirectoryCounts();
+            filterMembersTable();
+          }
+          renderProgramsManager();
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('fetchLiveCounts error:', e);
+      }
     }
 
     let currentDirSubTab = 'MEMBERS'; // 'MEMBERS', 'GUESTS', 'ALL'
