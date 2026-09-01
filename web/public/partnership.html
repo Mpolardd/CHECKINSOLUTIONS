@@ -1012,6 +1012,8 @@
       } catch (err) {}
     }
 
+    let partnerSearchDebounce = null;
+
     function handlePartnerSearchInput(query) {
       const suggestBox = document.getElementById('partnerSuggestBox');
       const q = query.trim().toLowerCase();
@@ -1019,6 +1021,34 @@
         suggestBox.style.display = 'none';
         return;
       }
+
+      renderPartnerSearchResults(q);
+
+      if (q.length >= 2) {
+        if (partnerSearchDebounce) clearTimeout(partnerSearchDebounce);
+        partnerSearchDebounce = setTimeout(async () => {
+          try {
+            const res = await fetch(`${API_BASE}/attendance/search?q=${encodeURIComponent(q)}`);
+            if (res.ok) {
+              const liveMembers = await res.json();
+              if (Array.isArray(liveMembers) && liveMembers.length > 0) {
+                // Merge into cachedMembersList avoiding duplicates
+                liveMembers.forEach(lm => {
+                  if (!cachedMembersList.some(cm => cm.id === lm.id)) {
+                    cachedMembersList.push(lm);
+                  }
+                });
+                renderPartnerSearchResults(q);
+              }
+            }
+          } catch (e) {}
+        }, 250);
+      }
+    }
+
+    function renderPartnerSearchResults(q) {
+      const suggestBox = document.getElementById('partnerSuggestBox');
+      if (!suggestBox) return;
 
       const matchingPartners = (cachedPartnersList || []).filter(p => 
         (p.memberName && p.memberName.toLowerCase().includes(q)) || 
@@ -1028,14 +1058,14 @@
       const matchingMembers = (cachedMembersList || []).filter(m => {
         const fullName = `${m.firstName || ''} ${m.lastName || ''}`.trim().toLowerCase();
         const phone = (m.phone || '').toLowerCase();
-        return (fullName.includes(q) || phone.includes(q)) && !matchingPartners.some(p => p.memberId === m.id || p.memberName.toLowerCase() === fullName);
-      }).slice(0, 5);
+        return (fullName.includes(q) || phone.includes(q)) && !matchingPartners.some(p => p.memberId === m.id || (p.memberName && p.memberName.toLowerCase() === fullName));
+      }).slice(0, 8);
 
       if (matchingPartners.length === 0 && matchingMembers.length === 0) {
         suggestBox.innerHTML = `
           <div style="padding: 12px 14px; color: var(--muted); font-size: 13px; text-align: center;">
-            No member found matching "<strong>${escapeHtml(query)}</strong>".<br/>
-            <button type="button" class="btn-main" style="margin-top: 8px; padding: 6px 12px; font-size: 12px; background: var(--emerald-dark);" onclick="openRegisterPartnerModalWithName('${escapeHtml(query)}')">
+            No member found matching "<strong>${escapeHtml(q)}</strong>".<br/>
+            <button type="button" class="btn-main" style="margin-top: 8px; padding: 6px 12px; font-size: 12px; background: var(--emerald-dark);" onclick="openRegisterPartnerModalWithName('${escapeHtml(q)}')">
               <i class="fas fa-user-plus"></i> Register as New Partner
             </button>
           </div>`;
