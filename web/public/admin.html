@@ -4165,8 +4165,7 @@
         return;
       }
 
-      container.innerHTML = archived.map(rep => {
-        const safeId = escapeHtml(rep.id);
+      container.innerHTML = archived.map((rep, idx) => {
         const name = escapeHtml(rep.serviceName || 'Sunday Service');
         const dateStr = escapeHtml(rep.dateFormatted || 'Recently Completed');
         const total = rep.presentCount || 0;
@@ -4192,10 +4191,10 @@
             </div>
 
             <div style="display: flex; gap: 8px; margin-top: 14px;">
-              <button class="btn-main" style="flex: 1; padding: 6px 10px; font-size: 12px; background: #107c41; justify-content: center;" onclick="downloadArchivedServiceReportExcel('${safeId}')">
+              <button class="btn-main" style="flex: 1; padding: 6px 10px; font-size: 12px; background: #107c41; justify-content: center;" onclick="downloadArchivedServiceReportExcel(${idx})">
                 <i class="fas fa-file-excel"></i> Export Excel
               </button>
-              <button class="btn-main" style="padding: 6px 10px; font-size: 12px; background: var(--light); color: var(--ink); border: 1px solid var(--line); justify-content: center;" onclick="viewArchivedServiceReportRoster('${safeId}')">
+              <button class="btn-main" style="padding: 6px 10px; font-size: 12px; background: var(--light); color: var(--ink); border: 1px solid var(--line); justify-content: center;" onclick="viewArchivedServiceReportRoster(${idx})">
                 <i class="fas fa-users"></i> View Roster
               </button>
             </div>
@@ -4334,10 +4333,19 @@
       renderArchivedCompletedServiceReports();
     }
 
-    function downloadArchivedServiceReportExcel(reportId) {
+    function downloadArchivedServiceReportExcel(reportIdOrIdx) {
       let archived = [];
       try { archived = JSON.parse(localStorage.getItem('sfmi_archived_service_reports') || '[]'); } catch(e) {}
-      const rep = archived.find(r => r.id === reportId);
+      let rep = null;
+      if (typeof reportIdOrIdx === 'number' || (!isNaN(reportIdOrIdx) && String(reportIdOrIdx).trim() !== '' && !String(reportIdOrIdx).startsWith('rep_'))) {
+        rep = archived[Number(reportIdOrIdx)];
+      }
+      if (!rep && reportIdOrIdx) {
+        rep = archived.find(r => r.id === reportIdOrIdx);
+      }
+      if (!rep && archived.length > 0) {
+        rep = archived[0];
+      }
       if (!rep) {
         showToast('Archived report not found.', 'error', 'Report Error');
         return;
@@ -4372,36 +4380,60 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `SFMI_Completed_Service_Report_${rep.serviceName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `SFMI_Completed_Service_Report_${rep.serviceName.replace(/[^a-zA-Z0-9]/g, '_')}_${formatLocalDate(new Date())}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       showToast('Completed Service Excel report downloaded successfully!', 'success', 'Export Complete');
     }
 
-    function viewArchivedServiceReportRoster(reportId) {
+    function viewArchivedServiceReportRoster(reportIdOrIdx) {
       let archived = [];
       try { archived = JSON.parse(localStorage.getItem('sfmi_archived_service_reports') || '[]'); } catch(e) {}
-      const rep = archived.find(r => r.id === reportId);
-      if (!rep) return;
+      let rep = null;
+      if (typeof reportIdOrIdx === 'number' || (!isNaN(reportIdOrIdx) && String(reportIdOrIdx).trim() !== '' && !String(reportIdOrIdx).startsWith('rep_'))) {
+        rep = archived[Number(reportIdOrIdx)];
+      }
+      if (!rep && reportIdOrIdx) {
+        rep = archived.find(r => r.id === reportIdOrIdx);
+      }
+      if (!rep && archived.length > 0) {
+        rep = archived[0];
+      }
+      if (!rep) {
+        showToast('Archived report not found.', 'error', 'Report Error');
+        return;
+      }
 
-      rawAttReportData = (rep.roster || []).map(r => ({
-        checkedInAt: rep.completedAt,
-        isGuest: r.isGuest,
-        method: r.method,
+      // Convert archived report format into standard session structure and open the full modal
+      const sessionObj = {
+        id: rep.id,
         serviceName: rep.serviceName,
-        member: {
-          firstName: (r.name || '').split(' ')[0],
-          lastName: (r.name || '').split(' ').slice(1).join(' '),
-          phone: r.phone,
-          category: r.category,
-          gender: r.gender,
-          address: r.location
-        }
-      }));
+        dateFormatted: rep.dateFormatted,
+        totalLogs: rep.presentCount || (rep.roster ? rep.roster.length : 0),
+        maleCount: rep.maleCount || 0,
+        femaleCount: rep.femaleCount || 0,
+        guestCount: rep.guestCount || 0,
+        childCount: rep.childCount || 0,
+        logs: (rep.roster || []).map(r => ({
+          checkedInAt: rep.completedAt || new Date().toISOString(),
+          isGuest: r.isGuest,
+          method: r.method || 'KIOSK',
+          member: {
+            firstName: (r.name || '').split(' ')[0],
+            lastName: (r.name || '').split(' ').slice(1).join(' '),
+            phone: r.phone,
+            category: r.category,
+            gender: r.gender,
+            address: r.location
+          }
+        }))
+      };
 
-      filterHistoricalAttendanceReportTable();
-      showToast(`Showing roster for completed report: ${rep.serviceName}`, 'info', 'Roster Loaded');
+      compiledAttSessionsMap[rep.id] = sessionObj;
+      compiledAttSessionsList.unshift(sessionObj);
+
+      openViewCompiledAttendanceModal(rep.id);
     }
 
     /* Financial Analytics, Date Filtering & Export */
