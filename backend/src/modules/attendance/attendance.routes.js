@@ -289,33 +289,6 @@ router.get('/by-service-name', async (req, res, next) => {
       member: { active: true, deletedAt: null }
     };
 
-    if (rawName && rawName.toUpperCase() !== 'ALL') {
-      const prefix = rawName.split(':')[0].trim();
-      const svcs = await prisma.service.findMany({
-        where: {
-          OR: [
-            { serviceType: { name: { contains: prefix, mode: 'insensitive' } } },
-            { serviceType: { name: { contains: rawName, mode: 'insensitive' } } }
-          ]
-        },
-        select: { id: true }
-      });
-      const svcIds = svcs.map(s => s.id);
-
-      if (svcIds.length > 0) {
-        attendanceWhere.serviceId = { in: svcIds };
-      } else {
-        attendanceWhere.service = {
-          serviceType: {
-            OR: [
-              { name: { contains: prefix, mode: 'insensitive' } },
-              { name: { contains: rawName, mode: 'insensitive' } }
-            ]
-          }
-        };
-      }
-    }
-
     if (dateParam) {
       const d = new Date(dateParam);
       if (!Number.isNaN(d.getTime())) {
@@ -327,53 +300,57 @@ router.get('/by-service-name', async (req, res, next) => {
       const now = new Date();
       const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
       const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      attendanceWhere.checkedInAt = { gte: start, lte: end };
+    }
 
-      try {
-        const todayCount = await prisma.attendance.count({
-          where: { ...attendanceWhere, checkedInAt: { gte: start, lte: end } }
-        });
-        if (todayCount > 0) {
-          attendanceWhere.checkedInAt = { gte: start, lte: end };
+    if (rawName && rawName.toUpperCase() !== 'ALL') {
+      const parts = rawName.split(/[:\&\(\)\—\-]+/).map(p => p.trim()).filter(p => p.length >= 3);
+      const serviceTypeOr = parts.map(p => ({
+        serviceType: { name: { contains: p, mode: 'insensitive' } }
+      }));
+      serviceTypeOr.push({ serviceType: { name: { contains: rawName, mode: 'insensitive' } } });
+
+      const svcs = await prisma.service.findMany({
+        where: { OR: serviceTypeOr },
+        select: { id: true }
+      });
+      const svcIds = svcs.map(s => s.id);
+
+      if (svcIds.length > 0) {
+        const filteredWhere = { ...attendanceWhere, serviceId: { in: svcIds } };
+        const matchCount = await prisma.attendance.count({ where: filteredWhere });
+        if (matchCount > 0) {
+          attendanceWhere.serviceId = { in: svcIds };
         }
-      } catch (cntErr) {
-        console.warn('Count check fallback:', cntErr?.message);
       }
     }
 
-    let attendees = [];
-    try {
+    let attendees = await prisma.attendance.findMany({
+      where: attendanceWhere,
+      include: {
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            gender: true,
+            address: true,
+            category: true,
+            role: true,
+            guardian: true,
+            createdAt: true
+          }
+        }
+      },
+      orderBy: { checkedInAt: 'desc' },
+      take: 1000
+    });
+
+    if (attendees.length === 0 && attendanceWhere.serviceId) {
+      delete attendanceWhere.serviceId;
       attendees = await prisma.attendance.findMany({
         where: attendanceWhere,
-        include: {
-          member: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              phone: true,
-              gender: true,
-              address: true,
-              category: true,
-              role: true,
-              guardian: true,
-              createdAt: true
-            }
-          }
-        },
-        orderBy: { checkedInAt: 'desc' },
-        take: 1000
-      });
-    } catch (queryErr) {
-      console.warn('First query fallback, fetching today checkins:', queryErr?.message);
-      const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-
-      attendees = await prisma.attendance.findMany({
-        where: {
-          member: { active: true, deletedAt: null },
-          checkedInAt: { gte: start, lte: end }
-        },
         include: {
           member: {
             select: {
