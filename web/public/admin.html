@@ -7002,16 +7002,25 @@
     function populateAdminPartnerSelectOptions() {
       const select = document.getElementById('adminPayPartnerSelect');
       if (!select) return;
+
+      const list = (cachedPartnersListAdmin && cachedPartnersListAdmin.length > 0)
+        ? cachedPartnersListAdmin
+        : (rawPartnershipMatrix || []).map(m => ({ id: m.partnerId, memberName: m.memberName, phone: m.phone, pledgeAmount: m.pledgeAmount }));
+
       select.innerHTML = '<option value="">-- Choose Covenant Partner --</option>' +
-        (cachedPartnersListAdmin || []).map(p => `
-          <option value="${p.id}" data-name="${escapeHtml(p.memberName)}" data-pledge="${p.pledgeAmount}">
-            ${escapeHtml(p.memberName)} (${p.phone || 'No phone'}) · GHS ${Number(p.pledgeAmount).toFixed(2)}/mo
+        list.map(p => `
+          <option value="${p.id}" data-name="${escapeHtml(p.memberName)}" data-pledge="${p.pledgeAmount || 0}">
+            ${escapeHtml(p.memberName)} (${p.phone || 'No phone'}) · GHS ${Number(p.pledgeAmount || 0).toFixed(2)}/mo
           </option>
         `).join('');
     }
 
     function handleAdminPartnerSelectChange(partnerId) {
-      const partner = (cachedPartnersListAdmin || []).find(p => p.id === partnerId);
+      const list = (cachedPartnersListAdmin && cachedPartnersListAdmin.length > 0)
+        ? cachedPartnersListAdmin
+        : (rawPartnershipMatrix || []).map(m => ({ id: m.partnerId, memberName: m.memberName, phone: m.phone, pledgeAmount: m.pledgeAmount }));
+
+      const partner = list.find(p => p.id === partnerId);
       if (partner) {
         const amtInput = document.getElementById('adminPayAmount');
         if (amtInput) amtInput.value = partner.pledgeAmount || '';
@@ -7019,17 +7028,27 @@
     }
 
     function openAdminRegisterPartnerModal() {
+      const modal = document.getElementById('adminRegisterPartnerModal');
+      if (!modal) return;
       document.getElementById('adminRegPartnerName').value = '';
       document.getElementById('adminRegPartnerPhone').value = '';
       document.getElementById('adminRegPartnerPledge').value = '';
       document.getElementById('adminRegPartnerStartDate').value = formatLocalDate(new Date());
       document.getElementById('adminRegPartnerNotes').value = '';
-      document.getElementById('adminRegisterPartnerModal').style.display = 'flex';
-      document.getElementById('adminRegPartnerName').focus();
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+      setTimeout(() => {
+        const nameInput = document.getElementById('adminRegPartnerName');
+        if (nameInput) nameInput.focus();
+      }, 50);
     }
 
     function closeAdminRegisterPartnerModal() {
-      document.getElementById('adminRegisterPartnerModal').style.display = 'none';
+      const modal = document.getElementById('adminRegisterPartnerModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+      }
     }
 
     async function handleAdminSavePartnerSubmit(e) {
@@ -7075,12 +7094,23 @@
     }
 
     function openAdminRecordPaymentModal(partnerId) {
+      const modal = document.getElementById('adminRecordPartnerPaymentModal');
+      if (!modal) return;
       populateAdminPartnerSelectOptions();
+
       const now = new Date();
       const curMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      document.getElementById('adminPayTargetMonth').value = curMonthStr;
-      document.getElementById('adminPayDate').value = formatLocalDate(now);
-      document.getElementById('adminPayNotes').value = '';
+      const targetMonthInput = document.getElementById('adminPayTargetMonth');
+      if (targetMonthInput) targetMonthInput.value = curMonthStr;
+
+      const dateInput = document.getElementById('adminPayDate');
+      if (dateInput) dateInput.value = formatLocalDate(now);
+
+      const notesInput = document.getElementById('adminPayNotes');
+      if (notesInput) notesInput.value = '';
+
+      const amtInput = document.getElementById('adminPayAmount');
+      if (amtInput) amtInput.value = '';
 
       if (partnerId) {
         const select = document.getElementById('adminPayPartnerSelect');
@@ -7090,11 +7120,16 @@
         }
       }
 
-      document.getElementById('adminRecordPartnerPaymentModal').style.display = 'flex';
+      modal.style.display = 'flex';
+      modal.classList.add('active');
     }
 
     function closeAdminRecordPaymentModal() {
-      document.getElementById('adminRecordPartnerPaymentModal').style.display = 'none';
+      const modal = document.getElementById('adminRecordPartnerPaymentModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+      }
     }
 
     async function handleAdminSavePartnerPaymentSubmit(e) {
@@ -7106,7 +7141,11 @@
       const paymentDate = document.getElementById('adminPayDate').value;
       const notes = document.getElementById('adminPayNotes').value.trim();
 
-      const partner = (cachedPartnersListAdmin || []).find(p => p.id === partnerId);
+      const list = (cachedPartnersListAdmin && cachedPartnersListAdmin.length > 0)
+        ? cachedPartnersListAdmin
+        : (rawPartnershipMatrix || []).map(m => ({ id: m.partnerId, memberName: m.memberName, phone: m.phone, pledgeAmount: m.pledgeAmount }));
+
+      const partner = list.find(p => p.id === partnerId);
       const memberName = partner ? partner.memberName : 'Partner';
 
       if (!partnerId || amount <= 0 || !targetMonth) {
@@ -7146,6 +7185,9 @@
     }
 
     async function viewPartnerHistory(partnerId) {
+      const modal = document.getElementById('adminPartnerHistoryModal');
+      if (!modal) return;
+
       const partner = (rawPartnershipMatrix || []).find(p => p.partnerId === partnerId) || 
                       (cachedPartnersListAdmin || []).find(p => p.id === partnerId);
       if (!partner) return;
@@ -7156,7 +7198,8 @@
 
       const tbody = document.getElementById('partnerHistoryTableBody');
       tbody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:var(--muted);">Loading payment transactions…</td></tr>`;
-      document.getElementById('adminPartnerHistoryModal').style.display = 'flex';
+      modal.style.display = 'flex';
+      modal.classList.add('active');
 
       try {
         const token = await getAdminAuthToken();
@@ -7183,7 +7226,11 @@
     }
 
     function closePartnerHistoryModal() {
-      document.getElementById('adminPartnerHistoryModal').style.display = 'none';
+      const modal = document.getElementById('adminPartnerHistoryModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+      }
     }
 
     function deletePartnerFromAdmin(partnerId) {
