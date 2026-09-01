@@ -7247,6 +7247,35 @@
       showToast('Partnership ledger spreadsheet exported successfully!', 'success', 'Excel Exported');
     }
 
+    /* ── CUSTOM CONFIRMATION MODAL SYSTEM ── */
+    let _confirmCallback = null;
+    function showConfirmModal(title, text, callback, iconClass = 'fas fa-sign-out-alt', btnText = 'Log Out', btnColor = '#c5221f') {
+      const titleEl = document.getElementById('confirmModalTitle');
+      const textEl = document.getElementById('confirmModalText');
+      const okBtn = document.getElementById('confirmModalOkBtn');
+      const icon = document.getElementById('confirmModalIcon');
+      const modal = document.getElementById('customConfirmModal');
+
+      if (titleEl) titleEl.innerText = title;
+      if (textEl) textEl.innerText = text;
+      if (okBtn) {
+        okBtn.innerText = btnText;
+        okBtn.style.background = btnColor;
+      }
+      if (icon) icon.className = iconClass;
+      _confirmCallback = callback;
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeCustomConfirmModal(confirmed) {
+      const modal = document.getElementById('customConfirmModal');
+      if (modal) modal.style.display = 'none';
+      if (confirmed && typeof _confirmCallback === 'function') {
+        _confirmCallback();
+      }
+      _confirmCallback = null;
+    }
+
     /* TOAST NOTIFICATION SYSTEM */
     function showToast(message, type = 'success', title = '') {
       let container = document.getElementById('toastContainer');
