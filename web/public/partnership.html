@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Covenant Partnership &amp; Monthly Pledges Portal — Solutions Faith Ministry</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --ink: #0d1e16;
+      --paper: #f4f6f3;
+      --card-bg: #ffffff;
+      --accent: #c89b55;
+      --accent-soft: rgba(200, 155, 85, 0.15);
+      --line: #e2e8f0;
+      --muted: #64748b;
+      --emerald: #10b981;
+      --emerald-dark: #092619;
+      --gold: #b45309;
+      --gold-bg: #fffbeb;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Centered Header Navigation Bar */
+    .fin-nav {
+      background: var(--emerald-dark);
+      border-bottom: 2px solid var(--accent);
+      padding: 14px 20px;
+      color: white;
+      position: relative;
+      width: 100%;
+    }
+
+    .fin-nav-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand-fin {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: white;
+    }
+
+    .brand-fin img {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid var(--accent);
+      object-fit: cover;
+      background: white;
+    }
+
+    .brand-title {
+      font-family: Cinzel, serif;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      color: #fff;
+    }
+
+    .brand-sub {
+      font-size: 11.5px;
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-header-link {
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(200, 155, 85, 0.4);
+      color: white;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .btn-header-link:hover {
+      background: rgba(200, 155, 85, 0.25);
+    }
+
+    .btn-header-logout {
+      padding: 8px 14px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .btn-header-logout:hover {
+      background: rgba(239, 68, 68, 0.3);
+      color: white;
+    }
+
+    /* Container */
+    .fin-container {
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+      flex: 1;
+    }
+
+    /* Login Screen Gate */
+    .login-container {
+      max-width: 440px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+
+    .login-card {
+      background: white;
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      padding: 36px 30px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      text-align: center;
+    }
+
+    /* Card */
+    .fin-card {
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 28px 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      margin-bottom: 24px;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 1.5px solid var(--line);
+      padding-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .kicker {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 2px;
+    }
+
+    .card-title {
+      font-family: Manrope, sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    /* Metrics Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .stat-box {
+      background: #fafbfa;
+      border: 1.5px solid var(--line);
+      border-radius: 8px;
+      padding: 16px 18px;
+      text-align: left;
+    }
+
+    .stat-num {
+      font-family: Manrope, sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--ink);
+      margin-top: 2px;
+    }
+
+    .stat-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Step Card */
+    .step-card {
+      background: white;
+      border: 1.5px solid var(--line);
+      border-radius: 8px;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .step-badge {
+      background: var(--emerald-dark);
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      padding: 5px 12px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .step-title {
+      font-family: Manrope, sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .step-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    .form-ctrl {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 14.5px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      background: white;
+      color: var(--ink);
+      font-family: inherit;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .form-ctrl:focus {
+      border-color: var(--accent);
+    }
+
+    .form-ctrl-money {
+      font-family: Manrope, sans-serif;
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    /* Partner Search Box */
+    .partner-search-wrapper {
+      position: relative;
+    }
+
+    .partner-suggest-box {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1.5px solid var(--accent);
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+      z-index: 1000;
+      max-height: 260px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .partner-suggest-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.15s;
+    }
+
+    .partner-suggest-item:hover {
+      background: #f0fdf4;
+    }
+
+    .partner-selected-box {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-top: 14px;
+    }
+
+    .quick-amt-pill {
+      padding: 5px 12px;
+      background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .quick-amt-pill:hover {
+      background: var(--accent);
+      color: #111;
+    }
+
+    /* Buttons */
+    .btn-main {
+      padding: 14px 28px;
+      background: var(--emerald-dark);
+      color: white;
+      font-weight: 700;
+      font-size: 14.5px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-main:hover {
+      background: #144933;
+    }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: white;
+      max-width: 500px;
+      width: 100%;
+      padding: 28px;
+      border-radius: 8px;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+      max-width: 440px;
+      width: calc(100vw - 48px);
+    }
+
+    .toast-msg {
+      pointer-events: auto;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 18px;
+      border-radius: 8px;
+      background: #092619;
+      color: white;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border: 1px solid rgba(200, 155, 85, 0.4);
+    }
+
+    .toast-msg.toast-success { border-left: 4.5px solid #22c55e; }
+    .toast-msg.toast-warning { border-left: 4.5px solid #f59e0b; }
+    .toast-msg.toast-error { border-left: 4.5px solid #ef4444; }
+    .toast-msg.toast-info { border-left: 4.5px solid #3b82f6; }
+
+    .toast-icon { font-size: 18px; margin-top: 2px; }
+    .toast-success .toast-icon { color: #4ade80; }
+    .toast-warning .toast-icon { color: #fbbf24; }
+    .toast-error .toast-icon { color: #f87171; }
+    .toast-info .toast-icon { color: #60a5fa; }
+    .toast-body { flex: 1; }
+    .toast-title { font-size: 13.5px; font-weight: 700; color: white; margin-bottom: 2px; }
+    .toast-text { font-size: 12.5px; color: #e2e8f0; }
+    .toast-close { background: none; border: none; color: #94a3b8; font-size: 14px; cursor: pointer; }
+
+    /* Footer */
+    .app-footer {
+      margin-top: 40px;
+      padding: 24px 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .footer-container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 0 16px;
+    }
+
+    @media (max-width: 768px) {
+      .stats-row, .grid-3 {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+      }
+      .brand-title { font-size: 12.5px !important; }
+      .brand-sub { font-size: 9.5px !important; }
+      .brand-fin img { width: 34px !important; height: 34px !important; }
+      .btn-main { width: 100% !important; justify-content: center !important; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Bar -->
+  <header class="fin-nav">
+    <div class="fin-nav-inner">
+      <a href="/partnership" class="brand-fin">
+        <img id="partnerNavLogo" src="/church-logo.jpg" alt="Logo">
+        <div>
+          <div class="brand-title" id="partnerChurchName">SOLUTIONS FAITH MINISTRY INTERNATIONAL</div>
+          <div class="brand-sub">Covenant Partnership &amp; Monthly Pledges Portal</div>
+        </div>
+      </a>
+      <div class="nav-actions" id="partnerNavActions" style="display: none;">
+        <a href="/finance" class="btn-header-link" title="Open Post-Service Figures Entry">
+          <i class="fas fa-coins"></i> <span>Service Collections</span>
+        </a>
+        <button id="btnPartnerLogout" class="btn-header-logout" onclick="handlePartnerLogout()" title="Log Out">
+          <i class="fas fa-sign-out-alt"></i> <span>Log Out</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Custom Confirmation Modal -->
+  <div class="modal-backdrop" id="customConfirmModal" style="display: none;" onclick="if(event.target===this)closeCustomConfirmModal(false)">
+    <div class="modal-card" style="max-width: 400px; text-align: center; padding: 28px 24px;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: #fff1f2; color: #e11d48; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px;">
+        <i class="fas fa-sign-out-alt" id="confirmModalIcon"></i>
+      </div>
+      <h3 style="font-family: Manrope, sans-serif; font-size: 19px; font-weight: 800; color: var(--ink); margin-bottom: 8px;" id="confirmModalTitle">Confirm Action</h3>
+      <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px;" id="confirmModalText">Are you sure you want to proceed?</p>
+      
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button type="button" class="btn-main" style="flex: 1; background: #f1f5f9; color: var(--ink); border: 1px solid var(--line); justify-content: center; font-size: 13.5px;" onclick="closeCustomConfirmModal(false)">Cancel</button>
+        <button type="button" class="btn-main" style="flex: 1; background: #c5221f; color: white; justify-content: center; font-size: 13.5px;" id="confirmModalOkBtn" onclick="closeCustomConfirmModal(true)">Yes, Proceed</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. LOGIN SCREEN GATE -->
+  <div class="login-container" id="partnerLoginScreen" style="display: none;">
+    <div class="login-card">
+      <div style="width: 50px; height: 50px; border-radius: 50%; background: #fef3c7; color: #b45309; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 14px;">
+        <i class="fas fa-handshake"></i>
+      </div>
+      <h2 style="font-family: Manrope, sans-serif; font-size: 22px; margin-bottom: 4px;">Treasury Partner Entry</h2>
+      <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px;">Sign in to record monthly covenant partnership contributions.</p>
+
+      <form onsubmit="handlePartnerLoginSubmit(event)" autocomplete="off">
+        <div class="form-group">
+          <label for="partnerLoginEmail" class="form-label">Officer Email</label>
+          <input required type="email" id="partnerLoginEmail" class="form-ctrl" placeholder="Enter treasury email address" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="partnerLoginPassword" class="form-label">Password</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input required type="password" id="partnerLoginPassword" class="form-ctrl" style="padding-right: 42px;" placeholder="Enter password" autocomplete="current-password" />
+            <button type="button" onclick="togglePasswordVisibility('partnerLoginPassword', 'partnerEyeIcon')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+              <i class="fas fa-eye" id="partnerEyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="partnerLoginErrorMsg" style="display: none; padding: 10px; margin-bottom: 14px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 4px; font-size: 13px; font-weight: 600;"></div>
+
+        <button type="submit" class="btn-main" style="width: 100%; justify-content: center;">Sign In to Partnership Portal</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. MAIN PARTNERSHIP DASHBOARD -->
+  <main class="fin-container" id="partnerDashboardContent" style="display: none;">
+    
+    <!-- Top Card -->
+    <div class="fin-card">
+      <div class="card-head">
+        <div>
+          <div class="kicker">Treasury Department</div>
+          <h1 class="card-title">Record Monthly Partnership Payment</h1>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn-main" style="padding: 9px 16px; font-size: 13px; background: var(--emerald-dark);" onclick="openRegisterPartnerModal()">
+            <i class="fas fa-user-plus"></i> Register New Partner
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick KPI Stats Bar -->
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-label">Active Partners</div>
+          <div class="stat-num" id="statActivePartners">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Monthly Target</div>
+          <div class="stat-num" id="statMonthlyTarget" style="color: var(--gold);">GHS 0.00</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Collected This Month</div>
+          <div class="stat-num" id="statCollectedThisMonth" style="color: var(--emerald);">GHS 0.00</div>
+        </div>
+      </div>
+
+      <!-- Entry Form -->
+      <form onsubmit="handleSavePartnershipPayment(event)">
+        
+        <!-- STEP 1: Search Partner -->
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-badge">STEP 1</div>
+            <div>
+              <div class="step-title">Select Covenant Partner</div>
+              <div class="step-desc">Type member name or phone to record their monthly pledge payment</div>
+            </div>
+          </div>
+
+          <div class="partner-search-wrapper">
+            <label for="partnerSearchInput" class="form-label">Search Member Name or Phone *</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="text" id="partnerSearchInput" class="form-ctrl" placeholder="Type member name (e.g. Samuel, Emmanuel, Grace)..." oninput="handlePartnerSearchInput(this.value)" autocomplete="off" />
+              <i class="fas fa-search" style="position: absolute; right: 14px; color: var(--muted); pointer-events: none;"></i>
+            </div>
+            <div class="partner-suggest-box" id="partnerSuggestBox"></div>
+          </div>
+
+          <input type="hidden" id="selectedPartnerId" />
+          <input type="hidden" id="selectedPartnerName" />
+          <input type="hidden" id="selectedPartnerPhone" />
+          <input type="hidden" id="selectedPartnerPledge" />
+
+          <!-- Selected Partner Information Card -->
+          <div class="partner-selected-box" id="partnerSelectedBox" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <div style="font-size: 11px; font-weight: 800; color: var(--emerald-dark); text-transform: uppercase; letter-spacing: 0.05em;">Selected Partner</div>
+                <div style="font-size: 17px; font-weight: 800; color: var(--ink);" id="partnerCardName">—</div>
+                <div style="font-size: 13px; color: var(--muted); margin-top: 2px;" id="partnerCardPhone"><i class="fas fa-phone"></i> —</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Registered Monthly Pledge</div>
+                <div style="font-size: 20px; font-weight: 800; color: var(--gold);" id="partnerCardPledge">GHS 0.00 / month</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: Payment Details -->
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-badge">STEP 2</div>
+            <div>
+              <div class="step-title">Payment Amount &amp; Target Month</div>
+              <div class="step-desc">Enter the amount received and the specific month being paid for</div>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="payTargetMonth" class="form-label">Payment For Month *</label>
+              <input required type="month" id="payTargetMonth" class="form-ctrl" />
+            </div>
+
+            <div class="form-group">
+              <label for="payAmount" class="form-label">Amount Paid (GHS) *</label>
+              <input required type="number" step="0.01" min="1" id="payAmount" class="form-ctrl form-ctrl-money" placeholder="0.00" />
+              <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;" id="quickAmtPills">
+                <button type="button" class="quick-amt-pill" onclick="applyQuickAmount('pledge')">Full Pledge</button>
+                <button type="button" class="quick-amt-pill" onclick="applyQuickAmount(50)">GHS 50</button>
+                <button type="button" class="quick-amt-pill" onclick="applyQuickAmount(100)">GHS 100</button>
+                <button type="button" class="quick-amt-pill" onclick="applyQuickAmount(200)">GHS 200</button>
+                <button type="button" class="quick-amt-pill" onclick="applyQuickAmount(500)">GHS 500</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="payPaymentMethod" class="form-label">Payment Method *</label>
+              <select required id="payPaymentMethod" class="form-ctrl">
+                <option value="CASH" selected>Cash Payment</option>
+                <option value="MOMO">Mobile Money (MoMo)</option>
+                <option value="BANK">Bank Transfer / Deposit</option>
+                <option value="POS">POS / Card</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-3" style="margin-top: 14px;">
+            <div class="form-group">
+              <label for="payPaymentDate" class="form-label">Date Received *</label>
+              <input required type="date" id="payPaymentDate" class="form-ctrl" />
+            </div>
+
+            <div class="form-group">
+              <label for="payRecordedBy" class="form-label">Treasury Officer *</label>
+              <input required type="text" id="payRecordedBy" class="form-ctrl" placeholder="Officer Full Name" />
+            </div>
+
+            <div class="form-group">
+              <label for="payNotes" class="form-label">Reference / Receipt Notes</label>
+              <input type="text" id="payNotes" class="form-ctrl" placeholder="e.g. MoMo Ref #12345 / Cheque #987" />
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 14px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
+          <button type="submit" class="btn-main" id="btnSavePartnerPay">
+            <i class="fas fa-handshake"></i> Record Partnership Payment
+          </button>
+          <button type="button" class="btn-main" style="background: transparent; color: var(--muted); border: 1px solid var(--line); box-shadow: none;" onclick="resetPartnershipPaymentForm()">
+            <i class="fas fa-rotate-left"></i> Clear Selection
+          </button>
+        </div>
+      </form>
+
+      <!-- Recent Payments Table -->
+      <div style="margin-top: 36px; border-top: 1px solid var(--line); padding-top: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="font-family: Manrope, sans-serif; font-size: 16px; font-weight: 800; color: var(--ink); margin: 0;">
+            <i class="fas fa-receipt" style="color: var(--accent); margin-right: 6px;"></i> Recent Partnership Payments Logged
+          </h3>
+          <button type="button" class="btn-main" style="padding: 6px 12px; font-size: 12px; background: transparent; color: var(--muted); border: 1px solid var(--line);" onclick="loadRecentPartnershipPayments()">
+            <i class="fas fa-rotate"></i> Refresh
+          </button>
+        </div>
+
+        <div style="overflow-x: auto; background: white; border: 1px solid var(--line); border-radius: 8px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; text-align: left;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 1.5px solid var(--line); color: var(--muted); font-size: 12px; text-transform: uppercase;">
+                <th style="padding: 12px 14px;">Date</th>
+                <th style="padding: 12px 14px;">Partner Name</th>
+                <th style="padding: 12px 14px;">For Month</th>
+                <th style="padding: 12px 14px;">Amount Paid</th>
+                <th style="padding: 12px 14px;">Channel</th>
+                <th style="padding: 12px 14px;">Officer</th>
+              </tr>
+            </thead>
+            <tbody id="recentPartnerPaymentsTable">
+              <tr>
+                <td colspan="6" style="padding: 24px; text-align: center; color: var(--muted);">Loading records…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Register Partner Modal -->
+  <div class="modal-backdrop" id="registerPartnerModal" style="display: none;" onclick="if(event.target===this)closeRegisterPartnerModal()">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeRegisterPartnerModal()">✕</button>
+      <h2 style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
+        Register New Church Partner
+      </h2>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Add a member who has pledged a regular monthly contribution</p>
+
+      <form onsubmit="handleSaveNewPartnerSubmit(event)">
+        <div class="form-group">
+          <label for="regPartnerMemberName" class="form-label">Member Full Name *</label>
+          <input required type="text" id="regPartnerMemberName" class="form-ctrl" placeholder="e.g. Samuel Osei" />
+        </div>
+
+        <div class="form-group">
+          <label for="regPartnerPhone" class="form-label">Phone Number *</label>
+          <input required type="tel" id="regPartnerPhone" class="form-ctrl" placeholder="e.g. +233 24 123 4567" />
+        </div>
+
+        <div class="grid-3" style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label for="regPartnerPledge" class="form-label">Monthly Pledge (GHS) *</label>
+            <input required type="number" step="0.01" min="1" id="regPartnerPledge" class="form-ctrl form-ctrl-money" placeholder="e.g. 200.00" />
+          </div>
+          <div class="form-group">
+            <label for="regPartnerCurrency" class="form-label">Currency</label>
+            <input type="text" id="regPartnerCurrency" class="form-ctrl" value="GHS" readonly style="background: #f1f5f9;" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="regPartnerStartDate" class="form-label">Pledge Start Date</label>
+          <input type="date" id="regPartnerStartDate" class="form-ctrl" />
+        </div>
+
+        <div class="form-group">
+          <label for="regPartnerNotes" class="form-label">Notes (Optional)</label>
+          <input type="text" id="regPartnerNotes" class="form-ctrl" placeholder="e.g. Pledged during August Convention" />
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 18px;">
+          <button type="submit" class="btn-main" id="btnSubmitRegPartner" style="flex: 1; justify-content: center; padding: 12px; background: var(--emerald-dark);">
+            <i class="fas fa-handshake"></i> Save &amp; Register Partner
+          </button>
+          <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeRegisterPartnerModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div>
+        <div style="font-weight: 700; color: var(--ink);">Solutions Faith Ministry International</div>
+        <div style="font-size: 12px; color: var(--muted);">Church Management &amp; Treasury System</div>
+      </div>
+      <div>
+        <a href="/finance" style="color: var(--muted); text-decoration: none; font-size: 12.5px; font-weight: 600;">Service Figures Portal &rarr;</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const API_BASE = '/api/v1';
+    let cachedPartnersList = [];
+    let cachedMembersList = [];
+    let inactivityTimer = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      checkPartnerAuth();
+    });
+
+    function resetInactivityTimer() {
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        handlePartnerLogout();
+        showToast('Your session has timed out due to inactivity.', 'warning', 'Session Timeout');
+      }, 15 * 60 * 1000);
+    }
+    ['mousedown', 'keydown', 'touchstart'].forEach(evt => window.addEventListener(evt, resetInactivityTimer, { passive: true }));
+
+    function purgePartnerAuthSession() {
+      sessionStorage.removeItem('sfmi_fin_token');
+      sessionStorage.removeItem('sfmi_fin_user');
+      localStorage.removeItem('sfmi_fin_token');
+    }
+
+    async function checkPartnerAuth() {
+      const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+
+      if (!token) {
+        purgePartnerAuthSession();
+        showPartnerLogin();
+        return;
+      }
+
+      // Offline session bypass
+      if (token.startsWith('sfmi_fin_offline_session_')) {
+        resetInactivityTimer();
+        showPartnerDashboard();
+        return;
+      }
+
+      showPartnerDashboard();
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/verify`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          sessionStorage.setItem('sfmi_fin_token', token);
+          if (data.user) sessionStorage.setItem('sfmi_fin_user', JSON.stringify(data.user));
+        } else if (res.status === 401 || res.status === 403) {
+          purgePartnerAuthSession();
+          showPartnerLogin();
+          showToast('Session expired. Please sign in again.', 'warning', 'Session Expired');
+        }
+      } catch (err) {}
+    }
+
+    function showPartnerLogin() {
+      document.getElementById('partnerLoginScreen').style.display = 'block';
+      document.getElementById('partnerDashboardContent').style.display = 'none';
+      document.getElementById('partnerNavActions').style.display = 'none';
+    }
+
+    function showPartnerDashboard() {
+      document.getElementById('partnerLoginScreen').style.display = 'none';
+      document.getElementById('partnerDashboardContent').style.display = 'block';
+      document.getElementById('partnerNavActions').style.display = 'flex';
+
+      loadBranding();
+
+      const now = new Date();
+      const curMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const targetInput = document.getElementById('payTargetMonth');
+      if (targetInput && !targetInput.value) targetInput.value = curMonthStr;
+
+      const dateInput = document.getElementById('payPaymentDate');
+      if (dateInput && !dateInput.value) dateInput.value = formatLocalDate(now);
+
+      let officerName = '';
+      try {
+        const u = JSON.parse(sessionStorage.getItem('sfmi_fin_user') || '{}');
+        if (u.name) officerName = u.name;
+      } catch(e) {}
+      const offInput = document.getElementById('payRecordedBy');
+      if (offInput && !offInput.value) offInput.value = officerName || 'Treasury Officer';
+
+      loadPartnersAndMembers();
+      loadRecentPartnershipPayments();
+    }
+
+    async function handlePartnerLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('partnerLoginEmail').value.trim();
+      const password = document.getElementById('partnerLoginPassword').value.trim();
+      const errorMsg = document.getElementById('partnerLoginErrorMsg');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      errorMsg.style.display = 'none';
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = 'Verifying credentials…'; }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          sessionStorage.setItem('sfmi_fin_token', data.accessToken);
+          localStorage.setItem('sfmi_fin_token', data.accessToken);
+          sessionStorage.setItem('sfmi_fin_user', JSON.stringify(data.user));
+          resetInactivityTimer();
+          showPartnerDashboard();
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Partnership Portal'; }
+          return;
+        }
+      } catch (err) {}
+
+      // Offline fallback: treasury
+      if (email.toLowerCase() === 'finance@solutionsfaith.com' && password === 'Money12@26') {
+        const offlineToken = 'sfmi_fin_offline_session_' + Date.now();
+        sessionStorage.setItem('sfmi_fin_token', offlineToken);
+        localStorage.setItem('sfmi_fin_token', offlineToken);
+        sessionStorage.setItem('sfmi_fin_user', JSON.stringify({ email: 'finance@solutionsfaith.com', role: 'FINANCE' }));
+        resetInactivityTimer();
+        showPartnerDashboard();
+      } else {
+        errorMsg.style.display = 'block';
+        errorMsg.innerText = 'Invalid credentials. Please check your email and password and try again.';
+      }
+
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Partnership Portal'; }
+    }
+
+    function handlePartnerLogout() {
+      showConfirmModal(
+        'Confirm Log Out',
+        'Are you sure you want to log out from the Partnership Portal?',
+        async () => {
+          if (inactivityTimer) clearTimeout(inactivityTimer);
+          const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token');
+          if (token && !token.startsWith('sfmi_fin_offline_session_')) {
+            try {
+              await fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+              });
+            } catch (e) {}
+          }
+          purgePartnerAuthSession();
+          showPartnerLogin();
+          showToast('Logged out safely.', 'info', 'Logged Out');
+        },
+        'fas fa-sign-out-alt',
+        'Log Out',
+        '#c5221f'
+      );
+    }
+
+    async function loadPartnersAndMembers() {
+      try {
+        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        const now = new Date();
+        const year = now.getFullYear();
+
+        const [partnerRes, memberRes, matrixRes] = await Promise.all([
+          fetch(`${API_BASE}/finance/partners`, { headers }).catch(() => null),
+          fetch(`${API_BASE}/members`, { headers }).catch(() => null),
+          fetch(`${API_BASE}/finance/partnerships/matrix?year=${year}`, { headers }).catch(() => null)
+        ]);
+
+        if (partnerRes && partnerRes.ok) {
+          cachedPartnersList = await partnerRes.json();
+        }
+        if (memberRes && memberRes.ok) {
+          const mData = await memberRes.json();
+          cachedMembersList = Array.isArray(mData) ? mData : (mData.members || []);
+        }
+        if (matrixRes && matrixRes.ok) {
+          const mData = await matrixRes.json();
+          const summary = mData.summary || {};
+          document.getElementById('statActivePartners').innerText = summary.totalPartners || cachedPartnersList.length || 0;
+          document.getElementById('statMonthlyTarget').innerText = `GHS ${(summary.totalMonthlyPledged || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+          document.getElementById('statCollectedThisMonth').innerText = `GHS ${(summary.currentMonthCollected || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        }
+      } catch (err) {}
+    }
+
+    function handlePartnerSearchInput(query) {
+      const suggestBox = document.getElementById('partnerSuggestBox');
+      const q = query.trim().toLowerCase();
+      if (!q) {
+        suggestBox.style.display = 'none';
+        return;
+      }
+
+      const matchingPartners = (cachedPartnersList || []).filter(p => 
+        (p.memberName && p.memberName.toLowerCase().includes(q)) || 
+        (p.phone && p.phone.includes(q))
+      );
+
+      const matchingMembers = (cachedMembersList || []).filter(m => {
+        const fullName = `${m.firstName || ''} ${m.lastName || ''}`.trim().toLowerCase();
+        const phone = (m.phone || '').toLowerCase();
+        return (fullName.includes(q) || phone.includes(q)) && !matchingPartners.some(p => p.memberId === m.id || p.memberName.toLowerCase() === fullName);
+      }).slice(0, 5);
+
+      if (matchingPartners.length === 0 && matchingMembers.length === 0) {
+        suggestBox.innerHTML = `
+          <div style="padding: 12px 14px; color: var(--muted); font-size: 13px; text-align: center;">
+            No member found matching "<strong>${escapeHtml(query)}</strong>".<br/>
+            <button type="button" class="btn-main" style="margin-top: 8px; padding: 6px 12px; font-size: 12px; background: var(--emerald-dark);" onclick="openRegisterPartnerModalWithName('${escapeHtml(query)}')">
+              <i class="fas fa-user-plus"></i> Register as New Partner
+            </button>
+          </div>`;
+        suggestBox.style.display = 'block';
+        return;
+      }
+
+      let html = '';
+      if (matchingPartners.length > 0) {
+        html += `<div style="padding: 6px 12px; font-size: 11px; font-weight: 800; color: var(--muted); background: #f8fafc; border-bottom: 1px solid var(--line); text-transform: uppercase;">Registered Covenant Partners</div>`;
+        matchingPartners.forEach(p => {
+          html += `
+            <div class="partner-suggest-item" onclick="selectPartner('${escapeHtml(p.id)}', '${escapeHtml(p.memberName)}', '${escapeHtml(p.phone || '')}', ${Number(p.pledgeAmount) || 0})">
+              <div>
+                <strong>${escapeHtml(p.memberName)}</strong>
+                <div style="font-size: 12px; color: var(--muted);"><i class="fas fa-phone"></i> ${escapeHtml(p.phone || 'No phone')}</div>
+              </div>
+              <div style="text-align: right;">
+                <span style="background:#fef3c7; color:#92400e; font-weight:800; font-size:12px; padding:3px 8px; border-radius:4px;">
+                  GHS ${(Number(p.pledgeAmount) || 0).toFixed(2)}/mo
+                </span>
+              </div>
+            </div>`;
+        });
+      }
+
+      if (matchingMembers.length > 0) {
+        html += `<div style="padding: 6px 12px; font-size: 11px; font-weight: 800; color: var(--muted); background: #f8fafc; border-bottom: 1px solid var(--line); text-transform: uppercase;">Church Members (Click to Register)</div>`;
+        matchingMembers.forEach(m => {
+          const fullName = `${m.firstName || ''} ${m.lastName || ''}`.trim();
+          html += `
+            <div class="partner-suggest-item" onclick="openRegisterPartnerModalWithMember('${escapeHtml(m.id)}', '${escapeHtml(fullName)}', '${escapeHtml(m.phone || '')}')">
+              <div>
+                <strong>${escapeHtml(fullName)}</strong>
+                <div style="font-size: 12px; color: var(--muted);">${m.category || 'Member'} · ${m.phone || 'No phone'}</div>
+              </div>
+              <div>
+                <span style="font-size: 11.5px; color: var(--emerald-dark); font-weight: 700;">+ Set Pledge</span>
+              </div>
+            </div>`;
+        });
+      }
+
+      suggestBox.innerHTML = html;
+      suggestBox.style.display = 'block';
+    }
+
+    function selectPartner(id, name, phone, pledgeAmount) {
+      document.getElementById('selectedPartnerId').value = id;
+      document.getElementById('selectedPartnerName').value = name;
+      document.getElementById('selectedPartnerPhone').value = phone;
+      document.getElementById('selectedPartnerPledge').value = pledgeAmount;
+
+      document.getElementById('partnerSearchInput').value = name;
+      document.getElementById('partnerSuggestBox').style.display = 'none';
+
+      document.getElementById('partnerCardName').innerText = name;
+      document.getElementById('partnerCardPhone').innerHTML = `<i class="fas fa-phone"></i> ${phone || 'No phone recorded'}`;
+      document.getElementById('partnerCardPledge').innerText = `GHS ${Number(pledgeAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })} / month`;
+      document.getElementById('partnerSelectedBox').style.display = 'block';
+
+      const amtInput = document.getElementById('payAmount');
+      if (amtInput && pledgeAmount > 0) amtInput.value = pledgeAmount;
+    }
+
+    function applyQuickAmount(val) {
+      const amtInput = document.getElementById('payAmount');
+      if (!amtInput) return;
+      if (val === 'pledge') {
+        const pledge = Number(document.getElementById('selectedPartnerPledge').value) || 0;
+        if (pledge > 0) amtInput.value = pledge;
+      } else {
+        amtInput.value = Number(val);
+      }
+    }
+
+    function resetPartnershipPaymentForm() {
+      document.getElementById('selectedPartnerId').value = '';
+      document.getElementById('selectedPartnerName').value = '';
+      document.getElementById('selectedPartnerPhone').value = '';
+      document.getElementById('selectedPartnerPledge').value = '';
+      document.getElementById('partnerSearchInput').value = '';
+      document.getElementById('partnerSuggestBox').style.display = 'none';
+      document.getElementById('partnerSelectedBox').style.display = 'none';
+      document.getElementById('payAmount').value = '';
+      document.getElementById('payNotes').value = '';
+    }
+
+    async function handleSavePartnershipPayment(e) {
+      e.preventDefault();
+      const partnerId = document.getElementById('selectedPartnerId').value;
+      const memberName = document.getElementById('selectedPartnerName').value || document.getElementById('partnerSearchInput').value.trim();
+      const targetMonth = document.getElementById('payTargetMonth').value;
+      const amount = parseFloat(document.getElementById('payAmount').value) || 0;
+      const paymentMethod = document.getElementById('payPaymentMethod').value;
+      const paymentDate = document.getElementById('payPaymentDate').value;
+      const recordedBy = document.getElementById('payRecordedBy').value.trim();
+      const notes = document.getElementById('payNotes').value.trim();
+
+      if (!partnerId) {
+        showToast('Please search and select a registered partner first.', 'error', 'Partner Required');
+        return;
+      }
+      if (amount <= 0) {
+        showToast('Please enter a valid payment amount.', 'error', 'Invalid Amount');
+        return;
+      }
+      if (!targetMonth) {
+        showToast('Please select target month.', 'error', 'Month Required');
+        return;
+      }
+
+      const btn = document.getElementById('btnSavePartnerPay');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Recording payment…'; }
+
+      try {
+        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const res = await fetch(`${API_BASE}/finance/partnerships/payments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            partnerId, memberName, amount, targetMonth, paymentDate, paymentMethod, recordedBy, notes
+          })
+        });
+
+        if (res.ok) {
+          showToast(`Partnership payment of <strong>GHS ${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong> for <strong>${escapeHtml(memberName)}</strong> (${targetMonth}) recorded!`, 'success', 'Payment Recorded');
+          resetPartnershipPaymentForm();
+          loadPartnersAndMembers();
+          loadRecentPartnershipPayments();
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Failed to record partnership payment.', 'error', 'Payment Failed');
+        }
+      } catch (err) {
+        showToast('Network error recording partnership payment.', 'error', 'Network Error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-handshake"></i> Record Partnership Payment'; }
+      }
+    }
+
+    async function loadRecentPartnershipPayments() {
+      const tbody = document.getElementById('recentPartnerPaymentsTable');
+      if (!tbody) return;
+
+      try {
+        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch(`${API_BASE}/finance/partnerships/payments`, { headers });
+        if (res.ok) {
+          const payments = await res.json();
+          if (Array.isArray(payments) && payments.length > 0) {
+            tbody.innerHTML = payments.slice(0, 15).map(p => `
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 10px 14px; color: var(--muted);">${p.paymentDate || '—'}</td>
+                <td style="padding: 10px 14px;"><strong>${escapeHtml(p.memberName || 'Partner')}</strong></td>
+                <td style="padding: 10px 14px;"><span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 12px;">${p.targetMonth || '—'}</span></td>
+                <td style="padding: 10px 14px;"><strong style="color: var(--emerald-dark);">GHS ${(Number(p.amount) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></td>
+                <td style="padding: 10px 14px;"><span style="font-size: 11.5px; text-transform: uppercase; font-weight: 700;">${p.paymentMethod || 'CASH'}</span></td>
+                <td style="padding: 10px 14px; font-size: 12.5px; color: var(--muted);">${escapeHtml(p.recordedBy || 'Treasury')}</td>
+              </tr>
+            `).join('');
+            return;
+          }
+        }
+      } catch (e) {}
+
+      tbody.innerHTML = `<tr><td colspan="6" style="padding: 24px; text-align: center; color: var(--muted);">No partnership payments recorded yet.</td></tr>`;
+    }
+
+    function openRegisterPartnerModal() {
+      document.getElementById('regPartnerMemberName').value = '';
+      document.getElementById('regPartnerPhone').value = '';
+      document.getElementById('regPartnerPledge').value = '';
+      document.getElementById('regPartnerStartDate').value = formatLocalDate(new Date());
+      document.getElementById('regPartnerNotes').value = '';
+      document.getElementById('registerPartnerModal').style.display = 'flex';
+      document.getElementById('regPartnerMemberName').focus();
+    }
+
+    function openRegisterPartnerModalWithName(name) {
+      openRegisterPartnerModal();
+      document.getElementById('regPartnerMemberName').value = name;
+      document.getElementById('regPartnerPledge').focus();
+    }
+
+    function openRegisterPartnerModalWithMember(id, name, phone) {
+      openRegisterPartnerModal();
+      document.getElementById('regPartnerMemberName').value = name;
+      document.getElementById('regPartnerPhone').value = phone;
+      document.getElementById('regPartnerPledge').focus();
+    }
+
+    function closeRegisterPartnerModal() {
+      document.getElementById('registerPartnerModal').style.display = 'none';
+    }
+
+    async function handleSaveNewPartnerSubmit(e) {
+      e.preventDefault();
+      const memberName = document.getElementById('regPartnerMemberName').value.trim();
+      const phone = document.getElementById('regPartnerPhone').value.trim();
+      const pledgeAmount = parseFloat(document.getElementById('regPartnerPledge').value) || 0;
+      const startDate = document.getElementById('regPartnerStartDate').value;
+      const notes = document.getElementById('regPartnerNotes').value.trim();
+
+      if (!memberName || pledgeAmount <= 0) {
+        showToast('Please enter member name and monthly pledge amount.', 'error', 'Invalid Input');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitRegPartner');
+      if (btn) { btn.disabled = true; btn.innerText = 'Registering…'; }
+
+      try {
+        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const res = await fetch(`${API_BASE}/finance/partners`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ memberName, phone, pledgeAmount, startDate, notes })
+        });
+
+        if (res.ok) {
+          const partner = await res.json();
+          cachedPartnersList.unshift(partner);
+          closeRegisterPartnerModal();
+          selectPartner(partner.id, partner.memberName, partner.phone, partner.pledgeAmount);
+          loadPartnersAndMembers();
+          showToast(`Partner <strong>${escapeHtml(memberName)}</strong> registered in Supabase!`, 'success', 'Partner Registered');
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Failed to register partner.', 'error', 'Registration Failed');
+        }
+      } catch (err) {
+        showToast('Network error registering partner.', 'error', 'Network Error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-handshake"></i> Save &amp; Register Partner'; }
+      }
+    }
+
+    function formatLocalDate(d = new Date()) {
+      const dateObj = typeof d === 'string' ? new Date(d) : d;
+      if (!dateObj || isNaN(dateObj.getTime())) return '';
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function loadBranding() {
+      const logo = localStorage.getItem('sfmi_logo_url');
+      const name = localStorage.getItem('sfmi_church_name');
+      if (logo) document.getElementById('partnerNavLogo').src = logo;
+      if (name) document.getElementById('partnerChurchName').innerText = name;
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    }
+
+    let _confirmCallback = null;
+    function showConfirmModal(title, text, callback, iconClass = 'fas fa-sign-out-alt', btnText = 'Log Out', btnColor = '#c5221f') {
+      document.getElementById('confirmModalTitle').innerText = title;
+      document.getElementById('confirmModalText').innerText = text;
+      const okBtn = document.getElementById('confirmModalOkBtn');
+      if (okBtn) {
+        okBtn.innerText = btnText;
+        okBtn.style.background = btnColor;
+      }
+      const icon = document.getElementById('confirmModalIcon');
+      if (icon) icon.className = iconClass;
+      _confirmCallback = callback;
+      document.getElementById('customConfirmModal').style.display = 'flex';
+    }
+
+    function closeCustomConfirmModal(confirmed) {
+      document.getElementById('customConfirmModal').style.display = 'none';
+      if (confirmed && typeof _confirmCallback === 'function') {
+        _confirmCallback();
+      }
+      _confirmCallback = null;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function showToast(message, type = 'success', title = '') {
+      let container = document.getElementById('toastContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
+
+      const icons = {
+        success: 'fas fa-circle-check',
+        warning: 'fas fa-triangle-exclamation',
+        error: 'fas fa-circle-exclamation',
+        info: 'fas fa-circle-info'
+      };
+
+      const defaultTitles = {
+        success: 'Success Notification',
+        warning: 'Attention Needed',
+        error: 'Action Error',
+        info: 'System Update'
+      };
+
+      const toast = document.createElement('div');
+      toast.className = `toast-msg toast-${type}`;
+      toast.innerHTML = `
+        <i class="${icons[type] || icons.success} toast-icon"></i>
+        <div class="toast-body">
+          <div class="toast-title">${title || defaultTitles[type]}</div>
+          <div class="toast-text">${message}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+      `;
+
+      container.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 4500);
+    }
+  </script>
+
+</body>
+</html>

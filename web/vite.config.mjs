@@ -17,6 +17,8 @@ export default defineConfig({
             req.url = `/admin.html${query}`;
           } else if (pathname === '/finance') {
             req.url = `/finance.html${query}`;
+          } else if (pathname === '/partnership' || pathname === '/partnerships') {
+            req.url = `/partnership.html${query}`;
           } else if (pathname === '/checkin' || pathname === '/kiosk') {
             req.url = `/checkin.html${query}`;
           }

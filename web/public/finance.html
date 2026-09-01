@@ -788,7 +788,10 @@
         </div>
       </div>
     </div>
-    <div class="nav-logout-wrap" id="finLogoutWrap" style="display: none;">
+    <div class="nav-logout-wrap" id="finLogoutWrap" style="display: none; align-items: center; gap: 10px;">
+      <a href="/partnership" class="btn-main" style="background: rgba(200, 155, 85, 0.2); color: white; border: 1px solid rgba(200, 155, 85, 0.5); font-size: 12.5px; text-decoration: none; padding: 8px 14px; border-radius: 6px;">
+        <i class="fas fa-handshake" style="color: var(--accent);"></i> Partnership Portal
+      </a>
       <button id="btnFinLogout" class="btn-header-logout" style="display: none;" onclick="handleFinLogout()" title="Log Out">
         <i class="fas fa-sign-out-alt"></i> <span class="logout-text">Log Out</span>
       </button>
@@ -842,29 +845,19 @@
   <!-- 2. MAIN FINANCIAL ENTRY DASHBOARD (Protected) -->
   <main class="fin-container" id="finDashboardContent" style="display: none;">
     
-    <!-- Success Banner -->
-    <div class="success-alert" id="successBanner">
-      <i class="fas fa-check-circle" style="margin-right: 6px;"></i> <span id="successMsgText">Service financials saved successfully.</span>
-    </div>
-
-    <!-- Treasury Portal Tabs Bar -->
-    <div class="fin-tabs-nav">
-      <button type="button" class="fin-tab-btn active" id="tabBtnServiceFinance" onclick="switchFinPortalTab('serviceFinance')">
-        <i class="fas fa-coins"></i> Post-Service Figures Entry
-      </button>
-      <button type="button" class="fin-tab-btn" id="tabBtnPartnership" onclick="switchFinPortalTab('partnership')">
-        <i class="fas fa-handshake"></i> Record Partnership Payment
-      </button>
-    </div>
-
-    <!-- 1. Post-Service Financial Entry Form -->
+    <!-- Post-Service Financial Entry Form -->
     <div class="fin-card" id="viewServiceFinance">
       <div class="card-head">
         <div>
           <div class="kicker">Service Financial Reconciliation</div>
           <h1 class="card-title">Post-Service Financial Figures Entry</h1>
         </div>
-        <div style="font-size: 13px; color: var(--muted);" id="liveDateDisplay"></div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <a href="/partnership" class="btn-main" style="background: var(--gold-bg); color: var(--ink); border: 1.5px solid #fde68a; font-size: 12.5px; text-decoration: none; padding: 8px 14px;">
+            <i class="fas fa-handshake" style="color: var(--gold);"></i> Open Partnership Portal &rarr;
+          </a>
+          <div style="font-size: 13px; color: var(--muted);" id="liveDateDisplay"></div>
+        </div>
       </div>
 
       <form onsubmit="handleSaveServiceFinance(event)">
@@ -987,143 +980,17 @@
               <input required id="finRecordedBy" class="form-ctrl" placeholder="e.g. Deacon Samuel & Sister Grace" />
             </div>
             <div class="form-group">
-              <label for="payTargetMonth" class="form-label">Payment For Month *</label>
-              <input required type="month" id="payTargetMonth" class="form-ctrl" />
-            </div>
-
-            <div class="form-group">
-              <label for="payAmount" class="form-label">Amount Paid (GHS) *</label>
-              <input required type="number" step="0.01" min="1" id="payAmount" class="form-ctrl form-ctrl-money" placeholder="0.00" />
-              <div style="display: flex; gap: 6px; margin-top: 6px;" id="quickAmtPills">
-                <button type="button" class="quick-amt-pill" onclick="applyQuickAmount('pledge')">Full Pledge</button>
-                <button type="button" class="quick-amt-pill" onclick="applyQuickAmount(50)">GHS 50</button>
-                <button type="button" class="quick-amt-pill" onclick="applyQuickAmount(100)">GHS 100</button>
-                <button type="button" class="quick-amt-pill" onclick="applyQuickAmount(200)">GHS 200</button>
-                <button type="button" class="quick-amt-pill" onclick="applyQuickAmount(500)">GHS 500</button>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="payPaymentMethod" class="form-label">Payment Method *</label>
-              <select required id="payPaymentMethod" class="form-ctrl">
-                <option value="CASH" selected>Cash Payment</option>
-                <option value="MOMO">Mobile Money (MoMo)</option>
-                <option value="BANK">Bank Transfer / Deposit</option>
-                <option value="POS">POS / Card</option>
-              </select>
+              <label for="finNotes" class="form-label">Remarks / Notes</label>
+              <input id="finNotes" class="form-ctrl" placeholder="e.g. Sunday service special appeal" />
             </div>
           </div>
 
-          <div class="grid-3" style="margin-top: 14px;">
-            <div class="form-group">
-              <label for="payPaymentDate" class="form-label">Date Received *</label>
-              <input required type="date" id="payPaymentDate" class="form-ctrl" />
-            </div>
-
-            <div class="form-group">
-              <label for="payRecordedBy" class="form-label">Treasury Officer *</label>
-              <input required type="text" id="payRecordedBy" class="form-ctrl" placeholder="Officer Full Name" />
-            </div>
-
-            <div class="form-group">
-              <label for="payNotes" class="form-label">Reference / Receipt Notes</label>
-              <input type="text" id="payNotes" class="form-ctrl" placeholder="e.g. MoMo Ref #12345 / Cheque #987" />
-            </div>
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 14px; align-items: center; margin-top: 10px;">
-          <button type="submit" class="btn-main" id="btnSavePartnerPay" style="background: var(--emerald-dark);">
-            <i class="fas fa-handshake"></i> Record Partnership Payment
-          </button>
-          <button type="button" class="btn-main" style="background: transparent; color: var(--muted); border: 1px solid var(--line); box-shadow: none;" onclick="resetPartnershipPaymentForm()">
-            <i class="fas fa-rotate-left"></i> Clear Selection
+          <button type="submit" class="btn-main" style="width: 100%; justify-content: center; padding: 16px; font-size: 16px; margin-top: 8px;">
+            <i class="fas fa-save"></i> Submit &amp; Save Financial Reconciliation
           </button>
         </div>
+
       </form>
-
-      <!-- Recent Partnership Payments Table -->
-      <div style="margin-top: 36px; border-top: 1px solid var(--line); padding-top: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-          <h3 style="font-family: Manrope, sans-serif; font-size: 16px; font-weight: 800; color: var(--ink); margin: 0;">
-            <i class="fas fa-receipt" style="color: var(--accent); margin-right: 6px;"></i> Recent Partnership Payments Logged
-          </h3>
-          <button type="button" class="btn-main" style="padding: 6px 12px; font-size: 12px; background: transparent; color: var(--muted); border: 1px solid var(--line);" onclick="loadRecentPartnershipPayments()">
-            <i class="fas fa-rotate"></i> Refresh
-          </button>
-        </div>
-
-        <div style="overflow-x: auto; background: white; border: 1px solid var(--line); border-radius: 8px;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; text-align: left;">
-            <thead>
-              <tr style="background: #f8fafc; border-bottom: 1.5px solid var(--line); color: var(--muted); font-size: 12px; text-transform: uppercase;">
-                <th style="padding: 12px 14px;">Date</th>
-                <th style="padding: 12px 14px;">Partner Name</th>
-                <th style="padding: 12px 14px;">For Month</th>
-                <th style="padding: 12px 14px;">Amount Paid</th>
-                <th style="padding: 12px 14px;">Channel</th>
-                <th style="padding: 12px 14px;">Officer</th>
-              </tr>
-            </thead>
-            <tbody id="recentPartnerPaymentsTable">
-              <tr>
-                <td colspan="6" style="padding: 24px; text-align: center; color: var(--muted);">No partnership payments recorded yet.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Register Partner Modal -->
-    <div class="modal-backdrop" id="registerPartnerModal" style="display: none;" onclick="if(event.target===this)closeRegisterPartnerModal()">
-      <div class="modal-card" style="max-width: 480px;">
-        <button class="modal-close" onclick="closeRegisterPartnerModal()">✕</button>
-        <h2 style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
-          Register New Church Partner
-        </h2>
-        <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Add a member who has pledged a regular monthly contribution</p>
-
-        <form onsubmit="handleSaveNewPartnerSubmit(event)">
-          <div class="form-group">
-            <label for="regPartnerMemberName" class="form-label">Member Full Name *</label>
-            <input required type="text" id="regPartnerMemberName" class="form-ctrl" placeholder="e.g. Samuel Osei" />
-          </div>
-
-          <div class="form-group">
-            <label for="regPartnerPhone" class="form-label">Phone Number *</label>
-            <input required type="tel" id="regPartnerPhone" class="form-ctrl" placeholder="e.g. +233 24 123 4567" />
-          </div>
-
-          <div class="grid-3" style="gap: 10px;">
-            <div class="form-group" style="grid-column: span 2;">
-              <label for="regPartnerPledge" class="form-label">Monthly Pledge (GHS) *</label>
-              <input required type="number" step="0.01" min="1" id="regPartnerPledge" class="form-ctrl form-ctrl-money" placeholder="e.g. 200.00" />
-            </div>
-            <div class="form-group">
-              <label for="regPartnerCurrency" class="form-label">Currency</label>
-              <input type="text" id="regPartnerCurrency" class="form-ctrl" value="GHS" readonly style="background: #f1f5f9;" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="regPartnerStartDate" class="form-label">Pledge Start Date</label>
-            <input type="date" id="regPartnerStartDate" class="form-ctrl" />
-          </div>
-
-          <div class="form-group">
-            <label for="regPartnerNotes" class="form-label">Notes (Optional)</label>
-            <input type="text" id="regPartnerNotes" class="form-ctrl" placeholder="e.g. Pledged during August Convention" />
-          </div>
-
-          <div style="display: flex; gap: 10px; margin-top: 18px;">
-            <button type="submit" class="btn-main" id="btnSubmitRegPartner" style="flex: 1; justify-content: center; padding: 12px; background: var(--emerald-dark);">
-              <i class="fas fa-handshake"></i> Save &amp; Register Partner
-            </button>
-            <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeRegisterPartnerModal()">Cancel</button>
-          </div>
-        </form>
-      </div>
     </div>
 
     <!-- SFMI Clean Footer -->
