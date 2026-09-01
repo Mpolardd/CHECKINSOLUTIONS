@@ -4651,11 +4651,26 @@
 
     function getAttendanceListForService(serviceName) {
       const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value : '';
-      if (selectedDate && serviceAttendanceMap[`${serviceName}_${selectedDate}`]) {
+
+      // 1. Direct match with date
+      if (selectedDate && selectedDate !== 'ALL' && serviceAttendanceMap[`${serviceName}_${selectedDate}`] && serviceAttendanceMap[`${serviceName}_${selectedDate}`].length > 0) {
         return serviceAttendanceMap[`${serviceName}_${selectedDate}`];
       }
-      const activeList = serviceAttendanceMap[serviceName] || [];
-      return activeList;
+
+      // 2. Direct match with service name
+      if (serviceAttendanceMap[serviceName] && serviceAttendanceMap[serviceName].length > 0) {
+        return serviceAttendanceMap[serviceName];
+      }
+
+      // 3. Fallback matching across all keys in serviceAttendanceMap for non-empty check-in lists
+      const allKeys = Object.keys(serviceAttendanceMap);
+      for (const k of allKeys) {
+        if (Array.isArray(serviceAttendanceMap[k]) && serviceAttendanceMap[k].length > 0) {
+          return serviceAttendanceMap[k];
+        }
+      }
+
+      return [];
     }
 
     function renderAttendanceAndDemographics() {
