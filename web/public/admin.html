@@ -1281,6 +1281,9 @@
       <button class="tab-btn" id="tabBtnPrograms" onclick="switchTab('programs')">
         <i class="fas fa-calendar-star"></i> Services & Programs Setup
       </button>
+      <button class="tab-btn" id="tabBtnPartnership" onclick="switchTab('partnership')">
+        <i class="fas fa-handshake"></i> Partnership &amp; Pledges
+      </button>
       <button class="tab-btn" id="tabBtnSubAdmins" onclick="switchTab('subAdmins')">
         <i class="fas fa-user-shield"></i> Staff & Sub-Admins
       </button>
@@ -1307,6 +1310,9 @@
         </button>
         <button class="mobile-menu-item" id="mobBtnPrograms" onclick="mobileSwitchTab('programs')">
           <i class="fas fa-calendar-star menu-icon"></i> Services & Programs Setup
+        </button>
+        <button class="mobile-menu-item" id="mobBtnPartnership" onclick="mobileSwitchTab('partnership')">
+          <i class="fas fa-handshake menu-icon"></i> Partnership &amp; Pledges
         </button>
         <button class="mobile-menu-item" id="mobBtnSubAdmins" onclick="mobileSwitchTab('subAdmins')">
           <i class="fas fa-user-shield menu-icon"></i> Staff & Sub-Admins
@@ -1857,6 +1863,125 @@
           <!-- Injected by JS -->
         </div>
       </div>
+    </div>
+
+    <!-- TAB: PARTNERSHIP & MONTHLY PLEDGES SYSTEM -->
+    <div id="secPartnership" style="display: none;">
+      <!-- Header & Action Bar -->
+      <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h2 style="font-family: Manrope, sans-serif; font-size: 22px; font-weight: 800; color: var(--ink);">
+            <i class="fas fa-handshake" style="color: var(--accent); margin-right: 8px;"></i> Ministry Partners &amp; Monthly Pledges
+          </h2>
+          <p style="font-size: 13.5px; color: var(--muted); margin-top: 4px;">
+            Track registered covenant partners, monthly pledge commitments, fulfillment status, and identify defaulters or missed payments in real-time.
+          </p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="button" class="btn-main" style="padding: 10px 18px; font-size: 13.5px; background: var(--emerald-dark);" onclick="openAdminRegisterPartnerModal()">
+            <i class="fas fa-user-plus"></i> Register New Partner
+          </button>
+          <button type="button" class="btn-main" style="padding: 10px 18px; font-size: 13.5px; background: var(--accent); color: #111;" onclick="openAdminRecordPaymentModal()">
+            <i class="fas fa-receipt"></i> Record Payment
+          </button>
+          <button type="button" class="btn-download" onclick="downloadPartnershipExcelReport()">
+            <i class="fas fa-file-arrow-down"></i> Export Excel Ledger
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Metrics Cards -->
+      <div class="metrics-row" style="margin-bottom: 22px;">
+        <div class="metric-box">
+          <div class="metric-num" id="statPartCount" style="color: var(--ink);">0</div>
+          <div class="metric-label">Active Partners</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" id="statPartPledged" style="color: var(--accent);">GHS 0.00</div>
+          <div class="metric-label">Total Monthly Pledged</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" id="statPartCollected" style="color: var(--emerald);">GHS 0.00</div>
+          <div class="metric-label">Collected This Month</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" id="statPartMissed" style="color: #c5221f;">0</div>
+          <div class="metric-label">Defaulters / Due This Month</div>
+        </div>
+      </div>
+
+      <!-- Filter & Year Toolbar -->
+      <div class="filter-toolbar" style="margin-bottom: 20px; background: white; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <div>
+            <label for="partnerYearSelect" style="font-size: 11px; font-weight: 800; color: var(--muted); display: block; margin-bottom: 2px;">Tracking Year</label>
+            <select id="partnerYearSelect" class="form-ctrl" style="padding: 6px 12px; font-size: 13px; width: 110px;" onchange="loadPartnershipMatrix(this.value)">
+              <option value="2026" selected>2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="partnerStatusFilter" style="font-size: 11px; font-weight: 800; color: var(--muted); display: block; margin-bottom: 2px;">Fulfillment Status</label>
+            <select id="partnerStatusFilter" class="form-ctrl" style="padding: 6px 12px; font-size: 13px; width: 170px;" onchange="filterPartnershipMatrix()">
+              <option value="ALL" selected>All Partners</option>
+              <option value="PAID">🟢 Up to Date (Paid)</option>
+              <option value="MISSED">🔴 Defaulters (Missed)</option>
+              <option value="PARTIAL">🟡 Partial Payments</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="partnerSearchFilter" style="font-size: 11px; font-weight: 800; color: var(--muted); display: block; margin-bottom: 2px;">Search Partner</label>
+            <input type="text" id="partnerSearchFilter" class="form-ctrl" placeholder="Search by name or phone..." style="padding: 6px 12px; font-size: 13px; width: 220px;" oninput="filterPartnershipMatrix()" />
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: center; font-size: 12px;">
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#10b981;"></span> Paid</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#f59e0b;"></span> Partial</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#ef4444;"></span> Missed</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#3b82f6;"></span> Due</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#cbd5e1;"></span> Upcoming</span>
+        </div>
+      </div>
+
+      <!-- 12-Month Matrix Table (Desktop) -->
+      <div class="table-responsive" style="background: white; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow-x: auto;">
+        <table class="data-table" id="partnershipMatrixTable" style="min-width: 1300px; font-size: 13px;">
+          <thead>
+            <tr>
+              <th style="width: 40px;">#</th>
+              <th style="min-width: 180px;">Partner Name</th>
+              <th style="min-width: 120px;">Phone</th>
+              <th style="min-width: 120px;">Pledge / Mo</th>
+              <th style="min-width: 120px;">Year Total</th>
+              <th style="width: 65px; text-align: center;">Jan</th>
+              <th style="width: 65px; text-align: center;">Feb</th>
+              <th style="width: 65px; text-align: center;">Mar</th>
+              <th style="width: 65px; text-align: center;">Apr</th>
+              <th style="width: 65px; text-align: center;">May</th>
+              <th style="width: 65px; text-align: center;">Jun</th>
+              <th style="width: 65px; text-align: center;">Jul</th>
+              <th style="width: 65px; text-align: center;">Aug</th>
+              <th style="width: 65px; text-align: center;">Sep</th>
+              <th style="width: 65px; text-align: center;">Oct</th>
+              <th style="width: 65px; text-align: center;">Nov</th>
+              <th style="width: 65px; text-align: center;">Dec</th>
+              <th style="min-width: 140px; text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="partnershipMatrixTableBody">
+            <tr>
+              <td colspan="18" style="padding: 36px; text-align: center; color: var(--muted);">Loading partnership records…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Matrix Cards -->
+      <div id="partnershipMobileCards" style="display: none; flex-direction: column; gap: 12px; margin-top: 14px;"></div>
     </div>
 
     <!-- TAB 6: HISTORICAL REPORTS & EXPORT HUB -->
@@ -2454,6 +2579,11 @@
               <span><i class="fa-solid fa-calendar-days" style="color: var(--accent); margin-right: 6px;"></i> Services &amp; Programs Setup</span>
             </label>
 
+            <label for="permPartnership" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="permPartnership" aria-label="Partnership Privilege" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span><i class="fa-solid fa-handshake" style="color: var(--accent); margin-right: 6px;"></i> Partnership &amp; Monthly Pledges</span>
+            </label>
+
             <label for="permReports" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="permReports" aria-label="Historical Reports Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span><i class="fa-solid fa-file-excel" style="color: var(--accent); margin-right: 6px;"></i> Historical Reports &amp; Archives</span>
@@ -2522,6 +2652,11 @@
               <span><i class="fa-solid fa-calendar-days" style="color: var(--accent); margin-right: 6px;"></i> Services &amp; Programs Setup</span>
             </label>
 
+            <label for="editPermPartnership" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="editPermPartnership" aria-label="Edit Partnership Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span><i class="fa-solid fa-handshake" style="color: var(--accent); margin-right: 6px;"></i> Partnership &amp; Monthly Pledges</span>
+            </label>
+
             <label for="editPermReports" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="editPermReports" aria-label="Edit Historical Reports Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span><i class="fa-solid fa-file-excel" style="color: var(--accent); margin-right: 6px;"></i> Historical Reports &amp; Archives</span>
@@ -2535,6 +2670,157 @@
         </div>
       </form>
     </div>
+    <!-- Register New Partner Modal (Admin) -->
+    <div class="modal-backdrop" id="adminRegisterPartnerModal" style="display: none;" onclick="if(event.target===this)closeAdminRegisterPartnerModal()">
+      <div class="modal-card" style="max-width: 500px;">
+        <button class="modal-close" onclick="closeAdminRegisterPartnerModal()">✕</button>
+        <h2 style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
+          Register New Covenant Partner
+        </h2>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Create a covenant partner record with monthly pledge commitment</p>
+
+        <form onsubmit="handleAdminSavePartnerSubmit(event)">
+          <div class="form-group">
+            <label for="adminRegPartnerName" class="form-label">Member Full Name *</label>
+            <input required type="text" id="adminRegPartnerName" class="form-ctrl" placeholder="e.g. Deaconess Mary Mensah" />
+          </div>
+
+          <div class="form-group">
+            <label for="adminRegPartnerPhone" class="form-label">Phone Number *</label>
+            <input required type="tel" id="adminRegPartnerPhone" class="form-ctrl" placeholder="e.g. +233 24 123 4567" />
+          </div>
+
+          <div class="grid-3" style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label for="adminRegPartnerPledge" class="form-label">Monthly Pledge (GHS) *</label>
+              <input required type="number" step="0.01" min="1" id="adminRegPartnerPledge" class="form-ctrl" placeholder="e.g. 250.00" />
+            </div>
+            <div class="form-group">
+              <label for="adminRegPartnerCurrency" class="form-label">Currency</label>
+              <input type="text" id="adminRegPartnerCurrency" class="form-ctrl" value="GHS" readonly style="background: #f1f5f9;" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="adminRegPartnerStartDate" class="form-label">Pledge Start Date</label>
+            <input type="date" id="adminRegPartnerStartDate" class="form-ctrl" />
+          </div>
+
+          <div class="form-group">
+            <label for="adminRegPartnerNotes" class="form-label">Notes (Optional)</label>
+            <input type="text" id="adminRegPartnerNotes" class="form-ctrl" placeholder="e.g. Special partnership commitment" />
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 18px;">
+            <button type="submit" class="btn-main" id="btnAdminSubmitPartner" style="flex: 1; justify-content: center; padding: 12px; background: var(--emerald-dark);">
+              <i class="fas fa-handshake"></i> Save Partner Record
+            </button>
+            <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeAdminRegisterPartnerModal()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Record Partner Payment Modal (Admin) -->
+    <div class="modal-backdrop" id="adminRecordPartnerPaymentModal" style="display: none;" onclick="if(event.target===this)closeAdminRecordPaymentModal()">
+      <div class="modal-card" style="max-width: 520px;">
+        <button class="modal-close" onclick="closeAdminRecordPaymentModal()">✕</button>
+        <h2 style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
+          Record Partnership Payment
+        </h2>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Log monthly contribution received from partner</p>
+
+        <form onsubmit="handleAdminSavePartnerPaymentSubmit(event)">
+          <div class="form-group">
+            <label for="adminPayPartnerSelect" class="form-label">Select Partner *</label>
+            <select required id="adminPayPartnerSelect" class="form-ctrl" onchange="handleAdminPartnerSelectChange(this.value)">
+              <!-- Injected by JS -->
+            </select>
+          </div>
+
+          <div class="grid-3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label for="adminPayTargetMonth" class="form-label">Payment For Month *</label>
+              <input required type="month" id="adminPayTargetMonth" class="form-ctrl" />
+            </div>
+
+            <div class="form-group">
+              <label for="adminPayAmount" class="form-label">Amount Paid (GHS) *</label>
+              <input required type="number" step="0.01" min="1" id="adminPayAmount" class="form-ctrl" placeholder="0.00" />
+            </div>
+          </div>
+
+          <div class="grid-3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label for="adminPayMethod" class="form-label">Payment Method *</label>
+              <select required id="adminPayMethod" class="form-ctrl">
+                <option value="CASH" selected>Cash Payment</option>
+                <option value="MOMO">Mobile Money (MoMo)</option>
+                <option value="BANK">Bank Deposit / Transfer</option>
+                <option value="POS">POS / Card</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="adminPayDate" class="form-label">Date Received *</label>
+              <input required type="date" id="adminPayDate" class="form-ctrl" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="adminPayNotes" class="form-label">Reference / Notes (Optional)</label>
+            <input type="text" id="adminPayNotes" class="form-ctrl" placeholder="e.g. MoMo Ref # / Check #" />
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 18px;">
+            <button type="submit" class="btn-main" id="btnAdminSubmitPay" style="flex: 1; justify-content: center; padding: 12px; background: var(--emerald-dark);">
+              <i class="fas fa-receipt"></i> Save Payment Record
+            </button>
+            <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeAdminRecordPaymentModal()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Partner History & Receipts Modal (Admin) -->
+    <div class="modal-backdrop" id="adminPartnerHistoryModal" style="display: none;" onclick="if(event.target===this)closePartnerHistoryModal()">
+      <div class="modal-card" style="max-width: 720px; width: 95%;">
+        <button class="modal-close" onclick="closePartnerHistoryModal()">✕</button>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 12px;">
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: var(--emerald-dark); text-transform: uppercase;">Partner Contribution Ledger</div>
+            <h2 style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin: 2px 0;" id="partnerHistoryName">Partner History</h2>
+            <div style="font-size: 13px; color: var(--muted);" id="partnerHistoryPhone">Phone: —</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Total Contributed</div>
+            <div style="font-size: 22px; font-weight: 800; color: var(--emerald-dark);" id="partnerHistoryTotal">GHS 0.00</div>
+          </div>
+        </div>
+
+        <div style="max-height: 380px; overflow-y: auto; background: #fafbfa; border: 1px solid var(--line); border-radius: 6px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+            <thead>
+              <tr style="background: #f1f5f9; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 11.5px; text-transform: uppercase;">
+                <th style="padding: 10px 12px;">Payment Date</th>
+                <th style="padding: 10px 12px;">Target Month</th>
+                <th style="padding: 10px 12px;">Amount</th>
+                <th style="padding: 10px 12px;">Channel</th>
+                <th style="padding: 10px 12px;">Recorded By</th>
+              </tr>
+            </thead>
+            <tbody id="partnerHistoryTableBody">
+              <!-- Injected by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+          <button type="button" class="btn-main" style="background: #e2e8f0; color: #111; padding: 8px 18px;" onclick="closePartnerHistoryModal()">Close</button>
+        </div>
+      </div>
+    </div>
+
   <!-- Compiled Attendance Service Report View Modal -->
   <div class="modal-backdrop" id="viewCompiledAttModal" style="display: none;" onclick="if(event.target===this)closeViewCompiledAttModal()">
     <div class="modal-card" style="max-width: 920px; width: 95%;">
@@ -2748,16 +3034,16 @@
       const isSuperAdmin = !isSubAdmin;
 
       // Sub-Admins NEVER have access to Finance or Staff & Sub-Admins
-      // They are strictly limited to the privileges granted to them (Attendance, Members, Programs, Reports)
+      // They are strictly limited to the privileges granted to them (Attendance, Members, Programs, Partnership, Reports)
       const rawPerms = (currentUser && Array.isArray(currentUser.permissions)) 
         ? currentUser.permissions 
-        : ['attendance', 'members', 'programs'];
+        : ['attendance', 'members', 'programs', 'partnership'];
 
       const permissions = isSuperAdmin 
-        ? ['finance', 'attendance', 'members', 'programs', 'reports', 'subAdmins']
+        ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'subAdmins']
         : rawPerms.filter(p => p !== 'finance' && p !== 'subAdmins');
 
-      const allTabs = ['finance', 'attendance', 'members', 'programs', 'reports', 'subAdmins'];
+      const allTabs = ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'subAdmins'];
       let firstAllowedTab = null;
 
       allTabs.forEach(t => {
@@ -2823,6 +3109,8 @@
         if (p === 'attendance') return `<span class="badge-check" style="background:#e0f2fe; color:#0369a1;"><i class="fas fa-list-check"></i> Attendance</span>`;
         if (p === 'members') return `<span class="badge-check" style="background:#dcfce7; color:#166534;"><i class="fas fa-users"></i> Directory</span>`;
         if (p === 'programs') return `<span class="badge-check" style="background:#fef3c7; color:#92400e;"><i class="fas fa-calendar-star"></i> Programs</span>`;
+        if (p === 'partnership') return `<span class="badge-check" style="background:#fef9c3; color:#854d0e;"><i class="fas fa-handshake"></i> Partnership</span>`;
+        if (p === 'reports') return `<span class="badge-check" style="background:#e0e7ff; color:#3730a3;"><i class="fas fa-file-excel"></i> Reports</span>`;
         if (p === 'finance') return `<span class="badge-check" style="background:#fee2e2; color:#991b1b;"><i class="fas fa-coins"></i> Finance</span>`;
         return '';
       }).join(' ');
@@ -2920,6 +3208,7 @@
       if (document.getElementById('permAttendance').checked) perms.push('attendance');
       if (document.getElementById('permMembers').checked) perms.push('members');
       if (document.getElementById('permPrograms').checked) perms.push('programs');
+      if (document.getElementById('permPartnership')?.checked) perms.push('partnership');
       if (document.getElementById('permReports')?.checked) perms.push('reports');
 
       if (perms.length === 0) {
@@ -2981,6 +3270,7 @@
       document.getElementById('editPermAttendance').checked = perms.includes('attendance');
       document.getElementById('editPermMembers').checked = perms.includes('members');
       document.getElementById('editPermPrograms').checked = perms.includes('programs');
+      if (document.getElementById('editPermPartnership')) document.getElementById('editPermPartnership').checked = perms.includes('partnership');
       if (document.getElementById('editPermReports')) document.getElementById('editPermReports').checked = perms.includes('reports');
 
       const modal = document.getElementById('editSubAdminModal');
@@ -3006,6 +3296,7 @@
       if (document.getElementById('editPermAttendance').checked) perms.push('attendance');
       if (document.getElementById('editPermMembers').checked) perms.push('members');
       if (document.getElementById('editPermPrograms').checked) perms.push('programs');
+      if (document.getElementById('editPermPartnership')?.checked) perms.push('partnership');
       if (document.getElementById('editPermReports')?.checked) perms.push('reports');
 
       if (perms.length === 0) {
@@ -3354,6 +3645,7 @@
       attendance: '<i class="fas fa-list-check"></i> Attendance & Demographics',
       members: '<i class="fas fa-users"></i> Member Directory',
       programs: '<i class="fas fa-calendar-star"></i> Services & Programs Setup',
+      partnership: '<i class="fas fa-handshake"></i> Partnership &amp; Pledges',
       subAdmins: '<i class="fas fa-user-shield"></i> Staff & Sub-Admins',
       reports: '<i class="fas fa-file-excel"></i> Historical Reports & Archives'
     };
@@ -3368,13 +3660,13 @@
       if (currentUser && currentUser.role === 'SUB_ADMIN') {
         const allowed = Array.isArray(currentUser.permissions) 
           ? currentUser.permissions.filter(p => p !== 'finance' && p !== 'subAdmins') 
-          : ['attendance', 'members', 'programs', 'reports'];
+          : ['attendance', 'members', 'programs', 'partnership', 'reports'];
         if (tab === 'finance' || tab === 'subAdmins' || !allowed.includes(tab)) {
           tab = allowed[0] || 'attendance';
         }
       }
 
-      const tabs = ['finance', 'attendance', 'members', 'programs', 'subAdmins', 'reports'];
+      const tabs = ['finance', 'attendance', 'members', 'programs', 'partnership', 'subAdmins', 'reports'];
       tabs.forEach(t => {
         const sec = document.getElementById(`sec${t.charAt(0).toUpperCase() + t.slice(1)}`);
         const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -3391,9 +3683,19 @@
       if (tab === 'attendance') { renderAttendanceAndDemographics(); syncAttendanceViewMode(); fetchLiveCounts(); }
       if (tab === 'members') { renderMembersTable(); syncMembersViewMode(); }
       if (tab === 'programs') { renderProgramsManager(); syncProgramsViewMode(); }
+      if (tab === 'partnership') { loadPartnershipMatrix(); syncPartnershipViewMode(); }
       if (tab === 'subAdmins') { renderSubAdminsList(); syncSubAdminsViewMode(); }
       if (tab === 'reports') { initReportsHub(); syncReportsViewMode(); }
     }
+
+    function syncPartnershipViewMode() {
+      const isMobile = window.innerWidth <= 850;
+      const tbl = document.querySelector('#secPartnership .table-responsive');
+      const cards = document.getElementById('partnershipMobileCards');
+      if (tbl) tbl.style.display = isMobile ? 'none' : 'block';
+      if (cards) cards.style.display = isMobile ? 'flex' : 'none';
+    }
+    window.addEventListener('resize', syncPartnershipViewMode);
 
     function syncReportsViewMode() {
       const isMobile = window.innerWidth <= 700;
@@ -6528,27 +6830,421 @@
       );
     }
 
-    let _confirmCallback = null;
-    function showConfirmModal(title, text, callback, iconClass = 'fas fa-sign-out-alt', btnText = 'Log Out', btnColor = '#c5221f') {
-      document.getElementById('confirmModalTitle').innerText = title;
-      document.getElementById('confirmModalText').innerText = text;
-      const okBtn = document.getElementById('confirmModalOkBtn');
-      if (okBtn) {
-        okBtn.innerText = btnText;
-        okBtn.style.background = btnColor;
+    /* ════════════════════════════════════════════════════════════════════
+       PARTNERSHIP & MONTHLY PLEDGES MANAGEMENT SYSTEM (ADMIN)
+    ════════════════════════════════════════════════════════════════════ */
+    let rawPartnershipMatrix = [];
+    let cachedPartnersListAdmin = [];
+    let currentMatrixYear = new Date().getFullYear();
+
+    async function loadPartnershipMatrix(year) {
+      if (year) currentMatrixYear = Number(year);
+      const yearSelect = document.getElementById('partnerYearSelect');
+      if (yearSelect) yearSelect.value = String(currentMatrixYear);
+
+      try {
+        const token = await getAdminAuthToken();
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        const [matrixRes, partnersRes] = await Promise.all([
+          fetch(`${API_BASE}/finance/partnerships/matrix?year=${currentMatrixYear}`, { headers }).catch(() => null),
+          fetch(`${API_BASE}/finance/partners`, { headers }).catch(() => null)
+        ]);
+
+        if (matrixRes && matrixRes.ok) {
+          const data = await matrixRes.json();
+          rawPartnershipMatrix = data.matrix || [];
+
+          // Render KPI Summary
+          const summary = data.summary || {};
+          const statCount = document.getElementById('statPartCount');
+          const statPledged = document.getElementById('statPartPledged');
+          const statCollected = document.getElementById('statPartCollected');
+          const statMissed = document.getElementById('statPartMissed');
+
+          if (statCount) statCount.innerText = summary.totalPartners || 0;
+          if (statPledged) statPledged.innerText = `GHS ${(summary.totalMonthlyPledged || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          if (statCollected) {
+            statCollected.innerHTML = `GHS ${(summary.currentMonthCollected || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span style="font-size:12px; color:var(--emerald-dark); font-weight:700;">(${summary.currentMonthFulfillmentPct || 0}%)</span>`;
+          }
+          if (statMissed) statMissed.innerText = summary.currentMonthMissedCount || 0;
+
+          renderPartnershipMatrix();
+        }
+
+        if (partnersRes && partnersRes.ok) {
+          cachedPartnersListAdmin = await partnersRes.json();
+          populateAdminPartnerSelectOptions();
+        }
+      } catch (err) {
+        console.error('Failed to load partnership matrix:', err);
       }
-      const icon = document.getElementById('confirmModalIcon');
-      if (icon) icon.className = iconClass;
-      _confirmCallback = callback;
-      document.getElementById('customConfirmModal').style.display = 'flex';
     }
 
-    function closeCustomConfirmModal(confirmed) {
-      document.getElementById('customConfirmModal').style.display = 'none';
-      if (confirmed && typeof _confirmCallback === 'function') {
-        _confirmCallback();
+    function renderPartnershipMatrix() {
+      const tbody = document.getElementById('partnershipMatrixTableBody');
+      const mobileWrap = document.getElementById('partnershipMobileCards');
+      if (!tbody) return;
+
+      const statusFilter = document.getElementById('partnerStatusFilter')?.value || 'ALL';
+      const searchFilter = (document.getElementById('partnerSearchFilter')?.value || '').trim().toLowerCase();
+      const currentMonthNum = new Date().getMonth() + 1;
+      const curMonthKey = String(currentMonthNum).padStart(2, '0');
+
+      let filtered = (rawPartnershipMatrix || []).filter(item => {
+        // Search filter
+        if (searchFilter) {
+          const matchName = (item.memberName || '').toLowerCase().includes(searchFilter);
+          const matchPhone = (item.phone || '').toLowerCase().includes(searchFilter);
+          if (!matchName && !matchPhone) return false;
+        }
+
+        // Status filter for current month
+        if (statusFilter !== 'ALL') {
+          const curStatus = item.monthlyStatus && item.monthlyStatus[curMonthKey] ? item.monthlyStatus[curMonthKey].status : '';
+          if (statusFilter === 'PAID' && curStatus !== 'PAID') return false;
+          if (statusFilter === 'MISSED' && curStatus !== 'MISSED' && curStatus !== 'DUE') return false;
+          if (statusFilter === 'PARTIAL' && curStatus !== 'PARTIAL') return false;
+        }
+
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="18" style="padding: 36px; text-align: center; color: var(--muted);">No partner records matching your filter.</td></tr>`;
+        if (mobileWrap) mobileWrap.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--muted); background:white; border-radius:8px;">No partner records matching your filter.</div>`;
+        return;
       }
-      _confirmCallback = null;
+
+      const monthKeys = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+
+      // Render Desktop Matrix Table
+      tbody.innerHTML = filtered.map((item, idx) => {
+        const monthCells = monthKeys.map(k => {
+          const mInfo = (item.monthlyStatus && item.monthlyStatus[k]) || { status: 'PENDING', paid: 0, pledge: item.pledgeAmount };
+          let badge = `<span style="color:#94a3b8; font-size:11px;">—</span>`;
+
+          if (mInfo.status === 'PAID') {
+            badge = `<span style="background:#d1fae5; color:#065f46; font-weight:800; font-size:10.5px; padding:3px 5px; border-radius:4px; display:inline-block;" title="GHS ${mInfo.paid.toFixed(2)} Paid in Full">✓ ${mInfo.paid >= 1000 ? (mInfo.paid/1000).toFixed(1)+'k' : mInfo.paid.toFixed(0)}</span>`;
+          } else if (mInfo.status === 'PARTIAL') {
+            badge = `<span style="background:#fef3c7; color:#92400e; font-weight:800; font-size:10.5px; padding:3px 5px; border-radius:4px; display:inline-block;" title="Partial: GHS ${mInfo.paid.toFixed(2)} of GHS ${mInfo.pledge.toFixed(2)}">~ ${mInfo.paid.toFixed(0)}</span>`;
+          } else if (mInfo.status === 'MISSED') {
+            badge = `<span style="background:#fee2e2; color:#991b1b; font-weight:800; font-size:10.5px; padding:3px 5px; border-radius:4px; display:inline-block;" title="Missed Payment: GHS 0.00">✕ Miss</span>`;
+          } else if (mInfo.status === 'DUE') {
+            badge = `<span style="background:#dbeafe; color:#1e40af; font-weight:800; font-size:10.5px; padding:3px 5px; border-radius:4px; display:inline-block;" title="Payment Due This Month">Due</span>`;
+          }
+
+          return `<td style="text-align: center; padding: 8px 4px;">${badge}</td>`;
+        }).join('');
+
+        return `
+          <tr style="border-bottom: 1px solid var(--line);">
+            <td>${idx + 1}</td>
+            <td><strong>${escapeHtml(item.memberName)}</strong></td>
+            <td style="color: var(--muted); font-size: 12px;">${escapeHtml(item.phone || '—')}</td>
+            <td><strong style="color: var(--gold);">GHS ${(item.pledgeAmount || 0).toFixed(2)}</strong></td>
+            <td><strong style="color: var(--emerald); font-size: 13px;">GHS ${(item.yearTotalPaid || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></td>
+            ${monthCells}
+            <td style="text-align: center;">
+              <div style="display: flex; gap: 4px; justify-content: center;">
+                <button type="button" class="btn-main" style="padding: 4px 8px; font-size: 11px; background: var(--ink);" onclick="viewPartnerHistory('${item.partnerId}')" title="View Full Payment Ledger">
+                  <i class="fas fa-list-check"></i> History
+                </button>
+                <button type="button" class="btn-main" style="padding: 4px 8px; font-size: 11px; background: var(--emerald-dark);" onclick="openAdminRecordPaymentModal('${item.partnerId}')" title="Record Payment">
+                  <i class="fas fa-plus"></i> Pay
+                </button>
+                <button type="button" class="btn-main" style="padding: 4px 8px; font-size: 11px; background: #c5221f;" onclick="deletePartnerFromAdmin('${item.partnerId}')" title="Remove Partner">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Render Mobile Cards
+      if (mobileWrap) {
+        mobileWrap.innerHTML = filtered.map((item, idx) => {
+          const curInfo = (item.monthlyStatus && item.monthlyStatus[curMonthKey]) || { status: 'PENDING', paid: 0 };
+          let statusBadge = `<span style="background:#e2e8f0; color:#475569; font-weight:700; padding:2px 8px; border-radius:4px; font-size:11px;">Upcoming</span>`;
+          if (curInfo.status === 'PAID') statusBadge = `<span style="background:#d1fae5; color:#065f46; font-weight:800; padding:2px 8px; border-radius:4px; font-size:11px;">🟢 Paid</span>`;
+          else if (curInfo.status === 'PARTIAL') statusBadge = `<span style="background:#fef3c7; color:#92400e; font-weight:800; padding:2px 8px; border-radius:4px; font-size:11px;">🟡 Partial</span>`;
+          else if (curInfo.status === 'MISSED' || curInfo.status === 'DUE') statusBadge = `<span style="background:#fee2e2; color:#991b1b; font-weight:800; padding:2px 8px; border-radius:4px; font-size:11px;">🔴 Defaulter</span>`;
+
+          return `
+            <div class="mob-card" style="background:white; border:1px solid var(--line); border-radius:8px; padding:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                <div>
+                  <div style="font-weight:800; font-size:15px; color:var(--ink);">${escapeHtml(item.memberName)}</div>
+                  <div style="font-size:12px; color:var(--muted);"><i class="fas fa-phone"></i> ${escapeHtml(item.phone || 'No phone')}</div>
+                </div>
+                ${statusBadge}
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#fafbfa; padding:10px; border-radius:6px; margin:8px 0; font-size:12px;">
+                <div>Monthly Pledge: <strong style="color:var(--gold);">GHS ${(item.pledgeAmount || 0).toFixed(2)}</strong></div>
+                <div>Year Total Paid: <strong style="color:var(--emerald);">GHS ${(item.yearTotalPaid || 0).toFixed(2)}</strong></div>
+              </div>
+              <div style="display:flex; gap:6px; margin-top:8px;">
+                <button type="button" class="btn-main" style="flex:1; justify-content:center; padding:8px; font-size:12px; background:var(--ink);" onclick="viewPartnerHistory('${item.partnerId}')"><i class="fas fa-list-check"></i> History</button>
+                <button type="button" class="btn-main" style="flex:1; justify-content:center; padding:8px; font-size:12px; background:var(--emerald-dark);" onclick="openAdminRecordPaymentModal('${item.partnerId}')"><i class="fas fa-plus"></i> Pay</button>
+                <button type="button" class="btn-main" style="padding:8px 12px; font-size:12px; background:#c5221f;" onclick="deletePartnerFromAdmin('${item.partnerId}')"><i class="fas fa-trash-alt"></i></button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function filterPartnershipMatrix() {
+      renderPartnershipMatrix();
+    }
+
+    function populateAdminPartnerSelectOptions() {
+      const select = document.getElementById('adminPayPartnerSelect');
+      if (!select) return;
+      select.innerHTML = '<option value="">-- Choose Covenant Partner --</option>' +
+        (cachedPartnersListAdmin || []).map(p => `
+          <option value="${p.id}" data-name="${escapeHtml(p.memberName)}" data-pledge="${p.pledgeAmount}">
+            ${escapeHtml(p.memberName)} (${p.phone || 'No phone'}) · GHS ${Number(p.pledgeAmount).toFixed(2)}/mo
+          </option>
+        `).join('');
+    }
+
+    function handleAdminPartnerSelectChange(partnerId) {
+      const partner = (cachedPartnersListAdmin || []).find(p => p.id === partnerId);
+      if (partner) {
+        const amtInput = document.getElementById('adminPayAmount');
+        if (amtInput) amtInput.value = partner.pledgeAmount || '';
+      }
+    }
+
+    function openAdminRegisterPartnerModal() {
+      document.getElementById('adminRegPartnerName').value = '';
+      document.getElementById('adminRegPartnerPhone').value = '';
+      document.getElementById('adminRegPartnerPledge').value = '';
+      document.getElementById('adminRegPartnerStartDate').value = formatLocalDate(new Date());
+      document.getElementById('adminRegPartnerNotes').value = '';
+      document.getElementById('adminRegisterPartnerModal').style.display = 'flex';
+      document.getElementById('adminRegPartnerName').focus();
+    }
+
+    function closeAdminRegisterPartnerModal() {
+      document.getElementById('adminRegisterPartnerModal').style.display = 'none';
+    }
+
+    async function handleAdminSavePartnerSubmit(e) {
+      e.preventDefault();
+      const memberName = document.getElementById('adminRegPartnerName').value.trim();
+      const phone = document.getElementById('adminRegPartnerPhone').value.trim();
+      const pledgeAmount = parseFloat(document.getElementById('adminRegPartnerPledge').value) || 0;
+      const startDate = document.getElementById('adminRegPartnerStartDate').value;
+      const notes = document.getElementById('adminRegPartnerNotes').value.trim();
+
+      if (!memberName || pledgeAmount <= 0) {
+        showToast('Please enter partner name and a valid pledge amount.', 'error', 'Invalid Input');
+        return;
+      }
+
+      const btn = document.getElementById('btnAdminSubmitPartner');
+      if (btn) { btn.disabled = true; btn.innerText = 'Saving partner…'; }
+
+      try {
+        const token = await getAdminAuthToken();
+        const res = await fetch(`${API_BASE}/finance/partners`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ memberName, phone, pledgeAmount, startDate, notes })
+        });
+
+        if (res.ok) {
+          closeAdminRegisterPartnerModal();
+          showToast(`Covenant partner <strong>${escapeHtml(memberName)}</strong> registered successfully in Supabase!`, 'success', 'Partner Registered');
+          loadPartnershipMatrix();
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Failed to register partner.', 'error', 'Registration Failed');
+        }
+      } catch (err) {
+        showToast('Network error saving partner to Supabase.', 'error', 'Network Error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-handshake"></i> Save Partner Record'; }
+      }
+    }
+
+    function openAdminRecordPaymentModal(partnerId) {
+      populateAdminPartnerSelectOptions();
+      const now = new Date();
+      const curMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      document.getElementById('adminPayTargetMonth').value = curMonthStr;
+      document.getElementById('adminPayDate').value = formatLocalDate(now);
+      document.getElementById('adminPayNotes').value = '';
+
+      if (partnerId) {
+        const select = document.getElementById('adminPayPartnerSelect');
+        if (select) {
+          select.value = partnerId;
+          handleAdminPartnerSelectChange(partnerId);
+        }
+      }
+
+      document.getElementById('adminRecordPartnerPaymentModal').style.display = 'flex';
+    }
+
+    function closeAdminRecordPaymentModal() {
+      document.getElementById('adminRecordPartnerPaymentModal').style.display = 'none';
+    }
+
+    async function handleAdminSavePartnerPaymentSubmit(e) {
+      e.preventDefault();
+      const partnerId = document.getElementById('adminPayPartnerSelect').value;
+      const targetMonth = document.getElementById('adminPayTargetMonth').value;
+      const amount = parseFloat(document.getElementById('adminPayAmount').value) || 0;
+      const paymentMethod = document.getElementById('adminPayMethod').value;
+      const paymentDate = document.getElementById('adminPayDate').value;
+      const notes = document.getElementById('adminPayNotes').value.trim();
+
+      const partner = (cachedPartnersListAdmin || []).find(p => p.id === partnerId);
+      const memberName = partner ? partner.memberName : 'Partner';
+
+      if (!partnerId || amount <= 0 || !targetMonth) {
+        showToast('Please fill all required payment fields.', 'error', 'Fields Required');
+        return;
+      }
+
+      const btn = document.getElementById('btnAdminSubmitPay');
+      if (btn) { btn.disabled = true; btn.innerText = 'Recording payment…'; }
+
+      try {
+        const token = await getAdminAuthToken();
+        const res = await fetch(`${API_BASE}/finance/partnerships/payments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            partnerId, memberName, amount, targetMonth, paymentDate, paymentMethod, recordedBy: 'Super Admin', notes
+          })
+        });
+
+        if (res.ok) {
+          closeAdminRecordPaymentModal();
+          showToast(`Partnership payment of <strong>GHS ${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong> for <strong>${escapeHtml(memberName)}</strong> saved to Supabase!`, 'success', 'Payment Recorded');
+          loadPartnershipMatrix();
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Failed to record payment.', 'error', 'Payment Failed');
+        }
+      } catch (err) {
+        showToast('Network error recording payment.', 'error', 'Network Error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-receipt"></i> Save Payment Record'; }
+      }
+    }
+
+    async function viewPartnerHistory(partnerId) {
+      const partner = (rawPartnershipMatrix || []).find(p => p.partnerId === partnerId) || 
+                      (cachedPartnersListAdmin || []).find(p => p.id === partnerId);
+      if (!partner) return;
+
+      document.getElementById('partnerHistoryName').innerText = partner.memberName || 'Partner History';
+      document.getElementById('partnerHistoryPhone').innerText = `Phone: ${partner.phone || 'No phone recorded'}`;
+      document.getElementById('partnerHistoryTotal').innerText = `GHS ${(partner.yearTotalPaid || partner.totalContributed || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+      const tbody = document.getElementById('partnerHistoryTableBody');
+      tbody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:var(--muted);">Loading payment transactions…</td></tr>`;
+      document.getElementById('adminPartnerHistoryModal').style.display = 'flex';
+
+      try {
+        const token = await getAdminAuthToken();
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch(`${API_BASE}/finance/partnerships/payments?partnerId=${partnerId}`, { headers });
+        if (res.ok) {
+          const payments = await res.json();
+          if (Array.isArray(payments) && payments.length > 0) {
+            tbody.innerHTML = payments.map(p => `
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 10px 12px; color: var(--muted);">${p.paymentDate || '—'}</td>
+                <td style="padding: 10px 12px;"><span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11.5px;">${p.targetMonth || '—'}</span></td>
+                <td style="padding: 10px 12px;"><strong style="color: var(--emerald-dark);">GHS ${(Number(p.amount) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></td>
+                <td style="padding: 10px 12px;"><span style="font-size: 11px; font-weight: 700; text-transform: uppercase;">${p.paymentMethod || 'CASH'}</span></td>
+                <td style="padding: 10px 12px; font-size: 12px; color: var(--muted);">${escapeHtml(p.recordedBy || 'Treasury')}</td>
+              </tr>
+            `).join('');
+            return;
+          }
+        }
+      } catch (err) {}
+
+      tbody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--muted);">No payment records found for this partner.</td></tr>`;
+    }
+
+    function closePartnerHistoryModal() {
+      document.getElementById('adminPartnerHistoryModal').style.display = 'none';
+    }
+
+    function deletePartnerFromAdmin(partnerId) {
+      showConfirmModal(
+        'Remove Covenant Partner',
+        'Are you sure you want to remove this partner? Historical payment ledger entries will be preserved in the financial database.',
+        async () => {
+          try {
+            const token = await getAdminAuthToken();
+            await fetch(`${API_BASE}/finance/partners/${partnerId}`, {
+              method: 'DELETE',
+              headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+            showToast('Partner record removed from active list.', 'info', 'Partner Removed');
+            loadPartnershipMatrix();
+          } catch (e) {
+            showToast('Error removing partner.', 'error', 'Error');
+          }
+        },
+        'fas fa-trash-alt',
+        'Remove Partner',
+        '#c5221f'
+      );
+    }
+
+    function downloadPartnershipExcelReport() {
+      if (!rawPartnershipMatrix || rawPartnershipMatrix.length === 0) {
+        showToast('No partnership records available to export.', 'warning', 'No Data');
+        return;
+      }
+
+      const headers = ['#', 'Partner Name', 'Phone Number', 'Monthly Pledge (GHS)', 'Year Total Paid (GHS)', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthKeys = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+
+      const rows = rawPartnershipMatrix.map((p, i) => {
+        const mStatuses = monthKeys.map(k => {
+          const m = (p.monthlyStatus && p.monthlyStatus[k]) || { status: 'PENDING', paid: 0 };
+          return `${m.status} (GHS ${m.paid.toFixed(2)})`;
+        });
+
+        return [
+          i + 1,
+          `"${(p.memberName || '').replace(/"/g, '""')}"`,
+          `"${(p.phone || '').replace(/"/g, '""')}"`,
+          (p.pledgeAmount || 0).toFixed(2),
+          (p.yearTotalPaid || 0).toFixed(2),
+          ...mStatuses.map(s => `"${s}"`)
+        ].join(',');
+      });
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `SFMI_Partnership_Pledges_Ledger_${currentMatrixYear}_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Partnership ledger spreadsheet exported successfully!', 'success', 'Excel Exported');
     }
 
     /* TOAST NOTIFICATION SYSTEM */
