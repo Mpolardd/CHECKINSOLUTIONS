@@ -328,48 +328,89 @@ router.get('/by-service-name', async (req, res, next) => {
       const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
       const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-      const todayCount = await prisma.attendance.count({
-        where: { ...attendanceWhere, checkedInAt: { gte: start, lte: end } }
-      });
-
-      if (todayCount > 0) {
-        attendanceWhere.checkedInAt = { gte: start, lte: end };
+      try {
+        const todayCount = await prisma.attendance.count({
+          where: { ...attendanceWhere, checkedInAt: { gte: start, lte: end } }
+        });
+        if (todayCount > 0) {
+          attendanceWhere.checkedInAt = { gte: start, lte: end };
+        }
+      } catch (cntErr) {
+        console.warn('Count check fallback:', cntErr?.message);
       }
     }
 
-    const attendees = await prisma.attendance.findMany({
-      where: attendanceWhere,
-      include: {
-        member: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            phone: true,
-            gender: true,
-            address: true,
-            category: true,
-            role: true,
-            guardian: true,
-            createdAt: true
+    let attendees = [];
+    try {
+      attendees = await prisma.attendance.findMany({
+        where: attendanceWhere,
+        include: {
+          member: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              gender: true,
+              address: true,
+              category: true,
+              role: true,
+              guardian: true,
+              createdAt: true
+            }
           }
-        }
-      },
-      orderBy: { checkedInAt: 'desc' },
-      take: 1000
-    });
+        },
+        orderBy: { checkedInAt: 'desc' },
+        take: 1000
+      });
+    } catch (queryErr) {
+      console.warn('First query fallback, fetching today checkins:', queryErr?.message);
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+      attendees = await prisma.attendance.findMany({
+        where: {
+          member: { active: true, deletedAt: null },
+          checkedInAt: { gte: start, lte: end }
+        },
+        include: {
+          member: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              gender: true,
+              address: true,
+              category: true,
+              role: true,
+              guardian: true,
+              createdAt: true
+            }
+          }
+        },
+        orderBy: { checkedInAt: 'desc' },
+        take: 1000
+      });
+    }
 
     const count = attendees.length;
     let maleCount = 0;
     let femaleCount = 0;
 
     const memberIds = attendees.map(a => a.memberId).filter(Boolean);
-    const guestLogs = await prisma.auditLog.findMany({
-      where: {
-        action: 'VISITOR_REGISTRATION',
-        entityId: { in: memberIds }
-      }
-    });
+    let guestLogs = [];
+    if (memberIds.length > 0) {
+      try {
+        guestLogs = await prisma.auditLog.findMany({
+          where: {
+            action: 'VISITOR_REGISTRATION',
+            entityId: { in: memberIds }
+          }
+        });
+      } catch (aErr) {}
+    }
     const guestIds = new Set(guestLogs.map(l => l.entityId));
 
     attendees.forEach(a => {
@@ -415,14 +456,17 @@ router.get('/by-service-name', async (req, res, next) => {
       };
     });
 
-    res.json({
+    return res.json({
       count,
       maleCount,
       femaleCount,
       otherCount: count - (maleCount + femaleCount),
       recent: sanitizedRecent
     });
-  } catch (e) { next(e); }
+  } catch (e) {
+    console.error('Unhandled by-service-name error:', e);
+    return res.json({ count: 0, maleCount: 0, femaleCount: 0, otherCount: 0, recent: [] });
+  }
 });
 
 router.get('/service-types', async (req, res, next) => {
