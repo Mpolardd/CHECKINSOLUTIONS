@@ -933,12 +933,19 @@
         }
       } catch (err) {}
 
-      // Offline fallback: treasury
+      // Offline fallback: treasury & super admin
       if (email.toLowerCase() === 'finance@solutionsfaith.com' && password === 'Money12@26') {
         const offlineToken = 'sfmi_fin_offline_session_' + Date.now();
         sessionStorage.setItem('sfmi_fin_token', offlineToken);
         localStorage.setItem('sfmi_fin_token', offlineToken);
-        sessionStorage.setItem('sfmi_fin_user', JSON.stringify({ email: 'finance@solutionsfaith.com', role: 'FINANCE' }));
+        sessionStorage.setItem('sfmi_fin_user', JSON.stringify({ email: 'finance@solutionsfaith.com', role: 'FINANCE', name: 'Treasury Officer' }));
+        resetInactivityTimer();
+        showPartnerDashboard();
+      } else if (email.toLowerCase() === 'admin@solutionsfaith.com' && password === 'Password12@26') {
+        const offlineToken = 'sfmi_fin_offline_session_' + Date.now();
+        sessionStorage.setItem('sfmi_fin_token', offlineToken);
+        localStorage.setItem('sfmi_fin_token', offlineToken);
+        sessionStorage.setItem('sfmi_fin_user', JSON.stringify({ email: 'admin@solutionsfaith.com', role: 'SUPER_ADMIN', name: 'Super Admin' }));
         resetInactivityTimer();
         showPartnerDashboard();
       } else {
