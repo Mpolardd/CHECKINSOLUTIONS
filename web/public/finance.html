@@ -1057,6 +1057,15 @@
       if (btn) btn.style.display = 'none';
     }
 
+    function formatLocalDate(d = new Date()) {
+      const dateObj = typeof d === 'string' ? new Date(d) : d;
+      if (!dateObj || isNaN(dateObj.getTime())) return '';
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
     function showFinDashboard() {
       document.getElementById('finLoginScreen').style.display = 'none';
       document.getElementById('finDashboardContent').style.display = 'block';
@@ -1066,7 +1075,7 @@
       if (btn) btn.style.display = 'inline-flex';
 
       loadBranding();
-      document.getElementById('finServiceDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('finServiceDate').value = formatLocalDate(new Date());
       document.getElementById('liveDateDisplay').innerText = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
     }
 
@@ -1255,7 +1264,7 @@
           showSuccessNotification(`Figures for ${serviceName} (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) saved directly to Supabase!`);
           showToast(`Financial collections for <strong>${serviceName}</strong> (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) recorded in Supabase database!`, 'success', 'Treasury Entry Saved');
           e.target.reset();
-          document.getElementById('finServiceDate').value = new Date().toISOString().split('T')[0];
+          document.getElementById('finServiceDate').value = formatLocalDate(new Date());
           computeGrandTotal();
           return;
         } else {

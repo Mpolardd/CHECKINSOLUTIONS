@@ -2642,6 +2642,15 @@
       return digits;
     }
 
+    function formatLocalDate(d = new Date()) {
+      const dateObj = typeof d === 'string' ? new Date(d) : d;
+      if (!dateObj || isNaN(dateObj.getTime())) return '';
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
     let allMembers = [];
     const deletedMemberIds = new Set();
     let serviceAttendanceMap = {};
@@ -3493,7 +3502,7 @@
       // Group into compiled service sessions
       compiledAttSessionsMap = {};
       list.forEach(item => {
-        const rawDate = item.checkedInAt ? item.checkedInAt.split('T')[0] : new Date().toISOString().split('T')[0];
+        const rawDate = formatLocalDate(item.checkedInAt || Date.now());
         const dateFormatted = new Date(item.checkedInAt || Date.now()).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
         const serviceName = item.service?.serviceType?.name || item.serviceName || 'Sunday Service';
         const key = `${rawDate}_${serviceName}`;
@@ -4209,10 +4218,9 @@
           if (isChild) {
             childCount++;
           } else {
-            const g = (m.gender || '').toLowerCase();
+            const g = (m.gender || '').trim().toLowerCase();
             if (g.startsWith('m')) maleCount++;
             else if (g.startsWith('f')) femaleCount++;
-            else maleCount++;
           }
 
           roster.push({
@@ -4376,18 +4384,18 @@
         document.getElementById('finFilterStart').value = '';
         document.getElementById('finFilterEnd').value = '';
       } else if (preset === 'this_month') {
-        const start = new Date(year, month, 1).toISOString().split('T')[0];
-        const end = new Date(year, month + 1, 0).toISOString().split('T')[0];
+        const start = formatLocalDate(new Date(year, month, 1));
+        const end = formatLocalDate(new Date(year, month + 1, 0));
         document.getElementById('finFilterStart').value = start;
         document.getElementById('finFilterEnd').value = end;
       } else if (preset === 'last_month') {
-        const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
-        const end = new Date(year, month, 0).toISOString().split('T')[0];
+        const start = formatLocalDate(new Date(year, month - 1, 1));
+        const end = formatLocalDate(new Date(year, month, 0));
         document.getElementById('finFilterStart').value = start;
         document.getElementById('finFilterEnd').value = end;
       } else if (preset === 'this_year') {
-        const start = new Date(year, 0, 1).toISOString().split('T')[0];
-        const end = new Date(year, 11, 31).toISOString().split('T')[0];
+        const start = formatLocalDate(new Date(year, 0, 1));
+        const end = formatLocalDate(new Date(year, 11, 31));
         document.getElementById('finFilterStart').value = start;
         document.getElementById('finFilterEnd').value = end;
       }
@@ -4633,10 +4641,9 @@
     }
 
     /* ATTENDANCE & DEMOGRAPHICS (SERVICE-BASED PRESENT VS ABSENTEE TRACKING) */
-    function handleAttServiceChange() {
+    async function handleAttServiceChange() {
       currentSelectedService = document.getElementById('attServiceSelect').value;
-      renderAttendanceAndDemographics();
-      fetchLiveCounts();
+      await fetchLiveCounts();
     }
 
     function setAttFilter(filter) {
@@ -4650,31 +4657,18 @@
     }
 
     function getAttendanceListForService(serviceName) {
-      const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value : '';
+      const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value.trim() : '';
 
-      // 1. Direct match with date
-      if (selectedDate && selectedDate !== 'ALL' && serviceAttendanceMap[`${serviceName}_${selectedDate}`] && serviceAttendanceMap[`${serviceName}_${selectedDate}`].length > 0) {
-        return serviceAttendanceMap[`${serviceName}_${selectedDate}`];
+      // Direct match with selected date or service name (no false cross-service fallbacks)
+      if (selectedDate && selectedDate !== 'ALL') {
+        return serviceAttendanceMap[`${serviceName}_${selectedDate}`] || [];
       }
 
-      // 2. Direct match with service name
-      if (serviceAttendanceMap[serviceName] && serviceAttendanceMap[serviceName].length > 0) {
-        return serviceAttendanceMap[serviceName];
-      }
-
-      // 3. Fallback matching across all keys in serviceAttendanceMap for non-empty check-in lists
-      const allKeys = Object.keys(serviceAttendanceMap);
-      for (const k of allKeys) {
-        if (Array.isArray(serviceAttendanceMap[k]) && serviceAttendanceMap[k].length > 0) {
-          return serviceAttendanceMap[k];
-        }
-      }
-
-      return [];
+      return serviceAttendanceMap[serviceName] || [];
     }
 
     function renderAttendanceAndDemographics() {
-      const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value : '';
+      const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value.trim() : '';
       const activeAttList = getAttendanceListForService(currentSelectedService);
       
       // Combine all directory members + any active check-ins (e.g. newly registered visitors/guests)
@@ -4717,6 +4711,7 @@
       let attendingMale = 0;
       let attendingFemale = 0;
       let attendingChild = 0;
+      let attendingOther = 0;
       let attendingGuest = 0;
 
       const processedMembers = directoryList.map(m => {
@@ -4741,14 +4736,14 @@
           if (isGuest) {
             attendingGuest++;
           }
-          const isChild = m.category === 'Child' || (m.role && m.role.toLowerCase().includes('child'));
+          const isChild = (m.category || '').toLowerCase() === 'child' || (m.role && m.role.toLowerCase().includes('child'));
           if (isChild) {
             attendingChild++;
           } else {
-            const g = (m.gender || '').toLowerCase();
+            const g = (m.gender || '').trim().toLowerCase();
             if (g.startsWith('m')) attendingMale++;
             else if (g.startsWith('f')) attendingFemale++;
-            else attendingMale++;
+            else attendingOther++;
           }
         } else {
           absentCount++;
@@ -4768,7 +4763,7 @@
       
       const malePct = presentCount > 0 ? Math.round((attendingMale / presentCount) * 100) : 0;
       const femalePct = presentCount > 0 ? Math.round((attendingFemale / presentCount) * 100) : 0;
-      const childPct = presentCount > 0 ? Math.max(0, 100 - malePct - femalePct) : 0;
+      const childPct = presentCount > 0 ? Math.round((attendingChild / presentCount) * 100) : 0;
 
       // Update Filter Counts in Toolbar
       document.getElementById('countAllFilter').innerText = totalDirectory;
@@ -4792,7 +4787,11 @@
       document.getElementById('ratioFillFemale').style.width = `${femalePct}%`;
       document.getElementById('ratioFillChild').style.width = `${childPct}%`;
 
-      document.getElementById('ratioDetailsText').innerText = `${attendingMale} Men (${malePct}%) · ${attendingFemale} Women (${femalePct}%) · ${attendingChild} Children (${childPct}%) · ${attendingGuest} First-Timer Guests`;
+      let ratioText = `${attendingMale} Men (${malePct}%) · ${attendingFemale} Women (${femalePct}%) · ${attendingChild} Children (${childPct}%) · ${attendingGuest} First-Timer Guests`;
+      if (attendingOther > 0) {
+        ratioText += ` · ${attendingOther} Unspecified Gender`;
+      }
+      document.getElementById('ratioDetailsText').innerText = ratioText;
       document.getElementById('legendMaleText').innerText = `${attendingMale} (${malePct}%)`;
       document.getElementById('legendFemaleText').innerText = `${attendingFemale} (${femalePct}%)`;
       document.getElementById('legendChildText').innerText = `${attendingChild} (${childPct}%)`;
@@ -5051,7 +5050,7 @@
             let modifiedDirectory = false;
             liveList.forEach(att => {
               const attPhoneNorm = normalizePhoneClient(att.phone);
-              const attFullName = att.name.toLowerCase();
+              const attFullName = (att.name || '').trim().toLowerCase();
               const foundIndex = allMembers.findIndex(m => 
                 (att.memberId && m.id && att.memberId === m.id) ||
                 (att.phone && m.phone && (att.phone.trim() === m.phone.trim() || (attPhoneNorm && normalizePhoneClient(m.phone) === attPhoneNorm))) ||
@@ -5066,25 +5065,34 @@
                   modifiedDirectory = true;
                 }
               } else if (att.name) {
-                allMembers.unshift({
-                  id: att.memberId || ('guest_' + Math.random().toString(36).substr(2, 9)),
-                  firstName: att.firstName || 'Visitor',
-                  lastName: att.lastName || 'Guest',
-                  phone: att.phone || '',
-                  gender: att.gender || 'Not specified',
-                  address: att.address || '',
-                  category: att.category || 'Visitor / Guest',
-                  role: att.role || 'Visitor / First Timer',
-                  guardian: att.guardian || '',
-                  isGuest: Boolean(att.isGuest)
-                });
-                modifiedDirectory = true;
+                const alreadyInDirectory = allMembers.some(m =>
+                  (att.memberId && m.id && att.memberId === m.id) ||
+                  (att.phone && m.phone && (att.phone.trim() === m.phone.trim() || (attPhoneNorm && normalizePhoneClient(m.phone) === attPhoneNorm))) ||
+                  (attFullName && `${m.firstName} ${m.lastName}`.trim().toLowerCase() === attFullName)
+                );
+                if (!alreadyInDirectory) {
+                  allMembers.unshift({
+                    id: att.memberId || ('guest_' + Math.random().toString(36).substr(2, 9)),
+                    firstName: att.firstName || 'Visitor',
+                    lastName: att.lastName || 'Guest',
+                    phone: att.phone || '',
+                    gender: att.gender || 'Not specified',
+                    address: att.address || '',
+                    category: att.category || 'Visitor / Guest',
+                    role: att.role || 'Visitor / First Timer',
+                    guardian: att.guardian || '',
+                    isGuest: Boolean(att.isGuest)
+                  });
+                  modifiedDirectory = true;
+                }
               }
             });
 
             const mapKey = selectedDate ? `${targetService}_${selectedDate}` : targetService;
             serviceAttendanceMap[mapKey] = liveList;
-            serviceAttendanceMap[targetService] = liveList;
+            if (!selectedDate) {
+              serviceAttendanceMap[targetService] = liveList;
+            }
             renderAttendanceAndDemographics();
             if (modifiedDirectory) {
               updateDirectoryCounts();

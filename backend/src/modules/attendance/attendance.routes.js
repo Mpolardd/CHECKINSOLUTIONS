@@ -5,6 +5,29 @@ const { z } = require('zod');
 const { requireAuth, requireRoles } = require('../../middleware/auth');
 const { normalizePhone } = require('../../utils/phone');
 
+function getDayRange(dateInput) {
+  let y, m, d;
+  if (dateInput && typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput.trim())) {
+    [y, m, d] = dateInput.trim().split('-').map(Number);
+    m = m - 1;
+  } else {
+    const dateObj = dateInput ? new Date(dateInput) : new Date();
+    if (isNaN(dateObj.getTime())) {
+      const now = new Date();
+      y = now.getFullYear();
+      m = now.getMonth();
+      d = now.getDate();
+    } else {
+      y = dateObj.getFullYear();
+      m = dateObj.getMonth();
+      d = dateObj.getDate();
+    }
+  }
+  const start = new Date(y, m, d, 0, 0, 0, 0);
+  const end = new Date(y, m, d, 23, 59, 59, 999);
+  return { start, end };
+}
+
 router.get('/search', async (req, res, next) => {
   try {
     const q = String(req.query.q || '').trim();
@@ -81,9 +104,7 @@ router.post('/checkin', async (req, res, next) => {
       let targetServiceId = b.serviceId;
       if (!targetServiceId) {
         let matched = null;
-        const now = new Date();
-        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        const { start: startOfDay, end: endOfDay } = getDayRange();
 
         if (b.serviceName) {
           const prefix = b.serviceName.split(':')[0].trim();
@@ -290,16 +311,10 @@ router.get('/by-service-name', async (req, res, next) => {
     };
 
     if (dateParam) {
-      const d = new Date(dateParam);
-      if (!Number.isNaN(d.getTime())) {
-        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
-        const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
-        attendanceWhere.checkedInAt = { gte: start, lte: end };
-      }
+      const { start, end } = getDayRange(dateParam);
+      attendanceWhere.checkedInAt = { gte: start, lte: end };
     } else {
-      const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      const { start, end } = getDayRange();
       attendanceWhere.checkedInAt = { gte: start, lte: end };
     }
 
@@ -317,11 +332,9 @@ router.get('/by-service-name', async (req, res, next) => {
       const svcIds = svcs.map(s => s.id);
 
       if (svcIds.length > 0) {
-        const filteredWhere = { ...attendanceWhere, serviceId: { in: svcIds } };
-        const matchCount = await prisma.attendance.count({ where: filteredWhere });
-        if (matchCount > 0) {
-          attendanceWhere.serviceId = { in: svcIds };
-        }
+        attendanceWhere.serviceId = { in: svcIds };
+      } else {
+        attendanceWhere.serviceId = { in: ['__none__'] };
       }
     }
 
@@ -346,31 +359,6 @@ router.get('/by-service-name', async (req, res, next) => {
       orderBy: { checkedInAt: 'desc' },
       take: 1000
     });
-
-    if (attendees.length === 0 && attendanceWhere.serviceId) {
-      delete attendanceWhere.serviceId;
-      attendees = await prisma.attendance.findMany({
-        where: attendanceWhere,
-        include: {
-          member: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              phone: true,
-              gender: true,
-              address: true,
-              category: true,
-              role: true,
-              guardian: true,
-              createdAt: true
-            }
-          }
-        },
-        orderBy: { checkedInAt: 'desc' },
-        take: 1000
-      });
-    }
 
     const count = attendees.length;
     let maleCount = 0;
@@ -484,12 +472,8 @@ router.get('/services', async (req, res, next) => {
     const where = { active: true };
     if (serviceTypeId) where.serviceTypeId = serviceTypeId;
     if (date) {
-      const d = new Date(String(date));
-      if (!Number.isNaN(d.getTime())) {
-        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-        const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
-        where.serviceDate = { gte: start, lte: end };
-      }
+      const { start, end } = getDayRange(String(date));
+      where.serviceDate = { gte: start, lte: end };
     }
 
     const services = await prisma.service.findMany({
@@ -508,8 +492,7 @@ router.get('/services', async (req, res, next) => {
 router.get('/services/current', async (req, res, next) => {
   try {
     const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    const { start, end } = getDayRange();
 
     let service = await prisma.service.findFirst({
       where: {
@@ -630,9 +613,7 @@ router.post('/quick-register-checkin', async (req, res, next) => {
       let targetServiceId = body.serviceId;
       if (!targetServiceId) {
         let matched = null;
-        const now = new Date();
-        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        const { start: startOfDay, end: endOfDay } = getDayRange();
 
         if (body.serviceName) {
           const prefix = body.serviceName.split(':')[0].trim();
@@ -738,9 +719,7 @@ router.post('/clear', async (req, res, next) => {
     } else if (serviceId) {
       await prisma.attendance.deleteMany({ where: { serviceId } });
     } else {
-      const now = new Date();
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      const { start: startOfDay, end: endOfDay } = getDayRange();
 
       if (serviceName) {
         const prefix = serviceName.split(':')[0].trim();
@@ -776,12 +755,12 @@ router.get('/history', async (req, res, next) => {
     if (startDate || endDate) {
       where.checkedInAt = {};
       if (startDate) {
-        const s = new Date(startDate);
-        if (!Number.isNaN(s.getTime())) where.checkedInAt.gte = new Date(s.getFullYear(), s.getMonth(), s.getDate(), 0, 0, 0, 0);
+        const { start } = getDayRange(startDate);
+        where.checkedInAt.gte = start;
       }
       if (endDate) {
-        const e = new Date(endDate);
-        if (!Number.isNaN(e.getTime())) where.checkedInAt.lte = new Date(e.getFullYear(), e.getMonth(), e.getDate(), 23, 59, 59, 999);
+        const { end } = getDayRange(endDate);
+        where.checkedInAt.lte = end;
       }
     }
 

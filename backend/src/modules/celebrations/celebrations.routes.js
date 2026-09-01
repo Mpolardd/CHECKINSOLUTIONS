@@ -2,18 +2,34 @@ const router=require('express').Router();
 const prisma=require('../../config/prisma');
 const {requireAuth,requireRoles}=require('../../middleware/auth');
 
-router.get('/today',requireAuth,async(req,res,next)=>{
- try{
-  const now=new Date(), tomorrow=new Date(now);tomorrow.setDate(now.getDate()+1);
-  const month=now.getMonth()+1, day=now.getDate();
-  const members=await prisma.member.findMany({where:{active:true,deletedAt:null},select:{id:true,firstName:true,lastName:true,dateOfBirth:true,anniversary:true}});
-  const today=members.filter(m=>{
-   const b=m.dateOfBirth && (m.dateOfBirth.getUTCMonth()+1===month && m.dateOfBirth.getUTCDate()===day);
-   const a=m.anniversary && (m.anniversary.getUTCMonth()+1===month && m.anniversary.getUTCDate()===day);
-   return b||a;
-  }).map(m=>({member:m,type:m.dateOfBirth&&(m.dateOfBirth.getUTCMonth()+1===month&&m.dateOfBirth.getUTCDate()===day)?'BIRTHDAY':'ANNIVERSARY'}));
-  res.json(today);
- }catch(e){next(e)}
+router.get('/today', requireAuth, async (req, res, next) => {
+  try {
+    const now = new Date();
+    const month = now.getUTCMonth() + 1, day = now.getUTCDate();
+    const locMonth = now.getMonth() + 1, locDay = now.getDate();
+    const members = await prisma.member.findMany({
+      where: { active: true, deletedAt: null },
+      select: { id: true, firstName: true, lastName: true, dateOfBirth: true, anniversary: true }
+    });
+    const today = members.filter(m => {
+      const b = m.dateOfBirth && (
+        (m.dateOfBirth.getUTCMonth() + 1 === month && m.dateOfBirth.getUTCDate() === day) ||
+        (m.dateOfBirth.getUTCMonth() + 1 === locMonth && m.dateOfBirth.getUTCDate() === locDay)
+      );
+      const a = m.anniversary && (
+        (m.anniversary.getUTCMonth() + 1 === month && m.anniversary.getUTCDate() === day) ||
+        (m.anniversary.getUTCMonth() + 1 === locMonth && m.anniversary.getUTCDate() === locDay)
+      );
+      return b || a;
+    }).map(m => ({
+      member: m,
+      type: m.dateOfBirth && (
+        (m.dateOfBirth.getUTCMonth() + 1 === month && m.dateOfBirth.getUTCDate() === day) ||
+        (m.dateOfBirth.getUTCMonth() + 1 === locMonth && m.dateOfBirth.getUTCDate() === locDay)
+      ) ? 'BIRTHDAY' : 'ANNIVERSARY'
+    }));
+    res.json(today);
+  } catch (e) { next(e); }
 });
 
 router.get('/upcoming',requireAuth,requireRoles('SUPER_ADMIN','ADMIN','PASTORAL'),async(req,res,next)=>{

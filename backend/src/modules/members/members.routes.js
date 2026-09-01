@@ -21,7 +21,13 @@ const memberSchema = z.object({
 
 function parseOptionalDate(val) {
   if (!val || typeof val !== 'string') return null;
-  const d = new Date(val);
+  const trimmed = val.trim();
+  if (!trimmed) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const [y, m, d] = trimmed.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+  }
+  const d = new Date(trimmed);
   return isNaN(d.getTime()) ? null : d;
 }
 
