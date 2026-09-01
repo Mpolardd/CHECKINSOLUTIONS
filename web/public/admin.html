@@ -3140,67 +3140,70 @@
       const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
       const subToken = sessionStorage.getItem('sfmi_sub_session');
 
-      // 1. If offline Super Admin or Sub-Admin session token, accept immediately
+      // 1. If no session or token exists, show login screen
+      if (!token && !subToken) {
+        purgeAuthSession();
+        showLogin();
+        return;
+      }
+
+      // 2. If offline Super Admin or Sub-Admin session token, accept immediately
       if (token && (token.startsWith('sfmi_super_admin_session_') || token.startsWith('sfmi_sub_admin_session_'))) {
         resetInactivityTimer();
         showDashboard();
         return;
       }
 
-      // 2. Check Sub-Admin session credentials
+      // 3. Verify active token with backend API before rendering dashboard
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE}/auth/verify`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const role = (data.user && data.user.role) ? data.user.role : '';
+
+            if (role === 'FINANCE') {
+              purgeAuthSession();
+              showLogin();
+              showToast('Access Denied: Treasury officers cannot access the Admin Portal.', 'error', 'Access Denied');
+              return;
+            }
+
+            const isSubAdminRole = role === 'SUB_ADMIN' || role === 'ADMIN';
+            sessionStorage.setItem('sfmi_token', token);
+            sessionStorage.setItem('sfmi_current_user', JSON.stringify({
+              email: data.user.email,
+              name: data.user.name || (isSubAdminRole ? 'Sub-Admin' : 'Super Admin'),
+              role: isSubAdminRole ? 'SUB_ADMIN' : 'SUPER_ADMIN',
+              permissions: (data.user && Array.isArray(data.user.permissions))
+                ? data.user.permissions
+                : (isSubAdminRole ? ['attendance', 'members', 'programs'] : ['finance', 'attendance', 'members', 'programs', 'reports', 'subAdmins'])
+            }));
+            localStorage.setItem('sfmi_current_user', sessionStorage.getItem('sfmi_current_user'));
+
+            resetInactivityTimer();
+            showDashboard();
+            return;
+          } else {
+            // Token expired or invalid
+            purgeAuthSession();
+            showLogin();
+            return;
+          }
+        } catch (err) {
+          // If offline / network error, allow existing local session
+          resetInactivityTimer();
+          showDashboard();
+          return;
+        }
+      }
+
       if (subToken) {
         resetInactivityTimer();
         showDashboard();
-        return;
-      }
-
-      // 3. If no session or token exists, show login screen
-      if (!token) {
-        purgeAuthSession();
-        showLogin();
-        return;
-      }
-
-      // 4. Token exists - display dashboard immediately to eliminate login screen flash on page refresh
-      resetInactivityTimer();
-      showDashboard();
-
-      // 5. Silently verify token with backend API in background
-      try {
-        const res = await fetch(`${API_BASE}/auth/verify`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const role = (data.user && data.user.role) ? data.user.role : '';
-
-          if (role === 'FINANCE') {
-            purgeAuthSession();
-            showLogin();
-            showToast('Access Denied: Treasury officers cannot access the Admin Portal.', 'error', 'Access Denied');
-            return;
-          }
-
-          const isSubAdminRole = role === 'SUB_ADMIN' || role === 'ADMIN';
-          sessionStorage.setItem('sfmi_token', token);
-          sessionStorage.setItem('sfmi_current_user', JSON.stringify({
-            email: data.user.email,
-            name: data.user.name || (isSubAdminRole ? 'Sub-Admin' : 'Super Admin'),
-            role: isSubAdminRole ? 'SUB_ADMIN' : 'SUPER_ADMIN',
-            permissions: (data.user && Array.isArray(data.user.permissions))
-              ? data.user.permissions
-              : (isSubAdminRole ? ['attendance', 'members', 'programs'] : ['finance', 'attendance', 'members', 'programs', 'subAdmins'])
-          }));
-          localStorage.setItem('sfmi_current_user', sessionStorage.getItem('sfmi_current_user'));
-        } else if (res.status === 401 || res.status === 403) {
-          // Token explicitly revoked or expired by server
-          purgeAuthSession();
-          showLogin();
-          showToast('Your session has expired. Please log in again.', 'warning', 'Session Expired');
-        }
-      } catch (err) {
-        console.warn('Backend session verification unavailable, using local active session:', err);
       }
     }
 
@@ -6287,6 +6290,35 @@
       if (modal) modal.classList.remove('active');
     }
 
+    function compressImage(file, maxWidth, maxHeight, quality, callback) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxWidth || h > maxHeight) {
+            if (w > h) {
+              h = Math.round((h * maxWidth) / w);
+              w = maxWidth;
+            } else {
+              w = Math.round((w * maxHeight) / h);
+              h = maxHeight;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          callback(compressedDataUrl);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
     function handleEditProgramFlyerAttachment(input) {
       const file = input.files[0];
       if (!file) return;
@@ -6296,19 +6328,16 @@
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const dataUrl = e.target.result;
+      compressImage(file, 1000, 1000, 0.8, (dataUrl) => {
         const elData = document.getElementById('editProgAttachedFlyerData');
         const elImg = document.getElementById('editProgFlyerPreviewImg');
         const elLbl = document.getElementById('editProgFlyerFileName');
 
         if (elData) elData.value = dataUrl;
         if (elImg) elImg.src = dataUrl;
-        if (elLbl) elLbl.innerText = `New: ${file.name} (Ready to Save)`;
-        showToast('New flyer image loaded! Click "Save Changes" to apply.', 'info', 'Flyer Attached');
-      };
-      reader.readAsDataURL(file);
+        if (elLbl) elLbl.innerText = `New: ${file.name} (Compressed & Ready)`;
+        showToast('Flyer image optimized! Click "Save Changes" to apply.', 'info', 'Flyer Attached');
+      });
     }
 
     function handleUpdateProgram(e) {
@@ -6392,12 +6421,18 @@
       if (serviceKey === 'AUTO: Day-of-Week Schedule') {
         await resetKioskToRegularSchedule();
       } else {
-        await activateProgramOnKiosk(serviceKey);
+        localStorage.setItem('sfmi_active_kiosk_service', serviceKey);
+        try {
+          await fetch(`${API_BASE}/attendance/active-kiosk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ programName: serviceKey })
+          });
+        } catch (err) {}
+        populateServiceDropdowns();
+        renderProgramsManager();
+        showToast(`Kiosk check-in is now set live for: <strong>${escapeHtml(serviceKey)}</strong>`, 'success', 'Live Kiosk Updated');
       }
-    }
-
-    function activateProgramOnKiosk(name) {
-      handleAdminSetKioskActive(name);
     }
 
     function viewProgramAttendance(name) {
@@ -6424,16 +6459,13 @@
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const dataUrl = e.target.result;
+      compressImage(file, 1000, 1000, 0.8, (dataUrl) => {
         document.getElementById('progAttachedFlyerData').value = dataUrl;
         document.getElementById('progFlyerPreviewImg').src = dataUrl;
-        document.getElementById('progFlyerFileName').innerText = file.name;
+        document.getElementById('progFlyerFileName').innerText = `${file.name} (Optimized)`;
         document.getElementById('progFlyerPlaceholder').style.display = 'none';
         document.getElementById('progFlyerPreviewWrap').style.display = 'flex';
-      };
-      reader.readAsDataURL(file);
+      });
     }
 
     function removeAttachedFlyer(e) {
