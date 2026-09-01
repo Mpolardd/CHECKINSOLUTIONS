@@ -3532,6 +3532,7 @@
       });
 
       const sessionsList = Object.values(compiledAttSessionsMap);
+      compiledAttSessionsList = sessionsList;
 
       const countTextEl = document.getElementById('repAttCountText');
       if (countTextEl) countTextEl.innerText = `${sessionsList.length} Compiled Service Reports`;
@@ -3548,7 +3549,6 @@
 
       if (tbody) {
         tbody.innerHTML = sessionsList.map((sess, idx) => {
-          const safeKey = escapeHtml(sess.id);
           const name = escapeHtml(sess.serviceName);
           const dateStr = escapeHtml(sess.dateFormatted);
           const ratioStr = `${sess.maleCount} Men · ${sess.femaleCount} Women · ${sess.guestCount} Guests`;
@@ -3562,10 +3562,10 @@
               <td><span class="badge badge-gray">${ratioStr}</span></td>
               <td>
                 <div style="display:flex; gap:6px;">
-                  <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:var(--light); color:var(--ink); border:1px solid var(--line);" onclick="openViewCompiledAttendanceModal('${safeKey}')">
+                  <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:var(--light); color:var(--ink); border:1px solid var(--line);" onclick="openViewCompiledAttendanceModal(${idx})">
                     <i class="fas fa-eye"></i> View Report
                   </button>
-                  <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:#107c41;" onclick="downloadCompiledAttendanceSessionExcel('${safeKey}')">
+                  <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:#107c41;" onclick="downloadCompiledAttendanceSessionExcel(${idx})">
                     <i class="fas fa-file-excel"></i> Download Excel
                   </button>
                 </div>
@@ -3576,8 +3576,7 @@
       }
 
       if (cardsContainer) {
-        cardsContainer.innerHTML = sessionsList.map(sess => {
-          const safeKey = escapeHtml(sess.id);
+        cardsContainer.innerHTML = sessionsList.map((sess, idx) => {
           const name = escapeHtml(sess.serviceName);
           const dateStr = escapeHtml(sess.dateFormatted);
           const ratioStr = `${sess.maleCount} Men · ${sess.femaleCount} Women · ${sess.guestCount} Guests`;
@@ -3597,10 +3596,10 @@
                 <i class="fas fa-users-rectangle" style="color: var(--accent);"></i> ${ratioStr}
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px;">
-                <button class="btn-main" style="padding: 8px; font-size: 12px; justify-content: center; background: var(--light); color: var(--ink); border: 1px solid var(--line);" onclick="openViewCompiledAttendanceModal('${safeKey}')">
+                <button class="btn-main" style="padding: 8px; font-size: 12px; justify-content: center; background: var(--light); color: var(--ink); border: 1px solid var(--line);" onclick="openViewCompiledAttendanceModal(${idx})">
                   <i class="fas fa-eye"></i> View Report
                 </button>
-                <button class="btn-main" style="padding: 8px; font-size: 12px; justify-content: center; background: #107c41;" onclick="downloadCompiledAttendanceSessionExcel('${safeKey}')">
+                <button class="btn-main" style="padding: 8px; font-size: 12px; justify-content: center; background: #107c41;" onclick="downloadCompiledAttendanceSessionExcel(${idx})">
                   <i class="fas fa-file-excel"></i> Download Excel
                 </button>
               </div>
@@ -3612,10 +3611,21 @@
       syncReportsViewMode();
     }
 
+    let compiledAttSessionsList = [];
     let activeCompAttSession = null;
 
-    function openViewCompiledAttendanceModal(sessionKey) {
-      const sess = compiledAttSessionsMap[sessionKey];
+    function openViewCompiledAttendanceModal(sessionKeyOrIdx) {
+      let sess = null;
+      if (typeof sessionKeyOrIdx === 'number' || (!isNaN(sessionKeyOrIdx) && String(sessionKeyOrIdx).trim() !== '' && !String(sessionKeyOrIdx).includes('_'))) {
+        sess = compiledAttSessionsList[Number(sessionKeyOrIdx)];
+      }
+      if (!sess && sessionKeyOrIdx) {
+        sess = compiledAttSessionsMap[sessionKeyOrIdx];
+      }
+      if (!sess && compiledAttSessionsList.length > 0) {
+        sess = compiledAttSessionsList[0];
+      }
+
       if (!sess) {
         showToast('Compiled report session not found.', 'error', 'Report Error');
         return;
@@ -3632,16 +3642,24 @@
       document.getElementById('compAttModalFemale').innerText = sess.femaleCount;
 
       const btnDl = document.getElementById('btnCompAttDownload');
-      if (btnDl) btnDl.onclick = () => downloadCompiledAttendanceSessionExcel(sessionKey);
+      if (btnDl) btnDl.onclick = () => downloadCompiledAttendanceSessionExcel(sess.id || sessionKeyOrIdx);
 
       document.getElementById('compAttModalSearch').value = '';
       filterCompiledAttModalRoster();
 
-      document.getElementById('viewCompiledAttModal').style.display = 'flex';
+      const modalEl = document.getElementById('viewCompiledAttModal');
+      if (modalEl) {
+        modalEl.classList.add('active');
+        modalEl.style.display = 'flex';
+      }
     }
 
     function closeViewCompiledAttModal() {
-      document.getElementById('viewCompiledAttModal').style.display = 'none';
+      const modalEl = document.getElementById('viewCompiledAttModal');
+      if (modalEl) {
+        modalEl.classList.remove('active');
+        modalEl.style.display = 'none';
+      }
     }
 
     function filterCompiledAttModalRoster() {
@@ -3689,9 +3707,19 @@
       }).join('');
     }
 
-    function downloadCompiledAttendanceSessionExcel(sessionKey) {
-      const sess = compiledAttSessionsMap[sessionKey];
-      if (!sess || !sess.logs.length) {
+    function downloadCompiledAttendanceSessionExcel(sessionKeyOrIdx) {
+      let sess = null;
+      if (typeof sessionKeyOrIdx === 'number' || (!isNaN(sessionKeyOrIdx) && String(sessionKeyOrIdx).trim() !== '' && !String(sessionKeyOrIdx).includes('_'))) {
+        sess = compiledAttSessionsList[Number(sessionKeyOrIdx)];
+      }
+      if (!sess && sessionKeyOrIdx) {
+        sess = compiledAttSessionsMap[sessionKeyOrIdx];
+      }
+      if (!sess && compiledAttSessionsList.length > 0) {
+        sess = compiledAttSessionsList[0];
+      }
+
+      if (!sess || !sess.logs || !sess.logs.length) {
         showToast('No session data available to export.', 'warning', 'Export Empty');
         return;
       }
@@ -3925,8 +3953,18 @@
       syncReportsViewMode();
     }
 
-    function openViewCompiledFinanceModal(entryId) {
-      const entry = rawFinReportData.find(e => String(e.id) === String(entryId));
+    function openViewCompiledFinanceModal(entryIdOrIdx) {
+      let entry = null;
+      if (typeof entryIdOrIdx === 'number' || (!isNaN(entryIdOrIdx) && String(entryIdOrIdx).trim() !== '' && String(entryIdOrIdx).length <= 4)) {
+        entry = rawFinReportData[Number(entryIdOrIdx)];
+      }
+      if (!entry && entryIdOrIdx) {
+        entry = rawFinReportData.find(e => String(e.id) === String(entryIdOrIdx));
+      }
+      if (!entry && rawFinReportData.length > 0) {
+        entry = rawFinReportData[0];
+      }
+
       if (!entry) {
         showToast('Financial collection record not found.', 'error', 'Error');
         return;
@@ -3937,7 +3975,7 @@
       document.getElementById('compFinSub').innerText = `Service Date: ${dateStr} · Recorded by ${entry.recordedBy || 'Treasury Officer'}`;
 
       const btnDl = document.getElementById('btnCompFinDownload');
-      if (btnDl) btnDl.onclick = () => downloadSingleServiceFinanceExcel(entryId);
+      if (btnDl) btnDl.onclick = () => downloadSingleServiceFinanceExcel(entry.id || entryIdOrIdx);
 
       const wrap = document.getElementById('compFinContentWrap');
       if (wrap) {
@@ -3988,15 +4026,33 @@
         `;
       }
 
-      document.getElementById('viewCompiledFinModal').style.display = 'flex';
+      const modalEl = document.getElementById('viewCompiledFinModal');
+      if (modalEl) {
+        modalEl.classList.add('active');
+        modalEl.style.display = 'flex';
+      }
     }
 
     function closeViewCompiledFinModal() {
-      document.getElementById('viewCompiledFinModal').style.display = 'none';
+      const modalEl = document.getElementById('viewCompiledFinModal');
+      if (modalEl) {
+        modalEl.classList.remove('active');
+        modalEl.style.display = 'none';
+      }
     }
 
-    function downloadSingleServiceFinanceExcel(entryId) {
-      const entry = rawFinReportData.find(e => String(e.id) === String(entryId));
+    function downloadSingleServiceFinanceExcel(entryIdOrIdx) {
+      let entry = null;
+      if (typeof entryIdOrIdx === 'number' || (!isNaN(entryIdOrIdx) && String(entryIdOrIdx).trim() !== '' && String(entryIdOrIdx).length <= 4)) {
+        entry = rawFinReportData[Number(entryIdOrIdx)];
+      }
+      if (!entry && entryIdOrIdx) {
+        entry = rawFinReportData.find(e => String(e.id) === String(entryIdOrIdx));
+      }
+      if (!entry && rawFinReportData.length > 0) {
+        entry = rawFinReportData[0];
+      }
+
       if (!entry) {
         showToast('Financial collection record not found.', 'error', 'Error');
         return;
