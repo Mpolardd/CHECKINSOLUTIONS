@@ -312,10 +312,14 @@ router.get('/by-service-name', async (req, res, next) => {
 
     if (dateParam) {
       const { start, end } = getDayRange(dateParam);
-      attendanceWhere.checkedInAt = { gte: start, lte: end };
+      // Generous buffer so client timezones (-14h to +14h) match the selected calendar date
+      const expandedStart = new Date(start.getTime() - 14 * 3600 * 1000);
+      const expandedEnd = new Date(end.getTime() + 14 * 3600 * 1000);
+      attendanceWhere.checkedInAt = { gte: expandedStart, lte: expandedEnd };
     } else {
-      const { start, end } = getDayRange();
-      attendanceWhere.checkedInAt = { gte: start, lte: end };
+      // Default live view: Query the last 48 hours so live check-ins show up immediately across all timezones
+      const cutoff = new Date(Date.now() - 48 * 3600 * 1000);
+      attendanceWhere.checkedInAt = { gte: cutoff };
     }
 
     if (rawName && rawName.toUpperCase() !== 'ALL') {
@@ -333,8 +337,6 @@ router.get('/by-service-name', async (req, res, next) => {
 
       if (svcIds.length > 0) {
         attendanceWhere.serviceId = { in: svcIds };
-      } else {
-        attendanceWhere.serviceId = { in: ['__none__'] };
       }
     }
 
@@ -354,11 +356,59 @@ router.get('/by-service-name', async (req, res, next) => {
             guardian: true,
             createdAt: true
           }
+        },
+        service: {
+          select: {
+            id: true,
+            serviceDate: true,
+            serviceType: {
+              select: { name: true }
+            }
+          }
         }
       },
       orderBy: { checkedInAt: 'desc' },
       take: 1000
     });
+
+    // If a specific service filter returned 0, fallback to all recent active check-ins so no attendee is hidden
+    if (attendees.length === 0 && attendanceWhere.serviceId) {
+      const fallbackWhere = { ...attendanceWhere };
+      delete fallbackWhere.serviceId;
+      const fallbackAttendees = await prisma.attendance.findMany({
+        where: fallbackWhere,
+        include: {
+          member: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              gender: true,
+              address: true,
+              category: true,
+              role: true,
+              guardian: true,
+              createdAt: true
+            }
+          },
+          service: {
+            select: {
+              id: true,
+              serviceDate: true,
+              serviceType: {
+                select: { name: true }
+              }
+            }
+          }
+        },
+        orderBy: { checkedInAt: 'desc' },
+        take: 1000
+      });
+      if (fallbackAttendees.length > 0) {
+        attendees = fallbackAttendees;
+      }
+    }
 
     const count = attendees.length;
     let maleCount = 0;

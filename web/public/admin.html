@@ -4659,12 +4659,31 @@
     function getAttendanceListForService(serviceName) {
       const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value.trim() : '';
 
-      // Direct match with selected date or service name (no false cross-service fallbacks)
       if (selectedDate && selectedDate !== 'ALL') {
+        if (serviceAttendanceMap[`${serviceName}_${selectedDate}`] && serviceAttendanceMap[`${serviceName}_${selectedDate}`].length > 0) {
+          return serviceAttendanceMap[`${serviceName}_${selectedDate}`];
+        }
+        if (serviceAttendanceMap[`ALL_${selectedDate}`] && serviceAttendanceMap[`ALL_${selectedDate}`].length > 0) {
+          return serviceAttendanceMap[`ALL_${selectedDate}`];
+        }
         return serviceAttendanceMap[`${serviceName}_${selectedDate}`] || [];
       }
 
-      return serviceAttendanceMap[serviceName] || [];
+      if (serviceAttendanceMap[serviceName] && serviceAttendanceMap[serviceName].length > 0) {
+        return serviceAttendanceMap[serviceName];
+      }
+      if (serviceAttendanceMap['ALL'] && serviceAttendanceMap['ALL'].length > 0) {
+        return serviceAttendanceMap['ALL'];
+      }
+
+      const allKeys = Object.keys(serviceAttendanceMap);
+      for (const k of allKeys) {
+        if (Array.isArray(serviceAttendanceMap[k]) && serviceAttendanceMap[k].length > 0) {
+          return serviceAttendanceMap[k];
+        }
+      }
+
+      return [];
     }
 
     function renderAttendanceAndDemographics() {
@@ -5090,9 +5109,8 @@
 
             const mapKey = selectedDate ? `${targetService}_${selectedDate}` : targetService;
             serviceAttendanceMap[mapKey] = liveList;
-            if (!selectedDate) {
-              serviceAttendanceMap[targetService] = liveList;
-            }
+            serviceAttendanceMap[targetService] = liveList;
+            serviceAttendanceMap['ALL'] = liveList;
             renderAttendanceAndDemographics();
             if (modifiedDirectory) {
               updateDirectoryCounts();
@@ -5823,6 +5841,7 @@
       const attSelect = document.getElementById('attServiceSelect');
       if (attSelect) {
         const standardOptions = [
+          { val: 'ALL', text: '⚡ All Services (Live Session Attendance)' },
           { val: 'Sunday: Family & Friends Service', text: 'Sunday — Family & Friends Service' },
           { val: 'Wednesday: Time with the Lord', text: 'Wednesday — Time with the Lord' },
           { val: 'Friday: Prophetic Healing & Deliverance', text: 'Friday — Prophetic Healing & Deliverance' }
