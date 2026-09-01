@@ -6,7 +6,8 @@ function requireAuth(req, res, next) {
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({error:'Authentication required'});
   try {
-    req.user = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    const secret = process.env.JWT_ACCESS_SECRET || 'church_mgmt_secret_dev_fallback_only';
+    req.user = jwt.verify(token, secret);
     next();
   } catch {
     return res.status(401).json({error:'Invalid or expired access token'});

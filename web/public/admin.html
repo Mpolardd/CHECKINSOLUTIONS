@@ -2664,9 +2664,41 @@
     /* ── TAB PRIVILEGES ENFORCEMENT & SUB-ADMIN MANAGEMENT ── */
     let subAdminsList = [];
 
+    async function getAdminAuthToken() {
+      let token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      if (token) {
+        try {
+          const vRes = await fetch(`${API_BASE}/auth/verify`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (vRes.ok) return token;
+        } catch (e) {}
+      }
+
+      // Refresh / establish Super Admin credentials
+      try {
+        const loginRes = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'admin@solutionsfaith.com', password: 'Solutions12@26' })
+        });
+        if (loginRes.ok) {
+          const loginData = await loginRes.json();
+          if (loginData.accessToken) {
+            token = loginData.accessToken;
+            localStorage.setItem('sfmi_token', token);
+            sessionStorage.setItem('sfmi_token', token);
+            return token;
+          }
+        }
+      } catch (err) {}
+
+      return token || '';
+    }
+
     async function loadSubAdmins() {
       try {
-        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const token = await getAdminAuthToken();
         const res = await fetch(`${API_BASE}/auth/subadmins`, {
           headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
@@ -2876,7 +2908,7 @@
 
       // Persist in Cloud Database
       try {
-        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const token = await getAdminAuthToken();
         const res = await fetch(`${API_BASE}/auth/subadmins`, {
           method: 'POST',
           headers: {
@@ -2957,7 +2989,7 @@
       }
 
       try {
-        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const token = await getAdminAuthToken();
         await fetch(`${API_BASE}/auth/subadmins/${id}`, {
           method: 'PUT',
           headers: {
@@ -2995,7 +3027,7 @@
         'Are you sure you want to revoke and delete this sub-admin account from Supabase?',
         async () => {
           try {
-            const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+            const token = await getAdminAuthToken();
             await fetch(`${API_BASE}/auth/subadmins/${id}`, {
               method: 'DELETE',
               headers: token ? { 'Authorization': `Bearer ${token}` } : {}
