@@ -2526,7 +2526,7 @@
       </form>
     </div>
   <!-- Compiled Attendance Service Report View Modal -->
-  <div class="modal-backdrop" id="viewCompiledAttModal">
+  <div class="modal-backdrop" id="viewCompiledAttModal" style="display: none;" onclick="if(event.target===this)closeViewCompiledAttModal()">
     <div class="modal-card" style="max-width: 920px; width: 95%;">
       <button class="modal-close" onclick="closeViewCompiledAttModal()">✕</button>
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
@@ -2590,7 +2590,7 @@
   </div>
 
   <!-- Compiled Financial Service Report View Modal -->
-  <div class="modal-backdrop" id="viewCompiledFinModal">
+  <div class="modal-backdrop" id="viewCompiledFinModal" style="display: none;" onclick="if(event.target===this)closeViewCompiledFinModal()">
     <div class="modal-card" style="max-width: 720px; width: 95%;">
       <button class="modal-close" onclick="closeViewCompiledFinModal()">✕</button>
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
@@ -3628,11 +3628,11 @@
       document.getElementById('compAttModalSearch').value = '';
       filterCompiledAttModalRoster();
 
-      document.getElementById('viewCompiledAttModal').classList.add('active');
+      document.getElementById('viewCompiledAttModal').style.display = 'flex';
     }
 
     function closeViewCompiledAttModal() {
-      document.getElementById('viewCompiledAttModal').classList.remove('active');
+      document.getElementById('viewCompiledAttModal').style.display = 'none';
     }
 
     function filterCompiledAttModalRoster() {
@@ -3979,11 +3979,11 @@
         `;
       }
 
-      document.getElementById('viewCompiledFinModal').classList.add('active');
+      document.getElementById('viewCompiledFinModal').style.display = 'flex';
     }
 
     function closeViewCompiledFinModal() {
-      document.getElementById('viewCompiledFinModal').classList.remove('active');
+      document.getElementById('viewCompiledFinModal').style.display = 'none';
     }
 
     function downloadSingleServiceFinanceExcel(entryId) {
