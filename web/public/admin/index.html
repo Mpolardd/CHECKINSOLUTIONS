@@ -1970,6 +1970,10 @@
               </tbody>
             </table>
           </div>
+          <!-- Mobile Vertical Cards Container -->
+          <div id="repAttMobileCards" style="display: none; flex-direction: column; gap: 12px; margin-top: 6px;">
+            <!-- Injected via JS -->
+          </div>
         </div>
       </div>
 
@@ -2047,6 +2051,10 @@
                 <!-- Injected via JS -->
               </tbody>
             </table>
+          </div>
+          <!-- Mobile Vertical Cards Container -->
+          <div id="repFinMobileCards" style="display: none; flex-direction: column; gap: 12px; margin-top: 6px;">
+            <!-- Injected via JS -->
           </div>
         </div>
       </div>
@@ -3356,8 +3364,22 @@
       if (tab === 'members') { renderMembersTable(); syncMembersViewMode(); }
       if (tab === 'programs') { renderProgramsManager(); syncProgramsViewMode(); }
       if (tab === 'subAdmins') { renderSubAdminsList(); syncSubAdminsViewMode(); }
-      if (tab === 'reports') { initReportsHub(); }
+      if (tab === 'reports') { initReportsHub(); syncReportsViewMode(); }
     }
+
+    function syncReportsViewMode() {
+      const isMobile = window.innerWidth <= 700;
+      const attTbl = document.querySelector('#repSubAttendance .table-responsive');
+      const attCards = document.getElementById('repAttMobileCards');
+      if (attTbl) attTbl.style.display = isMobile ? 'none' : 'block';
+      if (attCards) attCards.style.display = isMobile ? 'flex' : 'none';
+
+      const finTbl = document.querySelector('#repSubFinance .table-responsive');
+      const finCards = document.getElementById('repFinMobileCards');
+      if (finTbl) finTbl.style.display = isMobile ? 'none' : 'block';
+      if (finCards) finCards.style.display = isMobile ? 'flex' : 'none';
+    }
+    window.addEventListener('resize', syncReportsViewMode);
 
     function toggleMobileMenu() {
       const drawer = document.getElementById('mobileMenuDrawer');
@@ -3506,39 +3528,79 @@
       if (countTextEl) countTextEl.innerText = `${sessionsList.length} Compiled Service Reports`;
 
       const tbody = document.getElementById('repAttTableBody');
-      if (!tbody) return;
+      const cardsContainer = document.getElementById('repAttMobileCards');
 
       if (sessionsList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 24px; color: var(--muted);">No compiled service check-in reports found.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 24px; color: var(--muted);">No compiled service check-in reports found.</td></tr>`;
+        if (cardsContainer) cardsContainer.innerHTML = `<div style="text-align:center; padding:24px; color:var(--muted); background:white; border-radius:8px; border:1px solid var(--line);">No compiled service check-in reports found.</div>`;
+        syncReportsViewMode();
         return;
       }
 
-      tbody.innerHTML = sessionsList.map((sess, idx) => {
-        const safeKey = escapeHtml(sess.id);
-        const name = escapeHtml(sess.serviceName);
-        const dateStr = escapeHtml(sess.dateFormatted);
-        const ratioStr = `${sess.maleCount} Men · ${sess.femaleCount} Women · ${sess.guestCount} Guests`;
+      if (tbody) {
+        tbody.innerHTML = sessionsList.map((sess, idx) => {
+          const safeKey = escapeHtml(sess.id);
+          const name = escapeHtml(sess.serviceName);
+          const dateStr = escapeHtml(sess.dateFormatted);
+          const ratioStr = `${sess.maleCount} Men · ${sess.femaleCount} Women · ${sess.guestCount} Guests`;
 
-        return `
-          <tr>
-            <td>${idx + 1}</td>
-            <td><strong>${dateStr}</strong></td>
-            <td><strong style="color: var(--ink);">${name}</strong></td>
-            <td><strong style="color: var(--emerald);">${sess.totalLogs} Present</strong></td>
-            <td><span class="badge badge-gray">${ratioStr}</span></td>
-            <td>
-              <div style="display:flex; gap:6px;">
-                <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:var(--light); color:var(--ink); border:1px solid var(--line);" onclick="openViewCompiledAttendanceModal('${safeKey}')">
+          return `
+            <tr>
+              <td>${idx + 1}</td>
+              <td><strong>${dateStr}</strong></td>
+              <td><strong style="color: var(--ink);">${name}</strong></td>
+              <td><strong style="color: var(--emerald);">${sess.totalLogs} Present</strong></td>
+              <td><span class="badge badge-gray">${ratioStr}</span></td>
+              <td>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:var(--light); color:var(--ink); border:1px solid var(--line);" onclick="openViewCompiledAttendanceModal('${safeKey}')">
+                    <i class="fas fa-eye"></i> View Report
+                  </button>
+                  <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:#107c41;" onclick="downloadCompiledAttendanceSessionExcel('${safeKey}')">
+                    <i class="fas fa-file-excel"></i> Download Excel
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      if (cardsContainer) {
+        cardsContainer.innerHTML = sessionsList.map(sess => {
+          const safeKey = escapeHtml(sess.id);
+          const name = escapeHtml(sess.serviceName);
+          const dateStr = escapeHtml(sess.dateFormatted);
+          const ratioStr = `${sess.maleCount} Men · ${sess.femaleCount} Women · ${sess.guestCount} Guests`;
+
+          return `
+            <div style="background: white; border: 1.5px solid var(--line); border-radius: 10px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div>
+                  <span class="badge badge-gray" style="font-size: 11px; margin-bottom: 4px;"><i class="fas fa-calendar"></i> ${dateStr}</span>
+                  <h4 style="font-size: 15px; font-weight: 800; color: var(--ink); margin-top: 2px;">${name}</h4>
+                </div>
+                <span style="font-size: 13px; font-weight: 800; color: var(--emerald); background: rgba(16, 124, 65, 0.08); padding: 4px 10px; border-radius: 20px;">
+                  ${sess.totalLogs} Present
+                </span>
+              </div>
+              <div style="font-size: 12.5px; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-users-rectangle" style="color: var(--accent);"></i> ${ratioStr}
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px;">
+                <button class="btn-main" style="padding: 8px; font-size: 12px; justify-content: center; background: var(--light); color: var(--ink); border: 1px solid var(--line);" onclick="openViewCompiledAttendanceModal('${safeKey}')">
                   <i class="fas fa-eye"></i> View Report
                 </button>
-                <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:#107c41;" onclick="downloadCompiledAttendanceSessionExcel('${safeKey}')">
+                <button class="btn-main" style="padding: 8px; font-size: 12px; justify-content: center; background: #107c41;" onclick="downloadCompiledAttendanceSessionExcel('${safeKey}')">
                   <i class="fas fa-file-excel"></i> Download Excel
                 </button>
               </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
+            </div>
+          `;
+        }).join('');
+      }
+
+      syncReportsViewMode();
     }
 
     let activeCompAttSession = null;
@@ -3764,46 +3826,94 @@
       if (countEl) countEl.innerText = `${list.length} Compiled Financial Service Reports`;
 
       const tbody = document.getElementById('repFinTableBody');
-      if (!tbody) return;
+      const finCardsContainer = document.getElementById('repFinMobileCards');
 
       if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 24px; color: var(--muted);">No financial collection records found for selected date/service filter.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 24px; color: var(--muted);">No financial collection records found for selected date/service filter.</td></tr>`;
+        if (finCardsContainer) finCardsContainer.innerHTML = `<div style="text-align:center; padding:24px; color:var(--muted); background:white; border-radius:8px; border:1px solid var(--line);">No financial collection records found for selected date/service filter.</div>`;
+        syncReportsViewMode();
         return;
       }
 
-      tbody.innerHTML = list.map((e, idx) => {
-        const dateStr = new Date(e.serviceDate).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
-        const name = e.serviceName || 'Sunday Service';
-        const tithes = Number(e.tithes || 0).toFixed(2);
-        const offering = Number(e.offering || 0).toFixed(2);
-        const seeds = (Number(e.buildingFund || 0) + Number(e.specialSeed || 0)).toFixed(2);
-        const total = Number(e.totalAmount || 0).toFixed(2);
-        const recordedBy = e.recordedBy || 'Treasury Officer';
-        const safeId = escapeHtml(e.id);
+      if (tbody) {
+        tbody.innerHTML = list.map((e, idx) => {
+          const dateStr = new Date(e.serviceDate).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+          const name = e.serviceName || 'Sunday Service';
+          const tithes = Number(e.tithes || 0).toFixed(2);
+          const offering = Number(e.offering || 0).toFixed(2);
+          const seeds = (Number(e.buildingFund || 0) + Number(e.specialSeed || 0)).toFixed(2);
+          const total = Number(e.totalAmount || 0).toFixed(2);
+          const recordedBy = e.recordedBy || 'Treasury Officer';
+          const safeId = escapeHtml(e.id);
 
-        return `
-          <tr>
-            <td>${idx + 1}</td>
-            <td><strong>${dateStr}</strong></td>
-            <td><strong style="color: var(--ink);">${escapeHtml(name)}</strong></td>
-            <td>GHS ${tithes}</td>
-            <td>GHS ${offering}</td>
-            <td>GHS ${seeds}</td>
-            <td><strong style="color: var(--emerald);">GHS ${total}</strong></td>
-            <td>${escapeHtml(recordedBy)}</td>
-            <td>
-              <div style="display:flex; gap:6px;">
-                <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:var(--light); color:var(--ink); border:1px solid var(--line);" onclick="openViewCompiledFinanceModal('${safeId}')">
+          return `
+            <tr>
+              <td>${idx + 1}</td>
+              <td><strong>${dateStr}</strong></td>
+              <td><strong style="color: var(--ink);">${escapeHtml(name)}</strong></td>
+              <td>GHS ${tithes}</td>
+              <td>GHS ${offering}</td>
+              <td>GHS ${seeds}</td>
+              <td><strong style="color: var(--emerald);">GHS ${total}</strong></td>
+              <td>${escapeHtml(recordedBy)}</td>
+              <td>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:var(--light); color:var(--ink); border:1px solid var(--line);" onclick="openViewCompiledFinanceModal('${safeId}')">
+                    <i class="fas fa-eye"></i> View Ledger
+                  </button>
+                  <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:#107c41;" onclick="downloadSingleServiceFinanceExcel('${safeId}')">
+                    <i class="fas fa-file-excel"></i> Download Excel
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      if (finCardsContainer) {
+        finCardsContainer.innerHTML = list.map(e => {
+          const dateStr = new Date(e.serviceDate).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+          const name = e.serviceName || 'Sunday Service';
+          const tithes = Number(e.tithes || 0).toFixed(2);
+          const offering = Number(e.offering || 0).toFixed(2);
+          const seeds = (Number(e.buildingFund || 0) + Number(e.specialSeed || 0)).toFixed(2);
+          const total = Number(e.totalAmount || 0).toFixed(2);
+          const safeId = escapeHtml(e.id);
+
+          return `
+            <div style="background: white; border: 1.5px solid var(--line); border-radius: 10px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div>
+                  <span class="badge badge-gray" style="font-size: 11px; margin-bottom: 4px;"><i class="fas fa-calendar"></i> ${dateStr}</span>
+                  <h4 style="font-size: 15px; font-weight: 800; color: var(--ink); margin-top: 2px;">${escapeHtml(name)}</h4>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 10px; text-transform: uppercase; color: var(--muted); font-weight: 700;">Grand Total</div>
+                  <div style="font-size: 16px; font-weight: 800; color: var(--emerald);">GHS ${total}</div>
+                </div>
+              </div>
+              
+              <div style="background: #fafbfa; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; margin-bottom: 12px; font-size: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                <div>Tithes: <strong>GHS ${tithes}</strong></div>
+                <div>Offering: <strong>GHS ${offering}</strong></div>
+                <div style="grid-column: span 2;">Seeds &amp; Building: <strong>GHS ${seeds}</strong></div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px;">
+                <button class="btn-main" style="padding: 8px; font-size: 12px; justify-content: center; background: var(--light); color: var(--ink); border: 1px solid var(--line);" onclick="openViewCompiledFinanceModal('${safeId}')">
                   <i class="fas fa-eye"></i> View Ledger
                 </button>
-                <button class="btn-main" style="padding:4px 10px; font-size:11.5px; background:#107c41;" onclick="downloadSingleServiceFinanceExcel('${safeId}')">
+                <button class="btn-main" style="padding: 8px; font-size: 12px; justify-content: center; background: #107c41;" onclick="downloadSingleServiceFinanceExcel('${safeId}')">
                   <i class="fas fa-file-excel"></i> Download Excel
                 </button>
               </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
+            </div>
+          `;
+        }).join('');
+      }
+
+      syncReportsViewMode();
     }
 
     function openViewCompiledFinanceModal(entryId) {
