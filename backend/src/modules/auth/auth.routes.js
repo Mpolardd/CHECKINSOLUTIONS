@@ -180,8 +180,12 @@ router.get('/verify', async (req, res) => {
 
 // ── Sub-Admin Cloud Persistence Endpoints (Strictly Protected for Super Admin Only) ──
 
-router.get('/subadmins', requireAuth, requireRoles('SUPER_ADMIN'), async (req, res) => {
+router.get('/subadmins', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (req, res) => {
   try {
+    if (req.user?.role !== 'SUPER_ADMIN') {
+      return res.json([]);
+    }
+
     const subAdminUsers = await prisma.user.findMany({
       where: { role: 'ADMIN' },
       orderBy: { createdAt: 'desc' },

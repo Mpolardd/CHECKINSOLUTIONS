@@ -2697,6 +2697,18 @@
     }
 
     async function loadSubAdmins() {
+      let currentUser = null;
+      try {
+        currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
+      } catch (e) {}
+
+      // Sub-Admins cannot access and do not load the Sub-Admins management list
+      if (currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN')) {
+        subAdminsList = [];
+        renderSubAdminsList();
+        return;
+      }
+
       try {
         const token = await getAdminAuthToken();
         const res = await fetch(`${API_BASE}/auth/subadmins`, {
@@ -3268,59 +3280,18 @@
           showDashboard();
           if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Admin Portal'; }
           return;
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          errorMsg.style.display = 'block';
+          errorMsg.innerText = errData.error || 'Invalid email or password. Please verify your credentials and try again.';
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Admin Portal'; }
+          return;
         }
-      } catch (err) {}
-
-      // Fallback auth check (Super Admin & Sub-Admin Accounts)
-      loadSubAdmins();
-      const isAdminEmail = (email.toLowerCase() === 'admin@solutionsfaith.com' || email.toLowerCase() === 'admin@example.com' || email.toLowerCase() === 'admin@solutionsfaith.org' || email.toLowerCase() === 'admin');
-      const isFinanceEmail = (email.toLowerCase() === 'finance@solutionsfaith.com' || email.toLowerCase() === 'treasury@solutionsfaith.com');
-
-      if (isFinanceEmail) {
-        purgeAuthSession();
+      } catch (err) {
         errorMsg.style.display = 'block';
-        errorMsg.innerText = 'Access Denied: Treasury Officers cannot access the Admin Portal. Please log in at Treasury Portal.';
+        errorMsg.innerText = 'Unable to connect to authentication server. Please check your internet connection.';
         if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Admin Portal'; }
-        return;
       }
-
-      if (isAdminEmail && (password === 'Solutions12@26' || password === 'ChangeMe123!' || password === 'admin123' || password === 'Godlovesme1@')) {
-        const offlineToken = 'sfmi_super_admin_session_' + Date.now();
-        sessionStorage.setItem('sfmi_token', offlineToken);
-        localStorage.setItem('sfmi_token', offlineToken);
-        sessionStorage.setItem('sfmi_current_user', JSON.stringify({
-          email: 'Admin@solutionsfaith.com',
-          name: 'Super Admin',
-          role: 'SUPER_ADMIN',
-          permissions: ['finance', 'attendance', 'members', 'programs', 'subAdmins']
-        }));
-        localStorage.setItem('sfmi_current_user', sessionStorage.getItem('sfmi_current_user'));
-
-        resetInactivityTimer();
-        showDashboard();
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Admin Portal'; }
-        return;
-      }
-
-      // Check Sub-Admins Registry
-      const matchedSub = subAdminsList.find(s => s.email.toLowerCase() === email.toLowerCase() && s.password === password);
-      if (matchedSub) {
-        sessionStorage.setItem('sfmi_sub_session', matchedSub.password);
-        sessionStorage.setItem('sfmi_current_user', JSON.stringify({
-          email: matchedSub.email,
-          name: matchedSub.name,
-          role: 'SUB_ADMIN',
-          permissions: matchedSub.permissions
-        }));
-        localStorage.setItem('sfmi_current_user', sessionStorage.getItem('sfmi_current_user'));
-        resetInactivityTimer();
-        showDashboard();
-      } else {
-        purgeAuthSession();
-        errorMsg.style.display = 'block';
-        errorMsg.innerText = 'Invalid email or password. Please try again.';
-      }
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Admin Portal'; }
     }
 
     function handleLogout() {
