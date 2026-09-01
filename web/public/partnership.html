@@ -1210,30 +1210,46 @@
     }
 
     function openRegisterPartnerModal() {
+      const modal = document.getElementById('registerPartnerModal');
+      if (!modal) return;
       document.getElementById('regPartnerMemberName').value = '';
       document.getElementById('regPartnerPhone').value = '';
       document.getElementById('regPartnerPledge').value = '';
       document.getElementById('regPartnerStartDate').value = formatLocalDate(new Date());
       document.getElementById('regPartnerNotes').value = '';
-      document.getElementById('registerPartnerModal').style.display = 'flex';
-      document.getElementById('regPartnerMemberName').focus();
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+      setTimeout(() => {
+        const input = document.getElementById('regPartnerMemberName');
+        if (input) input.focus();
+      }, 50);
     }
 
     function openRegisterPartnerModalWithName(name) {
       openRegisterPartnerModal();
       document.getElementById('regPartnerMemberName').value = name;
-      document.getElementById('regPartnerPledge').focus();
+      setTimeout(() => {
+        const input = document.getElementById('regPartnerPledge');
+        if (input) input.focus();
+      }, 60);
     }
 
     function openRegisterPartnerModalWithMember(id, name, phone) {
       openRegisterPartnerModal();
       document.getElementById('regPartnerMemberName').value = name;
       document.getElementById('regPartnerPhone').value = phone;
-      document.getElementById('regPartnerPledge').focus();
+      setTimeout(() => {
+        const input = document.getElementById('regPartnerPledge');
+        if (input) input.focus();
+      }, 60);
     }
 
     function closeRegisterPartnerModal() {
-      document.getElementById('registerPartnerModal').style.display = 'none';
+      const modal = document.getElementById('registerPartnerModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+      }
     }
 
     async function handleSaveNewPartnerSubmit(e) {

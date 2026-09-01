@@ -3079,11 +3079,19 @@
 
     function openManageSubAdminsModal() {
       renderSubAdminsList();
-      document.getElementById('manageSubAdminsModal').style.display = 'flex';
+      const modal = document.getElementById('manageSubAdminsModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+      }
     }
 
     function closeManageSubAdminsModal() {
-      document.getElementById('manageSubAdminsModal').style.display = 'none';
+      const modal = document.getElementById('manageSubAdminsModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+      }
     }
 
     function openCreateSubAdminModal() {
@@ -5003,11 +5011,19 @@
           <span style="font-size:13.5px;font-weight:700;">${v}</span>
         </div>`
       ).join('');
-      document.getElementById('finViewModal').style.display = 'flex';
+      const modal = document.getElementById('finViewModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+      }
     }
 
     function closeFinViewModal() {
-      document.getElementById('finViewModal').style.display = 'none';
+      const modal = document.getElementById('finViewModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+      }
     }
 
     function filterAdminFinanceTable() {
