@@ -941,7 +941,7 @@
         sessionStorage.setItem('sfmi_fin_user', JSON.stringify({ email: 'finance@solutionsfaith.com', role: 'FINANCE', name: 'Treasury Officer' }));
         resetInactivityTimer();
         showPartnerDashboard();
-      } else if (email.toLowerCase() === 'admin@solutionsfaith.com' && password === 'Password12@26') {
+      } else if (email.toLowerCase() === 'admin@solutionsfaith.com' && (password === 'Solutions12@26' || password === 'Password12@26')) {
         const offlineToken = 'sfmi_fin_offline_session_' + Date.now();
         sessionStorage.setItem('sfmi_fin_token', offlineToken);
         localStorage.setItem('sfmi_fin_token', offlineToken);
