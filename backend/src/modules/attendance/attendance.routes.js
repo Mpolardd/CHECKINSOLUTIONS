@@ -515,6 +515,94 @@ router.post('/services', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), asyn
   } catch (e) { next(e); }
 });
 
+router.get('/programs', async (req, res, next) => {
+  try {
+    const logs = await prisma.auditLog.findMany({
+      where: { entity: 'CUSTOM_PROGRAM' },
+      orderBy: { createdAt: 'desc' }
+    });
+    const programs = logs.map(l => ({
+      id: l.entityId || l.id,
+      ...(l.metadata || {})
+    }));
+    res.json(programs);
+  } catch (e) { next(e); }
+});
+
+router.post('/programs', async (req, res, next) => {
+  try {
+    const program = req.body;
+    if (!program || !program.id || !program.name) {
+      return res.status(400).json({ error: 'id and name are required' });
+    }
+
+    // Upsert custom program in AuditLog storage
+    await prisma.auditLog.deleteMany({
+      where: { entity: 'CUSTOM_PROGRAM', entityId: program.id }
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        actorId: req.user?.userId || null,
+        action: 'SAVE_PROGRAM',
+        entity: 'CUSTOM_PROGRAM',
+        entityId: program.id,
+        metadata: {
+          name: program.name,
+          category: program.category || 'Special Program / Convention',
+          schedule: program.schedule || '',
+          cutoffTime: program.cutoffTime || '11:30',
+          flyerUrl: program.flyerUrl || '/Sunday.JPG',
+          isStandard: Boolean(program.isStandard)
+        }
+      }
+    });
+
+    res.status(201).json({ success: true, program });
+  } catch (e) { next(e); }
+});
+
+router.delete('/programs/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await prisma.auditLog.deleteMany({
+      where: { entity: 'CUSTOM_PROGRAM', entityId: id }
+    });
+    res.json({ success: true, message: 'Program deleted' });
+  } catch (e) { next(e); }
+});
+
+router.get('/active-kiosk', async (req, res, next) => {
+  try {
+    const log = await prisma.auditLog.findFirst({
+      where: { entity: 'ACTIVE_KIOSK_PROGRAM' },
+      orderBy: { createdAt: 'desc' }
+    });
+    const programName = log && log.metadata ? log.metadata.programName : null;
+    res.json({ activeKiosk: programName });
+  } catch (e) { next(e); }
+});
+
+router.post('/active-kiosk', async (req, res, next) => {
+  try {
+    const { programName } = req.body || {};
+    await prisma.auditLog.deleteMany({
+      where: { entity: 'ACTIVE_KIOSK_PROGRAM' }
+    });
+    if (programName) {
+      await prisma.auditLog.create({
+        data: {
+          actorId: req.user?.userId || null,
+          action: 'SET_ACTIVE_KIOSK',
+          entity: 'ACTIVE_KIOSK_PROGRAM',
+          metadata: { programName }
+        }
+      });
+    }
+    res.json({ success: true, activeKiosk: programName || null });
+  } catch (e) { next(e); }
+});
+
 router.get('/services', async (req, res, next) => {
   try {
     const { serviceTypeId, date } = req.query;

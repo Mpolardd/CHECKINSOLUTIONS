@@ -2453,6 +2453,11 @@
             <input type="checkbox" id="permPrograms" aria-label="Programs Management Privilege" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span><i class="fa-solid fa-calendar-days" style="color: var(--accent); margin-right: 6px;"></i> Services &amp; Programs Setup</span>
             </label>
+
+            <label for="permReports" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="permReports" aria-label="Historical Reports Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span><i class="fa-solid fa-file-excel" style="color: var(--accent); margin-right: 6px;"></i> Historical Reports &amp; Archives</span>
+            </label>
           </div>
         </div>
 
@@ -2515,6 +2520,11 @@
             <label for="editPermPrograms" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="editPermPrograms" aria-label="Edit Programs Management Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span><i class="fa-solid fa-calendar-days" style="color: var(--accent); margin-right: 6px;"></i> Services &amp; Programs Setup</span>
+            </label>
+
+            <label for="editPermReports" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="editPermReports" aria-label="Edit Historical Reports Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span><i class="fa-solid fa-file-excel" style="color: var(--accent); margin-right: 6px;"></i> Historical Reports &amp; Archives</span>
             </label>
           </div>
         </div>
@@ -2738,16 +2748,16 @@
       const isSuperAdmin = !isSubAdmin;
 
       // Sub-Admins NEVER have access to Finance or Staff & Sub-Admins
-      // They are strictly limited to the privileges granted to them (Attendance, Members, Programs)
+      // They are strictly limited to the privileges granted to them (Attendance, Members, Programs, Reports)
       const rawPerms = (currentUser && Array.isArray(currentUser.permissions)) 
         ? currentUser.permissions 
         : ['attendance', 'members', 'programs'];
 
       const permissions = isSuperAdmin 
-        ? ['finance', 'attendance', 'members', 'programs', 'subAdmins']
+        ? ['finance', 'attendance', 'members', 'programs', 'reports', 'subAdmins']
         : rawPerms.filter(p => p !== 'finance' && p !== 'subAdmins');
 
-      const allTabs = ['finance', 'attendance', 'members', 'programs', 'subAdmins'];
+      const allTabs = ['finance', 'attendance', 'members', 'programs', 'reports', 'subAdmins'];
       let firstAllowedTab = null;
 
       allTabs.forEach(t => {
@@ -2910,6 +2920,7 @@
       if (document.getElementById('permAttendance').checked) perms.push('attendance');
       if (document.getElementById('permMembers').checked) perms.push('members');
       if (document.getElementById('permPrograms').checked) perms.push('programs');
+      if (document.getElementById('permReports')?.checked) perms.push('reports');
 
       if (perms.length === 0) {
         showToast('Please select at least one module privilege for this sub-admin.', 'error', 'No Privileges Selected');
@@ -2970,6 +2981,7 @@
       document.getElementById('editPermAttendance').checked = perms.includes('attendance');
       document.getElementById('editPermMembers').checked = perms.includes('members');
       document.getElementById('editPermPrograms').checked = perms.includes('programs');
+      if (document.getElementById('editPermReports')) document.getElementById('editPermReports').checked = perms.includes('reports');
 
       const modal = document.getElementById('editSubAdminModal');
       if (!modal) return;
@@ -2994,6 +3006,7 @@
       if (document.getElementById('editPermAttendance').checked) perms.push('attendance');
       if (document.getElementById('editPermMembers').checked) perms.push('members');
       if (document.getElementById('editPermPrograms').checked) perms.push('programs');
+      if (document.getElementById('editPermReports')?.checked) perms.push('reports');
 
       if (perms.length === 0) {
         showToast('Please select at least one module privilege.', 'error', 'No Privileges Selected');
@@ -5944,15 +5957,50 @@
     /* SERVICES & SPECIAL PROGRAMS SETUP MANAGER */
     let customPrograms = [];
 
-    function loadCustomPrograms() {
+    async function loadCustomPrograms() {
+      try {
+        const [progRes, kioskRes] = await Promise.all([
+          fetch(`${API_BASE}/attendance/programs`).catch(() => null),
+          fetch(`${API_BASE}/attendance/active-kiosk`).catch(() => null)
+        ]);
+
+        if (progRes && progRes.ok) {
+          const cloudProgs = await progRes.json();
+          if (Array.isArray(cloudProgs) && cloudProgs.length > 0) {
+            customPrograms = cloudProgs;
+            localStorage.setItem('sfmi_custom_programs', JSON.stringify(customPrograms));
+          }
+        }
+        if (kioskRes && kioskRes.ok) {
+          const kioskData = await kioskRes.json();
+          if (kioskData && kioskData.activeKiosk !== undefined) {
+            if (kioskData.activeKiosk) {
+              localStorage.setItem('sfmi_active_kiosk_service', kioskData.activeKiosk);
+            } else {
+              localStorage.removeItem('sfmi_active_kiosk_service');
+            }
+          }
+        }
+      } catch (err) {}
+
       const saved = localStorage.getItem('sfmi_custom_programs');
-      if (saved) {
+      if (saved && customPrograms.length === 0) {
         try { customPrograms = JSON.parse(saved); } catch(e){}
       }
+      populateServiceDropdowns();
     }
 
-    function saveCustomPrograms() {
+    async function saveCustomPrograms() {
       localStorage.setItem('sfmi_custom_programs', JSON.stringify(customPrograms));
+      try {
+        for (const prog of customPrograms) {
+          await fetch(`${API_BASE}/attendance/programs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(prog)
+          });
+        }
+      } catch (err) {}
     }
 
     function populateServiceDropdowns() {
@@ -6009,7 +6057,7 @@
     }
 
     async function resetKioskToRegularSchedule(programName) {
-      if (confirm('End active program/service and clear its attendance records?')) {
+      if (confirm('End active program/service and reset kiosk to regular schedule?')) {
         try {
           const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
           await fetch(`${API_BASE}/attendance/clear`, {
@@ -6020,13 +6068,18 @@
             },
             body: JSON.stringify({ serviceName: programName || currentSelectedService, clearAll: true })
           });
+          await fetch(`${API_BASE}/attendance/active-kiosk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ programName: null })
+          });
         } catch(e) {}
         serviceAttendanceMap = {};
         localStorage.removeItem('sfmi_active_kiosk_service');
         populateServiceDropdowns();
         renderAttendanceAndDemographics();
         renderProgramsManager();
-        showToast('Kiosk reset to <strong>Regular Schedule</strong> and attendance list cleared!', 'success', 'Schedule Reset');
+        showToast('Kiosk reset to <strong>Regular Schedule</strong>!', 'success', 'Schedule Reset');
       }
     }
 
@@ -6309,14 +6362,37 @@
       showToast(`Service <strong>"${escapeHtml(name)}"</strong> updated successfully!`, 'success', 'Service Updated');
     }
 
-    function handleAdminSetKioskActive(serviceKey) {
+    async function activateProgramOnKiosk(name) {
+      localStorage.setItem('sfmi_active_kiosk_service', name);
+      try {
+        await fetch(`${API_BASE}/attendance/active-kiosk`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ programName: name })
+        });
+      } catch (err) {}
+      populateServiceDropdowns();
+      renderProgramsManager();
+      showToast(`Kiosk check-in is now set live for: <strong>${escapeHtml(name)}</strong>`, 'success', 'Live Kiosk Updated');
+    }
+
+    async function deleteCustomProgram(id) {
+      if (!confirm('Are you sure you want to delete this special program?')) return;
+      customPrograms = customPrograms.filter(p => p.id !== id);
+      localStorage.setItem('sfmi_custom_programs', JSON.stringify(customPrograms));
+      try {
+        await fetch(`${API_BASE}/attendance/programs/${id}`, { method: 'DELETE' });
+      } catch (err) {}
+      populateServiceDropdowns();
+      renderProgramsManager();
+      showToast('Special program deleted.', 'info', 'Program Removed');
+    }
+
+    async function handleAdminSetKioskActive(serviceKey) {
       if (serviceKey === 'AUTO: Day-of-Week Schedule') {
-        resetKioskToRegularSchedule();
+        await resetKioskToRegularSchedule();
       } else {
-        localStorage.setItem('sfmi_active_kiosk_service', serviceKey);
-        populateServiceDropdowns();
-        renderProgramsManager();
-        showToast(`Kiosk check-in is now set live for: <strong>${serviceKey}</strong>`, 'success', 'Live Kiosk Updated');
+        await activateProgramOnKiosk(serviceKey);
       }
     }
 

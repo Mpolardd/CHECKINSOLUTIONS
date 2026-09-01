@@ -934,13 +934,32 @@
       if (name) document.getElementById('navChurchName').innerText = name;
     }
 
-    function loadCustomPrograms() {
+    async function loadCustomPrograms() {
+      try {
+        const [progRes, kioskRes] = await Promise.all([
+          fetch(`${API_BASE}/attendance/programs`).catch(() => null),
+          fetch(`${API_BASE}/attendance/active-kiosk`).catch(() => null)
+        ]);
+        if (progRes && progRes.ok) {
+          const progs = await progRes.json();
+          if (Array.isArray(progs) && progs.length > 0) {
+            localStorage.setItem('sfmi_custom_programs', JSON.stringify(progs));
+          }
+        }
+        if (kioskRes && kioskRes.ok) {
+          const kData = await kioskRes.json();
+          if (kData && kData.activeKiosk !== undefined) {
+            if (kData.activeKiosk) localStorage.setItem('sfmi_active_kiosk_service', kData.activeKiosk);
+            else localStorage.removeItem('sfmi_active_kiosk_service');
+          }
+        }
+      } catch (e) {}
+
       const savedPrograms = localStorage.getItem('sfmi_custom_programs');
       if (savedPrograms) {
         try {
           const list = JSON.parse(savedPrograms);
           const select = document.getElementById('kioskServiceSelector');
-          // Add custom programs to dropdown
           list.forEach(p => {
             if (!Array.from(select.options).some(o => o.value === p.name)) {
               const opt = document.createElement('option');
@@ -951,6 +970,7 @@
           });
         } catch(e) {}
       }
+      determineActiveService();
     }
 
     function determineActiveService() {
