@@ -1247,13 +1247,14 @@
         id: 'mem_' + Date.now(),
         firstName,
         lastName,
-        category,
+        category: category ? `Visitor (${category})` : 'Visitor / Guest',
         guardian: category === 'Child' ? guardian : '',
         phone,
         gender,
         address,
         email,
-        role: category === 'Child' ? 'Child / Sunday School' : 'Visitor / First Timer'
+        role: category === 'Child' ? 'Child / Sunday School' : 'Visitor / First Timer',
+        isGuest: true
       };
 
       try {
@@ -1271,7 +1272,9 @@
             newMember.id = regData.member.id;
           }
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error('Visitor registration request error:', err);
+      }
 
       closeRegisterModal();
       e.target.reset();

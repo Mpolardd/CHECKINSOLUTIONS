@@ -509,5 +509,53 @@ router.get('/partnerships/matrix', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Clear / Reset Financial Overview & Analytics Records - Protected
+router.post('/clear', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const deletedEntries = await tx.serviceFinance.deleteMany({});
+      const deletedTransactions = await tx.financialTransaction.deleteMany({
+        where: {
+          OR: [
+            { reference: { startsWith: 'SVC-' } },
+            { description: { contains: 'Service Collections' } }
+          ]
+        }
+      });
+      const deletedAudit = await tx.auditLog.deleteMany({
+        where: { entity: 'SERVICE_FINANCE' }
+      });
+
+      // Audit Log for clearing finance records
+      await tx.auditLog.create({
+        data: {
+          actorId: req.user?.userId || null,
+          action: 'CLEAR_SERVICE_FINANCE',
+          entity: 'SERVICE_FINANCE',
+          metadata: {
+            clearedEntriesCount: deletedEntries.count,
+            clearedTransactionsCount: deletedTransactions.count,
+            clearedAt: new Date().toISOString()
+          }
+        }
+      });
+
+      return {
+        clearedEntriesCount: deletedEntries.count,
+        clearedTransactionsCount: deletedTransactions.count
+      };
+    });
+
+    res.json({
+      success: true,
+      message: 'Financial Overview & Analytics records cleared successfully. Starting fresh with new production data.',
+      ...result
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
 module.exports = router;
+
 

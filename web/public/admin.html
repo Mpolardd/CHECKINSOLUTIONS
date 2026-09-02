@@ -1366,8 +1366,9 @@
               <option value="Sunday">Sunday (Family &amp; Friends)</option>
             </select>
           </div>
-          <div style="align-self: flex-end;">
+          <div style="align-self: flex-end; display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="btn-download" onclick="downloadFinancialCSV()"><i class="fas fa-file-arrow-down"></i> Download CSV Report</button>
+            <button class="btn-main" style="background: #c5221f;" onclick="clearFinancialData()" title="Reset and clear financial collection figures for fresh production start"><i class="fas fa-trash-alt"></i> Reset / Clear Financial Data</button>
           </div>
         </div>
       </div>
@@ -5084,31 +5085,53 @@
       renderAttendanceAndDemographics();
     }
 
+    function canonicalServiceName(raw) {
+      if (!raw) return 'Sunday: Family & Friends Service';
+      const s = String(raw).trim().toLowerCase();
+      if (s.includes('family') || s.includes('friends') || (s.includes('sunday') && !s.includes('school'))) {
+        return 'Sunday: Family & Friends Service';
+      }
+      if (s.includes('time with the lord') || s.includes('time with lord') || s.includes('wednesday')) {
+        return 'Wednesday: Time with the Lord';
+      }
+      if (s.includes('prophetic') || s.includes('deliverance') || s.includes('friday')) {
+        return 'Friday: Prophetic Healing & Deliverance';
+      }
+      return raw.trim();
+    }
+
     function getAttendanceListForService(serviceName) {
       const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value.trim() : '';
+      const canonName = canonicalServiceName(serviceName);
+
+      if (serviceName === 'ALL') {
+        if (selectedDate && selectedDate !== 'ALL') {
+          return serviceAttendanceMap[`ALL_${selectedDate}`] || serviceAttendanceMap['ALL'] || [];
+        }
+        return serviceAttendanceMap['ALL'] || [];
+      }
 
       if (selectedDate && selectedDate !== 'ALL') {
-        if (serviceAttendanceMap[`${serviceName}_${selectedDate}`] && serviceAttendanceMap[`${serviceName}_${selectedDate}`].length > 0) {
+        if (serviceAttendanceMap[`${serviceName}_${selectedDate}`]?.length > 0) {
           return serviceAttendanceMap[`${serviceName}_${selectedDate}`];
         }
-        if (serviceAttendanceMap[`ALL_${selectedDate}`] && serviceAttendanceMap[`ALL_${selectedDate}`].length > 0) {
-          return serviceAttendanceMap[`ALL_${selectedDate}`];
+        if (serviceAttendanceMap[`${canonName}_${selectedDate}`]?.length > 0) {
+          return serviceAttendanceMap[`${canonName}_${selectedDate}`];
+        }
+        if (serviceAttendanceMap[serviceName]?.length > 0) {
+          return serviceAttendanceMap[serviceName];
+        }
+        if (serviceAttendanceMap[canonName]?.length > 0) {
+          return serviceAttendanceMap[canonName];
         }
         return serviceAttendanceMap[`${serviceName}_${selectedDate}`] || [];
       }
 
-      if (serviceAttendanceMap[serviceName] && serviceAttendanceMap[serviceName].length > 0) {
+      if (serviceAttendanceMap[serviceName]?.length > 0) {
         return serviceAttendanceMap[serviceName];
       }
-      if (serviceAttendanceMap['ALL'] && serviceAttendanceMap['ALL'].length > 0) {
-        return serviceAttendanceMap['ALL'];
-      }
-
-      const allKeys = Object.keys(serviceAttendanceMap);
-      for (const k of allKeys) {
-        if (Array.isArray(serviceAttendanceMap[k]) && serviceAttendanceMap[k].length > 0) {
-          return serviceAttendanceMap[k];
-        }
+      if (serviceAttendanceMap[canonName]?.length > 0) {
+        return serviceAttendanceMap[canonName];
       }
 
       return [];
@@ -5492,7 +5515,20 @@
             const fName = item.member?.firstName || '';
             const lName = item.member?.lastName || '';
             const rawDate = formatLocalDate(item.checkedInAt || Date.now());
-            const svcName = item.service?.serviceType?.name || item.serviceName || 'Sunday Service';
+            const svcName = item.service?.serviceType?.name || item.serviceName || targetService;
+            const mRole = (item.member?.role || '').toLowerCase();
+            const mCat = (item.member?.category || '').toLowerCase();
+            const isGuest = Boolean(
+              item.isGuest ||
+              item.member?.isGuest ||
+              mRole.includes('visitor') ||
+              mRole.includes('first timer') ||
+              mRole.includes('first-timer') ||
+              mCat.includes('visitor') ||
+              mCat.includes('guest') ||
+              mCat.includes('first timer') ||
+              mCat.includes('first-timer')
+            );
             return {
               id: item.id || item.memberId,
               memberId: item.memberId || item.member?.id || null,
@@ -5502,14 +5538,14 @@
               name: `${fName} ${lName}`.trim(),
               gender: item.member?.gender || '',
               address: item.member?.address || '',
-              category: item.member?.category || (item.isGuest ? 'Visitor / Guest' : 'Adult'),
-              role: item.member?.role || (item.isGuest ? 'Visitor / First Timer' : 'Member'),
+              category: item.member?.category || (isGuest ? 'Visitor / Guest' : 'Adult'),
+              role: item.member?.role || (isGuest ? 'Visitor / First Timer' : 'Member'),
               guardian: item.member?.guardian || '',
               time: new Date(item.checkedInAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               dateStr: rawDate,
               serviceName: svcName,
               method: item.method || 'KIOSK',
-              isGuest: Boolean(item.isGuest || item.member?.category === 'Visitor / Guest')
+              isGuest: isGuest
             };
           });
 
@@ -5553,8 +5589,8 @@
                   phone: att.phone || '',
                   gender: att.gender || 'Not specified',
                   address: att.address || '',
-                  category: att.category || 'Visitor / Guest',
-                  role: att.role || 'Visitor / First Timer',
+                  category: att.category || (att.isGuest ? 'Visitor / Guest' : 'Adult'),
+                  role: att.role || (att.isGuest ? 'Visitor / First Timer' : 'Member'),
                   guardian: att.guardian || '',
                   isGuest: Boolean(att.isGuest)
                 });
@@ -5563,9 +5599,37 @@
             }
           });
 
-          const mapKey = selectedDate ? `${targetService}_${selectedDate}` : targetService;
-          serviceAttendanceMap[mapKey] = liveList;
-          serviceAttendanceMap[targetService] = liveList;
+          // Pre-initialize standard services
+          if (!serviceAttendanceMap['Sunday: Family & Friends Service']) serviceAttendanceMap['Sunday: Family & Friends Service'] = [];
+          if (!serviceAttendanceMap['Wednesday: Time with the Lord']) serviceAttendanceMap['Wednesday: Time with the Lord'] = [];
+          if (!serviceAttendanceMap['Friday: Prophetic Healing & Deliverance']) serviceAttendanceMap['Friday: Prophetic Healing & Deliverance'] = [];
+
+          // Group liveList into canonical services and exact service keys
+          const grouped = {};
+          liveList.forEach(att => {
+            const canon = canonicalServiceName(att.serviceName);
+            if (!grouped[canon]) grouped[canon] = [];
+            grouped[canon].push(att);
+
+            if (att.serviceName && att.serviceName !== canon) {
+              if (!grouped[att.serviceName]) grouped[att.serviceName] = [];
+              grouped[att.serviceName].push(att);
+            }
+          });
+
+          Object.keys(grouped).forEach(k => {
+            serviceAttendanceMap[k] = grouped[k];
+            if (selectedDate) {
+              serviceAttendanceMap[`${k}_${selectedDate}`] = grouped[k];
+            }
+          });
+
+          // Keep selected targetService mapped
+          const canonTarget = canonicalServiceName(targetService);
+          if (!serviceAttendanceMap[targetService] && serviceAttendanceMap[canonTarget]) {
+            serviceAttendanceMap[targetService] = serviceAttendanceMap[canonTarget];
+          }
+
           serviceAttendanceMap['ALL'] = liveList;
           if (selectedDate) {
             serviceAttendanceMap[`ALL_${selectedDate}`] = liveList;
@@ -6432,6 +6496,48 @@
       }
     }
 
+    async function clearFinancialData() {
+      showConfirmModal(
+        'Reset / Clear Financial Data?',
+        'Are you sure you want to clear all Financial Overview & Analytics collection records? This will purge all compiled service collection figures and cross-posted ledger entries to start fresh with new production data. This action cannot be undone.',
+        async () => {
+          try {
+            const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+            const res = await fetch(`${API_BASE}/finance/clear`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+              }
+            });
+            if (res.ok) {
+              try {
+                localStorage.removeItem('sfmi_finance_entries');
+                localStorage.removeItem('sfmi_cached_finance');
+                localStorage.removeItem('sfmi_fin_entries');
+              } catch (c) {}
+              rawFinanceEntries = [];
+              filteredFinanceEntries = [];
+              rawFinReportData = [];
+              await loadFinanceData();
+              if (typeof loadHistoricalFinanceReport === 'function') {
+                await loadHistoricalFinanceReport();
+              }
+              showToast('Financial Overview & Analytics records cleared successfully. Ready for new production data.', 'success', 'Finance Cleared');
+            } else {
+              const err = await res.json().catch(() => ({ error: 'Failed to clear financial data' }));
+              showToast(err.error || 'Failed to clear financial data.', 'error', 'Action Failed');
+            }
+          } catch (err) {
+            showToast('Network error connecting to server.', 'error', 'Error');
+          }
+        },
+        'fas fa-trash-alt',
+        'Clear Financial Data',
+        '#c5221f'
+      );
+    }
+
     function renderProgramsManager() {
       populateServiceDropdowns();
       const tbody = document.getElementById('programsTableBody');
@@ -6758,8 +6864,13 @@
 
     function viewProgramAttendance(name) {
       currentSelectedService = name;
+      const attSelect = document.getElementById('attServiceSelect');
+      if (attSelect) {
+        attSelect.value = name;
+      }
       switchTab('attendance');
       renderAttendanceAndDemographics();
+      fetchLiveCounts();
     }
 
     function openCreateProgramModal() {

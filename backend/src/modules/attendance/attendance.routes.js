@@ -446,7 +446,13 @@ router.get('/by-service-name', async (req, res, next) => {
     }
 
     const sanitizedRecent = attendees.slice(0, 100).map(a => {
-      const isGuest = guestIds.has(a.memberId);
+      const mCat = (a.member?.category || '').toLowerCase();
+      const mRole = (a.member?.role || '').toLowerCase();
+      const isGuest = Boolean(
+        guestIds.has(a.memberId) ||
+        mCat.includes('visitor') || mCat.includes('guest') || mCat.includes('first timer') ||
+        mRole.includes('visitor') || mRole.includes('first timer') || mRole.includes('guest')
+      );
       if (isAdmin) {
         return {
           id: a.id,
@@ -455,7 +461,10 @@ router.get('/by-service-name', async (req, res, next) => {
           method: a.method,
           checkedInAt: a.checkedInAt,
           isGuest,
-          member: a.member
+          member: {
+            ...(a.member || {}),
+            isGuest
+          }
         };
       }
       return {
@@ -466,7 +475,8 @@ router.get('/by-service-name', async (req, res, next) => {
         member: {
           firstName: a.member?.firstName || '',
           lastName: a.member?.lastName ? `${a.member.lastName.charAt(0)}.` : '',
-          gender: a.member?.gender || ''
+          gender: a.member?.gender || '',
+          isGuest
         }
       };
     });
@@ -719,6 +729,10 @@ router.post('/quick-register-checkin', async (req, res, next) => {
         if (body.phone && body.phone !== normPhone) phoneQueries.push({ phone: body.phone });
         member = await tx.member.findFirst({ where: { active: true, deletedAt: null, OR: phoneQueries } });
       }
+      const visitorCategory = body.category
+        ? (body.category.toLowerCase().includes('visitor') ? body.category : `Visitor (${body.category})`)
+        : 'Visitor / Guest';
+
       if (!member) {
         member = await tx.member.create({
           data: {
@@ -727,7 +741,7 @@ router.post('/quick-register-checkin', async (req, res, next) => {
             phone: normPhone || body.phone?.trim() || null,
             gender: body.gender?.trim() || null,
             address: body.address?.trim() || null,
-            category: body.category || 'Visitor / Guest',
+            category: visitorCategory,
             role: 'Visitor / First Timer',
             guardian: body.guardian?.trim() || null,
             email: body.email?.trim() || null
@@ -742,7 +756,9 @@ router.post('/quick-register-checkin', async (req, res, next) => {
             gender: body.gender?.trim() || member.gender,
             address: body.address?.trim() || member.address,
             email: body.email?.trim() || member.email,
-            guardian: body.guardian?.trim() || member.guardian
+            guardian: body.guardian?.trim() || member.guardian,
+            category: member.category || visitorCategory,
+            role: member.role || 'Visitor / First Timer'
           }
         });
       }
@@ -754,10 +770,19 @@ router.post('/quick-register-checkin', async (req, res, next) => {
         const { start: startOfDay, end: endOfDay } = getDayRange();
 
         if (body.serviceName) {
-          const prefix = body.serviceName.split(':')[0].trim();
+          const raw = body.serviceName.trim();
+          const clean = raw.replace(/^(Sunday|Wednesday|Friday)[:\s—-]+/i, '').trim();
+          const prefix = raw.split(/[:\&\(\)\—\-]+/)[0].trim();
+
           matched = await tx.service.findFirst({
             where: {
-              serviceType: { name: { contains: prefix, mode: 'insensitive' } },
+              serviceType: {
+                OR: [
+                  { name: { contains: clean, mode: 'insensitive' } },
+                  { name: { contains: prefix, mode: 'insensitive' } },
+                  { name: { contains: raw, mode: 'insensitive' } }
+                ]
+              },
               serviceDate: { gte: startOfDay, lte: endOfDay },
               active: true
             },
@@ -776,9 +801,18 @@ router.post('/quick-register-checkin', async (req, res, next) => {
         if (!matched) {
           let svcType = null;
           if (body.serviceName) {
-            const prefix = body.serviceName.split(':')[0].trim();
+            const raw = body.serviceName.trim();
+            const clean = raw.replace(/^(Sunday|Wednesday|Friday)[:\s—-]+/i, '').trim();
+            const prefix = raw.split(/[:\&\(\)\—\-]+/)[0].trim();
             svcType = await tx.serviceType.findFirst({
-              where: { name: { contains: prefix, mode: 'insensitive' }, active: true }
+              where: {
+                OR: [
+                  { name: { contains: clean, mode: 'insensitive' } },
+                  { name: { contains: prefix, mode: 'insensitive' } },
+                  { name: { contains: raw, mode: 'insensitive' } }
+                ],
+                active: true
+              }
             });
           }
           if (!svcType) {
@@ -894,21 +928,24 @@ router.get('/history', async (req, res, next) => {
       where.checkedInAt = {};
       if (startDate) {
         const { start } = getDayRange(startDate);
-        where.checkedInAt.gte = start;
+        where.checkedInAt.gte = new Date(start.getTime() - 14 * 3600 * 1000);
       }
       if (endDate) {
         const { end } = getDayRange(endDate);
-        where.checkedInAt.lte = end;
+        where.checkedInAt.lte = new Date(end.getTime() + 14 * 3600 * 1000);
       }
     }
 
     if (serviceName && serviceName.toUpperCase() !== 'ALL') {
-      const prefix = serviceName.split(':')[0].trim();
+      const raw = serviceName.trim();
+      const clean = raw.replace(/^(Sunday|Wednesday|Friday)[:\s—-]+/i, '').trim();
+      const prefix = raw.split(/[:\&\(\)\—\-]+/)[0].trim();
       const svcs = await prisma.service.findMany({
         where: {
           OR: [
+            { serviceType: { name: { contains: clean, mode: 'insensitive' } } },
             { serviceType: { name: { contains: prefix, mode: 'insensitive' } } },
-            { serviceType: { name: { contains: serviceName, mode: 'insensitive' } } }
+            { serviceType: { name: { contains: raw, mode: 'insensitive' } } }
           ]
         },
         select: { id: true }
@@ -949,7 +986,41 @@ router.get('/history', async (req, res, next) => {
       take
     });
 
-    res.json(attendees);
+    const memberIds = attendees.map(a => a.memberId).filter(Boolean);
+    let guestLogs = [];
+    if (memberIds.length > 0) {
+      try {
+        guestLogs = await prisma.auditLog.findMany({
+          where: {
+            action: 'VISITOR_REGISTRATION',
+            entityId: { in: memberIds }
+          },
+          select: { entityId: true }
+        });
+      } catch (aErr) {}
+    }
+    const guestIdSet = new Set(guestLogs.map(g => g.entityId));
+
+    const enriched = attendees.map(att => {
+      const m = att.member || {};
+      const cat = (m.category || '').toLowerCase();
+      const role = (m.role || '').toLowerCase();
+      const isGuest = Boolean(
+        guestIdSet.has(att.memberId) ||
+        cat.includes('visitor') || cat.includes('guest') || cat.includes('first-timer') || cat.includes('first timer') ||
+        role.includes('visitor') || role.includes('guest') || role.includes('first-timer') || role.includes('first timer')
+      );
+      return {
+        ...att,
+        isGuest,
+        member: {
+          ...m,
+          isGuest
+        }
+      };
+    });
+
+    res.json(enriched);
   } catch (e) { next(e); }
 });
 
