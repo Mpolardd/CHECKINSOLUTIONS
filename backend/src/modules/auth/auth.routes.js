@@ -20,7 +20,7 @@ function accessToken(user) {
   return jwt.sign(
     { sub: user.id, role: user.role, memberId: user.memberId || null },
     secret,
-    { expiresIn: `${process.env.ACCESS_TOKEN_MINUTES || 15}m` }
+    { expiresIn: `${process.env.ACCESS_TOKEN_MINUTES || 1440}m` }
   );
 }
 

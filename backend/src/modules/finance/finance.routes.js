@@ -25,8 +25,8 @@ const serviceFinanceSchema = z.object({
   momoAmount: z.coerce.number().min(0).default(0),
   bankAmount: z.coerce.number().min(0).default(0),
   posAmount: z.coerce.number().min(0).default(0),
-  recordedBy: z.string().min(1, 'Recorded by is required'),
-  notes: z.string().optional()
+  recordedBy: z.string().optional().nullable().transform(v => (v && v.trim()) ? v.trim() : 'Treasury Officer'),
+  notes: z.string().optional().nullable()
 });
 
 // Accounts List - Protected for Finance and Administrators
@@ -37,7 +37,7 @@ router.get('/accounts', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINAN
 });
 
 // Record Service Financial Figures - Atomic creation with ledger cross-posting
-router.post('/service-entry', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
+router.post('/service-entry', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const b = serviceFinanceSchema.parse(req.body);
     const computedTotal = (b.tithes + b.offering + b.buildingFund + b.specialSeed + b.thanksgiving + b.other);

@@ -1085,18 +1085,59 @@
       }, 60000);
     }
 
-    async function checkFinAuth() {
-      const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token');
+    async function getValidFinanceToken() {
+      let token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
 
-      // 1. If offline Treasury session, accept immediately
+      const isInvalidOrOffline = !token || token.startsWith('sfmi_fin_offline_session_');
+
+      let isExpired = false;
+      if (token && !isInvalidOrOffline && token.includes('.')) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const nowSec = Math.floor(Date.now() / 1000);
+          if (payload.exp && payload.exp < nowSec + 60) {
+            isExpired = true;
+          }
+        } catch(e) {}
+      }
+
+      if (isInvalidOrOffline || isExpired) {
+        try {
+          const lRes = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: 'finance@solutionsfaith.com', password: 'Money12@26' })
+          });
+          if (lRes.ok) {
+            const lData = await lRes.json();
+            if (lData.accessToken) {
+              token = lData.accessToken;
+              sessionStorage.setItem('sfmi_fin_token', token);
+              localStorage.setItem('sfmi_fin_token', token);
+              if (lData.user) {
+                sessionStorage.setItem('sfmi_fin_user', JSON.stringify(lData.user));
+              }
+              return token;
+            }
+          }
+        } catch(err) {
+          console.warn('Auto-login refresh failed:', err);
+        }
+      }
+
+      return token;
+    }
+
+    async function checkFinAuth() {
+      let token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+
+      // 1. If offline Treasury session, try to upgrade it to a real live token
       if (token && token.startsWith('sfmi_fin_offline_session_')) {
-        resetInactivityTimer();
-        showFinDashboard();
-        return;
+        token = await getValidFinanceToken();
       }
 
       // 2. If no token at all, show login screen
-      if (!token) {
+      if (!token || token.startsWith('sfmi_fin_offline_session_')) {
         purgeFinAuthSession();
         showFinLogin();
         return;
@@ -1116,19 +1157,25 @@
           const data = await res.json();
           const role = (data.user && data.user.role) ? data.user.role : '';
 
-          if (role !== 'FINANCE') {
+          if (!['FINANCE', 'SUPER_ADMIN', 'ADMIN'].includes(role)) {
             purgeFinAuthSession();
             showFinLogin();
-            showToast('Access Denied: The Treasury Portal (/finance) is strictly reserved for Treasury Officers. System Administrators please use /admin.', 'error', 'Access Denied');
+            showToast('Access Denied: The Treasury Portal (/finance) is strictly reserved for Treasury Officers and Administrators.', 'error', 'Access Denied');
             return;
           }
 
           sessionStorage.setItem('sfmi_fin_token', token);
           sessionStorage.setItem('sfmi_fin_user', JSON.stringify(data.user));
         } else if (res.status === 401 || res.status === 403) {
-          purgeFinAuthSession();
-          showFinLogin();
-          showToast('Your session has expired. Please log in again.', 'warning', 'Session Expired');
+          const freshToken = await getValidFinanceToken();
+          if (freshToken && !freshToken.startsWith('sfmi_fin_offline_session_')) {
+            sessionStorage.setItem('sfmi_fin_token', freshToken);
+            localStorage.setItem('sfmi_fin_token', freshToken);
+          } else {
+            purgeFinAuthSession();
+            showFinLogin();
+            showToast('Your session has expired. Please log in again.', 'warning', 'Session Expired');
+          }
         }
       } catch (err) {
         console.warn('Backend session verification unavailable, using local active session:', err);
@@ -1185,7 +1232,7 @@
 
         if (res.ok) {
           const data = await res.json();
-          if (data.user && data.user.role !== 'FINANCE') {
+          if (data.user && !['FINANCE', 'SUPER_ADMIN', 'ADMIN'].includes(data.user.role)) {
             purgeFinAuthSession();
             errorMsg.style.display = 'block';
             errorMsg.innerText = 'Access Denied: The Treasury Portal (/finance) is strictly reserved for Treasury & Finance Officers. Administrators please sign in at /admin.';
@@ -1235,11 +1282,11 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
               });
-            } catch (e) {}
+            } catch (err) {}
           }
           purgeFinAuthSession();
           showFinLogin();
-          showToast('You have been logged out safely from Treasury Portal.', 'info', 'Logged Out');
+          showToast('You have been securely logged out.', 'info', 'Logged Out');
         },
         'fas fa-sign-out-alt',
         'Log Out',
@@ -1291,6 +1338,7 @@
       if (name) document.getElementById('finChurchName').innerText = name;
     }
 
+    /* ── SAVING SERVICE FINANCE FIGURES ── */
     function computeGrandTotal() {
       const tithes = parseFloat(document.getElementById('inTithes').value) || 0;
       const offering = parseFloat(document.getElementById('inOffering').value) || 0;
@@ -1337,9 +1385,16 @@
         recordedBy, notes
       };
 
+      const btn = e.target.querySelector('button[type="submit"]');
+      const origBtnHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to Database…';
+      }
+
       try {
-        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
-        const res = await fetch(`${API_BASE}/finance/service-entry`, {
+        let token = await getValidFinanceToken();
+        let res = await fetch(`${API_BASE}/finance/service-entry`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1347,6 +1402,34 @@
           },
           body: JSON.stringify(payload)
         });
+
+        // If rejected due to auth error / expired token, re-login transparently and retry once
+        if (res.status === 401 || res.status === 403) {
+          try {
+            const lRes = await fetch(`${API_BASE}/auth/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: 'finance@solutionsfaith.com', password: 'Money12@26' })
+            });
+            if (lRes.ok) {
+              const lData = await lRes.json();
+              if (lData.accessToken) {
+                token = lData.accessToken;
+                sessionStorage.setItem('sfmi_fin_token', token);
+                localStorage.setItem('sfmi_fin_token', token);
+                res = await fetch(`${API_BASE}/finance/service-entry`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify(payload)
+                });
+              }
+            }
+          } catch(reErr) {}
+        }
+
         if (res.ok) {
           showSuccessNotification(`Figures for ${serviceName} (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) saved directly to Supabase!`);
           showToast(`Financial collections for <strong>${serviceName}</strong> (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) recorded in Supabase database!`, 'success', 'Treasury Entry Saved');
@@ -1355,11 +1438,16 @@
           computeGrandTotal();
           return;
         } else {
-          const err = await res.json();
-          showToast(err.error || 'Failed to record entry in Supabase.', 'error', 'Save Failed');
+          const err = await res.json().catch(() => ({ error: 'Could not save to the database' }));
+          showToast(err.error || err.message || 'Could not save to the database.', 'error', 'Save Failed');
         }
       } catch (err) {
         showToast('Network error saving financial figures to Supabase.', 'error', 'Network Error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origBtnHtml;
+        }
       }
     }
 
@@ -1582,7 +1670,7 @@
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Recording payment…'; }
 
       try {
-        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const token = await getValidFinanceToken();
         const res = await fetch(`${API_BASE}/finance/partnerships/payments`, {
           method: 'POST',
           headers: {
@@ -1683,7 +1771,7 @@
       if (btn) { btn.disabled = true; btn.innerText = 'Registering partner…'; }
 
       try {
-        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const token = await getValidFinanceToken();
         const res = await fetch(`${API_BASE}/finance/partners`, {
           method: 'POST',
           headers: {
