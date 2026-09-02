@@ -858,6 +858,12 @@
           </a>
           <div style="font-size: 13px; color: var(--muted);" id="liveDateDisplay"></div>
         </div>
+      <!-- SUCCESS BANNER -->
+      <div id="successBanner" style="display: none; background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <i class="fas fa-check-circle" style="color: #059669; font-size: 20px;"></i>
+          <span id="successMsgText" style="color: #065f46; font-weight: 600; font-size: 14px;"></span>
+        </div>
       </div>
 
       <form onsubmit="handleSaveServiceFinance(event)">
@@ -1431,18 +1437,21 @@
         }
 
         if (res.ok) {
+          showToast(`Financial collections for <strong>${escapeHtml(serviceName)}</strong> (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) recorded in Supabase database!`, 'success', 'Treasury Entry Saved');
           showSuccessNotification(`Figures for ${serviceName} (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) saved directly to Supabase!`);
-          showToast(`Financial collections for <strong>${serviceName}</strong> (GHS ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}) recorded in Supabase database!`, 'success', 'Treasury Entry Saved');
-          e.target.reset();
-          document.getElementById('finServiceDate').value = formatLocalDate(new Date());
-          computeGrandTotal();
+          try {
+            e.target.reset();
+            document.getElementById('finServiceDate').value = formatLocalDate(new Date());
+            computeGrandTotal();
+          } catch(reErr) {}
           return;
         } else {
           const err = await res.json().catch(() => ({ error: 'Could not save to the database' }));
           showToast(err.error || err.message || 'Could not save to the database.', 'error', 'Save Failed');
         }
       } catch (err) {
-        showToast('Network error saving financial figures to Supabase.', 'error', 'Network Error');
+        console.error('handleSaveServiceFinance error:', err);
+        showToast(err.message || 'Network error saving financial figures to Supabase.', 'error', 'Save Failed');
       } finally {
         if (btn) {
           btn.disabled = false;
@@ -1454,12 +1463,14 @@
     function showSuccessNotification(msg) {
       const banner = document.getElementById('successBanner');
       const text = document.getElementById('successMsgText');
-      text.innerText = msg;
-      banner.style.display = 'block';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setTimeout(() => {
-        banner.style.display = 'none';
-      }, 6000);
+      if (banner && text) {
+        text.innerText = msg;
+        banner.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => {
+          banner.style.display = 'none';
+        }, 6000);
+      }
     }
 
     /* ── PARTNERSHIP & MONTHLY PLEDGES FUNCTIONS ── */
