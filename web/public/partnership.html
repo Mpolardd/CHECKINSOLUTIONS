@@ -492,10 +492,73 @@
         flex-direction: column !important;
         gap: 12px !important;
       }
-      .brand-title { font-size: 12.5px !important; }
-      .brand-sub { font-size: 9.5px !important; }
-      .brand-fin img { width: 34px !important; height: 34px !important; }
-      .btn-main { width: 100% !important; justify-content: center !important; }
+      .fin-nav {
+        padding: 10px 14px;
+      }
+      .fin-nav-inner {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 0 !important;
+      }
+      .brand-fin {
+        gap: 8px !important;
+        flex: 1 1 50% !important;
+        min-width: 0 !important;
+      }
+      .brand-title {
+        font-size: 12px !important;
+        line-height: 1.2 !important;
+      }
+      .brand-sub {
+        font-size: 9px !important;
+        letter-spacing: 0.04em !important;
+      }
+      .brand-fin img {
+        width: 34px !important;
+        height: 34px !important;
+      }
+      .nav-actions {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-shrink: 0 !important;
+      }
+      .btn-header-link {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        border-radius: 6px !important;
+        gap: 5px !important;
+      }
+      .btn-header-logout {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        border-radius: 6px !important;
+        gap: 5px !important;
+      }
+      .btn-main {
+        width: 100% !important;
+        justify-content: center !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .brand-title {
+        font-size: 11px !important;
+      }
+      .btn-header-link .nav-btn-text,
+      .btn-header-logout .nav-btn-text {
+        display: none !important;
+      }
+      .btn-header-link {
+        padding: 7px 10px !important;
+        font-size: 13px !important;
+      }
+      .btn-header-logout {
+        padding: 7px 10px !important;
+        font-size: 13px !important;
+      }
     }
   </style>
 </head>
@@ -507,17 +570,17 @@
     <div class="fin-nav-inner">
       <a href="/partnership" class="brand-fin">
         <img id="partnerNavLogo" src="/church-logo.jpg" alt="Logo">
-        <div>
+        <div class="brand-text-wrap">
           <div class="brand-title" id="partnerChurchName">SOLUTIONS FAITH MINISTRY INTERNATIONAL</div>
           <div class="brand-sub">Covenant Partnership &amp; Monthly Pledges Portal</div>
         </div>
       </a>
       <div class="nav-actions" id="partnerNavActions" style="display: none;">
         <a href="/finance" class="btn-header-link" title="Open Post-Service Figures Entry">
-          <i class="fas fa-coins"></i> <span>Service Collections</span>
+          <i class="fas fa-coins"></i> <span class="nav-btn-text">Service Collections</span>
         </a>
         <button id="btnPartnerLogout" class="btn-header-logout" onclick="handlePartnerLogout()" title="Log Out">
-          <i class="fas fa-sign-out-alt"></i> <span>Log Out</span>
+          <i class="fas fa-sign-out-alt"></i> <span class="nav-btn-text">Log Out</span>
         </button>
       </div>
     </div>

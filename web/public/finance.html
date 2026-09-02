@@ -43,12 +43,13 @@
       flex-direction: column;
     }
 
-    /* Top Nav (Centered Brand & Logo) */
+    /* Top Nav (Responsive Header) */
     .fin-nav {
       background: var(--emerald-dark);
       color: white;
-      padding: 20px 24px;
+      padding: 14px 20px;
       border-bottom: 2px solid var(--accent);
+      width: 100%;
       position: relative;
     }
 
@@ -56,21 +57,22 @@
       max-width: var(--max);
       margin: 0 auto;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
-      justify-content: center;
-      text-align: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
     .brand-fin {
       display: flex;
       flex-direction: row;
       align-items: center;
-      justify-content: center;
       gap: 12px;
       text-decoration: none;
       color: white;
-      text-align: left;
+      min-width: 0;
+      flex: 1 1 auto;
     }
 
     .brand-fin img {
@@ -82,41 +84,66 @@
       flex-shrink: 0;
     }
 
+    .brand-text-wrap {
+      min-width: 0;
+    }
+
     .brand-title {
       font-family: Manrope, sans-serif;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 800;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
+      line-height: 1.25;
     }
 
     .brand-sub {
       font-size: 11px;
       color: #c4d0ca;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       margin-top: 2px;
     }
 
     .nav-logout-wrap {
-      position: absolute;
-      right: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn-header-partner {
+      background: rgba(200, 155, 85, 0.2);
+      color: white;
+      border: 1px solid rgba(200, 155, 85, 0.5);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      padding: 7px 13px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn-header-partner:hover {
+      background: rgba(200, 155, 85, 0.35);
+      color: white;
     }
 
     .btn-header-logout {
       background: #c5221f;
       color: white;
       border: none;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      padding: 8px 16px;
+      padding: 7px 13px;
       border-radius: 6px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       box-shadow: 0 2px 8px rgba(197,34,31,0.35);
       transition: background 0.2s, transform 0.15s;
       white-space: nowrap;
@@ -124,7 +151,6 @@
 
     .btn-header-logout:hover {
       background: #a51815;
-      transform: translateY(-1px);
     }
 
     .modal-backdrop {
@@ -580,25 +606,84 @@
       .grid-4 { grid-template-columns: repeat(2, 1fr); }
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 768px) {
       .fin-container { padding: 12px 10px; }
       .fin-card { padding: 16px 12px; border-radius: 10px; }
-      .brand-title { font-size: 12.5px !important; line-height: 1.25; }
-      .brand-sub { font-size: 9.5px !important; }
-      .brand-fin img { width: 34px !important; height: 34px !important; }
-      .brand-fin { gap: 8px !important; }
-      .fin-nav { padding: 10px 12px; }
-      .fin-nav-inner { text-align: left; padding: 0 48px 0 12px !important; margin: 0; }
-      .nav-logout-wrap { right: 12px !important; top: 50% !important; transform: translateY(-50%) !important; }
-      .btn-header-logout { padding: 0 !important; width: 36px !important; height: 36px !important; border-radius: 50% !important; font-size: 14px !important; justify-content: center !important; align-items: center !important; flex-shrink: 0 !important; }
-      .btn-header-logout .logout-text { display: none !important; }
+      .fin-nav { padding: 10px 14px; }
+      .fin-nav-inner {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 0 !important;
+        text-align: left !important;
+      }
+      .brand-fin {
+        gap: 8px !important;
+        flex: 1 1 50% !important;
+        min-width: 0 !important;
+      }
+      .brand-fin img {
+        width: 34px !important;
+        height: 34px !important;
+      }
+      .brand-title {
+        font-size: 12px !important;
+        line-height: 1.2 !important;
+      }
+      .brand-sub {
+        font-size: 9px !important;
+        letter-spacing: 0.04em !important;
+      }
+      .nav-logout-wrap {
+        display: flex !important;
+        position: static !important;
+        transform: none !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
+      }
+      .btn-header-partner {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        border-radius: 6px !important;
+        gap: 5px !important;
+      }
+      .btn-header-logout {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        border-radius: 6px !important;
+        gap: 5px !important;
+        width: auto !important;
+        height: auto !important;
+      }
 
-      /* Pure Vertical Column Layout for Mobile (One step/field on top of the other) */
+      /* Pure Vertical Column Layout for Mobile */
       .card-head {
         flex-direction: column !important;
         align-items: flex-start !important;
-        gap: 8px !important;
+        gap: 10px !important;
       }
+    }
+
+    @media (max-width: 480px) {
+      .brand-title {
+        font-size: 11px !important;
+      }
+      .btn-header-partner .nav-btn-text,
+      .btn-header-logout .nav-btn-text {
+        display: none !important;
+      }
+      .btn-header-partner {
+        padding: 7px 10px !important;
+        font-size: 13px !important;
+      }
+      .btn-header-logout {
+        padding: 7px 10px !important;
+        font-size: 13px !important;
+      }
+    }
 
       .step-card {
         padding: 16px 12px !important;
@@ -777,24 +862,24 @@
 
 <body>
 
-  <!-- Top Bar (Centered Brand & Logo) -->
+  <!-- Top Bar -->
   <header class="fin-nav">
     <div class="fin-nav-inner">
       <div class="brand-fin">
         <img id="finNavLogo" src="/church-logo.jpg" alt="Logo">
-        <div>
+        <div class="brand-text-wrap">
           <div class="brand-title" id="finChurchName">SOLUTIONS FAITH MINISTRY INTERNATIONAL</div>
-          <div class="brand-sub">Church Treasury & Financial Entry Portal</div>
+          <div class="brand-sub">Church Treasury &amp; Financial Entry Portal</div>
         </div>
       </div>
-    </div>
-    <div class="nav-logout-wrap" id="finLogoutWrap" style="display: none; align-items: center; gap: 10px;">
-      <a href="/partnership" class="btn-main" style="background: rgba(200, 155, 85, 0.2); color: white; border: 1px solid rgba(200, 155, 85, 0.5); font-size: 12.5px; text-decoration: none; padding: 8px 14px; border-radius: 6px;">
-        <i class="fas fa-handshake" style="color: var(--accent);"></i> Partnership Portal
-      </a>
-      <button id="btnFinLogout" class="btn-header-logout" style="display: none;" onclick="handleFinLogout()" title="Log Out">
-        <i class="fas fa-sign-out-alt"></i> <span class="logout-text">Log Out</span>
-      </button>
+      <div class="nav-logout-wrap" id="finLogoutWrap" style="display: none;">
+        <a href="/partnership" class="btn-header-partner" title="Open Partnership Portal">
+          <i class="fas fa-handshake"></i> <span class="nav-btn-text">Partnership Portal</span>
+        </a>
+        <button id="btnFinLogout" class="btn-header-logout" onclick="handleFinLogout()" title="Log Out">
+          <i class="fas fa-sign-out-alt"></i> <span class="nav-btn-text">Log Out</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -858,6 +943,8 @@
           </a>
           <div style="font-size: 13px; color: var(--muted);" id="liveDateDisplay"></div>
         </div>
+      </div>
+
       <!-- SUCCESS BANNER -->
       <div id="successBanner" style="display: none; background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;">
         <div style="display: flex; align-items: center; gap: 12px;">
