@@ -7912,8 +7912,9 @@
     function renderVisitorsSection() {
       // 1. Populate Service Selector with dynamic church programs if empty
       const sSelect = document.getElementById("visServiceSelect");
-      if (sSelect && sSelect.options.length <= 4 && Array.isArray(allPrograms) && allPrograms.length > 0) {
-        allPrograms.forEach(p => {
+      const progs = (typeof customPrograms !== 'undefined' && Array.isArray(customPrograms)) ? customPrograms : [];
+      if (sSelect && sSelect.options.length <= 4 && progs.length > 0) {
+        progs.forEach(p => {
           const canon = canonicalServiceName(p.name);
           let exists = false;
           for (let i = 0; i < sSelect.options.length; i++) {
