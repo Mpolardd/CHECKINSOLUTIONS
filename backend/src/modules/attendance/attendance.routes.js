@@ -1175,11 +1175,12 @@ const analyticsService = require('./attendanceAnalytics.service');
 // Monthly Attendance Analytics Dashboard
 router.get('/analytics/monthly', requireAuth, async (req, res, next) => {
   try {
-    const { year, month, serviceType } = req.query;
+    const { year, month, serviceType, attendeeType } = req.query;
     const data = await analyticsService.getMonthlyAttendanceAnalytics({
       year,
       month,
-      serviceTypeFilter: serviceType || 'ALL'
+      serviceTypeFilter: serviceType || 'ALL',
+      attendeeType: attendeeType || 'ALL'
     });
     res.json(data);
   } catch (e) {

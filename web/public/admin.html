@@ -1730,7 +1730,7 @@
           <div>
             <div class="kicker">Executive Intelligence &amp; Pastoral Care</div>
             <h1 class="card-title">Attendance &amp; Engagement Analytics</h1>
-            <p class="card-sub">Continuous Sunday streaks, multi-service consistency tracking, 3-month decline detection, engagement scoring, and pastoral care command center.</p>
+            <p class="card-sub">Continuous streaks across Wednesday, Friday, Sunday &amp; All Services, multi-service consistency tracking, 3-month decline detection, and pastoral care command center.</p>
           </div>
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <!-- Month & Year Selectors -->
@@ -1757,8 +1757,8 @@
               </select>
             </div>
 
-            <!-- Service Filter -->
-            <select id="analyticsServiceTypeSelect" class="form-ctrl" style="padding: 7px 12px; font-size: 13px; width: 220px; font-weight: 700;" onchange="handleAnalyticsPeriodChange()">
+            <!-- Service Activity Filter -->
+            <select id="analyticsServiceTypeSelect" class="form-ctrl" style="padding: 7px 12px; font-size: 13px; width: 215px; font-weight: 700;" onchange="handleAnalyticsPeriodChange()">
               <option value="ALL" selected>⚡ All Church Activities</option>
               <option value="SUNDAY">Sunday Services Only</option>
               <option value="WEDNESDAY">Wednesday Midweek Only</option>
@@ -1766,9 +1766,16 @@
               <option value="EVENT">Special Events Only</option>
             </select>
 
+            <!-- Attendee Type Filter (Members vs Visitors) -->
+            <select id="analyticsAttendeeTypeSelect" class="form-ctrl" style="padding: 7px 12px; font-size: 13px; width: 235px; font-weight: 700;" onchange="handleAnalyticsPeriodChange()">
+              <option value="ALL" selected>👥 All Attendees (Members + Visitors)</option>
+              <option value="MEMBERS">⛪ Church Members Only</option>
+              <option value="VISITORS">🌟 Visitors &amp; First-Timers Only</option>
+            </select>
+
             <!-- Search Member -->
             <div style="position: relative;">
-              <input type="text" id="analyticsSearchInput" class="form-ctrl" placeholder="Search member..." style="padding-left: 28px; width: 170px; font-size: 12.5px;" oninput="handleAnalyticsSearch(this.value)" />
+              <input type="text" id="analyticsSearchInput" class="form-ctrl" placeholder="Search attendee..." style="padding-left: 28px; width: 170px; font-size: 12.5px;" oninput="handleAnalyticsSearch(this.value)" />
               <i class="fas fa-search" style="position: absolute; left: 10px; top: 10px; font-size: 11px; color: var(--muted);"></i>
             </div>
           </div>
@@ -1779,8 +1786,8 @@
           <button class="btn-main" style="background: #14532d; font-size: 12px; padding: 6px 14px;" onclick="openPastorSummaryModal()">
             <i class="fas fa-file-lines"></i> Monthly Pastor Summary
           </button>
-          <button class="btn-main" style="background: #1e40af; font-size: 12px; padding: 6px 14px;" onclick="scrollToSundayCommandCenter()">
-            <i class="fas fa-crown" style="color: #fbbf24;"></i> Sunday Streaks Hub
+          <button class="btn-main" style="background: #1e40af; font-size: 12px; padding: 6px 14px;" onclick="scrollToStreakCommandCenter()">
+            <i class="fas fa-crown" style="color: #fbbf24;"></i> Multi-Service Streaks Hub
           </button>
           <button class="btn-download" style="font-size: 12px; padding: 6px 14px;" onclick="downloadAnalyticsCSV()">
             <i class="fas fa-file-excel"></i> Export to Excel (CSV)
@@ -1801,8 +1808,8 @@
       <div class="metrics-row" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); margin-top: 14px;">
         <div class="metric-box">
           <div class="metric-num" id="statAnTotalMembers">0</div>
-          <div class="metric-label">Regular Members</div>
-          <div style="font-size: 11px; color: var(--muted); margin-top: 2px;" id="statAnTotalVisitors">0 Visitors</div>
+          <div class="metric-label" id="statAnTotalMembersLabel">Total Attendees Analyzed</div>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 2px;" id="statAnTotalVisitors">0 Members · 0 Visitors</div>
         </div>
         <div class="metric-box" style="border-left: 3.5px solid #10b981;">
           <div class="metric-num" style="color: #10b981;" id="statAnActiveMembers">0</div>
@@ -1841,85 +1848,93 @@
         </div>
       </div>
 
-      <!-- 🔴 MANDATORY CONSECUTIVE SUNDAY ATTENDANCE & PASTORAL CARE COMMAND CENTER -->
-      <div class="admin-card" id="sundayStreakHubSection" style="margin-top: 18px; border: 1.5px solid #0284c7; background: #f0f9ff; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; border-bottom: 1px solid rgba(2, 132, 199, 0.2); padding-bottom: 10px;">
+      <!-- 🔴 MULTI-SERVICE CONSECUTIVE STREAK & PASTORAL CARE COMMAND CENTER -->
+      <div class="admin-card" id="streakHubSection" style="margin-top: 18px; border: 1.5px solid #0284c7; background: #f0f9ff; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(2, 132, 199, 0.2); padding-bottom: 10px;">
           <div>
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="background: #0284c7; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Mandatory Engine</span>
-              <h2 style="font-family: Manrope, sans-serif; font-size: 18px; color: #0c4a6e; margin: 0;">Consecutive Sunday Attendance &amp; Pastoral Care Command Center</h2>
+              <span style="background: #0284c7; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Multi-Service Engine</span>
+              <h2 style="font-family: Manrope, sans-serif; font-size: 18px; color: #0c4a6e; margin: 0;">Consecutive Attendance &amp; Pastoral Care Command Center</h2>
             </div>
-            <p style="font-size: 12.5px; color: #0369a1; margin-top: 4px;">Continuous chronological weekly streaks that span across calendar months and years without resetting. Preserves streaks during documented excused absences.</p>
+            <p style="font-size: 12.5px; color: #0369a1; margin-top: 4px;">Independent chronological streaks for Sunday, Wednesday, Friday, and Overall church services. Preserves active streaks through documented excused absences.</p>
           </div>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <button class="btn-main" style="background: #0284c7; font-size: 12px; padding: 5px 12px;" onclick="filterAnalyticsTableBySunday('SUNDAY_STREAKS')">
-              <i class="fas fa-fire" style="color: #fbbf24;"></i> View Active Streaks
+          
+          <!-- Service Streaks View Switcher -->
+          <div style="display: flex; gap: 6px; background: white; padding: 4px; border: 1px solid #bae6fd; border-radius: 6px;">
+            <button class="btn-preset active" id="btnStreakTabOverall" onclick="switchStreakServiceTab('overall')" style="font-size: 12px; font-weight: 700;">
+              ⚡ All Services
             </button>
-            <button class="btn-main" style="background: #dc2626; font-size: 12px; padding: 5px 12px;" onclick="filterAnalyticsTableBySunday('FOLLOW_UP_REQUIRED')">
-              <i class="fas fa-user-clock"></i> Pastoral Follow-Up Needed
+            <button class="btn-preset" id="btnStreakTabSunday" onclick="switchStreakServiceTab('sunday')" style="font-size: 12px; font-weight: 700; color: #0284c7;">
+              ⛪ Sunday Services
+            </button>
+            <button class="btn-preset" id="btnStreakTabWednesday" onclick="switchStreakServiceTab('wednesday')" style="font-size: 12px; font-weight: 700; color: #8b5cf6;">
+              📖 Wednesday Midweek
+            </button>
+            <button class="btn-preset" id="btnStreakTabFriday" onclick="switchStreakServiceTab('friday')" style="font-size: 12px; font-weight: 700; color: #ec4899;">
+              🔥 Friday Prophetic
             </button>
           </div>
         </div>
 
-        <!-- 4 Progressive Sunday Alert Metric Boxes -->
+        <!-- 4 Progressive Alert Metric Boxes (Dynamically updated for selected service tab) -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 14px;">
-          <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; cursor: pointer;" onclick="filterAnalyticsTableBySunday('SUNDAY_FAITHFUL')">
+          <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; cursor: pointer;" onclick="filterTableByActiveStreakCategory('FAITHFUL')">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 12px; font-weight: 700; color: #15803d;">🟢 Sunday Faithful</span>
+              <span style="font-size: 12px; font-weight: 700; color: #15803d;" id="labelStreakFaithful">🟢 Faithful</span>
               <i class="fas fa-fire" style="color: #16a34a;"></i>
             </div>
-            <div style="font-size: 22px; font-weight: 800; color: #15803d; margin-top: 4px;" id="statSundayFaithfulCount">0</div>
+            <div style="font-size: 22px; font-weight: 800; color: #15803d; margin-top: 4px;" id="statStreakFaithfulCount">0</div>
             <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">0 missed · Active streak</div>
           </div>
 
-          <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #fef08a; border-left: 4px solid #ca8a04; cursor: pointer;" onclick="filterAnalyticsTableBySunday('SUNDAY_WATCH')">
+          <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #fef08a; border-left: 4px solid #ca8a04; cursor: pointer;" onclick="filterTableByActiveStreakCategory('WATCH')">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 12px; font-weight: 700; color: #a16207;">🟡 Sunday Watch</span>
+              <span style="font-size: 12px; font-weight: 700; color: #a16207;" id="labelStreakWatch">🟡 Watch (1 Missed)</span>
               <i class="fas fa-eye" style="color: #ca8a04;"></i>
             </div>
-            <div style="font-size: 22px; font-weight: 800; color: #a16207; margin-top: 4px;" id="statSundayWatchCount">0</div>
-            <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Missed 1 Sunday · Check in</div>
+            <div style="font-size: 22px; font-weight: 800; color: #a16207; margin-top: 4px;" id="statStreakWatchCount">0</div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Missed 1 service · Check in</div>
           </div>
 
-          <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #fed7aa; border-left: 4px solid #ea580c; cursor: pointer;" onclick="filterAnalyticsTableBySunday('SUNDAY_CONCERN')">
+          <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #fed7aa; border-left: 4px solid #ea580c; cursor: pointer;" onclick="filterTableByActiveStreakCategory('CONCERN')">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 12px; font-weight: 700; color: #c2410c;">🟠 Sunday Concern</span>
+              <span style="font-size: 12px; font-weight: 700; color: #c2410c;" id="labelStreakConcern">🟠 Concern (2 Missed)</span>
               <i class="fas fa-phone-volume" style="color: #ea580c;"></i>
             </div>
-            <div style="font-size: 22px; font-weight: 800; color: #c2410c; margin-top: 4px;" id="statSundayConcernCount">0</div>
-            <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Missed 2 Sundays · Call</div>
+            <div style="font-size: 22px; font-weight: 800; color: #c2410c; margin-top: 4px;" id="statStreakConcernCount">0</div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Missed 2 services · Call</div>
           </div>
 
-          <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #fecaca; border-left: 4px solid #dc2626; cursor: pointer;" onclick="filterAnalyticsTableBySunday('FOLLOW_UP_REQUIRED')">
+          <div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #fecaca; border-left: 4px solid #dc2626; cursor: pointer;" onclick="filterTableByActiveStreakCategory('FOLLOW_UP_REQUIRED')">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 12px; font-weight: 700; color: #b91c1c;">🔴 Follow-Up Required</span>
+              <span style="font-size: 12px; font-weight: 700; color: #b91c1c;" id="labelStreakFollowUp">🔴 Follow-Up Required</span>
               <i class="fas fa-triangle-exclamation" style="color: #dc2626;"></i>
             </div>
-            <div style="font-size: 22px; font-weight: 800; color: #b91c1c; margin-top: 4px;" id="statSundayFollowUpCount">0</div>
-            <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Missed 3+ Sundays · Pastoral care</div>
+            <div style="font-size: 22px; font-weight: 800; color: #b91c1c; margin-top: 4px;" id="statStreakFollowUpCount">0</div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Missed 3+ services · Pastoral care</div>
           </div>
         </div>
 
-        <!-- Sunday Streak Sub-Panels (Leaderboards & Immediate Pastoral Action Cards) -->
+        <!-- Streaks Sub-Panels (Leaderboards & Immediate Pastoral Action Cards) -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-          <!-- Left: Current Sunday Streaks Leaderboard -->
+          <!-- Left: Current Streaks Leaderboard -->
           <div style="background: white; border-radius: 6px; padding: 12px; border: 1px solid var(--line);">
             <div style="font-weight: 800; font-size: 13px; color: var(--ink); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
-              <span><i class="fas fa-fire" style="color: #ea580c;"></i> Current Sunday Streaks Leaderboard</span>
-              <span style="font-size: 11px; color: var(--muted);">Consecutive Sundays</span>
+              <span id="streakLeaderboardTitle"><i class="fas fa-fire" style="color: #ea580c;"></i> Active Streaks Leaderboard</span>
+              <span style="font-size: 11px; color: var(--muted);" id="streakLeaderboardSubtitle">Consecutive Services</span>
             </div>
-            <div id="sundayStreakLeaderboardList" style="max-height: 200px; overflow-y: auto; font-size: 12.5px;">
+            <div id="serviceStreakLeaderboardList" style="max-height: 200px; overflow-y: auto; font-size: 12.5px;">
               <!-- Injected by JS -->
             </div>
           </div>
 
-          <!-- Right: Urgent Pastoral Care Call List (Missed 2+ Sundays) -->
+          <!-- Right: Urgent Pastoral Care Call List (Missed 2+ Services) -->
           <div style="background: white; border-radius: 6px; padding: 12px; border: 1px solid var(--line);">
             <div style="font-weight: 800; font-size: 13px; color: #b91c1c; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
-              <span><i class="fas fa-hand-holding-heart" style="color: #dc2626;"></i> Urgent Pastoral Follow-Up Needed</span>
-              <span style="font-size: 11px; color: var(--muted);">Missed 2+ Sundays</span>
+              <span id="streakUrgentTitle"><i class="fas fa-hand-holding-heart" style="color: #dc2626;"></i> Urgent Pastoral Follow-Up Needed</span>
+              <span style="font-size: 11px; color: var(--muted);" id="streakUrgentSubtitle">Missed 2+ Services</span>
             </div>
-            <div id="sundayPastoralUrgentList" style="max-height: 200px; overflow-y: auto; font-size: 12.5px;">
+            <div id="servicePastoralUrgentList" style="max-height: 200px; overflow-y: auto; font-size: 12.5px;">
               <!-- Injected by JS -->
             </div>
           </div>
@@ -1967,7 +1982,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
           <div>
             <h2 style="font-family: Manrope, sans-serif; font-size: 17px;">Pastoral Care &amp; Retention Watchlists</h2>
-            <p style="font-size: 12px; color: var(--muted);">Automated member categorization based on multi-month trajectory, streak momentum, and participation diversity.</p>
+            <p style="font-size: 12px; color: var(--muted);">Automated categorization based on multi-month trajectory, streak momentum, and participation diversity across all service types.</p>
           </div>
           <!-- Watchlist Filter Tabs -->
           <div class="filter-presets">
@@ -1996,18 +2011,20 @@
       <div class="admin-card" style="margin-top: 18px;" id="analyticsMasterTableCard">
         <div class="card-head-row">
           <div>
-            <h2 style="font-family: Manrope, sans-serif; font-size: 17px;" id="analyticsTableTitle">Monthly Member Attendance &amp; Engagement Ledger</h2>
-            <p class="card-sub" id="analyticsTableSubtitle">Complete breakdown of every member's Sunday streaks, service habits, and engagement score.</p>
+            <h2 style="font-family: Manrope, sans-serif; font-size: 17px;" id="analyticsTableTitle">Monthly Attendance &amp; Engagement Ledger</h2>
+            <p class="card-sub" id="analyticsTableSubtitle">Complete breakdown of every attendee's Sunday, Wednesday, Friday, and Overall streaks, service habits, and engagement score.</p>
           </div>
           <!-- Table Presets -->
           <div class="filter-presets" style="flex-wrap: wrap;">
-            <button class="btn-preset active" id="btnAnFilterAll" onclick="setAnalyticsMemberFilter('ALL')">All Members (<span id="anCountAll">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterSundayFaithful" onclick="setAnalyticsMemberFilter('SUNDAY_FAITHFUL')" style="color: #15803d;">Sunday Faithful (<span id="anCountSundayFaithful">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterWatch" onclick="setAnalyticsMemberFilter('SUNDAY_WATCH')" style="color: #ca8a04;">Sunday Watch: 1 Missed (<span id="anCountWatch">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterConcern" onclick="setAnalyticsMemberFilter('SUNDAY_CONCERN')" style="color: #ea580c;">Sunday Concern: 2 Missed (<span id="anCountConcern">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterFollowUp" onclick="setAnalyticsMemberFilter('FOLLOW_UP_REQUIRED')" style="color: #dc2626; font-weight: 700;">Follow-Up Needed: 3+ Missed (<span id="anCountFollowUp">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterDeclining" onclick="setAnalyticsMemberFilter('DECLINING')" style="color: #991b1b;">Declining (<span id="anCountDeclining">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterPillars" onclick="setAnalyticsMemberFilter('PILLARS')" style="color: #047857;">All-Round Pillars (<span id="anCountPillars">0</span>)</button>
+            <button class="btn-preset active" id="btnAnFilterAll" onclick="setAnalyticsMemberFilter('ALL')">All Attendees (<span id="anCountAll">0</span>)</button>
+            <button class="btn-preset" id="btnAnFilterMembers" onclick="setAnalyticsMemberFilter('MEMBERS_ONLY')" style="color: #047857;">Members Only (<span id="anCountMembers">0</span>)</button>
+            <button class="btn-preset" id="btnAnFilterVisitors" onclick="setAnalyticsMemberFilter('VISITORS_ONLY')" style="color: #b45309;">Visitors &amp; Guests (<span id="anCountVisitors">0</span>)</button>
+            <button class="btn-preset" id="btnAnFilterSundayFaithful" onclick="setAnalyticsMemberFilter('SUNDAY_FAITHFUL')" style="color: #0284c7;">Sunday Faithful (<span id="anCountSundayFaithful">0</span>)</button>
+            <button class="btn-preset" id="btnAnFilterWedFaithful" onclick="setAnalyticsMemberFilter('WEDNESDAY_FAITHFUL')" style="color: #8b5cf6;">Wednesday Faithful (<span id="anCountWedFaithful">0</span>)</button>
+            <button class="btn-preset" id="btnAnFilterFriFaithful" onclick="setAnalyticsMemberFilter('FRIDAY_FAITHFUL')" style="color: #ec4899;">Friday Faithful (<span id="anCountFriFaithful">0</span>)</button>
+            <button class="btn-preset" id="btnAnFilterPillars" onclick="setAnalyticsMemberFilter('PILLARS')" style="color: #15803d; font-weight: 700;">All-Round Pillars (<span id="anCountPillars">0</span>)</button>
+            <button class="btn-preset" id="btnAnFilterDeclining" onclick="setAnalyticsMemberFilter('DECLINING')" style="color: #dc2626;">Declining (<span id="anCountDeclining">0</span>)</button>
+            <button class="btn-preset" id="btnAnFilterFollowUp" onclick="setAnalyticsMemberFilter('FOLLOW_UP_REQUIRED')" style="color: #b91c1c; font-weight: 700;">Follow-Up Needed (<span id="anCountFollowUp">0</span>)</button>
             <button class="btn-preset" id="btnAnFilterZero" onclick="setAnalyticsMemberFilter('ZERO')" style="color: #475569;">Zero Attendance (<span id="anCountZero">0</span>)</button>
           </div>
         </div>
@@ -2016,13 +2033,12 @@
           <table class="data-table" id="analyticsMasterTable">
             <thead>
               <tr>
-                <th style="width: 45px;">#</th>
-                <th>Member Profile</th>
-                <th>Sunday Streak</th>
-                <th>Sunday Pastoral Alert</th>
+                <th style="width: 40px;">#</th>
+                <th>Attendee Profile</th>
+                <th>Continuous Streaks (Sun · Wed · Fri · Overall)</th>
                 <th>Sunday %</th>
-                <th>Wed %</th>
-                <th>Fri %</th>
+                <th>Wednesday %</th>
+                <th>Friday %</th>
                 <th>Events %</th>
                 <th>Overall %</th>
                 <th>Engagement Score</th>
@@ -8889,6 +8905,7 @@
     let currentAnalyticsFilter = 'ALL';
     let currentAnalyticsSearch = '';
     let currentWatchlistTab = 'PILLARS';
+    let currentStreakServiceCategory = 'overall'; // 'overall' | 'sunday' | 'wednesday' | 'friday'
     let chartAttendanceTrendsInstance = null;
     let chartServiceBreakdownInstance = null;
     let chartConsistencyDistributionInstance = null;
@@ -8897,6 +8914,7 @@
       const monthSelect = document.getElementById('analyticsMonthSelect');
       const yearSelect = document.getElementById('analyticsYearSelect');
       const serviceSelect = document.getElementById('analyticsServiceTypeSelect');
+      const attendeeSelect = document.getElementById('analyticsAttendeeTypeSelect');
 
       if (!monthSelect.value) {
         const now = new Date();
@@ -8907,18 +8925,19 @@
       const year = yearSelect.value;
       const month = monthSelect.value;
       const serviceType = serviceSelect ? serviceSelect.value : 'ALL';
+      const attendeeType = attendeeSelect ? attendeeSelect.value : 'ALL';
 
       const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
       try {
-        // 1. Fetch Monthly Analytics & Sunday Streaks
-        const anUrl = `${API_BASE}/attendance/analytics/monthly?year=${year}&month=${month}&serviceType=${serviceType}`;
+        // 1. Fetch Monthly Analytics & Multi-Service Streaks
+        const anUrl = `${API_BASE}/attendance/analytics/monthly?year=${year}&month=${month}&serviceType=${serviceType}&attendeeType=${attendeeType}`;
         const anRes = await fetch(anUrl, { headers });
         if (anRes.ok) {
           currentAnalyticsData = await anRes.json();
           renderAnalyticsKPIs(currentAnalyticsData);
-          renderSundayCommandCenter(currentAnalyticsData);
+          renderStreakCommandCenter(currentAnalyticsData);
           renderAnalyticsWatchlistGrid();
           renderAnalyticsMasterTable();
         }
@@ -8947,34 +8966,59 @@
 
     function setAnalyticsMemberFilter(filter) {
       currentAnalyticsFilter = filter;
-      const buttons = [
-        { id: 'btnAnFilterAll', key: 'ALL' },
-        { id: 'btnAnFilterSundayFaithful', key: 'SUNDAY_FAITHFUL' },
-        { id: 'btnAnFilterWatch', key: 'SUNDAY_WATCH' },
-        { id: 'btnAnFilterConcern', key: 'SUNDAY_CONCERN' },
-        { id: 'btnAnFilterFollowUp', key: 'FOLLOW_UP_REQUIRED' },
-        { id: 'btnAnFilterDeclining', key: 'DECLINING' },
-        { id: 'btnAnFilterPillars', key: 'PILLARS' },
-        { id: 'btnAnFilterZero', key: 'ZERO' }
-      ];
+      const buttonMap = {
+        'ALL': 'btnAnFilterAll',
+        'MEMBERS_ONLY': 'btnAnFilterMembers',
+        'VISITORS_ONLY': 'btnAnFilterVisitors',
+        'SUNDAY_FAITHFUL': 'btnAnFilterSundayFaithful',
+        'WEDNESDAY_FAITHFUL': 'btnAnFilterWedFaithful',
+        'FRIDAY_FAITHFUL': 'btnAnFilterFriFaithful',
+        'PILLARS': 'btnAnFilterPillars',
+        'DECLINING': 'btnAnFilterDeclining',
+        'FOLLOW_UP_REQUIRED': 'btnAnFilterFollowUp',
+        'ZERO': 'btnAnFilterZero'
+      };
 
-      buttons.forEach(b => {
-        const el = document.getElementById(b.id);
-        if (el) el.classList.toggle('active', b.key === filter);
+      Object.entries(buttonMap).forEach(([k, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('active', k === filter);
       });
 
       renderAnalyticsMasterTable();
     }
 
-    function filterAnalyticsTableBySunday(filter) {
-      setAnalyticsMemberFilter(filter === 'SUNDAY_STREAKS' ? 'SUNDAY_FAITHFUL' : filter);
+    function filterTableByActiveStreakCategory(tier) {
+      const cat = currentStreakServiceCategory || 'overall';
+      currentAnalyticsFilter = `ACTIVE_STREAK_${cat.toUpperCase()}_${tier}`;
+
+      // Remove active class from preset buttons
+      const buttonIds = [
+        'btnAnFilterAll', 'btnAnFilterMembers', 'btnAnFilterVisitors',
+        'btnAnFilterSundayFaithful', 'btnAnFilterWedFaithful', 'btnAnFilterFriFaithful',
+        'btnAnFilterPillars', 'btnAnFilterDeclining', 'btnAnFilterFollowUp', 'btnAnFilterZero'
+      ];
+      buttonIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+
+      renderAnalyticsMasterTable();
       const target = document.getElementById('analyticsMasterTableCard');
       if (target) target.scrollIntoView({ behavior: 'smooth' });
     }
 
-    function scrollToSundayCommandCenter() {
-      const target = document.getElementById('sundayStreakHubSection');
+    function scrollToStreakCommandCenter() {
+      const target = document.getElementById('streakHubSection');
       if (target) target.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function switchStreakServiceTab(category) {
+      currentStreakServiceCategory = category;
+      ['overall', 'sunday', 'wednesday', 'friday'].forEach(c => {
+        const btn = document.getElementById(`btnStreakTab${c.charAt(0).toUpperCase() + c.slice(1)}`);
+        if (btn) btn.classList.toggle('active', c === category);
+      });
+      renderStreakCommandCenter(currentAnalyticsData);
     }
 
     function switchWatchlistTab(tab) {
@@ -8991,82 +9035,192 @@
       const s = data.summary;
       const sb = s.serviceBreakdown || {};
 
-      document.getElementById('statAnTotalMembers').innerText = s.totalRegisteredMembers;
-      document.getElementById('statAnTotalVisitors').innerText = `${s.totalVisitorsCount} Visitors Recorded`;
-      document.getElementById('statAnActiveMembers').innerText = s.activeMembersThisMonth;
-      document.getElementById('statAnParticipationRate').innerText = `${s.monthlyParticipationRate}% Participation`;
-      document.getElementById('statAnOverallAttendancePct').innerText = `${s.overallAttendancePct}%`;
-      document.getElementById('statAnTotalCheckins').innerText = `${s.totalCheckinsCount} Total Check-ins`;
+      const totalMemsEl = document.getElementById('statAnTotalMembers');
+      if (totalMemsEl) totalMemsEl.innerText = s.analyzedCount ?? s.totalRegisteredMembers;
 
-      document.getElementById('statAnSundayAvg').innerText = sb.sunday?.average || 0;
-      document.getElementById('statAnSundayTotal').innerText = `${sb.sunday?.totalAttendance || 0} Total (${sb.sunday?.servicesCount || 0} Sundays)`;
+      const totalMemsLbl = document.getElementById('statAnTotalMembersLabel');
+      if (totalMemsLbl) {
+        if (s.attendeeTypeFilter === 'MEMBERS') totalMemsLbl.innerText = 'Church Members Analyzed';
+        else if (s.attendeeTypeFilter === 'VISITORS') totalMemsLbl.innerText = 'Visitors & First-Timers Analyzed';
+        else totalMemsLbl.innerText = 'Total Attendees Analyzed';
+      }
 
-      document.getElementById('statAnWedAvg').innerText = sb.wednesday?.average || 0;
-      document.getElementById('statAnWedTotal').innerText = `${sb.wednesday?.totalAttendance || 0} Total (${sb.wednesday?.servicesCount || 0} Midweek)`;
+      const totalVisEl = document.getElementById('statAnTotalVisitors');
+      if (totalVisEl) totalVisEl.innerText = `${s.totalRegularCount ?? 0} Members · ${s.totalVisitorsCount ?? 0} Visitors`;
 
-      document.getElementById('statAnFriAvg').innerText = sb.friday?.average || 0;
-      document.getElementById('statAnFriTotal').innerText = `${sb.friday?.totalAttendance || 0} Total (${sb.friday?.servicesCount || 0} Friday)`;
+      const activeMemsEl = document.getElementById('statAnActiveMembers');
+      if (activeMemsEl) activeMemsEl.innerText = s.activeMembersThisMonth;
 
-      document.getElementById('statAnEventTotal').innerText = sb.event?.totalAttendance || 0;
-      document.getElementById('statAnEventServices').innerText = `${sb.event?.servicesCount || 0} Events Held`;
+      const partRateEl = document.getElementById('statAnParticipationRate');
+      if (partRateEl) partRateEl.innerText = `${s.monthlyParticipationRate}% Participation`;
 
-      document.getElementById('statAnAvgScore').innerText = `${s.averageEngagementScore}/100`;
+      const overallPctEl = document.getElementById('statAnOverallAttendancePct');
+      if (overallPctEl) overallPctEl.innerText = `${s.overallAttendancePct}%`;
+
+      const totalCheckinsEl = document.getElementById('statAnTotalCheckins');
+      if (totalCheckinsEl) totalCheckinsEl.innerText = `${s.totalCheckinsCount} Total Check-ins`;
+
+      // Services Breakdown
+      const sunAvgEl = document.getElementById('statAnSundayAvg');
+      if (sunAvgEl) sunAvgEl.innerText = sb.sunday?.average || 0;
+      const sunTotEl = document.getElementById('statAnSundayTotal');
+      if (sunTotEl) sunTotEl.innerText = `${sb.sunday?.totalAttendance || 0} Total (${sb.sunday?.servicesCount || 0} Sundays)`;
+
+      const wedAvgEl = document.getElementById('statAnWedAvg');
+      if (wedAvgEl) wedAvgEl.innerText = sb.wednesday?.average || 0;
+      const wedTotEl = document.getElementById('statAnWedTotal');
+      if (wedTotEl) wedTotEl.innerText = `${sb.wednesday?.totalAttendance || 0} Total (${sb.wednesday?.servicesCount || 0} Midweek)`;
+
+      const friAvgEl = document.getElementById('statAnFriAvg');
+      if (friAvgEl) friAvgEl.innerText = sb.friday?.average || 0;
+      const friTotEl = document.getElementById('statAnFriTotal');
+      if (friTotEl) friTotEl.innerText = `${sb.friday?.totalAttendance || 0} Total (${sb.friday?.servicesCount || 0} Friday)`;
+
+      const evtTotEl = document.getElementById('statAnEventTotal');
+      if (evtTotEl) evtTotEl.innerText = sb.event?.totalAttendance || 0;
+      const evtSvcEl = document.getElementById('statAnEventServices');
+      if (evtSvcEl) evtSvcEl.innerText = `${sb.event?.servicesCount || 0} Events Held`;
+
+      const avgScoreEl = document.getElementById('statAnAvgScore');
+      if (avgScoreEl) avgScoreEl.innerText = `${s.averageEngagementScore}/100`;
+
       let scoreLabel = 'Moderate';
       if (s.averageEngagementScore >= 80) scoreLabel = '🌟 Church Thriving';
       else if (s.averageEngagementScore >= 65) scoreLabel = '🟢 Healthy Engagement';
       else if (s.averageEngagementScore < 40) scoreLabel = '⚠️ Needs Outreach';
-      document.getElementById('statAnAvgScoreLabel').innerText = scoreLabel;
+      const avgScoreLbl = document.getElementById('statAnAvgScoreLabel');
+      if (avgScoreLbl) avgScoreLbl.innerText = scoreLabel;
     }
 
-    function renderSundayCommandCenter(data) {
+    function renderStreakCommandCenter(data) {
       if (!data || !data.summary) return;
       const alertCounts = data.summary.pastoralAlertCounts || {};
       const lb = data.leaderboards || {};
+      const cat = currentStreakServiceCategory || 'overall';
 
-      // 4 Progressive Sunday Alert boxes
-      const faithfulCount = (data.members || []).filter(m => m.sunday.consecutiveMissed === 0).length;
-      document.getElementById('statSundayFaithfulCount').innerText = faithfulCount;
-      document.getElementById('statSundayWatchCount').innerText = alertCounts.sundayWatch || 0;
-      document.getElementById('statSundayConcernCount').innerText = alertCounts.sundayConcern || 0;
-      document.getElementById('statSundayFollowUpCount').innerText = alertCounts.sundayFollowUpRequired || 0;
+      let catLabel = 'All Services';
+      let itemUnit = 'Services';
+      let faithfulCount = 0;
+      let watchCount = 0;
+      let concernCount = 0;
+      let followUpCount = 0;
+      let streaks = [];
+      let urgentMembers = [];
 
-      // Current Sunday Streaks Leaderboard
-      const streakListEl = document.getElementById('sundayStreakLeaderboardList');
+      if (cat === 'sunday') {
+        catLabel = 'Sunday Services';
+        itemUnit = 'Sundays';
+        faithfulCount = alertCounts.sundayFaithful ?? (data.members || []).filter(m => m.sunday.consecutiveMissed === 0).length;
+        watchCount = alertCounts.sundayWatch ?? 0;
+        concernCount = alertCounts.sundayConcern ?? 0;
+        followUpCount = alertCounts.sundayFollowUpRequired ?? 0;
+        streaks = lb.sunday?.currentStreaks || lb.currentSundayStreaks || [];
+        urgentMembers = (data.members || []).filter(m => m.sunday.consecutiveMissed >= 2);
+      } else if (cat === 'wednesday') {
+        catLabel = 'Wednesday Midweek';
+        itemUnit = 'Midweek';
+        faithfulCount = alertCounts.wednesdayFaithful ?? (data.members || []).filter(m => m.wednesday.consecutiveMissed === 0).length;
+        watchCount = alertCounts.wednesdayWatch ?? 0;
+        concernCount = alertCounts.wednesdayConcern ?? 0;
+        followUpCount = alertCounts.wednesdayFollowUpRequired ?? 0;
+        streaks = lb.wednesday?.currentStreaks || [];
+        urgentMembers = (data.members || []).filter(m => m.wednesday.consecutiveMissed >= 2);
+      } else if (cat === 'friday') {
+        catLabel = 'Friday Prophetic';
+        itemUnit = 'Friday';
+        faithfulCount = alertCounts.fridayFaithful ?? (data.members || []).filter(m => m.friday.consecutiveMissed === 0).length;
+        watchCount = alertCounts.fridayWatch ?? 0;
+        concernCount = alertCounts.fridayConcern ?? 0;
+        followUpCount = alertCounts.fridayFollowUpRequired ?? 0;
+        streaks = lb.friday?.currentStreaks || [];
+        urgentMembers = (data.members || []).filter(m => m.friday.consecutiveMissed >= 2);
+      } else {
+        // Overall
+        catLabel = 'All Church Services';
+        itemUnit = 'Services';
+        faithfulCount = alertCounts.overallFaithful ?? (data.members || []).filter(m => m.overall.consecutiveMissed === 0).length;
+        watchCount = alertCounts.overallWatch ?? 0;
+        concernCount = alertCounts.overallConcern ?? 0;
+        followUpCount = alertCounts.overallFollowUpRequired ?? 0;
+        streaks = lb.overall?.currentStreaks || [];
+        urgentMembers = (data.members || []).filter(m => m.overall.consecutiveMissed >= 2);
+      }
+
+      // Update 4 Progressive Alert Boxes
+      const labelFaithfulEl = document.getElementById('labelStreakFaithful');
+      if (labelFaithfulEl) labelFaithfulEl.innerText = `🟢 ${catLabel} Faithful`;
+      const statFaithfulEl = document.getElementById('statStreakFaithfulCount');
+      if (statFaithfulEl) statFaithfulEl.innerText = faithfulCount;
+
+      const labelWatchEl = document.getElementById('labelStreakWatch');
+      if (labelWatchEl) labelWatchEl.innerText = `🟡 Watch (1 Missed)`;
+      const statWatchEl = document.getElementById('statStreakWatchCount');
+      if (statWatchEl) statWatchEl.innerText = watchCount;
+
+      const labelConcernEl = document.getElementById('labelStreakConcern');
+      if (labelConcernEl) labelConcernEl.innerText = `🟠 Concern (2 Missed)`;
+      const statConcernEl = document.getElementById('statStreakConcernCount');
+      if (statConcernEl) statConcernEl.innerText = concernCount;
+
+      const labelFollowUpEl = document.getElementById('labelStreakFollowUp');
+      if (labelFollowUpEl) labelFollowUpEl.innerText = `🔴 Follow-Up Required`;
+      const statFollowUpEl = document.getElementById('statStreakFollowUpCount');
+      if (statFollowUpEl) statFollowUpEl.innerText = followUpCount;
+
+      // Update Sub-Panels Header
+      const titleEl = document.getElementById('streakLeaderboardTitle');
+      if (titleEl) titleEl.innerHTML = `<i class="fas fa-fire" style="color: #ea580c;"></i> ${catLabel} Streaks Leaderboard`;
+      const subtitleEl = document.getElementById('streakLeaderboardSubtitle');
+      if (subtitleEl) subtitleEl.innerText = `Active ${itemUnit} Streak`;
+
+      const urgentTitleEl = document.getElementById('streakUrgentTitle');
+      if (urgentTitleEl) urgentTitleEl.innerHTML = `<i class="fas fa-hand-holding-heart" style="color: #dc2626;"></i> Urgent ${catLabel} Follow-Up Needed`;
+      const urgentSubEl = document.getElementById('streakUrgentSubtitle');
+      if (urgentSubEl) urgentSubEl.innerText = `Missed 2+ ${itemUnit}`;
+
+      // Render Left: Streaks Leaderboard
+      const streakListEl = document.getElementById('serviceStreakLeaderboardList');
       if (streakListEl) {
-        const streaks = lb.currentSundayStreaks || [];
         if (streaks.length === 0) {
-          streakListEl.innerHTML = `<div style="color: var(--muted); padding: 16px 0; text-align: center;">No active Sunday streaks recorded yet.</div>`;
+          streakListEl.innerHTML = `<div style="color: var(--muted); padding: 16px 0; text-align: center;">No active ${catLabel} streaks recorded yet.</div>`;
         } else {
-          streakListEl.innerHTML = streaks.slice(0, 8).map((m, i) => `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line);">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-weight: 800; color: var(--muted); width: 18px; font-size: 11px;">#${i + 1}</span>
-                <div>
-                  <div style="font-weight: 700; color: var(--ink);">${escapeHtml(m.name)}</div>
-                  <div style="font-size: 11px; color: var(--muted);">${m.category} · Sunday ${m.sunday.rate}%</div>
+          streakListEl.innerHTML = streaks.slice(0, 8).map((m, i) => {
+            const streakVal = m[cat]?.currentStreak || m.sunday?.currentStreak || 0;
+            const rateVal = m[cat]?.rate ?? m.overall?.rate ?? 0;
+            return `
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-weight: 800; color: var(--muted); width: 18px; font-size: 11px;">#${i + 1}</span>
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span style="font-weight: 700; color: var(--ink); cursor: pointer;" onclick="openMemberAnalyticsModal('${m.memberId}')">${escapeHtml(m.name)}</span>
+                      ${m.isVisitor ? `<span style="background:#fef3c7;color:#b45309;font-size:9.5px;font-weight:700;padding:1px 4px;border-radius:3px;">Visitor</span>` : ''}
+                    </div>
+                    <div style="font-size: 11px; color: var(--muted);">${m.category} · ${catLabel} ${rateVal}%</div>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <span style="background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 11.5px;">
+                    🔥 ${streakVal} ${itemUnit}
+                  </span>
                 </div>
               </div>
-              <div style="text-align: right;">
-                <span style="background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 11.5px;">
-                  🔥 ${m.sunday.currentStreak} Sundays
-                </span>
-              </div>
-            </div>
-          `).join('');
+            `;
+          }).join('');
         }
       }
 
-      // Urgent Pastoral Follow-Up Needed (Missed 2+ Sundays)
-      const urgentListEl = document.getElementById('sundayPastoralUrgentList');
+      // Render Right: Urgent Care List
+      const urgentListEl = document.getElementById('servicePastoralUrgentList');
       if (urgentListEl) {
-        const urgentMembers = (data.members || []).filter(m => m.sunday.consecutiveMissed >= 2);
         if (urgentMembers.length === 0) {
-          urgentListEl.innerHTML = `<div style="color: #15803d; padding: 16px 0; text-align: center;"><i class="fas fa-check-circle"></i> Excellent! No members have missed 2+ consecutive Sundays.</div>`;
+          urgentListEl.innerHTML = `<div style="color: #15803d; padding: 16px 0; text-align: center;"><i class="fas fa-check-circle"></i> Excellent! No attendees have missed 2+ consecutive ${itemUnit}.</div>`;
         } else {
           urgentListEl.innerHTML = urgentMembers.slice(0, 8).map(m => {
-            const missedBadge = m.sunday.consecutiveMissed >= 3
-              ? `<span style="background: #fecaca; color: #dc2626; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">Missed ${m.sunday.consecutiveMissed} Sundays</span>`
-              : `<span style="background: #fed7aa; color: #ea580c; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">Missed 2 Sundays</span>`;
+            const missedCount = m[cat]?.consecutiveMissed || 2;
+            const missedBadge = missedCount >= 3
+              ? `<span style="background: #fecaca; color: #dc2626; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">Missed ${missedCount} ${itemUnit}</span>`
+              : `<span style="background: #fed7aa; color: #ea580c; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">Missed 2 ${itemUnit}</span>`;
 
             const phoneClean = (m.phone || '').replace(/[^0-9]/g, '');
             const waLink = phoneClean ? `https://wa.me/${phoneClean.startsWith('0') ? '233' + phoneClean.slice(1) : phoneClean}` : '#';
@@ -9074,8 +9228,11 @@
             return `
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line);">
                 <div>
-                  <div style="font-weight: 700; color: #991b1b;">${escapeHtml(m.name)}</div>
-                  <div style="font-size: 11px; color: var(--muted);">${m.phone || 'No phone'} · Last seen: ${m.sunday.lastAttendedDate || 'Never'}</div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-weight: 700; color: #991b1b; cursor: pointer;" onclick="openMemberAnalyticsModal('${m.memberId}')">${escapeHtml(m.name)}</span>
+                    ${m.isVisitor ? `<span style="background:#fef3c7;color:#b45309;font-size:9.5px;font-weight:700;padding:1px 4px;border-radius:3px;">Visitor</span>` : ''}
+                  </div>
+                  <div style="font-size: 11px; color: var(--muted);">${m.phone || 'No phone'} · Last seen: ${m[cat]?.lastAttendedDate || 'Never'}</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
                   ${missedBadge}
@@ -9206,7 +9363,7 @@
       else if (currentWatchlistTab === 'NEW') activeList = newMems;
 
       if (activeList.length === 0) {
-        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 30px;">No members matching this pastoral watchlist filter.</div>`;
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 30px;">No attendees matching this pastoral watchlist filter.</div>`;
         return;
       }
 
@@ -9214,24 +9371,28 @@
         const phoneClean = (m.phone || '').replace(/[^0-9]/g, '');
         const waLink = phoneClean ? `https://wa.me/${phoneClean.startsWith('0') ? '233' + phoneClean.slice(1) : phoneClean}` : '#';
 
-        const streakBadge = m.sunday.currentStreak > 0
-          ? `<span style="background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">🔥 ${m.sunday.currentStreak} Sundays</span>`
-          : `<span style="background: #fecaca; color: #dc2626; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">❌ Missed ${m.sunday.consecutiveMissed}</span>`;
+        const streakBadge = m.overall.currentStreak > 0
+          ? `<span style="background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">🔥 ${m.overall.currentStreak} All</span>`
+          : `<span style="background: #fecaca; color: #dc2626; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">❌ Missed ${m.overall.consecutiveMissed}</span>`;
 
         return `
           <div style="background: white; border: 1px solid var(--line); border-radius: 6px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                <span style="font-weight: 800; font-size: 13.5px; color: var(--ink);">${escapeHtml(m.name)}</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-weight: 800; font-size: 13.5px; color: var(--ink); cursor: pointer;" onclick="openMemberAnalyticsModal('${m.memberId}')">${escapeHtml(m.name)}</span>
+                  ${m.isVisitor ? `<span style="background:#fef3c7;color:#b45309;font-size:9.5px;font-weight:700;padding:1px 4px;border-radius:3px;">Visitor</span>` : ''}
+                </div>
                 ${streakBadge}
               </div>
               <div style="font-size: 11.5px; color: var(--muted); margin-bottom: 8px;">
                 ${m.category} · ${m.phone || 'No phone'}
               </div>
-              <div style="display: flex; gap: 8px; font-size: 11px; background: #f8fafc; padding: 6px 8px; border-radius: 4px; margin-bottom: 8px;">
-                <div><strong>Sunday:</strong> ${m.sunday.rate}%</div>
+              <div style="display: flex; gap: 8px; font-size: 11px; background: #f8fafc; padding: 6px 8px; border-radius: 4px; margin-bottom: 8px; flex-wrap: wrap;">
+                <div><strong>Sun:</strong> ${m.sunday.rate}%</div>
                 <div><strong>Wed:</strong> ${m.wednesday.rate}%</div>
                 <div><strong>Fri:</strong> ${m.friday.rate}%</div>
+                <div><strong>Overall:</strong> <strong style="color:var(--emerald);">${m.overall.rate}%</strong></div>
                 <div><strong>Score:</strong> <span style="color:${m.engagement.badgeColor}; font-weight:800;">${m.engagement.score}/100</span></div>
               </div>
             </div>
@@ -9254,30 +9415,60 @@
       let list = currentAnalyticsData.members;
 
       // Update Preset Counts
-      document.getElementById('anCountAll').innerText = list.length;
-      document.getElementById('anCountSundayFaithful').innerText = list.filter(m => m.sunday.consecutiveMissed === 0).length;
-      document.getElementById('anCountWatch').innerText = list.filter(m => m.sunday.consecutiveMissed === 1).length;
-      document.getElementById('anCountConcern').innerText = list.filter(m => m.sunday.consecutiveMissed === 2).length;
-      document.getElementById('anCountFollowUp').innerText = list.filter(m => m.sunday.consecutiveMissed >= 3).length;
-      document.getElementById('anCountDeclining').innerText = list.filter(m => m.overall.isRapidlyDeclining || m.overall.rateDelta <= -30).length;
-      document.getElementById('anCountPillars').innerText = list.filter(m => m.overall.rate >= 75 || m.sunday.rate >= 80).length;
-      document.getElementById('anCountZero').innerText = list.filter(m => m.overall.attended === 0).length;
+      const elCountAll = document.getElementById('anCountAll');
+      if (elCountAll) elCountAll.innerText = list.length;
+      const elCountMembers = document.getElementById('anCountMembers');
+      if (elCountMembers) elCountMembers.innerText = list.filter(m => !m.isVisitor).length;
+      const elCountVisitors = document.getElementById('anCountVisitors');
+      if (elCountVisitors) elCountVisitors.innerText = list.filter(m => m.isVisitor).length;
+      const elCountSun = document.getElementById('anCountSundayFaithful');
+      if (elCountSun) elCountSun.innerText = list.filter(m => m.sunday.consecutiveMissed === 0).length;
+      const elCountWed = document.getElementById('anCountWedFaithful');
+      if (elCountWed) elCountWed.innerText = list.filter(m => m.wednesday.consecutiveMissed === 0 && (m.wednesday.attended > 0 || m.wednesday.currentStreak > 0)).length;
+      const elCountFri = document.getElementById('anCountFriFaithful');
+      if (elCountFri) elCountFri.innerText = list.filter(m => m.friday.consecutiveMissed === 0 && (m.friday.attended > 0 || m.friday.currentStreak > 0)).length;
+      const elCountPillars = document.getElementById('anCountPillars');
+      if (elCountPillars) elCountPillars.innerText = list.filter(m => m.overall.rate >= 75 || m.sunday.rate >= 80).length;
+      const elCountDeclining = document.getElementById('anCountDeclining');
+      if (elCountDeclining) elCountDeclining.innerText = list.filter(m => m.overall.isRapidlyDeclining || m.overall.rateDelta <= -30).length;
+      const elCountFollowUp = document.getElementById('anCountFollowUp');
+      if (elCountFollowUp) elCountFollowUp.innerText = list.filter(m => m.sunday.consecutiveMissed >= 3 || m.overall.consecutiveMissed >= 3 || (m.pastoralFollowUp?.status || '').includes('Required')).length;
+      const elCountZero = document.getElementById('anCountZero');
+      if (elCountZero) elCountZero.innerText = list.filter(m => m.overall.attended === 0).length;
 
       // Apply Filter
-      if (currentAnalyticsFilter === 'SUNDAY_FAITHFUL') {
+      if (currentAnalyticsFilter === 'MEMBERS_ONLY') {
+        list = list.filter(m => !m.isVisitor);
+      } else if (currentAnalyticsFilter === 'VISITORS_ONLY') {
+        list = list.filter(m => m.isVisitor);
+      } else if (currentAnalyticsFilter === 'SUNDAY_FAITHFUL') {
         list = list.filter(m => m.sunday.consecutiveMissed === 0);
-      } else if (currentAnalyticsFilter === 'SUNDAY_WATCH') {
-        list = list.filter(m => m.sunday.consecutiveMissed === 1);
-      } else if (currentAnalyticsFilter === 'SUNDAY_CONCERN') {
-        list = list.filter(m => m.sunday.consecutiveMissed === 2);
-      } else if (currentAnalyticsFilter === 'FOLLOW_UP_REQUIRED') {
-        list = list.filter(m => m.sunday.consecutiveMissed >= 3);
-      } else if (currentAnalyticsFilter === 'DECLINING') {
-        list = list.filter(m => m.overall.isRapidlyDeclining || m.overall.rateDelta <= -30);
+      } else if (currentAnalyticsFilter === 'WEDNESDAY_FAITHFUL') {
+        list = list.filter(m => m.wednesday.consecutiveMissed === 0 && (m.wednesday.attended > 0 || m.wednesday.currentStreak > 0));
+      } else if (currentAnalyticsFilter === 'FRIDAY_FAITHFUL') {
+        list = list.filter(m => m.friday.consecutiveMissed === 0 && (m.friday.attended > 0 || m.friday.currentStreak > 0));
       } else if (currentAnalyticsFilter === 'PILLARS') {
         list = list.filter(m => m.overall.rate >= 75 || m.sunday.rate >= 80);
+      } else if (currentAnalyticsFilter === 'DECLINING') {
+        list = list.filter(m => m.overall.isRapidlyDeclining || m.overall.rateDelta <= -30);
+      } else if (currentAnalyticsFilter === 'FOLLOW_UP_REQUIRED') {
+        list = list.filter(m => m.sunday.consecutiveMissed >= 3 || m.overall.consecutiveMissed >= 3 || (m.pastoralFollowUp?.status || '').includes('Required'));
       } else if (currentAnalyticsFilter === 'ZERO') {
         list = list.filter(m => m.overall.attended === 0);
+      } else if (currentAnalyticsFilter.startsWith('ACTIVE_STREAK_')) {
+        const parts = currentAnalyticsFilter.replace('ACTIVE_STREAK_', '').toLowerCase().split('_');
+        const svcCat = parts[0];
+        const tier = parts.slice(1).join('_').toUpperCase();
+
+        if (tier === 'FAITHFUL') {
+          list = list.filter(m => m[svcCat]?.consecutiveMissed === 0);
+        } else if (tier === 'WATCH') {
+          list = list.filter(m => m[svcCat]?.consecutiveMissed === 1);
+        } else if (tier === 'CONCERN') {
+          list = list.filter(m => m[svcCat]?.consecutiveMissed === 2);
+        } else if (tier === 'FOLLOW_UP_REQUIRED') {
+          list = list.filter(m => (m[svcCat]?.consecutiveMissed || 0) >= 3);
+        }
       }
 
       // Apply Search
@@ -9289,21 +9480,32 @@
       }
 
       if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: var(--muted); padding: 30px;">No members found matching this filter.</td></tr>`;
-        if (mobContainer) mobContainer.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px 0;">No members found.</div>`;
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: var(--muted); padding: 30px;">No attendees found matching this filter.</td></tr>`;
+        if (mobContainer) mobContainer.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px 0;">No attendees found.</div>`;
         return;
       }
 
       tbody.innerHTML = list.map((m, i) => {
-        const streakHtml = m.sunday.currentStreak > 0
-          ? `<span style="background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 11.5px;">🔥 ${m.sunday.currentStreak} Sundays</span>`
-          : `<span style="background: #fecaca; color: #dc2626; padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 11.5px;">❌ Missed ${m.sunday.consecutiveMissed}</span>`;
-
-        const alertBadge = `<span style="background: ${m.sunday.alertColor}15; color: ${m.sunday.alertColor}; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11.5px; border: 1px solid ${m.sunday.alertColor}40;">${m.sunday.alertLabel}</span>`;
+        const streaksHtml = `
+          <div style="display: flex; flex-wrap: wrap; gap: 4px; max-width: 230px;">
+            <span style="background: ${m.sunday.currentStreak > 0 ? '#dbeafe' : '#f1f5f9'}; color: ${m.sunday.currentStreak > 0 ? '#1d4ed8' : '#64748b'}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;" title="Sunday Streak">
+              Sun: ${m.sunday.currentStreak > 0 ? `🔥 ${m.sunday.currentStreak}` : `❌ ${m.sunday.consecutiveMissed}`}
+            </span>
+            <span style="background: ${m.wednesday.currentStreak > 0 ? '#ede9fe' : '#f1f5f9'}; color: ${m.wednesday.currentStreak > 0 ? '#6d28d9' : '#64748b'}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;" title="Wednesday Streak">
+              Wed: ${m.wednesday.currentStreak > 0 ? `🔥 ${m.wednesday.currentStreak}` : `❌ ${m.wednesday.consecutiveMissed}`}
+            </span>
+            <span style="background: ${m.friday.currentStreak > 0 ? '#fce7f3' : '#f1f5f9'}; color: ${m.friday.currentStreak > 0 ? '#be185d' : '#64748b'}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;" title="Friday Streak">
+              Fri: ${m.friday.currentStreak > 0 ? `🔥 ${m.friday.currentStreak}` : `❌ ${m.friday.consecutiveMissed}`}
+            </span>
+            <span style="background: ${m.overall.currentStreak > 0 ? '#dcfce7' : '#fee2e2'}; color: ${m.overall.currentStreak > 0 ? '#15803d' : '#b91c1c'}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; white-space: nowrap;" title="Overall Streak across all services">
+              All: ${m.overall.currentStreak > 0 ? `🔥 ${m.overall.currentStreak}` : `❌ ${m.overall.consecutiveMissed}`}
+            </span>
+          </div>
+        `;
 
         const scoreGauge = `
           <div style="display: flex; align-items: center; gap: 6px;">
-            <div style="width: 50px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+            <div style="width: 45px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
               <div style="width: ${m.engagement.score}%; height: 100%; background: ${m.engagement.badgeColor};"></div>
             </div>
             <span style="font-weight: 800; font-size: 11.5px; color: ${m.engagement.badgeColor};">${m.engagement.score}/100</span>
@@ -9317,22 +9519,24 @@
           <tr>
             <td>${i + 1}</td>
             <td>
-              <div style="font-weight: 700; color: var(--ink); cursor: pointer;" onclick="openMemberAnalyticsModal('${m.memberId}')">
-                ${escapeHtml(m.name)}
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <span style="font-weight: 700; color: var(--ink); cursor: pointer;" onclick="openMemberAnalyticsModal('${m.memberId}')">
+                  ${escapeHtml(m.name)}
+                </span>
+                ${m.isVisitor ? `<span style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 10px; font-weight: 800; padding: 1px 5px; border-radius: 4px;">Visitor</span>` : `<span style="background: #ecfdf5; color: #047857; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px;">Member</span>`}
               </div>
               <div style="font-size: 11px; color: var(--muted);">${m.category} · ${m.phone || 'No phone'}</div>
             </td>
-            <td>${streakHtml}</td>
-            <td>${alertBadge}</td>
+            <td>${streaksHtml}</td>
             <td><strong>${m.sunday.rate}%</strong> <span style="font-size:11px;color:var(--muted);">(${m.sunday.attended}/${m.sunday.available})</span></td>
             <td><strong>${m.wednesday.rate}%</strong> <span style="font-size:11px;color:var(--muted);">(${m.wednesday.attended}/${m.wednesday.available})</span></td>
             <td><strong>${m.friday.rate}%</strong> <span style="font-size:11px;color:var(--muted);">(${m.friday.attended}/${m.friday.available})</span></td>
             <td><strong>${m.event.rate}%</strong> <span style="font-size:11px;color:var(--muted);">(${m.event.attended}/${m.event.available})</span></td>
-            <td><strong style="color: var(--emerald);">${m.overall.rate}%</strong> <span style="font-size:11px;color:var(--muted);">(${m.overall.attended}/${m.overall.available})</span></td>
+            <td><strong style="color: var(--emerald); font-weight:800;">${m.overall.rate}%</strong> <span style="font-size:11px;color:var(--muted);">(${m.overall.attended}/${m.overall.available})</span></td>
             <td>${scoreGauge}</td>
             <td>
               <span class="badge-check" style="font-size: 11px; background: ${m.pastoralFollowUp.status === 'Resolved' ? '#dcfce7;color:#15803d;' : (m.pastoralFollowUp.status.includes('Required') ? '#fee2e2;color:#b91c1c;' : '#f1f5f9;color:#475569;')}">
-                ${m.pastoralFollowUp.status}
+                ${escapeHtml(m.pastoralFollowUp.status)}
               </span>
             </td>
             <td style="text-align: right;">
@@ -9351,12 +9555,22 @@
         mobContainer.innerHTML = list.map((m, i) => `
           <div class="mob-card">
             <div class="mob-card-header">
-              <div class="mob-card-name" onclick="openMemberAnalyticsModal('${m.memberId}')">${i + 1}. ${escapeHtml(m.name)}</div>
-              ${m.sunday.currentStreak > 0 ? `<span style="background:#fef3c7;color:#b45309;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:800;">🔥 ${m.sunday.currentStreak} Sundays</span>` : `<span style="background:#fecaca;color:#dc2626;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:800;">❌ Missed ${m.sunday.consecutiveMissed}</span>`}
+              <div class="mob-card-name" onclick="openMemberAnalyticsModal('${m.memberId}')">
+                ${i + 1}. ${escapeHtml(m.name)}
+                ${m.isVisitor ? `<span style="background:#fef3c7;color:#b45309;font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px;">Visitor</span>` : ''}
+              </div>
+              <span style="background:${m.overall.currentStreak > 0 ? '#dcfce7' : '#fee2e2'};color:${m.overall.currentStreak > 0 ? '#15803d' : '#b91c1c'};padding:2px 6px;border-radius:4px;font-size:11px;font-weight:800;">
+                All: ${m.overall.currentStreak > 0 ? `🔥 ${m.overall.currentStreak}` : `❌ ${m.overall.consecutiveMissed}`}
+              </span>
             </div>
             <div class="mob-card-meta">
-              <div class="mob-card-row"><span>Category</span><strong>${m.category}</strong></div>
+              <div class="mob-card-row">
+                <span>Streaks</span>
+                <strong>Sun: ${m.sunday.currentStreak > 0 ? `🔥${m.sunday.currentStreak}` : `❌${m.sunday.consecutiveMissed}`} · Wed: ${m.wednesday.currentStreak > 0 ? `🔥${m.wednesday.currentStreak}` : `❌${m.wednesday.consecutiveMissed}`} · Fri: ${m.friday.currentStreak > 0 ? `🔥${m.friday.currentStreak}` : `❌${m.friday.consecutiveMissed}`}</strong>
+              </div>
               <div class="mob-card-row"><span>Sunday %</span><strong>${m.sunday.rate}% (${m.sunday.attended}/${m.sunday.available})</strong></div>
+              <div class="mob-card-row"><span>Wednesday %</span><strong>${m.wednesday.rate}% (${m.wednesday.attended}/${m.wednesday.available})</strong></div>
+              <div class="mob-card-row"><span>Friday %</span><strong>${m.friday.rate}% (${m.friday.attended}/${m.friday.available})</strong></div>
               <div class="mob-card-row"><span>Overall %</span><strong style="color:var(--emerald);">${m.overall.rate}% (${m.overall.attended}/${m.overall.available})</strong></div>
               <div class="mob-card-row"><span>Score</span><strong style="color:${m.engagement.badgeColor};">${m.engagement.score}/100 (${m.engagement.tierLabel})</strong></div>
               <div class="mob-card-row"><span>Pastoral Status</span><strong>${m.pastoralFollowUp.status}</strong></div>
@@ -9379,14 +9593,14 @@
     }
 
     /* ═════════════════════════════════════════════════════════════════════════
-       INDIVIDUAL MEMBER ANALYTICS DOSSIER MODAL
+       INDIVIDUAL MEMBER ANALYTICS DOSSIER MODAL (MULTI-SERVICE STREAKS)
     ═════════════════════════════════════════════════════════════════════════ */
     async function openMemberAnalyticsModal(memberId) {
       const modal = document.getElementById('memberAnalyticsModal');
       const content = document.getElementById('memberAnalyticsModalContent');
       if (!modal || !content) return;
 
-      content.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--muted);"><i class="fas fa-spinner fa-spin fa-2x"></i><div style="margin-top: 10px;">Loading Member Attendance Dossier...</div></div>`;
+      content.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--muted);"><i class="fas fa-spinner fa-spin fa-2x"></i><div style="margin-top: 10px;">Loading Attendee Dossier &amp; Streaks...</div></div>`;
       modal.style.display = 'flex';
 
       const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
@@ -9394,11 +9608,11 @@
 
       try {
         const res = await fetch(`${API_BASE}/attendance/analytics/member/${memberId}`, { headers });
-        if (!res.ok) throw new Error('Could not load member dossier');
+        if (!res.ok) throw new Error('Could not load attendee dossier');
         const data = await res.json();
         renderMemberAnalyticsModalContent(data);
       } catch (err) {
-        content.innerHTML = `<div style="color: #dc2626; padding: 20px; text-align: center;">Error loading member analytics: ${escapeHtml(err.message)}</div>`;
+        content.innerHTML = `<div style="color: #dc2626; padding: 20px; text-align: center;">Error loading analytics dossier: ${escapeHtml(err.message)}</div>`;
       }
     }
 
@@ -9413,8 +9627,10 @@
 
       const m = d.member;
       const sun = d.sunday || {};
+      const wed = d.wednesday || {};
+      const fri = d.friday || {};
+      const ov = d.overall || {};
       const life = d.lifetime || {};
-      const cat = life.byCategory || {};
 
       const phoneClean = (m.phone || '').replace(/[^0-9]/g, '');
       const waLink = phoneClean ? `https://wa.me/${phoneClean.startsWith('0') ? '233' + phoneClean.slice(1) : phoneClean}` : '#';
@@ -9462,9 +9678,10 @@
               <div style="display: flex; align-items: center; gap: 8px;">
                 <h3 style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin: 0;">${escapeHtml(m.name)}</h3>
                 <span class="badge-check" style="font-size: 11px;">${m.category}</span>
+                ${(m.role || '').toLowerCase().includes('visitor') ? `<span style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 4px;">Visitor / Guest</span>` : ''}
               </div>
               <div style="font-size: 12.5px; color: var(--muted); margin-top: 2px;">
-                ${m.phone || 'No phone'} · ${m.email || 'No email'} · Joined ${new Date(m.createdAt).toLocaleDateString()}
+                ${m.phone || 'No phone'} · ${m.email || 'No email'} · Registered ${new Date(m.createdAt).toLocaleDateString()}
               </div>
             </div>
           </div>
@@ -9474,25 +9691,61 @@
           </div>
         </div>
 
-        <!-- Sunday Streak Highlight Banner -->
-        <div style="background: #f0f9ff; border: 1.5px solid #0284c7; border-radius: 6px; padding: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-          <div>
-            <div style="font-size: 11px; font-weight: 800; color: #0369a1; text-transform: uppercase; letter-spacing: 0.05em;">🔴 Sunday Consecutive Attendance Status</div>
-            <div style="font-size: 17px; font-weight: 800; color: #0c4a6e; margin-top: 2px;">
-              ${sun.alertLabel}
+        <!-- 4 Multi-Service Consecutive Streaks Grid -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;">
+          <!-- Sunday Streak -->
+          <div style="background: #f0f9ff; border: 1.5px solid #0284c7; border-radius: 6px; padding: 10px;">
+            <div style="font-size: 11px; font-weight: 800; color: #0369a1; text-transform: uppercase;">⛪ Sunday Streak</div>
+            <div style="font-size: 18px; font-weight: 800; color: #b45309; margin-top: 2px;">
+              ${sun.currentStreak > 0 ? `🔥 ${sun.currentStreak} Sundays` : `❌ 0 Streak`}
             </div>
-            <div style="font-size: 11.5px; color: #0284c7; margin-top: 2px;">
-              Last Sunday Attended: <strong>${sun.lastSundayAttendedDate || 'Never'}</strong> · Streak Started: <strong>${sun.streakStartDate || 'N/A'}</strong>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">
+              Longest: <strong>${sun.longestStreak || 0}</strong> · Missed: <strong>${sun.consecutiveMissed || 0}</strong>
+            </div>
+            <div style="font-size: 10.5px; color: ${sun.alertColor || '#0369a1'}; font-weight: 700; margin-top: 4px;">
+              ${sun.alertLabel || 'Sunday'}
             </div>
           </div>
-          <div style="display: flex; gap: 14px;">
-            <div style="text-align: right;">
-              <div style="font-size: 11px; color: var(--muted);">Current Streak</div>
-              <div style="font-size: 18px; font-weight: 800; color: #b45309;">🔥 ${sun.currentSundayStreak} Sundays</div>
+
+          <!-- Wednesday Streak -->
+          <div style="background: #faf5ff; border: 1.5px solid #8b5cf6; border-radius: 6px; padding: 10px;">
+            <div style="font-size: 11px; font-weight: 800; color: #7c3aed; text-transform: uppercase;">📖 Wednesday Streak</div>
+            <div style="font-size: 18px; font-weight: 800; color: #7c3aed; margin-top: 2px;">
+              ${wed.currentStreak > 0 ? `🔥 ${wed.currentStreak} Midweek` : `❌ 0 Streak`}
             </div>
-            <div style="text-align: right; border-left: 1px solid var(--line); padding-left: 14px;">
-              <div style="font-size: 11px; color: var(--muted);">Longest Streak</div>
-              <div style="font-size: 18px; font-weight: 800; color: #15803d;">🏆 ${sun.longestSundayStreak} Sundays</div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">
+              Longest: <strong>${wed.longestStreak || 0}</strong> · Missed: <strong>${wed.consecutiveMissed || 0}</strong>
+            </div>
+            <div style="font-size: 10.5px; color: ${wed.alertColor || '#7c3aed'}; font-weight: 700; margin-top: 4px;">
+              ${wed.alertLabel || 'Wednesday'}
+            </div>
+          </div>
+
+          <!-- Friday Streak -->
+          <div style="background: #fdf2f8; border: 1.5px solid #ec4899; border-radius: 6px; padding: 10px;">
+            <div style="font-size: 11px; font-weight: 800; color: #db2777; text-transform: uppercase;">🔥 Friday Streak</div>
+            <div style="font-size: 18px; font-weight: 800; color: #db2777; margin-top: 2px;">
+              ${fri.currentStreak > 0 ? `🔥 ${fri.currentStreak} Friday` : `❌ 0 Streak`}
+            </div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">
+              Longest: <strong>${fri.longestStreak || 0}</strong> · Missed: <strong>${fri.consecutiveMissed || 0}</strong>
+            </div>
+            <div style="font-size: 10.5px; color: ${fri.alertColor || '#db2777'}; font-weight: 700; margin-top: 4px;">
+              ${fri.alertLabel || 'Friday'}
+            </div>
+          </div>
+
+          <!-- Overall Streak -->
+          <div style="background: #f0fdf4; border: 1.5px solid #16a34a; border-radius: 6px; padding: 10px;">
+            <div style="font-size: 11px; font-weight: 800; color: #15803d; text-transform: uppercase;">⚡ Overall Streak</div>
+            <div style="font-size: 18px; font-weight: 800; color: #15803d; margin-top: 2px;">
+              ${ov.currentStreak > 0 ? `🔥 ${ov.currentStreak} Services` : `❌ 0 Streak`}
+            </div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">
+              Longest: <strong>${ov.longestStreak || 0}</strong> · Missed: <strong>${ov.consecutiveMissed || 0}</strong>
+            </div>
+            <div style="font-size: 10.5px; color: ${ov.alertColor || '#15803d'}; font-weight: 700; margin-top: 4px;">
+              ${ov.alertLabel || 'Overall'}
             </div>
           </div>
         </div>
@@ -9501,21 +9754,23 @@
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;">
           <div style="background: #f8fafc; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid var(--line);">
             <div style="font-size: 11px; color: var(--muted);">Sunday Fidelity</div>
-            <div style="font-size: 17px; font-weight: 800; color: #0284c7;">${sun.sundayAttendancePct}%</div>
-            <div style="font-size: 10.5px; color: var(--muted);">${sun.totalSundaysAttended}/${sun.totalSundayOpportunities} Sundays</div>
+            <div style="font-size: 17px; font-weight: 800; color: #0284c7;">${sun.attendancePct ?? sun.rate ?? 0}%</div>
+            <div style="font-size: 10.5px; color: var(--muted);">${sun.totalAttended ?? sun.attended ?? 0}/${sun.totalOpportunities ?? sun.available ?? 0} Sundays</div>
           </div>
           <div style="background: #f8fafc; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid var(--line);">
             <div style="font-size: 11px; color: var(--muted);">Wednesday Midweek</div>
-            <div style="font-size: 17px; font-weight: 800; color: #8b5cf6;">${cat.wednesday || 0} Attended</div>
+            <div style="font-size: 17px; font-weight: 800; color: #8b5cf6;">${wed.attendancePct ?? wed.rate ?? 0}%</div>
+            <div style="font-size: 10.5px; color: var(--muted);">${wed.totalAttended ?? wed.attended ?? 0}/${wed.totalOpportunities ?? wed.available ?? 0} Services</div>
           </div>
           <div style="background: #f8fafc; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid var(--line);">
             <div style="font-size: 11px; color: var(--muted);">Friday Prophetic</div>
-            <div style="font-size: 17px; font-weight: 800; color: #ec4899;">${cat.friday || 0} Attended</div>
+            <div style="font-size: 17px; font-weight: 800; color: #ec4899;">${fri.attendancePct ?? fri.rate ?? 0}%</div>
+            <div style="font-size: 10.5px; color: var(--muted);">${fri.totalAttended ?? fri.attended ?? 0}/${fri.totalOpportunities ?? fri.available ?? 0} Services</div>
           </div>
           <div style="background: #f8fafc; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid var(--line);">
             <div style="font-size: 11px; color: var(--muted);">Lifetime Attendance</div>
-            <div style="font-size: 17px; font-weight: 800; color: #15803d;">${life.overallRate}%</div>
-            <div style="font-size: 10.5px; color: var(--muted);">${life.totalAttended}/${life.totalServicesHeld} Total</div>
+            <div style="font-size: 17px; font-weight: 800; color: #15803d;">${life.overallRate ?? ov.rate ?? 0}%</div>
+            <div style="font-size: 10.5px; color: var(--muted);">${life.totalAttended ?? ov.attended ?? 0}/${life.totalServicesHeld ?? ov.available ?? 0} Total</div>
           </div>
         </div>
 
@@ -9534,7 +9789,7 @@
           <!-- Recent Check-ins -->
           <div style="background: white; border: 1px solid var(--line); border-radius: 6px; padding: 12px;">
             <div style="font-weight: 700; font-size: 12.5px; color: var(--ink); margin-bottom: 8px;">
-              <i class="fas fa-clock-rotate-left"></i> Recent Check-In History
+              <i class="fas fa-clock-rotate-left"></i> Recent Check-In History across Services
             </div>
             <div style="max-height: 180px; overflow-y: auto;">
               ${recentCheckinsHtml}
@@ -9558,7 +9813,7 @@
                 <option value="Resolved">🟢 Resolved / Re-Engaged</option>
                 <option value="Do Not Follow Up">⚪ Do Not Follow Up</option>
               </select>
-              <textarea id="pastoralNoteInput_${m.id}" class="form-ctrl" placeholder="Add pastoral care note (e.g. called member, was traveling, will attend Sunday)..." style="font-size: 12px; height: 50px; resize: none;"></textarea>
+              <textarea id="pastoralNoteInput_${m.id}" class="form-ctrl" placeholder="Add pastoral care note (e.g. contacted attendee, will attend Wednesday and Friday)..." style="font-size: 12px; height: 50px; resize: none;"></textarea>
               <button class="btn-main" style="background: #b45309; font-size: 11.5px; padding: 5px 12px; align-self: flex-start;" onclick="savePastoralFollowUp('${m.id}')">
                 <i class="fas fa-save"></i> Save Pastoral Action
               </button>
@@ -9619,7 +9874,7 @@
       const lb = d.leaderboards;
       const period = d.period;
 
-      const urgentFollowUps = (d.members || []).filter(m => m.sunday.consecutiveMissed >= 2);
+      const urgentFollowUps = (d.members || []).filter(m => m.sunday.consecutiveMissed >= 2 || m.overall.consecutiveMissed >= 2);
       const pillars = (lb.consistentMembers || []).slice(0, 10);
 
       content.innerHTML = `
@@ -9642,7 +9897,7 @@
             <i class="fas fa-church"></i> Pastoral Executive Overview
           </div>
           <p style="font-size: 13px; color: var(--ink); line-height: 1.5; margin: 0;">
-            During <strong>${period.label}</strong>, Solutions Faith Ministry International conducted a total of <strong>${s.totalServicesHeld} church services</strong> across Sunday, Wednesday, and Friday gatherings. Overall church attendance reached <strong>${s.overallAttendancePct}%</strong> with <strong>${s.activeMembersThisMonth} of ${s.totalRegisteredMembers} regular members</strong> actively in attendance (${s.monthlyParticipationRate}% active participation). The church-wide engagement index stands at <strong>${s.averageEngagementScore}/100</strong>.
+            During <strong>${period.label}</strong>, Solutions Faith Ministry International conducted a total of <strong>${s.totalServicesHeld} church services</strong> across Sunday, Wednesday, and Friday gatherings. Overall church attendance reached <strong>${s.overallAttendancePct}%</strong> with <strong>${s.activeMembersThisMonth} of ${s.analyzedCount || s.totalRegisteredMembers} attendees</strong> actively in attendance (${s.monthlyParticipationRate}% active participation). The church-wide engagement index stands at <strong>${s.averageEngagementScore}/100</strong>.
           </p>
         </div>
 
@@ -9651,17 +9906,17 @@
           <div style="border: 1px solid var(--line); border-radius: 6px; padding: 10px; text-align: center;">
             <div style="font-size: 11.5px; color: var(--muted);">Sunday Service Avg</div>
             <div style="font-size: 20px; font-weight: 800; color: #0284c7;">${sb.sunday?.average || 0}</div>
-            <div style="font-size: 11px; color: var(--muted);">${sb.sunday?.totalAttendance || 0} Total</div>
+            <div style="font-size: 11px; color: var(--muted);">${sb.sunday?.totalAttendance || 0} Total (${sb.sunday?.servicesCount || 0} Services)</div>
           </div>
           <div style="border: 1px solid var(--line); border-radius: 6px; padding: 10px; text-align: center;">
             <div style="font-size: 11.5px; color: var(--muted);">Wednesday Midweek Avg</div>
             <div style="font-size: 20px; font-weight: 800; color: #8b5cf6;">${sb.wednesday?.average || 0}</div>
-            <div style="font-size: 11px; color: var(--muted);">${sb.wednesday?.totalAttendance || 0} Total</div>
+            <div style="font-size: 11px; color: var(--muted);">${sb.wednesday?.totalAttendance || 0} Total (${sb.wednesday?.servicesCount || 0} Services)</div>
           </div>
           <div style="border: 1px solid var(--line); border-radius: 6px; padding: 10px; text-align: center;">
             <div style="font-size: 11.5px; color: var(--muted);">Friday Prophetic Avg</div>
             <div style="font-size: 20px; font-weight: 800; color: #ec4899;">${sb.friday?.average || 0}</div>
-            <div style="font-size: 11px; color: var(--muted);">${sb.friday?.totalAttendance || 0} Total</div>
+            <div style="font-size: 11px; color: var(--muted);">${sb.friday?.totalAttendance || 0} Total (${sb.friday?.servicesCount || 0} Services)</div>
           </div>
           <div style="border: 1px solid var(--line); border-radius: 6px; padding: 10px; text-align: center;">
             <div style="font-size: 11.5px; color: var(--muted);">Special Events Total</div>
@@ -9675,16 +9930,17 @@
           <!-- Urgent Follow-up List -->
           <div style="border: 1px solid #fca5a5; border-radius: 6px; padding: 12px; background: #fff5f5;">
             <div style="font-weight: 800; font-size: 13px; color: #dc2626; margin-bottom: 8px;">
-              <i class="fas fa-hand-holding-heart"></i> Members Requiring Pastoral Attention (${urgentFollowUps.length})
+              <i class="fas fa-hand-holding-heart"></i> Attendees Requiring Pastoral Attention (${urgentFollowUps.length})
             </div>
             <div style="max-height: 180px; overflow-y: auto;">
-              ${urgentFollowUps.length === 0 ? `<div style="font-size: 12px; color: #15803d;">All members attended consistently.</div>` : urgentFollowUps.map(m => `
+              ${urgentFollowUps.length === 0 ? `<div style="font-size: 12px; color: #15803d;">All attendees attended consistently.</div>` : urgentFollowUps.map(m => `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px dashed #fca5a5; font-size: 12px;">
                   <div>
                     <strong>${escapeHtml(m.name)}</strong>
+                    ${m.isVisitor ? `<span style="background:#fef3c7;color:#b45309;font-size:9.5px;padding:1px 4px;border-radius:3px;">Visitor</span>` : ''}
                     <span style="font-size: 11px; color: var(--muted); margin-left: 4px;">(${m.phone || 'No phone'})</span>
                   </div>
-                  <span style="color: #dc2626; font-weight: 800; font-size: 11px;">Missed ${m.sunday.consecutiveMissed} Sundays</span>
+                  <span style="color: #dc2626; font-weight: 800; font-size: 11px;">Missed ${m.sunday.consecutiveMissed} Sun · ${m.overall.consecutiveMissed} Total</span>
                 </div>
               `).join('')}
             </div>
@@ -9693,18 +9949,19 @@
           <!-- Most Consistent Members -->
           <div style="border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px; background: #f0fdf4;">
             <div style="font-weight: 800; font-size: 13px; color: #15803d; margin-bottom: 8px;">
-              <i class="fas fa-award"></i> Most Consistent Members / Pillars (${pillars.length})
+              <i class="fas fa-award"></i> Most Consistent Pillars (${pillars.length})
             </div>
             <div style="max-height: 180px; overflow-y: auto;">
               ${pillars.map(m => `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px dashed #bbf7d0; font-size: 12px;">
                   <div>
                     <strong>${escapeHtml(m.name)}</strong>
+                    ${m.isVisitor ? `<span style="background:#fef3c7;color:#b45309;font-size:9.5px;padding:1px 4px;border-radius:3px;">Visitor</span>` : ''}
                     <span style="font-size: 11px; color: var(--muted); margin-left: 4px;">(${m.category})</span>
                   </div>
                   <div style="font-size: 11px;">
-                    <span style="color: #b45309; font-weight: 800;">🔥 ${m.sunday.currentStreak} Sun</span> · 
-                    <span style="color: #15803d; font-weight: 800;">Overall ${m.overall.rate}%</span>
+                    <span style="color: #15803d; font-weight: 800;">Overall ${m.overall.rate}%</span> · 
+                    <span style="color: #b45309; font-weight: 800;">🔥 ${m.overall.currentStreak} Streak</span>
                   </div>
                 </div>
               `).join('')}
@@ -9737,25 +9994,33 @@
       const d = currentAnalyticsData;
       const headers = [
         "#",
-        "Member Full Name",
+        "Attendee Full Name",
+        "Attendee Type",
         "Category",
         "Phone Number",
-        "Current Sunday Streak",
-        "Longest Sunday Streak",
-        "Consecutive Sundays Missed",
-        "Sunday Pastoral Status",
+        "Sunday Current Streak",
+        "Sunday Longest Streak",
+        "Sunday Missed",
         "Sunday Attended",
         "Sunday Held",
         "Sunday Rate %",
+        "Wednesday Current Streak",
+        "Wednesday Longest Streak",
+        "Wednesday Missed",
         "Wednesday Attended",
         "Wednesday Held",
         "Wednesday Rate %",
+        "Friday Current Streak",
+        "Friday Longest Streak",
+        "Friday Missed",
         "Friday Attended",
         "Friday Held",
         "Friday Rate %",
         "Events Attended",
         "Events Held",
         "Events Rate %",
+        "Overall Current Streak",
+        "Overall Longest Streak",
         "Total Services Attended",
         "Total Services Held",
         "Overall Attendance %",
@@ -9767,24 +10032,32 @@
       const rows = d.members.map((m, i) => [
         i + 1,
         `"${m.name.replace(/"/g, '""')}"`,
+        `"${m.isVisitor ? 'Visitor / Guest' : 'Church Member'}"`,
         `"${m.category.replace(/"/g, '""')}"`,
         `"${m.phone.replace(/"/g, '""')}"`,
         m.sunday.currentStreak,
         m.sunday.longestStreak,
         m.sunday.consecutiveMissed,
-        `"${m.sunday.alertLabel.replace(/"/g, '""')}"`,
         m.sunday.attended,
         m.sunday.available,
         `${m.sunday.rate}%`,
+        m.wednesday.currentStreak,
+        m.wednesday.longestStreak,
+        m.wednesday.consecutiveMissed,
         m.wednesday.attended,
         m.wednesday.available,
         `${m.wednesday.rate}%`,
+        m.friday.currentStreak,
+        m.friday.longestStreak,
+        m.friday.consecutiveMissed,
         m.friday.attended,
         m.friday.available,
         `${m.friday.rate}%`,
         m.event.attended,
         m.event.available,
         `${m.event.rate}%`,
+        m.overall.currentStreak,
+        m.overall.longestStreak,
         m.overall.attended,
         m.overall.available,
         `${m.overall.rate}%`,

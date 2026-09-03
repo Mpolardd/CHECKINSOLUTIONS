@@ -22,22 +22,24 @@ function classifyServiceCategory(serviceName = '', serviceTypeName = '') {
 }
 
 /**
- * 🔴 Mandatory Consecutive Sunday Attendance Engine
+ * 🔴 Multi-Service Consecutive Attendance Engine
  *
- * Evaluates all Sunday services held across church history chronologically.
- * Tracks continuous Sunday streaks across calendar months and years without monthly resets.
+ * Chronologically evaluates services held across church history.
+ * Tracks continuous streaks across calendar months and years without monthly resets.
  * Preserves streaks through excused absences.
  *
- * @param {Array} allSundayServices Chronologically ordered Sunday services (oldest to newest)
+ * @param {Array} targetServices Chronologically ordered services of the target category (oldest to newest)
  * @param {Array} allAttendances All attendance records across church history
  * @param {Map} excusedMap Map of memberId -> Array of excused absence ranges or dates
- * @returns {Map} memberId -> Sunday streak profile
+ * @param {Array} targetMemberIds Target members to evaluate
+ * @param {string} serviceTypeLabel Label (e.g. 'Sunday', 'Wednesday', 'Friday', 'Overall')
+ * @returns {Map} memberId -> streak profile
  */
-function calculateSundayConsecutiveStreaks(allSundayServices = [], allAttendances = [], excusedMap = new Map(), targetMemberIds = []) {
-  const sundayProfiles = new Map();
+function calculateConsecutiveStreaks(targetServices = [], allAttendances = [], excusedMap = new Map(), targetMemberIds = [], serviceTypeLabel = 'Sunday') {
+  const profiles = new Map();
 
-  // Sort Sunday services chronologically (oldest to newest)
-  const sortedSundays = [...allSundayServices].sort((a, b) => {
+  // Sort services chronologically (oldest to newest)
+  const sortedServices = [...targetServices].sort((a, b) => {
     const da = new Date(a.serviceDate || a.startsAt);
     const db = new Date(b.serviceDate || b.startsAt);
     return da - db;
@@ -55,34 +57,29 @@ function calculateSundayConsecutiveStreaks(allSundayServices = [], allAttendance
   // Pre-index all unique memberIds present in church + target registered members
   const allMemberIds = new Set(targetMemberIds);
   allAttendances.forEach(att => allMemberIds.add(att.memberId));
-
-  // Also collect members who have an excused record
   for (const [mId] of excusedMap) {
     allMemberIds.add(mId);
   }
 
-  // Evaluate each member's Sunday journey
   for (const memberId of allMemberIds) {
     let currentStreak = 0;
     let longestStreak = 0;
     let runningStreak = 0;
     let consecutiveMissed = 0;
-    let totalSundaysAttended = 0;
-    let totalSundaysMissed = 0;
-    let totalSundaysExcused = 0;
-    let lastSundayAttendedDate = null;
+    let totalAttended = 0;
+    let totalMissed = 0;
+    let totalExcused = 0;
+    let lastAttendedDate = null;
     let streakStartDate = null;
     let currentStreakStartedAt = null;
 
     const memberExcusedRanges = excusedMap.get(memberId) || [];
 
-    // Iterate through each Sunday service chronologically
-    for (let i = 0; i < sortedSundays.length; i++) {
-      const svc = sortedSundays[i];
+    for (let i = 0; i < sortedServices.length; i++) {
+      const svc = sortedServices[i];
       const svcDate = new Date(svc.serviceDate || svc.startsAt);
       const isAttended = attendanceByServiceId.get(svc.id)?.has(memberId) || false;
 
-      // Check if this date falls within an excused absence range
       const isExcused = !isAttended && memberExcusedRanges.some(range => {
         const start = new Date(range.startsAt || range.startDate);
         const end = new Date(range.endsAt || range.endDate || range.startsAt);
@@ -91,7 +88,7 @@ function calculateSundayConsecutiveStreaks(allSundayServices = [], allAttendance
       });
 
       if (isAttended) {
-        totalSundaysAttended++;
+        totalAttended++;
         consecutiveMissed = 0;
         if (runningStreak === 0) {
           currentStreakStartedAt = svcDate.toISOString().slice(0, 10);
@@ -100,13 +97,11 @@ function calculateSundayConsecutiveStreaks(allSundayServices = [], allAttendance
         if (runningStreak > longestStreak) {
           longestStreak = runningStreak;
         }
-        lastSundayAttendedDate = svcDate.toISOString().slice(0, 10);
+        lastAttendedDate = svcDate.toISOString().slice(0, 10);
       } else if (isExcused) {
-        // Excused: Preserves streak (neither incremented nor reset to zero), does not increment consecutive missed
-        totalSundaysExcused++;
+        totalExcused++;
       } else {
-        // Unexcused Miss: Breaks current streak!
-        totalSundaysMissed++;
+        totalMissed++;
         runningStreak = 0;
         currentStreakStartedAt = null;
         consecutiveMissed++;
@@ -116,57 +111,71 @@ function calculateSundayConsecutiveStreaks(allSundayServices = [], allAttendance
     currentStreak = runningStreak;
     streakStartDate = currentStreakStartedAt;
 
-    // Determine Progressive Sunday Pastoral Alert Tier
-    let sundayAlertStatus = 'SUNDAY_FAITHFUL'; // 🟢
-    let alertLabel = 'Sunday Faithful';
-    let alertColor = '#137333'; // green
+    let alertStatus = 'FAITHFUL';
+    let alertLabel = `${serviceTypeLabel} Faithful`;
+    let alertColor = '#137333';
 
     if (consecutiveMissed >= 8) {
-      sundayAlertStatus = 'INACTIVE'; // ⚫
-      alertLabel = 'Inactive (Prolonged Absence)';
+      alertStatus = 'INACTIVE';
+      alertLabel = `${serviceTypeLabel} Inactive`;
       alertColor = '#475569';
     } else if (consecutiveMissed >= 3) {
-      sundayAlertStatus = 'FOLLOW_UP_REQUIRED'; // 🔴
-      alertLabel = `Pastoral Follow-Up Required (${consecutiveMissed} Missed)`;
+      alertStatus = 'FOLLOW_UP_REQUIRED';
+      alertLabel = `Follow-Up Required (${consecutiveMissed} Missed)`;
       alertColor = '#dc2626';
     } else if (consecutiveMissed === 2) {
-      sundayAlertStatus = 'SUNDAY_CONCERN'; // 🟠
-      alertLabel = 'Sunday Concern (2 Missed)';
+      alertStatus = 'CONCERN';
+      alertLabel = `${serviceTypeLabel} Concern (2 Missed)`;
       alertColor = '#ea580c';
     } else if (consecutiveMissed === 1) {
-      sundayAlertStatus = 'SUNDAY_WATCH'; // 🟡
-      alertLabel = 'Sunday Watch (1 Missed)';
+      alertStatus = 'WATCH';
+      alertLabel = `${serviceTypeLabel} Watch (1 Missed)`;
       alertColor = '#d97706';
     } else {
-      sundayAlertStatus = 'SUNDAY_FAITHFUL'; // 🟢
-      alertLabel = currentStreak >= 4 ? `Sunday Faithful (🔥 ${currentStreak} Streak)` : 'Sunday Faithful';
+      alertStatus = 'FAITHFUL';
+      alertLabel = currentStreak >= 3 ? `${serviceTypeLabel} Faithful (🔥 ${currentStreak} Streak)` : `${serviceTypeLabel} Faithful`;
       alertColor = '#137333';
     }
 
-    const totalSundayOpportunities = sortedSundays.length;
-    const sundayAttendancePct = totalSundayOpportunities > 0
-      ? Math.round((totalSundaysAttended / totalSundayOpportunities) * 100)
+    const totalOpportunities = sortedServices.length;
+    const attendancePct = totalOpportunities > 0
+      ? Math.round((totalAttended / totalOpportunities) * 100)
       : 0;
 
-    sundayProfiles.set(memberId, {
+    profiles.set(memberId, {
       memberId,
+      currentStreak,
+      longestStreak,
+      consecutiveMissed,
+      totalAttended,
+      totalMissed,
+      totalExcused,
+      totalOpportunities,
+      attendancePct,
+      lastAttendedDate,
+      streakStartDate,
+      alertStatus,
+      alertLabel,
+      alertColor,
+      // Backward compatibility aliases
       currentSundayStreak: currentStreak,
       longestSundayStreak: longestStreak,
       consecutiveSundaysMissed: consecutiveMissed,
-      totalSundaysAttended,
-      totalSundaysMissed,
-      totalSundaysExcused,
-      totalSundayOpportunities,
-      sundayAttendancePct,
-      lastSundayAttendedDate,
-      streakStartDate,
-      sundayAlertStatus,
-      alertLabel,
-      alertColor
+      totalSundaysAttended: totalAttended,
+      totalSundaysMissed: totalMissed,
+      totalSundaysExcused: totalExcused,
+      totalSundayOpportunities: totalOpportunities,
+      sundayAttendancePct: attendancePct,
+      lastSundayAttendedDate: lastAttendedDate,
+      sundayAlertStatus: alertStatus
     });
   }
 
-  return sundayProfiles;
+  return profiles;
+}
+
+function calculateSundayConsecutiveStreaks(allSundayServices = [], allAttendances = [], excusedMap = new Map(), targetMemberIds = []) {
+  return calculateConsecutiveStreaks(allSundayServices, allAttendances, excusedMap, targetMemberIds, 'Sunday');
 }
 
 /**
@@ -188,7 +197,7 @@ function calculateEngagementScore({
   // 1. Overall frequency (0-35)
   score += Math.round((Math.min(100, overallRate) / 100) * 35);
 
-  // 2. Sunday fidelity (0-30)
+  // 2. Sunday fidelity (0-20)
   score += Math.round((Math.min(100, sundayRate) / 100) * 20);
   if (currentSundayStreak >= 4) score += 10;
   else if (currentSundayStreak >= 2) score += 5;
@@ -198,10 +207,10 @@ function calculateEngagementScore({
   else if (consecutiveSundaysMissed === 2) score -= 8;
   else if (consecutiveSundaysMissed === 1) score -= 3;
 
-  // 3. Midweek & Event diversity (0-20)
-  const serviceDiversity = (wednesdayCount > 0 ? 1 : 0) + (fridayCount > 0 ? 1 : 0) + (eventCount > 0 ? 1 : 0);
-  if (serviceDiversity >= 2) score += 20;
-  else if (serviceDiversity === 1) score += 10;
+  // 3. Midweek & Friday participation (0-25)
+  const wedScore = wednesdayCount > 0 ? (wednesdayCount >= 2 ? 15 : 10) : 0;
+  const friScore = fridayCount > 0 ? (fridayCount >= 2 ? 10 : 7) : 0;
+  score += (wedScore + friScore);
 
   // 4. Recency & Trajectory (0-15)
   if (rateDelta >= 15) score += 15;
@@ -210,7 +219,7 @@ function calculateEngagementScore({
   if (rateDelta <= -35) score -= 10;
 
   if (isNewMember) {
-    score = Math.max(score, Math.round(overallRate * 0.8));
+    score = Math.max(score, Math.round(overallRate * 0.9));
   }
 
   score = Math.max(0, Math.min(100, Math.round(score)));
@@ -244,14 +253,43 @@ function calculateEngagementScore({
   return { score, tier, tierLabel, badgeColor };
 }
 
+function createDefaultProfile(label) {
+  return {
+    currentStreak: 0,
+    longestStreak: 0,
+    consecutiveMissed: 0,
+    totalAttended: 0,
+    totalMissed: 0,
+    totalExcused: 0,
+    totalOpportunities: 0,
+    attendancePct: 0,
+    lastAttendedDate: null,
+    streakStartDate: null,
+    alertStatus: 'WATCH',
+    alertLabel: `${label} Watch`,
+    alertColor: '#d97706',
+    currentSundayStreak: 0,
+    longestSundayStreak: 0,
+    consecutiveSundaysMissed: 0,
+    totalSundaysAttended: 0,
+    totalSundaysMissed: 0,
+    totalSundaysExcused: 0,
+    totalSundayOpportunities: 0,
+    sundayAttendancePct: 0,
+    lastSundayAttendedDate: null,
+    sundayAlertStatus: 'WATCH'
+  };
+}
+
 /**
  * Main Monthly Attendance Analytics Engine
  */
-async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 'ALL' } = {}) {
-  const currentYear = year ? parseInt(year, 10) : new Date().getFullYear();
-  const currentMonth = month ? parseInt(month, 10) : new Date().getMonth() + 1; // 1-indexed
+async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 'ALL', attendeeType = 'ALL' } = {}) {
+  const now = new Date();
+  const currentYear = year ? parseInt(year, 10) : now.getUTCFullYear();
+  const currentMonth = month ? parseInt(month, 10) : now.getUTCMonth() + 1;
 
-  // Month date range (UTC boundaries)
+  // Month date ranges
   const startOfMonth = new Date(Date.UTC(currentYear, currentMonth - 1, 1, 0, 0, 0, 0));
   const endOfMonth = new Date(Date.UTC(currentYear, currentMonth, 0, 23, 59, 59, 999));
 
@@ -260,12 +298,12 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
   const startOfPrevMonth = new Date(Date.UTC(prevMonthDate.getUTCFullYear(), prevMonthDate.getUTCMonth(), 1, 0, 0, 0, 0));
   const endOfPrevMonth = new Date(Date.UTC(prevMonthDate.getUTCFullYear(), prevMonthDate.getUTCMonth() + 1, 0, 23, 59, 59, 999));
 
-  // Two Months Ago (M-2) for 3-month trajectory detection
+  // Two Months Ago (M-2)
   const twoMonthsAgoDate = new Date(Date.UTC(currentYear, currentMonth - 3, 1));
   const startOfTwoMonthsAgo = new Date(Date.UTC(twoMonthsAgoDate.getUTCFullYear(), twoMonthsAgoDate.getUTCMonth(), 1, 0, 0, 0, 0));
   const endOfTwoMonthsAgo = new Date(Date.UTC(twoMonthsAgoDate.getUTCFullYear(), twoMonthsAgoDate.getUTCMonth() + 1, 0, 23, 59, 59, 999));
 
-  // 1. Fetch All Active Registered Members (excluding soft-deleted)
+  // 1. Fetch All Active Registered Members
   const allMembers = await prisma.member.findMany({
     where: { active: true, deletedAt: null },
     select: {
@@ -283,13 +321,20 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
     orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }]
   });
 
-  // Separate regular church members vs visitors
   const regularMembers = allMembers.filter(m => {
     const role = (m.role || '').toLowerCase();
     const cat = (m.category || '').toLowerCase();
     return !role.includes('visitor') && !role.includes('guest') && !cat.includes('visitor') && !cat.includes('guest');
   });
   const visitorMembers = allMembers.filter(m => !regularMembers.includes(m));
+
+  // Select target members based on attendeeType: 'ALL', 'MEMBERS', or 'VISITORS'
+  let targetMembers = allMembers;
+  if (attendeeType === 'MEMBERS') {
+    targetMembers = regularMembers;
+  } else if (attendeeType === 'VISITORS') {
+    targetMembers = visitorMembers;
+  }
 
   // 2. Fetch All Services Held in Month
   const monthServices = await prisma.service.findMany({
@@ -304,18 +349,24 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
     orderBy: { serviceDate: 'asc' }
   });
 
-  // 3. Fetch All Sunday Services Held in Church History for Consecutive Sunday Streak Engine
-  const allSundayServices = await prisma.service.findMany({
-    where: {
-      active: true,
-      OR: [
-        { serviceType: { name: { contains: 'Sunday', mode: 'insensitive' } } },
-        { serviceType: { name: { contains: 'Family', mode: 'insensitive' } } },
-        { serviceType: { dayOfWeek: 0 } }
-      ]
-    },
+  // 3. Fetch All Historical Services categorized for Multi-Service Streaks
+  const allHistoricalServices = await prisma.service.findMany({
+    where: { active: true },
     include: { serviceType: true },
     orderBy: { serviceDate: 'asc' }
+  });
+
+  const allSundayServices = [];
+  const allWednesdayServices = [];
+  const allFridayServices = [];
+  const allEventServices = [];
+
+  allHistoricalServices.forEach(s => {
+    const cat = classifyServiceCategory(s.serviceType?.name || '', s.name || '');
+    if (cat === 'SUNDAY') allSundayServices.push(s);
+    else if (cat === 'WEDNESDAY') allWednesdayServices.push(s);
+    else if (cat === 'FRIDAY') allFridayServices.push(s);
+    else allEventServices.push(s);
   });
 
   // 4. Fetch All Attendance Records across History for Streak Calculations
@@ -334,9 +385,12 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
     excusedMap.get(rec.memberId).push(rec);
   });
 
-  // 🔴 Run Mandatory Sunday Consecutive Attendance Engine
-  const targetMemberIds = regularMembers.map(m => m.id);
-  const sundayProfiles = calculateSundayConsecutiveStreaks(allSundayServices, allHistoricalAttendances, excusedMap, targetMemberIds);
+  // Multi-Service Streaks across History for target members
+  const targetMemberIds = targetMembers.map(m => m.id);
+  const sundayProfiles = calculateConsecutiveStreaks(allSundayServices, allHistoricalAttendances, excusedMap, targetMemberIds, 'Sunday');
+  const wednesdayProfiles = calculateConsecutiveStreaks(allWednesdayServices, allHistoricalAttendances, excusedMap, targetMemberIds, 'Wednesday');
+  const fridayProfiles = calculateConsecutiveStreaks(allFridayServices, allHistoricalAttendances, excusedMap, targetMemberIds, 'Friday');
+  const overallProfiles = calculateConsecutiveStreaks(allHistoricalServices, allHistoricalAttendances, excusedMap, targetMemberIds, 'Overall');
 
   // 6. Filter Month Services by Service Category
   const categorizedMonthServices = monthServices.map(s => {
@@ -415,7 +469,7 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
   const pastoralFollowUpLogs = await prisma.auditLog.findMany({
     where: { action: 'PASTORAL_FOLLOW_UP' },
     orderBy: { createdAt: 'desc' },
-    take: 300
+    take: 500
   });
   const memberLatestFollowUp = new Map();
   pastoralFollowUpLogs.forEach(log => {
@@ -431,22 +485,12 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
   });
 
   // 9. Build Individual Member Metrics
-  const memberMetrics = regularMembers.map(member => {
+  const memberMetrics = targetMembers.map(member => {
     const atts = memberMonthAttendances.get(member.id) || [];
-    const sunProfile = sundayProfiles.get(member.id) || {
-      currentSundayStreak: 0,
-      longestSundayStreak: 0,
-      consecutiveSundaysMissed: 0,
-      totalSundaysAttended: 0,
-      totalSundaysMissed: 0,
-      totalSundaysExcused: 0,
-      sundayAttendancePct: 0,
-      lastSundayAttendedDate: null,
-      streakStartDate: null,
-      sundayAlertStatus: 'SUNDAY_WATCH',
-      alertLabel: 'Sunday Watch',
-      alertColor: '#d97706'
-    };
+    const sunProfile = sundayProfiles.get(member.id) || createDefaultProfile('Sunday');
+    const wedProfile = wednesdayProfiles.get(member.id) || createDefaultProfile('Wednesday');
+    const friProfile = fridayProfiles.get(member.id) || createDefaultProfile('Friday');
+    const ovProfile = overallProfiles.get(member.id) || createDefaultProfile('Overall');
 
     // Break down by service type in current month
     let sundayAttended = 0;
@@ -497,8 +541,8 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
     const engagement = calculateEngagementScore({
       overallRate,
       sundayRate,
-      currentSundayStreak: sunProfile.currentSundayStreak,
-      consecutiveSundaysMissed: sunProfile.consecutiveSundaysMissed,
+      currentSundayStreak: sunProfile.currentStreak,
+      consecutiveSundaysMissed: sunProfile.consecutiveMissed,
       wednesdayCount: wednesdayAttended,
       fridayCount: fridayAttended,
       eventCount: eventAttended,
@@ -511,35 +555,45 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
     let habitLabel = 'Occasional Attendee';
     let habitColor = '#b45309';
 
-    if (overallRate >= 75 && (wednesdayAttended > 0 || fridayAttended > 0)) {
+    if (overallRate >= 70 && (wednesdayAttended > 0 || fridayAttended > 0)) {
       habitProfile = 'ALL_ROUND_PILLAR';
       habitLabel = 'All-Round Pillar';
-      habitColor = '#15803d'; // dark green
+      habitColor = '#15803d';
     } else if (sundayRate >= 80) {
       habitProfile = 'SUNDAY_FAITHFUL';
       habitLabel = 'Sunday Faithful';
-      habitColor = '#0284c7'; // blue
-    } else if ((wednesdayRate >= 60 || fridayRate >= 60) && sundayRate < 50) {
+      habitColor = '#0284c7';
+    } else if (wednesdayRate >= 50 && fridayRate >= 50) {
       habitProfile = 'MIDWEEK_DEVOTED';
-      habitLabel = 'Midweek Devoted';
-      habitColor = '#7c3aed'; // purple
+      habitLabel = 'Midweek & Friday Devoted';
+      habitColor = '#7c3aed';
+    } else if (wednesdayRate >= 50) {
+      habitProfile = 'WEDNESDAY_FAITHFUL';
+      habitLabel = 'Wednesday Faithful';
+      habitColor = '#8b5cf6';
+    } else if (fridayRate >= 50) {
+      habitProfile = 'FRIDAY_FAITHFUL';
+      habitLabel = 'Friday Faithful';
+      habitColor = '#ec4899';
     } else if (isRapidlyDeclining) {
       habitProfile = 'RAPIDLY_DECLINING';
       habitLabel = 'Rapidly Declining';
-      habitColor = '#dc2626'; // red
+      habitColor = '#dc2626';
     } else if (totalAttended === 0) {
       habitProfile = 'ZERO_ATTENDANCE';
       habitLabel = 'Zero Attendance (Absent)';
-      habitColor = '#475569'; // gray
+      habitColor = '#475569';
     } else if (overallRate < 30) {
       habitProfile = 'FREQUENTLY_ABSENT';
       habitLabel = 'Frequently Absent';
-      habitColor = '#ea580c'; // orange
+      habitColor = '#ea580c';
     }
+
+    const isVisitor = visitorMembers.some(v => v.id === member.id);
 
     // Pastoral Care Status
     const followUp = memberLatestFollowUp.get(member.id) || {
-      status: sunProfile.consecutiveSundaysMissed >= 3 ? 'Follow-Up Required' : 'None',
+      status: sunProfile.consecutiveMissed >= 3 ? 'Follow-Up Required' : 'None',
       note: '',
       updatedAt: null
     };
@@ -557,27 +611,60 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
       photoUrl: member.photoUrl,
       createdAt: member.createdAt,
       isNewMember,
+      isVisitor,
 
-      // Sunday Specifics (🔴 Mandatory Rule)
+      // Sunday Specifics
       sunday: {
         attended: sundayAttended,
         available: totalSundayOpportunities,
         rate: sundayRate,
-        currentStreak: sunProfile.currentSundayStreak,
-        longestStreak: sunProfile.longestSundayStreak,
-        consecutiveMissed: sunProfile.consecutiveSundaysMissed,
-        totalSundaysExcused: sunProfile.totalSundaysExcused,
-        lastAttendedDate: sunProfile.lastSundayAttendedDate,
+        currentStreak: sunProfile.currentStreak,
+        longestStreak: sunProfile.longestStreak,
+        consecutiveMissed: sunProfile.consecutiveMissed,
+        totalSundaysExcused: sunProfile.totalExcused,
+        lastAttendedDate: sunProfile.lastAttendedDate,
         streakStartDate: sunProfile.streakStartDate,
-        alertStatus: sunProfile.sundayAlertStatus,
+        alertStatus: sunProfile.alertStatus,
         alertLabel: sunProfile.alertLabel,
         alertColor: sunProfile.alertColor
       },
 
-      // Midweek & Events
-      wednesday: { attended: wednesdayAttended, available: totalWednesdayOpportunities, rate: wednesdayRate },
-      friday: { attended: fridayAttended, available: totalFridayOpportunities, rate: fridayRate },
-      event: { attended: eventAttended, available: totalEventOpportunities, rate: eventRate },
+      // Wednesday Specifics
+      wednesday: {
+        attended: wednesdayAttended,
+        available: totalWednesdayOpportunities,
+        rate: wednesdayRate,
+        currentStreak: wedProfile.currentStreak,
+        longestStreak: wedProfile.longestStreak,
+        consecutiveMissed: wedProfile.consecutiveMissed,
+        lastAttendedDate: wedProfile.lastAttendedDate,
+        streakStartDate: wedProfile.streakStartDate,
+        alertStatus: wedProfile.alertStatus,
+        alertLabel: wedProfile.alertLabel,
+        alertColor: wedProfile.alertColor
+      },
+
+      // Friday Specifics
+      friday: {
+        attended: fridayAttended,
+        available: totalFridayOpportunities,
+        rate: fridayRate,
+        currentStreak: friProfile.currentStreak,
+        longestStreak: friProfile.longestStreak,
+        consecutiveMissed: friProfile.consecutiveMissed,
+        lastAttendedDate: friProfile.lastAttendedDate,
+        streakStartDate: friProfile.streakStartDate,
+        alertStatus: friProfile.alertStatus,
+        alertLabel: friProfile.alertLabel,
+        alertColor: friProfile.alertColor
+      },
+
+      // Special Events
+      event: {
+        attended: eventAttended,
+        available: totalEventOpportunities,
+        rate: eventRate
+      },
 
       // Overall
       overall: {
@@ -585,8 +672,16 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
         missed: totalMissed,
         available: totalMonthOpportunities,
         rate: overallRate,
+        currentStreak: ovProfile.currentStreak,
+        longestStreak: ovProfile.longestStreak,
+        consecutiveMissed: ovProfile.consecutiveMissed,
+        lastAttendedDate: ovProfile.lastAttendedDate,
+        streakStartDate: ovProfile.streakStartDate,
+        alertStatus: ovProfile.alertStatus,
+        alertLabel: ovProfile.alertLabel,
+        alertColor: ovProfile.alertColor,
         prevMonthRate: prevRate,
-        twoMonthsAgoRate: twoMonthsAgoRate,
+        twoMonthsAgoRate,
         rateDelta,
         isRapidlyDeclining
       },
@@ -607,61 +702,71 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
   if (serviceTypeFilter === 'SUNDAY') {
     filteredMetrics = memberMetrics.filter(m => m.sunday.attended > 0 || m.sunday.currentStreak > 0);
   } else if (serviceTypeFilter === 'WEDNESDAY') {
-    filteredMetrics = memberMetrics.filter(m => m.wednesday.attended > 0);
+    filteredMetrics = memberMetrics.filter(m => m.wednesday.attended > 0 || m.wednesday.currentStreak > 0);
   } else if (serviceTypeFilter === 'FRIDAY') {
-    filteredMetrics = memberMetrics.filter(m => m.friday.attended > 0);
+    filteredMetrics = memberMetrics.filter(m => m.friday.attended > 0 || m.friday.currentStreak > 0);
   } else if (serviceTypeFilter === 'EVENT') {
     filteredMetrics = memberMetrics.filter(m => m.event.attended > 0);
   }
 
-  // Curate Pastoral Lists & Honor Rolls
-  // 1. Current Sunday Streak Leaderboard
-  const currentSundayStreakLeaderboard = [...memberMetrics]
-    .filter(m => m.sunday.currentStreak > 0)
-    .sort((a, b) => b.sunday.currentStreak - a.sunday.currentStreak)
-    .slice(0, 15);
+  // Multi-Service Leaderboards
+  // Sunday
+  const currentSundayStreaks = [...memberMetrics].filter(m => m.sunday.currentStreak > 0).sort((a, b) => b.sunday.currentStreak - a.sunday.currentStreak).slice(0, 15);
+  const longestSundayStreaks = [...memberMetrics].filter(m => m.sunday.longestStreak > 0).sort((a, b) => b.sunday.longestStreak - a.sunday.longestStreak).slice(0, 15);
+  const sundayWatch = memberMetrics.filter(m => m.sunday.consecutiveMissed === 1);
+  const sundayConcern = memberMetrics.filter(m => m.sunday.consecutiveMissed === 2);
+  const sundayFollowUp = memberMetrics.filter(m => m.sunday.consecutiveMissed >= 3);
+  const sundayFaithful = memberMetrics.filter(m => m.sunday.consecutiveMissed === 0);
 
-  // 2. Longest Sunday Streak Hall of Fame
-  const longestSundayStreakLeaderboard = [...memberMetrics]
-    .filter(m => m.sunday.longestStreak > 0)
-    .sort((a, b) => b.sunday.longestStreak - a.sunday.longestStreak)
-    .slice(0, 15);
+  // Wednesday
+  const currentWednesdayStreaks = [...memberMetrics].filter(m => m.wednesday.currentStreak > 0).sort((a, b) => b.wednesday.currentStreak - a.wednesday.currentStreak).slice(0, 15);
+  const longestWednesdayStreaks = [...memberMetrics].filter(m => m.wednesday.longestStreak > 0).sort((a, b) => b.wednesday.longestStreak - a.wednesday.longestStreak).slice(0, 15);
+  const wednesdayWatch = memberMetrics.filter(m => m.wednesday.consecutiveMissed === 1);
+  const wednesdayConcern = memberMetrics.filter(m => m.wednesday.consecutiveMissed === 2);
+  const wednesdayFollowUp = memberMetrics.filter(m => m.wednesday.consecutiveMissed >= 3);
+  const wednesdayFaithful = memberMetrics.filter(m => m.wednesday.consecutiveMissed === 0);
 
-  // 3. Sunday Watch List (Missed 1 Sunday)
-  const sundayWatchList = memberMetrics.filter(m => m.sunday.consecutiveMissed === 1);
+  // Friday
+  const currentFridayStreaks = [...memberMetrics].filter(m => m.friday.currentStreak > 0).sort((a, b) => b.friday.currentStreak - a.friday.currentStreak).slice(0, 15);
+  const longestFridayStreaks = [...memberMetrics].filter(m => m.friday.longestStreak > 0).sort((a, b) => b.friday.longestStreak - a.friday.longestStreak).slice(0, 15);
+  const fridayWatch = memberMetrics.filter(m => m.friday.consecutiveMissed === 1);
+  const fridayConcern = memberMetrics.filter(m => m.friday.consecutiveMissed === 2);
+  const fridayFollowUp = memberMetrics.filter(m => m.friday.consecutiveMissed >= 3);
+  const fridayFaithful = memberMetrics.filter(m => m.friday.consecutiveMissed === 0);
 
-  // 4. Sunday Concern List (Missed 2 Consecutive Sundays)
-  const sundayConcernList = memberMetrics.filter(m => m.sunday.consecutiveMissed === 2);
+  // Overall
+  const currentOverallStreaks = [...memberMetrics].filter(m => m.overall.currentStreak > 0).sort((a, b) => b.overall.currentStreak - a.overall.currentStreak).slice(0, 15);
+  const longestOverallStreaks = [...memberMetrics].filter(m => m.overall.longestStreak > 0).sort((a, b) => b.overall.longestStreak - a.overall.longestStreak).slice(0, 15);
+  const overallWatch = memberMetrics.filter(m => m.overall.consecutiveMissed === 1);
+  const overallConcern = memberMetrics.filter(m => m.overall.consecutiveMissed === 2);
+  const overallFollowUp = memberMetrics.filter(m => m.overall.consecutiveMissed >= 3);
+  const overallFaithful = memberMetrics.filter(m => m.overall.consecutiveMissed === 0);
 
-  // 5. Sunday Pastoral Follow-Up Required List (Missed 3+ Consecutive Sundays)
-  const sundayFollowUpRequiredList = memberMetrics.filter(m => m.sunday.consecutiveMissed >= 3);
-
-  // 6. Rapidly Declining Attendance List
+  // Special Lists
   const rapidlyDecliningList = memberMetrics
     .filter(m => m.overall.isRapidlyDeclining || (m.overall.rateDelta <= -30 && m.overall.prevMonthRate >= 35))
     .sort((a, b) => a.overall.rateDelta - b.overall.rateDelta);
 
-  // 7. All-Round Pillars / Most Consistent Overall
   const consistentList = [...memberMetrics]
-    .filter(m => m.overall.rate >= 70 || m.sunday.rate >= 85)
+    .filter(m => m.overall.rate >= 60 || m.sunday.rate >= 80 || m.wednesday.rate >= 70 || m.friday.rate >= 70)
     .sort((a, b) => b.engagement.score - a.engagement.score)
-    .slice(0, 20);
+    .slice(0, 25);
 
-  // 8. Zero Attendance / Inactive List
   const zeroAttendanceList = memberMetrics.filter(m => m.overall.attended === 0);
-
-  // 9. New Members Retention Watch
   const newMemberList = memberMetrics.filter(m => m.isNewMember);
 
-  // 10. Summary KPI Totals
-  const totalRegisteredMembers = regularMembers.length;
+  // Summary KPI Totals
+  const totalRegisteredMembers = allMembers.length;
+  const totalRegularCount = regularMembers.length;
   const totalVisitorsCount = visitorMembers.length;
-  const activeMembersThisMonth = memberMetrics.filter(m => m.overall.attended > 0).length;
-  const monthlyParticipationRate = totalRegisteredMembers > 0
-    ? Math.round((activeMembersThisMonth / totalRegisteredMembers) * 100)
+  const analyzedCount = targetMembers.length;
+
+  const activeAttendeesThisMonth = memberMetrics.filter(m => m.overall.attended > 0).length;
+  const monthlyParticipationRate = analyzedCount > 0
+    ? Math.round((activeAttendeesThisMonth / analyzedCount) * 100)
     : 0;
 
-  const totalPossibleAttendances = totalRegisteredMembers * totalMonthOpportunities;
+  const totalPossibleAttendances = analyzedCount * totalMonthOpportunities;
   const actualAttendancesCount = monthAttendances.length;
   const overallAttendancePct = totalPossibleAttendances > 0
     ? Math.round((actualAttendancesCount / totalPossibleAttendances) * 100)
@@ -695,8 +800,11 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
     },
     summary: {
       totalRegisteredMembers,
+      totalRegularCount,
       totalVisitorsCount,
-      activeMembersThisMonth,
+      analyzedCount,
+      attendeeTypeFilter: attendeeType,
+      activeMembersThisMonth: activeAttendeesThisMonth,
       monthlyParticipationRate,
       totalServicesHeld: totalMonthOpportunities,
       totalCheckinsCount: actualAttendancesCount,
@@ -709,21 +817,72 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
         event: { servicesCount: totalEventOpportunities, totalAttendance: eventAttendances.length, average: eventAvg }
       },
       pastoralAlertCounts: {
-        sundayWatch: sundayWatchList.length,
-        sundayConcern: sundayConcernList.length,
-        sundayFollowUpRequired: sundayFollowUpRequiredList.length,
+        sundayFaithful: sundayFaithful.length,
+        sundayWatch: sundayWatch.length,
+        sundayConcern: sundayConcern.length,
+        sundayFollowUpRequired: sundayFollowUp.length,
+
+        wednesdayFaithful: wednesdayFaithful.length,
+        wednesdayWatch: wednesdayWatch.length,
+        wednesdayConcern: wednesdayConcern.length,
+        wednesdayFollowUpRequired: wednesdayFollowUp.length,
+
+        fridayFaithful: fridayFaithful.length,
+        fridayWatch: fridayWatch.length,
+        fridayConcern: fridayConcern.length,
+        fridayFollowUpRequired: fridayFollowUp.length,
+
+        overallFaithful: overallFaithful.length,
+        overallWatch: overallWatch.length,
+        overallConcern: overallConcern.length,
+        overallFollowUpRequired: overallFollowUp.length,
+
         rapidlyDeclining: rapidlyDecliningList.length,
         zeroAttendance: zeroAttendanceList.length,
         newMembers: newMemberList.length
       }
     },
     leaderboards: {
-      currentSundayStreaks: currentSundayStreakLeaderboard,
-      longestSundayStreaks: longestSundayStreakLeaderboard,
+      // Multi-service leaderboards
+      sunday: {
+        currentStreaks: currentSundayStreaks,
+        longestStreaks: longestSundayStreaks,
+        watch: sundayWatch,
+        concern: sundayConcern,
+        followUpRequired: sundayFollowUp,
+        faithful: sundayFaithful
+      },
+      wednesday: {
+        currentStreaks: currentWednesdayStreaks,
+        longestStreaks: longestWednesdayStreaks,
+        watch: wednesdayWatch,
+        concern: wednesdayConcern,
+        followUpRequired: wednesdayFollowUp,
+        faithful: wednesdayFaithful
+      },
+      friday: {
+        currentStreaks: currentFridayStreaks,
+        longestStreaks: longestFridayStreaks,
+        watch: fridayWatch,
+        concern: fridayConcern,
+        followUpRequired: fridayFollowUp,
+        faithful: fridayFaithful
+      },
+      overall: {
+        currentStreaks: currentOverallStreaks,
+        longestStreaks: longestOverallStreaks,
+        watch: overallWatch,
+        concern: overallConcern,
+        followUpRequired: overallFollowUp,
+        faithful: overallFaithful
+      },
+      // Backward compatible top-level shortcuts
+      currentSundayStreaks,
+      longestSundayStreaks,
       consistentMembers: consistentList,
-      sundayWatch: sundayWatchList,
-      sundayConcern: sundayConcernList,
-      sundayFollowUpRequired: sundayFollowUpRequiredList,
+      sundayWatch,
+      sundayConcern,
+      sundayFollowUpRequired: sundayFollowUp,
       rapidlyDeclining: rapidlyDecliningList,
       zeroAttendance: zeroAttendanceList,
       newMembers: newMemberList
@@ -749,43 +908,46 @@ async function getAttendanceTrends({ months = 12 } = {}) {
 
     const monthLabel = d.toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 
-    // Fetch services for this month
-    const services = await prisma.service.findMany({
-      where: { active: true, serviceDate: { gte: start, lte: end } },
-      include: { serviceType: true }
+    const totalSvcs = await prisma.service.count({
+      where: { active: true, serviceDate: { gte: start, lte: end } }
     });
 
     const attendances = await prisma.attendance.findMany({
-      where: { service: { serviceDate: { gte: start, lte: end }, active: true } },
-      include: { service: { include: { serviceType: true } } }
+      where: {
+        service: { active: true, serviceDate: { gte: start, lte: end } },
+        member: { active: true, deletedAt: null }
+      },
+      include: {
+        service: { include: { serviceType: true } }
+      }
     });
 
-    let sundayCount = 0;
-    let wednesdayCount = 0;
-    let fridayCount = 0;
-    let eventCount = 0;
-    const uniqueAttendees = new Set();
+    let sundayCheckins = 0;
+    let wednesdayCheckins = 0;
+    let fridayCheckins = 0;
+    let eventCheckins = 0;
 
     attendances.forEach(a => {
-      uniqueAttendees.add(a.memberId);
       const cat = classifyServiceCategory(a.service?.serviceType?.name || '', a.service?.serviceType?.name || '');
-      if (cat === 'SUNDAY') sundayCount++;
-      else if (cat === 'WEDNESDAY') wednesdayCount++;
-      else if (cat === 'FRIDAY') fridayCount++;
-      else eventCount++;
+      if (cat === 'SUNDAY') sundayCheckins++;
+      else if (cat === 'WEDNESDAY') wednesdayCheckins++;
+      else if (cat === 'FRIDAY') fridayCheckins++;
+      else eventCheckins++;
     });
+
+    const uniqueAttendees = new Set(attendances.map(a => a.memberId)).size;
 
     trendPoints.push({
       year: y,
       month: m,
       monthLabel,
-      totalServices: services.length,
+      totalServices: totalSvcs,
       totalCheckins: attendances.length,
-      uniqueAttendeesCount: uniqueAttendees.size,
-      sundayCheckins: sundayCount,
-      wednesdayCheckins: wednesdayCount,
-      fridayCheckins: fridayCount,
-      eventCheckins: eventCount
+      uniqueAttendeesCount: uniqueAttendees,
+      sundayCheckins,
+      wednesdayCheckins,
+      fridayCheckins,
+      eventCheckins
     });
   }
 
@@ -793,7 +955,7 @@ async function getAttendanceTrends({ months = 12 } = {}) {
 }
 
 /**
- * Individual Member Attendance Dossier
+ * Individual Member Attendance Dossier & Historical Streaks
  */
 async function getMemberAttendanceAnalytics(memberId) {
   const member = await prisma.member.findUnique({
@@ -806,18 +968,22 @@ async function getMemberAttendanceAnalytics(memberId) {
     throw new Error('Member not found');
   }
 
-  // All Sunday services across history
-  const allSundayServices = await prisma.service.findMany({
-    where: {
-      active: true,
-      OR: [
-        { serviceType: { name: { contains: 'Sunday', mode: 'insensitive' } } },
-        { serviceType: { name: { contains: 'Family', mode: 'insensitive' } } },
-        { serviceType: { dayOfWeek: 0 } }
-      ]
-    },
+  // Fetch All Historical Services
+  const allHistoricalServices = await prisma.service.findMany({
+    where: { active: true },
     include: { serviceType: true },
     orderBy: { serviceDate: 'asc' }
+  });
+
+  const allSundayServices = [];
+  const allWednesdayServices = [];
+  const allFridayServices = [];
+
+  allHistoricalServices.forEach(s => {
+    const cat = classifyServiceCategory(s.serviceType?.name || '', s.name || '');
+    if (cat === 'SUNDAY') allSundayServices.push(s);
+    else if (cat === 'WEDNESDAY') allWednesdayServices.push(s);
+    else if (cat === 'FRIDAY') allFridayServices.push(s);
   });
 
   // All member attendances across history
@@ -829,7 +995,7 @@ async function getMemberAttendanceAnalytics(memberId) {
     orderBy: { checkedInAt: 'desc' }
   });
 
-  // Calculate Sunday streak for this specific member
+  // All historical attendances
   const allHistoricalAttendances = await prisma.attendance.findMany({
     where: { member: { active: true, deletedAt: null } },
     select: { id: true, memberId: true, serviceId: true, checkedInAt: true, method: true }
@@ -840,21 +1006,11 @@ async function getMemberAttendanceAnalytics(memberId) {
     excusedMap.set(member.id, [member.outOfTown]);
   }
 
-  const sundayProfiles = calculateSundayConsecutiveStreaks(allSundayServices, allHistoricalAttendances, excusedMap);
-  const sunProfile = sundayProfiles.get(member.id) || {
-    currentSundayStreak: 0,
-    longestSundayStreak: 0,
-    consecutiveSundaysMissed: 0,
-    totalSundaysAttended: 0,
-    totalSundaysMissed: 0,
-    totalSundaysExcused: 0,
-    sundayAttendancePct: 0,
-    lastSundayAttendedDate: null,
-    streakStartDate: null,
-    sundayAlertStatus: 'SUNDAY_WATCH',
-    alertLabel: 'Sunday Watch',
-    alertColor: '#d97706'
-  };
+  const targetId = [member.id];
+  const sunProfile = calculateConsecutiveStreaks(allSundayServices, allHistoricalAttendances, excusedMap, targetId, 'Sunday').get(member.id) || createDefaultProfile('Sunday');
+  const wedProfile = calculateConsecutiveStreaks(allWednesdayServices, allHistoricalAttendances, excusedMap, targetId, 'Wednesday').get(member.id) || createDefaultProfile('Wednesday');
+  const friProfile = calculateConsecutiveStreaks(allFridayServices, allHistoricalAttendances, excusedMap, targetId, 'Friday').get(member.id) || createDefaultProfile('Friday');
+  const ovProfile = calculateConsecutiveStreaks(allHistoricalServices, allHistoricalAttendances, excusedMap, targetId, 'Overall').get(member.id) || createDefaultProfile('Overall');
 
   // Lifetime counts by service category
   let sundayTotal = 0;
@@ -871,7 +1027,7 @@ async function getMemberAttendanceAnalytics(memberId) {
   });
 
   // Total services held across history
-  const totalServicesHeld = await prisma.service.count({ where: { active: true } });
+  const totalServicesHeld = allHistoricalServices.length;
   const totalAttended = allMemberAttendances.length;
   const overallRate = totalServicesHeld > 0 ? Math.round((totalAttended / totalServicesHeld) * 100) : 0;
 
@@ -890,11 +1046,12 @@ async function getMemberAttendanceAnalytics(memberId) {
       where: { active: true, serviceDate: { gte: start, lte: end } }
     });
 
-    const attendedCount = allMemberAttendances.filter(a => {
+    const monthAtts = allMemberAttendances.filter(a => {
       const sDate = new Date(a.service?.serviceDate || a.checkedInAt);
       return sDate >= start && sDate <= end;
-    }).length;
+    });
 
+    const attendedCount = monthAtts.length;
     const rate = totalSvcs > 0 ? Math.round((attendedCount / totalSvcs) * 100) : 0;
 
     monthlyHistory.push({
@@ -903,7 +1060,10 @@ async function getMemberAttendanceAnalytics(memberId) {
       monthLabel: d.toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }),
       attended: attendedCount,
       totalServices: totalSvcs,
-      rate
+      rate,
+      sundayCount: monthAtts.filter(a => classifyServiceCategory(a.service?.serviceType?.name || '', a.service?.serviceType?.name || '') === 'SUNDAY').length,
+      wednesdayCount: monthAtts.filter(a => classifyServiceCategory(a.service?.serviceType?.name || '', a.service?.serviceType?.name || '') === 'WEDNESDAY').length,
+      fridayCount: monthAtts.filter(a => classifyServiceCategory(a.service?.serviceType?.name || '', a.service?.serviceType?.name || '') === 'FRIDAY').length
     });
   }
 
@@ -929,7 +1089,7 @@ async function getMemberAttendanceAnalytics(memberId) {
     note: (followUpLogs[0].metadata && followUpLogs[0].metadata.note) || '',
     updatedAt: followUpLogs[0].createdAt
   } : {
-    status: sunProfile.consecutiveSundaysMissed >= 3 ? 'Follow-Up Required' : 'None',
+    status: sunProfile.consecutiveMissed >= 3 ? 'Follow-Up Required' : 'None',
     note: '',
     updatedAt: null
   };
@@ -938,14 +1098,20 @@ async function getMemberAttendanceAnalytics(memberId) {
     member: {
       id: member.id,
       name: `${member.firstName} ${member.lastName}`,
-      phone: member.phone,
-      email: member.email,
-      gender: member.gender,
-      category: member.category,
-      role: member.role,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      phone: member.phone || '',
+      email: member.email || '',
+      gender: member.gender || 'Not Specified',
+      category: member.category || 'Adult',
+      role: member.role || 'Member',
       photoUrl: member.photoUrl,
       createdAt: member.createdAt
     },
+    sunday: sunProfile,
+    wednesday: wedProfile,
+    friday: friProfile,
+    overall: ovProfile,
     lifetime: {
       totalAttended,
       totalServicesHeld,
@@ -957,33 +1123,32 @@ async function getMemberAttendanceAnalytics(memberId) {
         event: eventTotal
       }
     },
-    sunday: sunProfile,
     monthlyHistory,
     recentCheckins,
     pastoralFollowUp: latestFollowUp,
     followUpHistory: followUpLogs.map(l => ({
       id: l.id,
-      status: l.metadata?.status,
-      note: l.metadata?.note,
+      status: (l.metadata && l.metadata.status) || 'Follow-Up Required',
+      note: (l.metadata && l.metadata.note) || '',
       createdAt: l.createdAt,
-      actorId: l.actorId
+      actorName: (l.metadata && l.metadata.actorName) || 'Pastor / Admin'
     }))
   };
 }
 
 /**
- * Log Pastoral Follow-Up Note & Status
+ * Log Pastoral Follow-Up Action & Note
  */
-async function logPastoralFollowUp({ memberId, status, note = '', actorId = null, actorName = 'Admin / Pastor' }) {
+async function logPastoralFollowUp({ memberId, status, note = '', actorId = null, actorName = 'Admin' } = {}) {
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member) throw new Error('Member not found');
 
   const log = await prisma.auditLog.create({
     data: {
-      actorId,
       action: 'PASTORAL_FOLLOW_UP',
-      entity: 'MEMBER_PASTORAL_CARE',
+      entity: 'Member',
       entityId: memberId,
+      actorId,
       metadata: {
         status,
         note,
@@ -994,56 +1159,74 @@ async function logPastoralFollowUp({ memberId, status, note = '', actorId = null
     }
   });
 
-  return { success: true, log };
+  return { success: true, logId: log.id, status, note, loggedAt: log.createdAt };
 }
 
 /**
- * Save / Archive Finalized Monthly Report Snapshot
+ * Snapshot & Archive Final Monthly Attendance Report
  */
 async function saveMonthlyReportSnapshot({ year, month, generatedBy = 'Admin' } = {}) {
-  const analytics = await getMonthlyAttendanceAnalytics({ year, month });
-  const entityId = `${analytics.period.year}-${String(analytics.period.month).padStart(2, '0')}`;
+  const reportData = await getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter: 'ALL', attendeeType: 'ALL' });
 
-  const log = await prisma.auditLog.create({
+  const snapshotKey = `MONTHLY_ATTENDANCE_${reportData.period.year}_${String(reportData.period.month).padStart(2, '0')}`;
+
+  const existing = await prisma.auditLog.findFirst({
+    where: { action: 'MONTHLY_REPORT_ARCHIVE', entity: snapshotKey }
+  });
+
+  if (existing) {
+    await prisma.auditLog.update({
+      where: { id: existing.id },
+      data: {
+        metadata: {
+          ...reportData,
+          archivedAt: new Date().toISOString(),
+          generatedBy,
+          version: ((existing.metadata && existing.metadata.version) || 1) + 1
+        }
+      }
+    });
+    return { success: true, updated: true, key: snapshotKey, period: reportData.period };
+  }
+
+  await prisma.auditLog.create({
     data: {
-      actorId: null,
-      action: 'MONTHLY_ATTENDANCE_REPORT',
-      entity: 'ATTENDANCE_REPORT_ARCHIVE',
-      entityId,
+      action: 'MONTHLY_REPORT_ARCHIVE',
+      entity: snapshotKey,
       metadata: {
-        periodLabel: analytics.period.label,
-        summary: analytics.summary,
-        leaderboards: analytics.leaderboards,
+        ...reportData,
+        archivedAt: new Date().toISOString(),
         generatedBy,
-        generatedAt: new Date().toISOString()
+        version: 1
       }
     }
   });
 
-  return { success: true, entityId, log };
+  return { success: true, created: true, key: snapshotKey, period: reportData.period };
 }
 
 /**
- * List Archived Monthly Reports
+ * Fetch List of Saved Monthly Report Snapshots
  */
 async function listSavedMonthlyReports() {
   const logs = await prisma.auditLog.findMany({
-    where: { action: 'MONTHLY_ATTENDANCE_REPORT' },
-    orderBy: { createdAt: 'desc' },
-    take: 50
+    where: { action: 'MONTHLY_REPORT_ARCHIVE' },
+    orderBy: { createdAt: 'desc' }
   });
 
   return logs.map(l => ({
     id: l.id,
-    reportMonth: l.entityId,
-    periodLabel: l.metadata?.periodLabel || l.entityId,
-    generatedAt: l.createdAt,
-    generatedBy: l.metadata?.generatedBy || 'System',
-    summary: l.metadata?.summary || null
+    key: l.entity,
+    period: (l.metadata && l.metadata.period) || {},
+    summary: (l.metadata && l.metadata.summary) || {},
+    archivedAt: (l.metadata && l.metadata.archivedAt) || l.createdAt,
+    generatedBy: (l.metadata && l.metadata.generatedBy) || 'System'
   }));
 }
 
 module.exports = {
+  classifyServiceCategory,
+  calculateConsecutiveStreaks,
   calculateSundayConsecutiveStreaks,
   calculateEngagementScore,
   getMonthlyAttendanceAnalytics,
