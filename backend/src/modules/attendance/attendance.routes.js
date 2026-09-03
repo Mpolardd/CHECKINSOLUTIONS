@@ -1167,5 +1167,138 @@ router.get('/visitors', async (req, res, next) => {
   }
 });
 
+/* ═════════════════════════════════════════════════════════════════════════
+   ATTENDANCE & ENGAGEMENT ANALYTICS (PASTOR & ADMIN SUITE)
+═════════════════════════════════════════════════════════════════════════ */
+const analyticsService = require('./attendanceAnalytics.service');
+
+// Monthly Attendance Analytics Dashboard
+router.get('/analytics/monthly', requireAuth, async (req, res, next) => {
+  try {
+    const { year, month, serviceType } = req.query;
+    const data = await analyticsService.getMonthlyAttendanceAnalytics({
+      year,
+      month,
+      serviceTypeFilter: serviceType || 'ALL'
+    });
+    res.json(data);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Dedicated Sunday Streak Leaderboards & Pastoral Alerts
+router.get('/analytics/sunday-streaks', requireAuth, async (req, res, next) => {
+  try {
+    const { year, month } = req.query;
+    const data = await analyticsService.getMonthlyAttendanceAnalytics({ year, month });
+    res.json({
+      success: true,
+      period: data.period,
+      currentSundayStreaks: data.leaderboards.currentSundayStreaks,
+      longestSundayStreaks: data.leaderboards.longestSundayStreaks,
+      sundayWatch: data.leaderboards.sundayWatch,
+      sundayConcern: data.leaderboards.sundayConcern,
+      sundayFollowUpRequired: data.leaderboards.sundayFollowUpRequired,
+      summary: data.summary.serviceBreakdown.sunday
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Multi-Month Trends for Visual Charts (6 to 12 months)
+router.get('/analytics/trends', requireAuth, async (req, res, next) => {
+  try {
+    const months = req.query.months ? parseInt(req.query.months, 10) : 12;
+    const trends = await analyticsService.getAttendanceTrends({ months });
+    res.json({ success: true, trends });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Individual Member Attendance Dossier & Streak History
+router.get('/analytics/member/:id', requireAuth, async (req, res, next) => {
+  try {
+    const data = await analyticsService.getMemberAttendanceAnalytics(req.params.id);
+    res.json({ success: true, ...data });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Record Pastoral Follow-Up Action & Note
+router.post('/analytics/pastoral-followup', requireAuth, async (req, res, next) => {
+  try {
+    const { memberId, status, note } = req.body;
+    if (!memberId || !status) {
+      return res.status(400).json({ error: 'memberId and status are required' });
+    }
+    const actorId = req.user?.userId || null;
+    const actorName = req.user?.email || 'Admin / Pastor';
+    const result = await analyticsService.logPastoralFollowUp({ memberId, status, note, actorId, actorName });
+    res.json(result);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Fetch Archived Reports List
+router.get('/analytics/reports', requireAuth, async (req, res, next) => {
+  try {
+    const reports = await analyticsService.listSavedMonthlyReports();
+    res.json({ success: true, reports });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Generate / Archive Monthly Report Snapshot On-Demand
+router.post('/analytics/report/generate', requireAuth, async (req, res, next) => {
+  try {
+    const { year, month } = req.body;
+    const generatedBy = req.user?.email || 'Admin';
+    const result = await analyticsService.saveMonthlyReportSnapshot({ year, month, generatedBy });
+    res.json(result);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Serverless Cron Endpoint for Automated End-of-Month Archiving
+router.all('/analytics/cron-monthly', async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const cronSecretHeader = req.headers['x-cron-secret'] || '';
+    const configuredSecret = process.env.CRON_SECRET || 'solutions_cron_secure_key_2026';
+
+    let authorized = false;
+    if (cronSecretHeader === configuredSecret || authHeader === `Bearer ${configuredSecret}`) {
+      authorized = true;
+    }
+    if (!authorized && authHeader.startsWith('Bearer ')) {
+      try {
+        const decoded = jwt.verify(authHeader.slice(7), process.env.JWT_ACCESS_SECRET || 'church_mgmt_secret_dev_fallback_only');
+        if (decoded.role === 'SUPER_ADMIN' || decoded.role === 'ADMIN') authorized = true;
+      } catch (e) {}
+    }
+
+    if (!authorized) {
+      return res.status(401).json({ error: 'Unauthorized CRON execution' });
+    }
+
+    const now = new Date();
+    const prevMonthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+    const y = prevMonthDate.getUTCFullYear();
+    const m = prevMonthDate.getUTCMonth() + 1;
+
+    const result = await analyticsService.saveMonthlyReportSnapshot({ year: y, month: m, generatedBy: 'SYSTEM_CRON' });
+    res.json({ success: true, message: `Monthly attendance report for ${y}-${m} archived successfully`, ...result });
+  } catch (e) {
+    next(e);
+  }
+});
+
 module.exports = router;
 

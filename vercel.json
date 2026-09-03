@@ -9,6 +9,10 @@
     {
       "path": "/api/v1/reminders/process",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/v1/attendance/analytics/cron-monthly",
+      "schedule": "0 0 1 * *"
     }
   ],
   "rewrites": [
