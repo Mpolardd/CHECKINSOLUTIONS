@@ -16,7 +16,8 @@ const memberSchema = z.object({
   guardian: z.string().optional(),
   dateOfBirth: z.string().optional(),
   anniversary: z.string().optional(),
-  householdId: z.string().optional()
+  householdId: z.string().optional(),
+  photoUrl: z.string().optional().nullable()
 });
 
 function parseOptionalDate(val) {
@@ -104,7 +105,8 @@ router.post('/', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION
         guardian: b.guardian ? b.guardian.trim() : null,
         dateOfBirth: parseOptionalDate(b.dateOfBirth),
         anniversary: parseOptionalDate(b.anniversary),
-        householdId: b.householdId || null
+        householdId: b.householdId || null,
+        photoUrl: b.photoUrl ? b.photoUrl.trim() : null
       }
     });
 
@@ -127,6 +129,55 @@ router.post('/', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION
   }
 });
 
+// Photo Upload Helper - Supports Supabase Storage Bucket or optimized storage
+router.post('/upload-photo', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION'), async (req, res, next) => {
+  try {
+    const { photoData, fileName } = req.body || {};
+    if (!photoData || typeof photoData !== 'string') {
+      return res.status(400).json({ error: 'Valid photoData is required' });
+    }
+
+    const supabaseUrl = process.env.SUPABASE_URL || 'https://voruwyxpzgxwcovghaoq.supabase.co';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'member-photos';
+
+    // If Supabase Storage key is configured, upload directly to the Supabase bucket
+    if (supabaseKey && photoData.startsWith('data:')) {
+      try {
+        const matches = photoData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        if (matches && matches.length === 3) {
+          const contentType = matches[1];
+          const buffer = Buffer.from(matches[2], 'base64');
+          const ext = contentType.split('/')[1] || 'jpg';
+          const cleanFileName = (fileName || `member_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`).replace(/[^a-zA-Z0-9._-]/g, '_');
+
+          const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/${bucketName}/${cleanFileName}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Content-Type': contentType,
+              'x-upsert': 'true'
+            },
+            body: buffer
+          });
+
+          if (uploadRes.ok) {
+            const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${cleanFileName}`;
+            return res.json({ success: true, photoUrl: publicUrl });
+          }
+        }
+      } catch (uploadErr) {
+        console.warn('Supabase bucket upload attempt failed, falling back to direct photoData storage:', uploadErr.message);
+      }
+    }
+
+    // Direct return of optimized photoData
+    res.json({ success: true, photoUrl: photoData });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.put('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION'), async (req, res, next) => {
   try {
     const b = memberSchema.partial().parse(req.body);
@@ -143,6 +194,7 @@ router.put('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATI
     if (b.dateOfBirth !== undefined) data.dateOfBirth = parseOptionalDate(b.dateOfBirth);
     if (b.anniversary !== undefined) data.anniversary = parseOptionalDate(b.anniversary);
     if (b.householdId !== undefined) data.householdId = b.householdId || null;
+    if (b.photoUrl !== undefined) data.photoUrl = b.photoUrl ? b.photoUrl.trim() : null;
 
     const m = await prisma.member.update({
       where: { id: req.params.id },

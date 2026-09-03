@@ -2199,6 +2199,23 @@
       <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Enter details for Adults, Youth, or Children (Sunday School) with parent linkages.</p>
       
       <form onsubmit="handleSaveNewMember(event)">
+        <!-- Member Photo Upload (Optional) -->
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; padding: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
+          <input type="file" id="newMemPhotoFile" accept="image/*" style="display: none;" onchange="handleMemberPhotoUpload(event, 'new')" />
+          <input type="hidden" id="newMemPhotoUrl" />
+          <div id="newMemPhotoPreview">
+            <div onclick="document.getElementById('newMemPhotoFile').click()" style="width: 64px; height: 64px; border-radius: 50%; border: 2px dashed #94a3b8; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); background: white; transition: all 0.2s;" title="Click to upload photo">
+              <i class="fas fa-camera" style="font-size: 18px; color: var(--accent);"></i>
+              <span style="font-size: 9px; font-weight: 700; margin-top: 2px;">Upload</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--ink);">Member Photo <span style="font-size: 11px; color: var(--muted); font-weight: normal;">(Optional)</span></div>
+            <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Upload picture from phone gallery or take a quick photo with camera.</div>
+            <button type="button" class="btn-ghost" style="padding: 4px 10px; font-size: 11px; margin-top: 6px;" onclick="document.getElementById('newMemPhotoFile').click()"><i class="fas fa-upload"></i> Choose Picture</button>
+          </div>
+        </div>
+
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label for="newMemFirst" class="form-label">First Name *</label>
@@ -2284,6 +2301,23 @@
       
       <form onsubmit="handleUpdateMember(event)">
         <input type="hidden" id="editMemId" />
+        <!-- Member Photo Upload (Optional) -->
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; padding: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
+          <input type="file" id="editMemPhotoFile" accept="image/*" style="display: none;" onchange="handleMemberPhotoUpload(event, 'edit')" />
+          <input type="hidden" id="editMemPhotoUrl" />
+          <div id="editMemPhotoPreview">
+            <div onclick="document.getElementById('editMemPhotoFile').click()" style="width: 64px; height: 64px; border-radius: 50%; border: 2px dashed #94a3b8; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); background: white; transition: all 0.2s;" title="Click to upload photo">
+              <i class="fas fa-camera" style="font-size: 18px; color: var(--accent);"></i>
+              <span style="font-size: 9px; font-weight: 700; margin-top: 2px;">Upload</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--ink);">Member Photo <span style="font-size: 11px; color: var(--muted); font-weight: normal;">(Optional)</span></div>
+            <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Upload picture from phone gallery or take a quick photo with camera.</div>
+            <button type="button" class="btn-ghost" style="padding: 4px 10px; font-size: 11px; margin-top: 6px;" onclick="document.getElementById('editMemPhotoFile').click()"><i class="fas fa-upload"></i> Change Picture</button>
+          </div>
+        </div>
+
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label for="editMemFirst" class="form-label">First Name *</label>
@@ -5795,8 +5829,19 @@
       if (tbody) {
         tbody.innerHTML = list.map((m, i) => {
           const {genderBadge, catBadge, phoneDisplay, roleDisplay} = buildMemberBadges(m);
+          const initials = `${(m.firstName || 'M')[0] || ''}${(m.lastName || '')[0] || ''}`.toUpperCase();
+          const avatarMini = m.photoUrl
+            ? `<img src="${escapeHtml(m.photoUrl)}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid var(--accent);flex-shrink:0;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-flex';" /><span style="display:none;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--emerald-dark),var(--emerald));color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">${initials}</span>`
+            : `<span style="display:inline-flex;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--emerald-dark),var(--emerald));color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">${initials}</span>`;
+
           return `<tr>
-            <td>${i+1}</td><td><strong>${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</strong></td>
+            <td>${i+1}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                ${avatarMini}
+                <span><strong>${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</strong></span>
+              </div>
+            </td>
             <td>${catBadge}</td><td>${phoneDisplay}</td><td>${genderBadge}</td>
             <td>${m.address?`<span><i class="fa-solid fa-location-dot" style="margin-right:4px; color:var(--muted);"></i> ${escapeHtml(m.address)}</span>`:'—'}</td>
             <td>${m.dob?`<span class="badge-dob"><i class="fa-solid fa-cake-candles" style="margin-right:4px;"></i> ${escapeHtml(m.dob)}</span>`:'—'}</td>
@@ -5815,10 +5860,18 @@
           ? `<div style="text-align:center;color:var(--muted);padding:28px 0;">No members yet.</div>`
           : list.map((m, i) => {
             const {genderBadge, catBadge} = buildMemberBadges(m);
+            const initials = `${(m.firstName || 'M')[0] || ''}${(m.lastName || '')[0] || ''}`.toUpperCase();
+            const avatarMini = m.photoUrl
+              ? `<img src="${escapeHtml(m.photoUrl)}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid var(--accent);flex-shrink:0;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-flex';" /><span style="display:none;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--emerald-dark),var(--emerald));color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">${initials}</span>`
+              : `<span style="display:inline-flex;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--emerald-dark),var(--emerald));color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">${initials}</span>`;
+
             return `
               <div class="mob-card">
-                <div class="mob-card-header">
-                  <div class="mob-card-name">${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</div>
+                <div class="mob-card-header" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    ${avatarMini}
+                    <div class="mob-card-name">${escapeHtml(m.firstName)} ${escapeHtml(m.lastName)}</div>
+                  </div>
                   ${catBadge}
                 </div>
                 <div class="mob-card-meta">
@@ -6082,7 +6135,74 @@
       document.getElementById('lblEditPhone').innerText = isChild ? 'Parent / Contact Phone *' : 'Phone Number *';
     }
 
+    function handleMemberPhotoUpload(e, mode) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select a valid image file (JPG, PNG, WebP).', 'warning', 'Invalid File');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const rawData = evt.target.result;
+        const img = new Image();
+        img.onload = function() {
+          const maxDim = 400;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const compressedData = canvas.toDataURL('image/jpeg', 0.85);
+
+          const urlInput = document.getElementById(mode === 'new' ? 'newMemPhotoUrl' : 'editMemPhotoUrl');
+          const preview = document.getElementById(mode === 'new' ? 'newMemPhotoPreview' : 'editMemPhotoPreview');
+          if (urlInput) urlInput.value = compressedData;
+          if (preview) {
+            preview.innerHTML = `
+              <div style="position: relative; display: inline-block;">
+                <img src="${compressedData}" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.15);" />
+                <button type="button" onclick="clearMemberPhoto('${mode}')" style="position: absolute; top: -4px; right: -4px; background: #c5221f; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Remove Photo">✕</button>
+              </div>
+            `;
+          }
+        };
+        img.src = rawData;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearMemberPhoto(mode) {
+      const fileInput = document.getElementById(mode === 'new' ? 'newMemPhotoFile' : 'editMemPhotoFile');
+      const urlInput = document.getElementById(mode === 'new' ? 'newMemPhotoUrl' : 'editMemPhotoUrl');
+      const preview = document.getElementById(mode === 'new' ? 'newMemPhotoPreview' : 'editMemPhotoPreview');
+      if (fileInput) fileInput.value = '';
+      if (urlInput) urlInput.value = '';
+      if (preview) {
+        preview.innerHTML = `
+          <div onclick="document.getElementById('${mode === 'new' ? 'newMemPhotoFile' : 'editMemPhotoFile'}').click()" style="width: 64px; height: 64px; border-radius: 50%; border: 2px dashed #94a3b8; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); background: white; transition: all 0.2s;" title="Click to upload photo">
+            <i class="fas fa-camera" style="font-size: 18px; color: var(--accent);"></i>
+            <span style="font-size: 9px; font-weight: 700; margin-top: 2px;">Upload</span>
+          </div>
+        `;
+      }
+    }
+
     function openAddMemberModal() {
+      clearMemberPhoto('new');
       document.getElementById('addMemberModal').classList.add('active');
       document.getElementById('newMemFirst').focus();
     }
@@ -6118,6 +6238,22 @@
       document.getElementById('editMemRole').value = member.role || 'Member';
       document.getElementById('editMemEmail').value = member.email || '';
 
+      const editPhotoUrl = member.photoUrl || '';
+      document.getElementById('editMemPhotoUrl').value = editPhotoUrl;
+      const editPreview = document.getElementById('editMemPhotoPreview');
+      if (editPreview) {
+        if (editPhotoUrl) {
+          editPreview.innerHTML = `
+            <div style="position: relative; display: inline-block;">
+              <img src="${escapeHtml(editPhotoUrl)}" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.15);" />
+              <button type="button" onclick="clearMemberPhoto('edit')" style="position: absolute; top: -4px; right: -4px; background: #c5221f; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Remove Photo">✕</button>
+            </div>
+          `;
+        } else {
+          clearMemberPhoto('edit');
+        }
+      }
+
       toggleEditGuardianField(member.category || 'Adult');
 
       document.getElementById('editMemberModal').classList.add('active');
@@ -6141,6 +6277,7 @@
       const rawDob = document.getElementById('editMemDob').value;
       const email = document.getElementById('editMemEmail').value.trim();
       const role = document.getElementById('editMemRole').value;
+      const photoUrl = document.getElementById('editMemPhotoUrl')?.value?.trim() || '';
 
       const formattedDob = formatDisplayDate(rawDob);
 
@@ -6175,7 +6312,8 @@
             address: address || undefined,
             dateOfBirth: rawDob ? new Date(rawDob).toISOString() : undefined,
             role: role || (category === 'Child' ? 'Child / Sunday School' : 'Member'),
-            email: email || undefined
+            email: email || undefined,
+            photoUrl: photoUrl || null
           };
 
           const res = await fetch(`${API_BASE}/members/${id}`, {
@@ -6230,6 +6368,7 @@
           rawDob: rawDob || null,
           email,
           role,
+          photoUrl: photoUrl || null,
           isGuest: category.toLowerCase().includes('visitor') || category.toLowerCase().includes('guest')
         };
 
@@ -6261,6 +6400,7 @@
       const rawDob = document.getElementById('newMemDob').value;
       const email = document.getElementById('newMemEmail')?.value?.trim() || '';
       const role = document.getElementById('newMemRole').value;
+      const photoUrl = document.getElementById('newMemPhotoUrl')?.value?.trim() || null;
 
       const formattedDob = formatDisplayDate(rawDob);
 
@@ -6295,7 +6435,8 @@
           address: address || undefined,
           dateOfBirth: rawDob ? new Date(rawDob).toISOString() : undefined,
           role: role || (category === 'Child' ? 'Child / Sunday School' : 'Member'),
-          email: email || undefined
+          email: email || undefined,
+          photoUrl: photoUrl || undefined
         };
 
         const res = await fetch(`${API_BASE}/members`, {
@@ -6327,6 +6468,7 @@
         rawDob: rawDob || null,
         email,
         role: role || (category === 'Child' ? 'Child / Sunday School' : 'Member'),
+        photoUrl: createdMember?.photoUrl || photoUrl || null,
         isGuest: category.toLowerCase().includes('visitor') || category.toLowerCase().includes('guest')
       };
 
@@ -6336,6 +6478,7 @@
       filterMembersTable();
       renderAttendanceAndDemographics();
       closeAddMemberModal();
+      clearMemberPhoto('new');
       e.target.reset();
       showToast(`New ${category} <strong>${escapeHtml(first)} ${escapeHtml(last)}</strong> saved permanently to cloud database!`, 'success', 'Member Registered');
     }
