@@ -2006,7 +2006,7 @@
               ⚠️ Rapidly Declining (<span id="countWatchlistDeclining">0</span>)
             </button>
             <button class="btn-preset" id="btnWatchlistAbsent" onclick="switchWatchlistTab('ABSENT')" style="color: #ea580c;">
-              🚨 Extended Absent (<span id="countWatchlistAbsent">0</span>)
+              🚨 Absent / Needs Outreach (<span id="countWatchlistAbsent">0</span>)
             </button>
             <button class="btn-preset" id="btnWatchlistNew" onclick="switchWatchlistTab('NEW')" style="color: #0284c7;">
               🌱 New Members (<span id="countWatchlistNew">0</span>)
@@ -9384,10 +9384,22 @@
       const mems = currentAnalyticsData.members;
 
       // Update Tab Counts
-      const pillars = mems.filter(m => m.overall.rate >= 75 || m.sunday.rate >= 80);
+      const pillars = mems.filter(m =>
+        m.overall.currentStreak > 0 ||
+        m.sunday.currentStreak > 0 ||
+        m.wednesday.currentStreak > 0 ||
+        m.friday.currentStreak > 0 ||
+        m.overall.attended > 0 ||
+        m.overall.rate >= 50
+      ).sort((a, b) => (b.overall.currentStreak + b.wednesday.currentStreak + b.friday.currentStreak) - (a.overall.currentStreak + a.wednesday.currentStreak + a.friday.currentStreak) || (b.engagement.score - a.engagement.score));
+
       const declining = mems.filter(m => m.overall.isRapidlyDeclining || (m.overall.rateDelta <= -30 && m.overall.prevMonthRate >= 35));
-      const absent = mems.filter(m => (m.overall.attended === 0 && m.overall.totalAttended > 0) || (m.sunday.consecutiveMissed >= 3 && m.sunday.totalAttended > 0));
-      const newMems = mems.filter(m => m.isNewMember);
+
+      const absent = mems.filter(m => m.overall.attended === 0)
+        .sort((a, b) => (b.phone ? 1 : 0) - (a.phone ? 1 : 0));
+
+      const newMems = mems.filter(m => m.isNewMember)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       const countPillarsEl = document.getElementById('countWatchlistPillars');
       if (countPillarsEl) countPillarsEl.innerText = pillars.length;
@@ -9408,13 +9420,19 @@
         return;
       }
 
-      container.innerHTML = activeList.slice(0, 8).map(m => {
+      container.innerHTML = activeList.slice(0, 16).map(m => {
         const phoneClean = (m.phone || '').replace(/[^0-9]/g, '');
         const waLink = phoneClean ? `https://wa.me/${phoneClean.startsWith('0') ? '233' + phoneClean.slice(1) : phoneClean}` : '#';
 
         let streakBadge = `<span style="background: #f1f5f9; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700;">All: —</span>`;
         if (m.overall.currentStreak > 0) {
           streakBadge = `<span style="background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">🔥 ${m.overall.currentStreak} All</span>`;
+        } else if (m.wednesday.currentStreak > 0) {
+          streakBadge = `<span style="background: #ede9fe; color: #6d28d9; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">🔥 ${m.wednesday.currentStreak} Wed</span>`;
+        } else if (m.friday.currentStreak > 0) {
+          streakBadge = `<span style="background: #fce7f3; color: #be185d; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">🔥 ${m.friday.currentStreak} Fri</span>`;
+        } else if (m.sunday.currentStreak > 0) {
+          streakBadge = `<span style="background: #dbeafe; color: #1d4ed8; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">🔥 ${m.sunday.currentStreak} Sun</span>`;
         } else if (m.overall.totalAttended > 0 && m.overall.consecutiveMissed > 0) {
           streakBadge = `<span style="background: #fecaca; color: #dc2626; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">❌ Missed ${m.overall.consecutiveMissed}</span>`;
         }
@@ -9433,10 +9451,10 @@
                 ${m.category} · ${m.phone || 'No phone'}
               </div>
               <div style="display: flex; gap: 8px; font-size: 11px; background: #f8fafc; padding: 6px 8px; border-radius: 4px; margin-bottom: 8px; flex-wrap: wrap;">
-                <div><strong>Sun:</strong> ${m.sunday.rate}%</div>
-                <div><strong>Wed:</strong> ${m.wednesday.rate}%</div>
-                <div><strong>Fri:</strong> ${m.friday.rate}%</div>
-                <div><strong>Overall:</strong> <strong style="color:var(--emerald);">${m.overall.rate}%</strong></div>
+                <div><strong>Sun:</strong> ${m.sunday.rate}% <span style="color:var(--muted);font-size:10px;">(${m.sunday.attended}/${m.sunday.available})</span></div>
+                <div><strong>Wed:</strong> ${m.wednesday.rate}% <span style="color:var(--muted);font-size:10px;">(${m.wednesday.attended}/${m.wednesday.available})</span></div>
+                <div><strong>Fri:</strong> ${m.friday.rate}% <span style="color:var(--muted);font-size:10px;">(${m.friday.attended}/${m.friday.available})</span></div>
+                <div><strong>Overall:</strong> <strong style="color:var(--emerald);">${m.overall.rate}%</strong> <span style="color:var(--muted);font-size:10px;">(${m.overall.attended}/${m.overall.available})</span></div>
                 <div><strong>Score:</strong> <span style="color:${m.engagement.badgeColor}; font-weight:800;">${m.engagement.score}/100</span></div>
               </div>
             </div>
