@@ -1213,6 +1213,20 @@
             setTimeout(() => { cancelConfirm(); }, 2500);
             return;
           }
+
+          try {
+            if (window.BroadcastChannel) {
+              const bc = new BroadcastChannel('sfmi_attendance_live');
+              bc.postMessage({
+                type: 'CHECKIN',
+                name: `${selectedMember.firstName} ${selectedMember.lastName}`,
+                isGuest: Boolean(selectedMember.isGuest),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                service: currentServiceName
+              });
+              setTimeout(() => bc.close(), 500);
+            }
+          } catch (bErr) {}
         }
       } catch (err) {}
 
@@ -1324,6 +1338,20 @@
           if (regData.member && regData.member.id) {
             newMember.id = regData.member.id;
           }
+
+          try {
+            if (window.BroadcastChannel) {
+              const bc = new BroadcastChannel('sfmi_attendance_live');
+              bc.postMessage({
+                type: 'CHECKIN',
+                name: `${firstName} ${lastName}`,
+                isGuest: true,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                service: currentServiceName
+              });
+              setTimeout(() => bc.close(), 500);
+            }
+          } catch (bErr) {}
         }
       } catch (err) {
         console.error('Visitor registration request error:', err);

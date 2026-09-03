@@ -1590,8 +1590,8 @@
           </div>
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <select id="attServiceSelect" class="form-ctrl" aria-label="Select Service for Attendance" style="padding: 7px 12px; font-size: 13.5px; width: 270px; font-weight: 700;" onchange="handleAttServiceChange()">
-              <option value="ALL">All Services</option>
-              <option value="Sunday: Family & Friends Service" selected>Sunday — Family & Friends Service</option>
+              <option value="ALL" selected>⚡ All Services (Live Session Attendance)</option>
+              <option value="Sunday: Family & Friends Service">Sunday — Family & Friends Service</option>
               <option value="Wednesday: Time with the Lord">Wednesday — Time with the Lord</option>
               <option value="Friday: Prophetic Healing & Deliverance">Friday — Prophetic Healing & Deliverance</option>
             </select>
@@ -3096,7 +3096,7 @@
     const deletedMemberIds = new Set();
     let serviceAttendanceMap = {};
 
-    let currentSelectedService = 'Sunday: Family & Friends Service';
+    let currentSelectedService = 'ALL';
     let currentAttFilter = 'ALL'; // 'ALL', 'PRESENT', 'ABSENT', 'GUEST'
 
     let rawFinanceEntries = [];
@@ -3696,6 +3696,21 @@
           fetchLiveCounts();
         }
       }, 3000);
+
+      try {
+        if (window.BroadcastChannel && !window._sfmiLiveBcAttached) {
+          window._sfmiLiveBcAttached = true;
+          const bc = new BroadcastChannel('sfmi_attendance_live');
+          bc.onmessage = (e) => {
+            if (e.data && e.data.type === 'CHECKIN') {
+              console.log('Live check-in event received via BroadcastChannel:', e.data);
+              fetchLiveCounts();
+              const guestTag = e.data.isGuest ? ' <span style="background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">First-Timer Guest</span>' : '';
+              showToast(`Live Kiosk Check-In: <strong>${escapeHtml(e.data.name)}</strong>${guestTag} checked in for ${escapeHtml(e.data.service || 'Service')} at ${e.data.time}!`, 'success', 'Live Kiosk Event');
+            }
+          };
+        }
+      } catch (bcErr) {}
     }
 
     async function handleLoginSubmit(e) {
@@ -5405,7 +5420,9 @@
       document.getElementById('countAbsentFilter').innerText = regularAbsentCount;
       // "First-Timers / Guests" reflects all guests in the system
       const guestFilterCount = document.getElementById('countGuestFilter');
-      if (guestFilterCount) guestFilterCount.innerText = totalGuests;
+      if (guestFilterCount) {
+        guestFilterCount.innerText = attendingGuestCount > 0 ? `${attendingGuestCount} Present / ${totalGuests}` : totalGuests;
+      }
 
       // Update Metric Cards
       document.getElementById('statTodayCount').innerText = totalRegular;
@@ -5434,8 +5451,8 @@
       // Filter by Active View Mode (ALL, PRESENT, ABSENT, GUEST)
       let listToDisplay = processedMembers;
       if (currentAttFilter === 'ALL') {
-        // Only show regular church members in "All Members" tab - never mix in inactive visitors
-        listToDisplay = processedMembers.filter(m => !m.isGuest);
+        // Show regular church members PLUS any Guest who actually attended/checked in for this service!
+        listToDisplay = processedMembers.filter(m => !m.isGuest || m.isPresent);
       } else if (currentAttFilter === 'PRESENT') {
         // Show everyone who attended
         listToDisplay = processedMembers.filter(m => m.isPresent);
@@ -5446,6 +5463,13 @@
         // Show First-Timers & Guests
         listToDisplay = processedMembers.filter(m => m.isGuest);
       }
+
+      // Sort: attendees currently PRESENT appear at the top so new kiosk check-ins are immediately visible!
+      listToDisplay.sort((a, b) => {
+        if (a.isPresent && !b.isPresent) return -1;
+        if (!a.isPresent && b.isPresent) return 1;
+        return (a.firstName || '').localeCompare(b.firstName || '');
+      });
 
       renderAttendanceTableHTML(listToDisplay);
     }
