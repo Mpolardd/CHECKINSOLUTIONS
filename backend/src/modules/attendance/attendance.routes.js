@@ -1024,5 +1024,128 @@ router.get('/history', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Dedicated All-Services Visitors & First-Timers Directory Endpoint
+router.get('/visitors', async (req, res, next) => {
+  try {
+    const { startDate, endDate, limit } = req.query;
+
+    let guestLogs = [];
+    try {
+      guestLogs = await prisma.auditLog.findMany({
+        where: { action: 'VISITOR_REGISTRATION' },
+        select: { entityId: true, metadata: true, createdAt: true }
+      });
+    } catch (e) {}
+    const guestIdSet = new Set(guestLogs.map(g => g.entityId).filter(Boolean));
+
+    const visitorMembers = await prisma.member.findMany({
+      where: {
+        active: true,
+        deletedAt: null,
+        OR: [
+          { id: { in: Array.from(guestIdSet) } },
+          { category: { contains: 'Visitor', mode: 'insensitive' } },
+          { category: { contains: 'Guest', mode: 'insensitive' } },
+          { role: { contains: 'Visitor', mode: 'insensitive' } },
+          { role: { contains: 'First Timer', mode: 'insensitive' } },
+          { role: { contains: 'First-Timer', mode: 'insensitive' } }
+        ]
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        gender: true,
+        address: true,
+        category: true,
+        role: true,
+        guardian: true,
+        createdAt: true,
+        photoUrl: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const visitorMemberIds = visitorMembers.map(m => m.id);
+    const allVisitorIds = Array.from(new Set([...visitorMemberIds, ...Array.from(guestIdSet)]));
+
+    const attWhere = {
+      member: { active: true, deletedAt: null }
+    };
+
+    if (allVisitorIds.length > 0) {
+      attWhere.memberId = { in: allVisitorIds };
+    }
+
+    if (startDate || endDate) {
+      attWhere.checkedInAt = {};
+      if (startDate) {
+        const { start } = getDayRange(startDate);
+        attWhere.checkedInAt.gte = new Date(start.getTime() - 14 * 3600 * 1000);
+      }
+      if (endDate) {
+        const { end } = getDayRange(endDate);
+        attWhere.checkedInAt.lte = new Date(end.getTime() + 14 * 3600 * 1000);
+      }
+    }
+
+    const take = limit ? Math.min(parseInt(limit, 10), 1000) : 500;
+
+    const attendances = await prisma.attendance.findMany({
+      where: attWhere,
+      include: {
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            gender: true,
+            address: true,
+            category: true,
+            role: true,
+            guardian: true,
+            photoUrl: true
+          }
+        },
+        service: {
+          select: {
+            id: true,
+            serviceDate: true,
+            serviceType: {
+              select: { name: true }
+            }
+          }
+        }
+      },
+      orderBy: { checkedInAt: 'desc' },
+      take
+    });
+
+    const summary = {
+      totalRegisteredVisitors: visitorMembers.length,
+      totalAttendanceCheckIns: attendances.length,
+      sundayCount: attendances.filter(a => {
+        const sName = (a.service?.serviceType?.name || '').toLowerCase();
+        return sName.includes('sunday') || sName.includes('family') || sName.includes('friends');
+      }).length,
+      midweekCount: attendances.filter(a => {
+        const sName = (a.service?.serviceType?.name || '').toLowerCase();
+        return sName.includes('wednesday') || sName.includes('friday') || sName.includes('time with') || sName.includes('prophetic');
+      }).length
+    };
+
+    res.json({
+      success: true,
+      summary,
+      visitors: visitorMembers,
+      attendances
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
 module.exports = router;
 

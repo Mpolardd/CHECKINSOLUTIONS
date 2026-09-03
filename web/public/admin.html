@@ -1275,6 +1275,9 @@
       <button class="tab-btn" id="tabBtnAttendance" onclick="switchTab('attendance')">
         <i class="fas fa-list-check"></i> Attendance & Demographics
       </button>
+      <button class="tab-btn" id="tabBtnVisitors" onclick="switchTab('visitors')">
+        <i class="fas fa-user-plus"></i> Visitors &amp; First-Timers
+      </button>
       <button class="tab-btn" id="tabBtnMembers" onclick="switchTab('members')">
         <i class="fas fa-users"></i> Member Directory
       </button>
@@ -1304,6 +1307,9 @@
         </button>
         <button class="mobile-menu-item" id="mobBtnAttendance" onclick="mobileSwitchTab('attendance')">
           <i class="fas fa-list-check menu-icon"></i> Attendance & Demographics
+        </button>
+        <button class="mobile-menu-item" id="mobBtnVisitors" onclick="mobileSwitchTab('visitors')">
+          <i class="fas fa-user-plus menu-icon"></i> Visitors &amp; First-Timers
         </button>
         <button class="mobile-menu-item" id="mobBtnMembers" onclick="mobileSwitchTab('members')">
           <i class="fas fa-users menu-icon"></i> Member Directory
@@ -1698,6 +1704,108 @@
           <div class="mob-cards-attendance" id="attMobileCards"></div>
         </div>
       </div>
+
+    <!-- TAB: VISITORS & FIRST-TIMERS DIRECTORY ACROSS ALL SERVICES -->
+    <div id="secVisitors" style="display: none;">
+      
+      <!-- Visitors Header Card & Filters -->
+      <div class="admin-card">
+        <div class="card-head-row">
+          <div>
+            <div class="kicker">First-Timers &amp; Guests Tracking</div>
+            <h1 class="card-title">Visitors &amp; First-Timers Hub</h1>
+            <p class="card-sub">Comprehensive directory of all first-timers and guests recorded across all church services with complete contact information and follow-up tools.</p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button class="btn-download" onclick="exportVisitorsCSV()"><i class="fas fa-file-arrow-down"></i> Export Visitors CSV</button>
+            <button class="btn-main" onclick="printVisitorsList()"><i class="fas fa-print"></i> Print Roster</button>
+            <button class="btn-main" style="background: var(--emerald-dark); border: 1.5px solid var(--accent);" onclick="openAddVisitorModal()"><i class="fas fa-user-plus"></i> Register Visitor</button>
+          </div>
+        </div>
+
+        <!-- Filter Controls Toolbar -->
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <!-- Service Filter Dropdown -->
+            <div style="display: flex; align-items: center; gap: 6px; background: white; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px;">
+              <i class="fas fa-church" style="color: var(--accent); font-size: 13px;"></i>
+              <select id="visServiceSelect" class="form-ctrl" style="border: none; padding: 2px 4px; font-size: 13px; font-weight: 700; color: var(--ink); cursor: pointer;" onchange="handleVisFilterChange()" title="Filter by Church Service">
+                <option value="ALL">All Church Services</option>
+                <option value="Sunday: Family &amp; Friends Service">Sunday: Family &amp; Friends Service</option>
+                <option value="Wednesday: Time with the Lord">Wednesday: Time with the Lord</option>
+                <option value="Friday: Prophetic Healing &amp; Deliverance">Friday: Prophetic Healing &amp; Deliverance</option>
+              </select>
+            </div>
+
+            <!-- Service Date Picker -->
+            <div style="display: flex; align-items: center; gap: 6px; background: white; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px;">
+              <i class="fas fa-calendar-alt" style="color: var(--muted); font-size: 13px;"></i>
+              <input type="date" id="visDateSelect" class="form-ctrl" style="border: none; padding: 2px 4px; font-size: 13px; font-weight: 600; width: 140px;" onchange="handleVisFilterChange()" title="Filter by Visit Date" />
+              <button type="button" class="btn-preset" style="padding: 2px 8px; font-size: 11px; font-weight: 700;" onclick="document.getElementById('visDateSelect').value=''; handleVisFilterChange();" title="View All Dates">All Dates</button>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="visSearchInput" class="form-ctrl" placeholder="Search visitor name, phone, address..." style="width: 280px;" oninput="filterVisitorsTable()" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Metrics with Visitor Counts Across Services -->
+      <div class="metrics-row">
+        <div class="metric-box" style="border-left: 3.5px solid var(--accent);">
+          <div class="metric-num" id="statVisTotal">0</div>
+          <div class="metric-label">Total Unique Visitors</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" style="color: #059669;" id="statVisVisits">0</div>
+          <div class="metric-label">Total Service Visits</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" style="color: var(--blue);" id="statVisSunday">0</div>
+          <div class="metric-label">Sunday Service Visitors</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" style="color: #b45309;" id="statVisMidweek">0</div>
+          <div class="metric-label">Midweek (Wed / Fri) Visitors</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-num" style="color: var(--emerald-dark);" id="statVisPhone">0 Ready</div>
+          <div class="metric-label">Follow-Up Phone Ready</div>
+        </div>
+      </div>
+
+      <!-- Visitors Roster Table -->
+      <div class="admin-card">
+        <div class="card-head-row">
+          <div>
+            <h2 class="card-title" id="visTableTitle">Visitors &amp; First-Timers Master List</h2>
+            <p class="card-sub" id="visTableSubtitle">Showing all guests and visitors recorded across services with contact and follow-up actions</p>
+          </div>
+          <div style="font-size: 13px; color: var(--muted); font-weight: 600;" id="visResultsCount">Showing 0 visitors</div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead><tr>
+              <th>#</th>
+              <th>Visitor Full Name</th>
+              <th>Service Attended</th>
+              <th>Date &amp; Time of Visit</th>
+              <th>Phone Number</th>
+              <th>Gender</th>
+              <th>Residential Area / Address</th>
+              <th>Check-In Method</th>
+              <th>Follow-Up &amp; Actions</th>
+            </tr></thead>
+            <tbody id="visitorsTableBody"><!-- Injected by JS --></tbody>
+          </table>
+        </div>
+        <!-- Mobile cards for visitors -->
+        <div class="mob-cards-attendance" id="visitorsMobileCards"></div>
+      </div>
+
+    </div>
 
     <!-- TAB 3: MEMBER DIRECTORY (WITH CHILDREN & ADULT PROVISION & BIRTHDAY REMINDERS) -->
     <div id="secMembers" style="display: none;">
@@ -3075,10 +3183,13 @@
         : ['attendance', 'members', 'programs', 'partnership'];
 
       const permissions = isSuperAdmin 
-        ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'subAdmins']
+        ? ['finance', 'attendance', 'visitors', 'members', 'programs', 'partnership', 'reports', 'subAdmins']
         : rawPerms.filter(p => p !== 'finance' && p !== 'subAdmins');
+      if (!isSuperAdmin && (rawPerms.includes('attendance') || rawPerms.includes('members') || rawPerms.includes('visitors'))) {
+        if (!permissions.includes('visitors')) permissions.push('visitors');
+      }
 
-      const allTabs = ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'subAdmins'];
+      const allTabs = ['finance', 'attendance', 'visitors', 'members', 'programs', 'partnership', 'reports', 'subAdmins'];
       let firstAllowedTab = null;
 
       allTabs.forEach(t => {
@@ -3574,6 +3685,7 @@
       renderMembersTable();
       renderProgramsManager();
       fetchLiveCounts();
+      loadVisitorsData();
 
       if (window.livePollTimer) clearInterval(window.livePollTimer);
       window.livePollTimer = setInterval(() => {
@@ -3687,6 +3799,7 @@
     const TAB_LABELS = {
       finance: '<i class="fas fa-coins"></i> Financial Overview & Analytics',
       attendance: '<i class="fas fa-list-check"></i> Attendance & Demographics',
+      visitors: '<i class="fas fa-user-plus"></i> Visitors & First-Timers',
       members: '<i class="fas fa-users"></i> Member Directory',
       programs: '<i class="fas fa-calendar-star"></i> Services & Programs Setup',
       partnership: '<i class="fas fa-handshake"></i> Partnership &amp; Pledges',
@@ -3704,13 +3817,16 @@
       if (currentUser && currentUser.role === 'SUB_ADMIN') {
         const allowed = Array.isArray(currentUser.permissions) 
           ? currentUser.permissions.filter(p => p !== 'finance' && p !== 'subAdmins') 
-          : ['attendance', 'members', 'programs', 'partnership', 'reports'];
+          : ['attendance', 'visitors', 'members', 'programs', 'partnership', 'reports'];
+        if (allowed.includes('attendance') || allowed.includes('members')) {
+          if (!allowed.includes('visitors')) allowed.push('visitors');
+        }
         if (tab === 'finance' || tab === 'subAdmins' || !allowed.includes(tab)) {
           tab = allowed[0] || 'attendance';
         }
       }
 
-      const tabs = ['finance', 'attendance', 'members', 'programs', 'partnership', 'subAdmins', 'reports'];
+      const tabs = ['finance', 'attendance', 'visitors', 'members', 'programs', 'partnership', 'subAdmins', 'reports'];
       tabs.forEach(t => {
         const sec = document.getElementById(`sec${t.charAt(0).toUpperCase() + t.slice(1)}`);
         const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -3725,6 +3841,7 @@
       
       if (tab === 'finance') { renderAdminFinanceTable(); syncFinanceViewMode(); }
       if (tab === 'attendance') { renderAttendanceAndDemographics(); syncAttendanceViewMode(); fetchLiveCounts(); }
+      if (tab === 'visitors') { renderVisitorsSection(); syncVisitorsViewMode(); }
       if (tab === 'members') { renderMembersTable(); syncMembersViewMode(); }
       if (tab === 'programs') { renderProgramsManager(); syncProgramsViewMode(); }
       if (tab === 'partnership') { loadPartnershipMatrix(); syncPartnershipViewMode(); }
@@ -5673,6 +5790,10 @@
             filterMembersTable();
           }
           renderProgramsManager();
+          const secVis = document.getElementById('secVisitors');
+          if (secVis && secVis.style.display !== 'none') {
+            renderVisitorsSection();
+          }
         }
       } catch (e) {
         console.error('fetchLiveCounts error:', e);
@@ -7647,6 +7768,516 @@
         }
       }, 300);
     }
+  
+    /* ══════════════════════════════════════════════════════════════════════
+       VISITORS & FIRST-TIMERS MANAGEMENT HUB (ALL SERVICES AGGREGATION)
+       ══════════════════════════════════════════════════════════════════════ */
+    let rawVisitorsData = [];
+    let processedVisitorsList = [];
+
+    function syncVisitorsViewMode() {
+      const isMobile = window.innerWidth <= 800;
+      const tbl = document.querySelector("#secVisitors .table-responsive");
+      const cards = document.getElementById("visitorsMobileCards");
+      if (tbl) tbl.style.display = isMobile ? "none" : "block";
+      if (cards) cards.style.display = isMobile ? "block" : "none";
+    }
+    window.addEventListener("resize", syncVisitorsViewMode);
+
+    function compileVisitorsFromState() {
+      const list = [];
+      const seen = new Set();
+
+      // 1. Gather all visitor entries from serviceAttendanceMap across ALL services & dates
+      Object.keys(serviceAttendanceMap).forEach(key => {
+        if (key.startsWith("ALL_")) return; // skip aggregates
+        const atts = serviceAttendanceMap[key] || [];
+        atts.forEach(item => {
+          const isGuest = Boolean(
+            item.isGuest ||
+            item.member?.isGuest ||
+            (item.role && (item.role.toLowerCase().includes("visitor") || item.role.toLowerCase().includes("first timer") || item.role.toLowerCase().includes("first-timer"))) ||
+            (item.category && (item.category.toLowerCase().includes("visitor") || item.category.toLowerCase().includes("guest") || item.category.toLowerCase().includes("first timer") || item.category.toLowerCase().includes("first-timer")))
+          );
+
+          if (isGuest) {
+            const fName = item.firstName || (item.name ? item.name.split(" ")[0] : "Visitor");
+            const lName = item.lastName || (item.name ? item.name.split(" ").slice(1).join(" ") : "Guest");
+            const fullName = `${fName} ${lName}`.trim() || item.name || "Visitor Guest";
+            const sName = canonicalServiceName(item.serviceName || key.split("_")[0]);
+            const dStr = item.dateStr || formatLocalDate(item.checkedInAt || Date.now());
+            const uniqueKey = `${fullName.toLowerCase()}_${(item.phone || "").trim()}_${dStr}_${sName}`;
+
+            if (!seen.has(uniqueKey)) {
+              seen.add(uniqueKey);
+              list.push({
+                id: item.id || item.memberId || ("vis_" + Math.random().toString(36).substr(2, 9)),
+                memberId: item.memberId || item.member?.id || null,
+                name: fullName,
+                firstName: fName,
+                lastName: lName,
+                phone: item.phone || item.member?.phone || "—",
+                gender: item.gender || item.member?.gender || "Not specified",
+                address: item.address || item.member?.address || "—",
+                serviceName: sName,
+                dateStr: dStr,
+                time: item.time || (item.checkedInAt ? new Date(item.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Today"),
+                method: item.method || "KIOSK",
+                guardian: item.guardian || item.member?.guardian || "",
+                category: item.category || "Visitor / Guest",
+                role: item.role || "Visitor / First Timer",
+                photoUrl: item.photoUrl || item.member?.photoUrl || null
+              });
+            }
+          }
+        });
+      });
+
+      // 2. Also incorporate registered visitors from allMembers
+      allMembers.forEach(m => {
+        const isGuest = Boolean(
+          m.isGuest ||
+          (m.role && (m.role.toLowerCase().includes("visitor") || m.role.toLowerCase().includes("first timer") || m.role.toLowerCase().includes("first-timer"))) ||
+          (m.category && (m.category.toLowerCase().includes("visitor") || m.category.toLowerCase().includes("guest") || m.category.toLowerCase().includes("first timer") || m.category.toLowerCase().includes("first-timer")))
+        );
+
+        if (isGuest) {
+          const fullName = `${m.firstName} ${m.lastName}`.trim();
+          const already = list.some(v => (v.memberId && v.memberId === m.id) || (v.phone && v.phone !== "—" && v.phone === m.phone) || v.name.toLowerCase() === fullName.toLowerCase());
+          if (!already) {
+            list.push({
+              id: m.id,
+              memberId: m.id,
+              name: fullName,
+              firstName: m.firstName,
+              lastName: m.lastName,
+              phone: m.phone || "—",
+              gender: m.gender || "Not specified",
+              address: m.address || "—",
+              serviceName: "Sunday: Family & Friends Service",
+              dateStr: m.createdAt ? formatLocalDate(m.createdAt) : formatLocalDate(new Date()),
+              time: "First Visit",
+              method: "REGISTRATION",
+              guardian: m.guardian || "",
+              category: m.category || "Visitor / Guest",
+              role: m.role || "Visitor / First Timer",
+              photoUrl: m.photoUrl || null
+            });
+          }
+        }
+      });
+
+      return list;
+    }
+
+    async function loadVisitorsData() {
+      try {
+        const res = await fetch(`${API_BASE}/attendance/visitors`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json && Array.isArray(json.attendances) && json.attendances.length > 0) {
+            const backendVisits = json.attendances.map(a => {
+              const m = a.member || {};
+              const svcName = canonicalServiceName(a.service?.serviceType?.name || "Sunday: Family & Friends Service");
+              const dStr = formatLocalDate(a.checkedInAt || a.service?.serviceDate || Date.now());
+              return {
+                id: a.id || a.memberId,
+                memberId: a.memberId || m.id,
+                name: `${m.firstName || ""} ${m.lastName || ""}`.trim() || "Visitor Guest",
+                firstName: m.firstName || "Visitor",
+                lastName: m.lastName || "Guest",
+                phone: m.phone || "—",
+                gender: m.gender || "Not specified",
+                address: m.address || "—",
+                serviceName: svcName,
+                dateStr: dStr,
+                time: a.checkedInAt ? new Date(a.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Today",
+                method: a.method || "KIOSK",
+                guardian: m.guardian || "",
+                category: m.category || "Visitor / Guest",
+                role: m.role || "Visitor / First Timer",
+                photoUrl: m.photoUrl || null
+              };
+            });
+            rawVisitorsData = backendVisits;
+          }
+        }
+      } catch (err) {
+        console.warn("Visitors endpoint fetch fallback to state:", err);
+      }
+
+      renderVisitorsSection();
+    }
+
+    function renderVisitorsSection() {
+      // 1. Populate Service Selector with dynamic church programs if empty
+      const sSelect = document.getElementById("visServiceSelect");
+      if (sSelect && sSelect.options.length <= 4 && Array.isArray(allPrograms) && allPrograms.length > 0) {
+        allPrograms.forEach(p => {
+          const canon = canonicalServiceName(p.name);
+          let exists = false;
+          for (let i = 0; i < sSelect.options.length; i++) {
+            if (sSelect.options[i].value === canon || sSelect.options[i].value === p.name) {
+              exists = true;
+              break;
+            }
+          }
+          if (!exists) {
+            const opt = document.createElement("option");
+            opt.value = canon;
+            opt.innerText = p.name;
+            sSelect.appendChild(opt);
+          }
+        });
+      }
+
+      // 2. Merge database visitors with live in-memory visitors
+      const localVisitors = compileVisitorsFromState();
+      const mergedMap = new Map();
+
+      // Put rawVisitorsData first
+      (rawVisitorsData || []).forEach(v => {
+        const k = `${v.name.toLowerCase()}_${(v.phone || "").trim()}_${v.dateStr}_${v.serviceName}`;
+        mergedMap.set(k, v);
+      });
+
+      // Overlay localVisitors
+      localVisitors.forEach(v => {
+        const k = `${v.name.toLowerCase()}_${(v.phone || "").trim()}_${v.dateStr}_${v.serviceName}`;
+        if (!mergedMap.has(k)) {
+          mergedMap.set(k, v);
+        }
+      });
+
+      processedVisitorsList = Array.from(mergedMap.values());
+
+      // 3. Compute Metrics
+      const totalVisits = processedVisitorsList.length;
+      const uniqueNames = new Set(processedVisitorsList.map(v => `${v.name.toLowerCase()}_${(v.phone || "").trim()}`));
+      const totalUnique = uniqueNames.size;
+
+      let sundayVisits = 0;
+      let midweekVisits = 0;
+      let phoneReady = 0;
+
+      processedVisitorsList.forEach(v => {
+        const s = (v.serviceName || "").toLowerCase();
+        if (s.includes("sunday") || s.includes("family") || s.includes("friends")) {
+          sundayVisits++;
+        } else if (s.includes("wednesday") || s.includes("friday") || s.includes("time with") || s.includes("prophetic")) {
+          midweekVisits++;
+        }
+        if (v.phone && v.phone !== "—" && v.phone.replace(/\D/g, "").length >= 9) {
+          phoneReady++;
+        }
+      });
+
+      // Update KPI Stat Boxes
+      const elTotal = document.getElementById("statVisTotal");
+      const elVisits = document.getElementById("statVisVisits");
+      const elSunday = document.getElementById("statVisSunday");
+      const elMidweek = document.getElementById("statVisMidweek");
+      const elPhone = document.getElementById("statVisPhone");
+
+      if (elTotal) elTotal.innerText = totalUnique;
+      if (elVisits) elVisits.innerText = totalVisits;
+      if (elSunday) elSunday.innerText = sundayVisits;
+      if (elMidweek) elMidweek.innerText = midweekVisits;
+      if (elPhone) elPhone.innerText = `${phoneReady} Ready`;
+
+      // 4. Apply active filters & render table
+      handleVisFilterChange();
+      syncVisitorsViewMode();
+    }
+
+    function handleVisFilterChange() {
+      const selectedService = document.getElementById("visServiceSelect") ? document.getElementById("visServiceSelect").value : "ALL";
+      const selectedDate = document.getElementById("visDateSelect") ? document.getElementById("visDateSelect").value.trim() : "";
+      const searchQ = document.getElementById("visSearchInput") ? document.getElementById("visSearchInput").value.trim().toLowerCase() : "";
+
+      let filtered = processedVisitorsList.slice();
+
+      // Filter by Service
+      if (selectedService && selectedService !== "ALL") {
+        const canonTarget = canonicalServiceName(selectedService).toLowerCase();
+        filtered = filtered.filter(v => {
+          const vCanon = canonicalServiceName(v.serviceName).toLowerCase();
+          return vCanon === canonTarget || v.serviceName.toLowerCase().includes(canonTarget);
+        });
+      }
+
+      // Filter by Date
+      if (selectedDate) {
+        filtered = filtered.filter(v => v.dateStr === selectedDate);
+      }
+
+      // Filter by Search text
+      if (searchQ) {
+        filtered = filtered.filter(v => {
+          return (
+            v.name.toLowerCase().includes(searchQ) ||
+            (v.phone && v.phone.toLowerCase().includes(searchQ)) ||
+            (v.address && v.address.toLowerCase().includes(searchQ)) ||
+            (v.serviceName && v.serviceName.toLowerCase().includes(searchQ)) ||
+            (v.guardian && v.guardian.toLowerCase().includes(searchQ))
+          );
+        });
+      }
+
+      renderVisitorsTableHTML(filtered);
+    }
+
+    function filterVisitorsTable() {
+      handleVisFilterChange();
+    }
+
+    function renderVisitorsTableHTML(list) {
+      const tbody = document.getElementById("visitorsTableBody");
+      const mobCards = document.getElementById("visitorsMobileCards");
+      const countEl = document.getElementById("visResultsCount");
+
+      if (countEl) {
+        countEl.innerText = `Showing ${list.length} visitor${list.length === 1 ? "" : "s"}`;
+      }
+
+      if (!list || list.length === 0) {
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--muted); padding: 36px 20px;">
+            <i class="fas fa-user-plus" style="font-size: 28px; color: var(--accent); margin-bottom: 8px; display: block;"></i>
+            No visitors found matching your filter. First-timers recorded during check-in or registration will appear here automatically across all services.
+          </td></tr>`;
+        }
+        if (mobCards) {
+          mobCards.innerHTML = `<div style="text-align: center; color: var(--muted); padding: 28px 10px;">No visitors found.</div>`;
+        }
+        return;
+      }
+
+      // Render Desktop Table
+      if (tbody) {
+        tbody.innerHTML = list.map((v, i) => {
+          const initials = `${(v.firstName || "V")[0] || ""}${(v.lastName || "")[0] || ""}`.toUpperCase();
+          const avatar = v.photoUrl
+            ? `<img src="${escapeHtml(v.photoUrl)}" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1.5px solid var(--accent);flex-shrink:0;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-flex';" /><span style="display:none;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--emerald-dark),var(--emerald));color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">${initials}</span>`
+            : `<span style="display:inline-flex;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--emerald-dark),var(--emerald));color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">${initials}</span>`;
+
+          const gLower = (v.gender || "").trim().toLowerCase();
+          const genderBadge = gLower.startsWith("m")
+            ? `<span class="badge" style="background:#e0f2fe;color:#0369a1;"><i class="fa-solid fa-mars" style="margin-right:3px;"></i> Male</span>`
+            : (gLower.startsWith("f")
+              ? `<span class="badge" style="background:#fce7f3;color:#be185d;"><i class="fa-solid fa-venus" style="margin-right:3px;"></i> Female</span>`
+              : `<span class="badge" style="background:#f1f5f9;color:#64748b;">${escapeHtml(v.gender || "—")}</span>`);
+
+          // Service badge color
+          const sLower = (v.serviceName || "").toLowerCase();
+          let svcClass = "badge-emerald";
+          if (sLower.includes("wednesday") || sLower.includes("time with")) svcClass = "badge-gold";
+          if (sLower.includes("friday") || sLower.includes("prophetic") || sLower.includes("healing")) svcClass = "badge-blue";
+
+          const hasValidPhone = v.phone && v.phone !== "—" && v.phone.replace(/\D/g, "").length >= 9;
+          const cleanPhone = hasValidPhone ? v.phone.replace(/\D/g, "") : "";
+          const intlPhone = cleanPhone.startsWith("0") ? ("233" + cleanPhone.slice(1)) : (cleanPhone.startsWith("233") ? cleanPhone : ("233" + cleanPhone));
+
+          const phoneHtml = hasValidPhone
+            ? `<div style="display: flex; align-items: center; gap: 8px;">
+                <a href="tel:${escapeHtml(v.phone)}" style="color: var(--ink); text-decoration: none; font-weight: 600;" title="Call visitor">
+                  <i class="fas fa-phone-flip" style="color: var(--emerald); font-size: 11px; margin-right: 4px;"></i>${escapeHtml(v.phone)}
+                </a>
+              </div>`
+            : `<span style="color: var(--muted);">—</span>`;
+
+          return `<tr>
+            <td>${i + 1}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                ${avatar}
+                <div>
+                  <div style="font-weight: 700; color: var(--ink);">${escapeHtml(v.name)}</div>
+                  <span class="badge badge-gold" style="font-size: 10px; padding: 1px 6px; margin-top: 2px; display: inline-block;">${escapeHtml(v.role || "Visitor / First Timer")}</span>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge ${svcClass}">${escapeHtml(v.serviceName)}</span></td>
+            <td>
+              <div style="font-weight: 600;">${escapeHtml(v.dateStr)}</div>
+              <div style="font-size: 11px; color: var(--muted);"><i class="far fa-clock"></i> ${escapeHtml(v.time)}</div>
+            </td>
+            <td>${phoneHtml}</td>
+            <td>${genderBadge}</td>
+            <td>${v.address && v.address !== "—" ? `<span><i class="fa-solid fa-location-dot" style="margin-right:4px; color:var(--muted);"></i> ${escapeHtml(v.address)}</span>` : `<span style="color:var(--muted);">—</span>`}</td>
+            <td><span class="badge badge-method">${escapeHtml(v.method || "KIOSK")}</span></td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                ${hasValidPhone ? `
+                  <button type="button" class="btn-ghost" style="padding: 4px 8px; font-size: 11px; color: #059669; border-color: #a7f3d0; background: #ecfdf5;" onclick="openWhatsAppToVisitor('${escapeHtml(intlPhone)}', '${escapeHtml(v.name)}')" title="Send Welcome WhatsApp">
+                    <i class="fa-brands fa-whatsapp" style="font-size: 13px;"></i> WhatsApp
+                  </button>
+                  <a href="tel:${escapeHtml(v.phone)}" class="btn-ghost" style="padding: 4px 8px; font-size: 11px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;" title="Call phone">
+                    <i class="fas fa-phone" style="font-size: 11px;"></i> Call
+                  </a>
+                ` : ""}
+                ${v.memberId ? `
+                  <button type="button" class="btn-preset" style="padding: 4px 8px; font-size: 11px; font-weight: 700; color: var(--emerald-dark); border-color: var(--accent);" onclick="convertVisitorToMember('${escapeHtml(v.memberId)}', '${escapeHtml(v.name)}')" title="Convert to Full Member">
+                    <i class="fas fa-user-check"></i> Make Member
+                  </button>
+                ` : ""}
+              </div>
+            </td>
+          </tr>`;
+        }).join("");
+      }
+
+      // Render Mobile Cards View
+      if (mobCards) {
+        mobCards.innerHTML = list.map((v, i) => {
+          const initials = `${(v.firstName || "V")[0] || ""}${(v.lastName || "")[0] || ""}`.toUpperCase();
+          const avatar = v.photoUrl
+            ? `<img src="${escapeHtml(v.photoUrl)}" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1.5px solid var(--accent);flex-shrink:0;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-flex';" /><span style="display:none;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--emerald-dark),var(--emerald));color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">${initials}</span>`
+            : `<span style="display:inline-flex;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--emerald-dark),var(--emerald));color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">${initials}</span>`;
+
+          const hasValidPhone = v.phone && v.phone !== "—" && v.phone.replace(/\D/g, "").length >= 9;
+          const cleanPhone = hasValidPhone ? v.phone.replace(/\D/g, "") : "";
+          const intlPhone = cleanPhone.startsWith("0") ? ("233" + cleanPhone.slice(1)) : (cleanPhone.startsWith("233") ? cleanPhone : ("233" + cleanPhone));
+
+          return `
+            <div class="mob-card" style="margin-bottom: 12px; padding: 14px; background: white; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  ${avatar}
+                  <div>
+                    <div style="font-weight: 800; font-size: 14.5px; color: var(--ink);">${escapeHtml(v.name)}</div>
+                    <span class="badge badge-gold" style="font-size: 10px;">${escapeHtml(v.role || "First Timer")}</span>
+                  </div>
+                </div>
+                <span class="badge badge-emerald" style="font-size: 10.5px;">${escapeHtml(v.serviceName)}</span>
+              </div>
+              <div style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">
+                <div><i class="far fa-calendar-alt"></i> ${escapeHtml(v.dateStr)} · ${escapeHtml(v.time)} (${escapeHtml(v.method || "KIOSK")})</div>
+                ${v.address && v.address !== "—" ? `<div style="margin-top: 2px;"><i class="fas fa-location-dot"></i> ${escapeHtml(v.address)}</div>` : ""}
+                ${hasValidPhone ? `<div style="margin-top: 2px;"><i class="fas fa-phone"></i> ${escapeHtml(v.phone)}</div>` : ""}
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                ${hasValidPhone ? `
+                  <button type="button" class="btn-ghost" style="padding: 6px 12px; font-size: 11.5px; color: #059669; border-color: #a7f3d0; background: #ecfdf5; flex: 1; justify-content: center;" onclick="openWhatsAppToVisitor('${escapeHtml(intlPhone)}', '${escapeHtml(v.name)}')">
+                    <i class="fa-brands fa-whatsapp" style="font-size: 14px;"></i> WhatsApp
+                  </button>
+                  <a href="tel:${escapeHtml(v.phone)}" class="btn-ghost" style="padding: 6px 12px; font-size: 11.5px; text-decoration: none; flex: 1; justify-content: center; display: inline-flex; align-items: center; gap: 4px;">
+                    <i class="fas fa-phone"></i> Call
+                  </a>
+                ` : ""}
+                ${v.memberId ? `
+                  <button type="button" class="btn-preset" style="padding: 6px 12px; font-size: 11.5px; font-weight: 700; color: var(--emerald-dark); border-color: var(--accent); flex: 1; justify-content: center;" onclick="convertVisitorToMember('${escapeHtml(v.memberId)}', '${escapeHtml(v.name)}')">
+                    <i class="fas fa-user-check"></i> Make Member
+                  </button>
+                ` : ""}
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
+    function openWhatsAppToVisitor(phone, name) {
+      if (!phone) {
+        showToast("No valid phone number for this visitor.", "warning", "No Phone");
+        return;
+      }
+      const msg = `Hello ${name}, thank you for worshiping with us at Solutions Faith Ministry International! We are truly blessed by your presence and would love to welcome you again to any of our services. God richly bless you!`;
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+      window.open(url, "_blank");
+    }
+
+    async function convertVisitorToMember(memberId, name) {
+      showConfirmModal(
+        `Convert to Full Member?`,
+        `Are you sure you want to convert ${name} from a visitor/guest into a regular full member of Solutions Faith Ministry International?`,
+        async () => {
+          try {
+            const token = sessionStorage.getItem("sfmi_token") || localStorage.getItem("sfmi_token");
+            const res = await fetch(`${API_BASE}/members/${memberId}`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { "Authorization": `Bearer ${token}` } : {})
+              },
+              body: JSON.stringify({
+                category: "Adult",
+                role: "Member"
+              })
+            });
+
+            if (res.ok) {
+              const idx = allMembers.findIndex(m => m.id === memberId);
+              if (idx !== -1) {
+                allMembers[idx].category = "Adult";
+                allMembers[idx].role = "Member";
+                allMembers[idx].isGuest = false;
+              }
+              // Remove guest status in local processed list
+              processedVisitorsList = processedVisitorsList.filter(v => v.memberId !== memberId);
+              renderVisitorsSection();
+              filterMembersTable();
+              renderAttendanceAndDemographics();
+              showToast(`<strong>${name}</strong> has been successfully converted to a regular full church member!`, "success", "Member Converted");
+            } else {
+              const err = await res.json().catch(() => ({ error: "Could not convert visitor" }));
+              showToast(err.error || "Could not convert visitor to member.", "error", "Conversion Failed");
+            }
+          } catch (err) {
+            console.error("convertVisitorToMember error:", err);
+            showToast("Network error connecting to cloud server.", "error", "Network Error");
+          }
+        },
+        "fas fa-user-check",
+        "Confirm Member",
+        "#059669"
+      );
+    }
+
+    function openAddVisitorModal() {
+      openAddMemberModal();
+      const catSelect = document.getElementById("newMemCat");
+      const roleSelect = document.getElementById("newMemRole");
+      if (catSelect) catSelect.value = "Visitor / Guest";
+      if (roleSelect) roleSelect.value = "Visitor / First Timer";
+    }
+
+    function exportVisitorsCSV() {
+      if (!processedVisitorsList || processedVisitorsList.length === 0) {
+        showToast("No visitor records available to export.", "warning", "Export Empty");
+        return;
+      }
+
+      const headers = ["#", "Visitor Full Name", "Service Attended", "Date of Visit", "Time", "Phone Number", "Gender", "Residential Location", "Category", "Role", "Check-In Method"];
+      const rows = processedVisitorsList.map((v, i) => [
+        i + 1,
+        `"${(v.name || "").replace(/"/g, '""')}"`,
+        `"${(v.serviceName || "").replace(/"/g, '""')}"`,
+        `"${(v.dateStr || "").replace(/"/g, '""')}"`,
+        `"${(v.time || "").replace(/"/g, '""')}"`,
+        `"${(v.phone || "").replace(/"/g, '""')}"`,
+        `"${(v.gender || "").replace(/"/g, '""')}"`,
+        `"${(v.address || "").replace(/"/g, '""')}"`,
+        `"${(v.category || "").replace(/"/g, '""')}"`,
+        `"${(v.role || "").replace(/"/g, '""')}"`,
+        `"${(v.method || "").replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `SFMI_Visitors_FirstTimers_${formatLocalDate(new Date())}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("Visitors & First-Timers roster exported to CSV successfully!", "success", "CSV Exported");
+    }
+
+    function printVisitorsList() {
+      window.print();
+    }
+
   </script>
 
 </body>
