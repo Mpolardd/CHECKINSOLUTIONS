@@ -273,18 +273,19 @@
     }
 
     .member-card-photo {
-      width: 52px;
-      height: 52px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid var(--accent);
+      border: 3px solid var(--accent);
       flex-shrink: 0;
       background: #f8fafc;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .member-card-avatar {
-      width: 52px;
-      height: 52px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--emerald-dark), var(--emerald));
       color: #ffffff;
@@ -292,11 +293,12 @@
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 18px;
+      font-size: 28px;
       letter-spacing: 0.5px;
-      border: 2px solid var(--accent);
+      border: 3px solid var(--accent);
       flex-shrink: 0;
       user-select: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .member-name {
@@ -1157,12 +1159,12 @@
       if (photoWrap) {
         if (member.photoUrl) {
           photoWrap.innerHTML = `
-            <img src="${escapeHtml(member.photoUrl)}" alt="${escapeHtml(member.firstName)}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); box-shadow: 0 4px 14px rgba(0,0,0,0.12);" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-            <div style="display: none; width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--emerald-dark), var(--emerald)); color: #fff; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; border: 3px solid var(--accent); box-shadow: 0 4px 14px rgba(0,0,0,0.12);">${initials}</div>
+            <img src="${escapeHtml(member.photoUrl)}" alt="${escapeHtml(member.firstName)}" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--accent); box-shadow: 0 8px 24px rgba(0,0,0,0.18);" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+            <div style="display: none; width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--emerald-dark), var(--emerald)); color: #fff; align-items: center; justify-content: center; font-size: 42px; font-weight: 800; border: 4px solid var(--accent); box-shadow: 0 8px 24px rgba(0,0,0,0.18);">${initials}</div>
           `;
         } else {
           photoWrap.innerHTML = `
-            <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--emerald-dark), var(--emerald)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; border: 3px solid var(--accent); box-shadow: 0 4px 14px rgba(0,0,0,0.12);">${initials}</div>
+            <div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--emerald-dark), var(--emerald)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 42px; font-weight: 800; border: 4px solid var(--accent); box-shadow: 0 8px 24px rgba(0,0,0,0.18);">${initials}</div>
           `;
         }
       }
