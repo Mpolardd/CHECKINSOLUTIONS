@@ -1109,8 +1109,8 @@
       checkFinAuth();
     });
 
-    /* ── 30-MINUTE INACTIVITY AUTO-LOGOUT SYSTEM ── */
-    const INACTIVITY_LIMIT_MS = 30 * 60 * 1000; // 30 minutes
+    /* ── 12-HOUR EXTENDED INACTIVITY AUTO-LOGOUT SYSTEM ── */
+    const INACTIVITY_LIMIT_MS = 12 * 60 * 60 * 1000; // 12 hours (extended working shift)
     let inactivityTimer = null;
 
     function resetInactivityTimer() {
@@ -1150,7 +1150,7 @@
       if (inactivityTimer) clearTimeout(inactivityTimer);
       purgeFinAuthSession();
       showFinLogin();
-      showToast('You were automatically logged out due to 30 minutes of inactivity.', 'warning', 'Session Timeout');
+      showToast('You were automatically logged out due to extended inactivity (12 hours).', 'warning', 'Session Timeout');
     }
 
     function initInactivityListeners() {

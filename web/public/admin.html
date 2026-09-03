@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   
   <style>
     :root {
@@ -2309,7 +2310,7 @@
       <form onsubmit="handleSaveNewMember(event)">
         <!-- Member Photo Upload (Optional) -->
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; padding: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
-          <input type="file" id="newMemPhotoFile" accept="image/*" style="display: none;" onchange="handleMemberPhotoUpload(event, 'new')" />
+          <input type="file" id="newMemPhotoFile" accept="image/*,.heic,.heif,image/heic,image/heif" style="display: none;" onchange="handleMemberPhotoUpload(event, 'new')" />
           <input type="hidden" id="newMemPhotoUrl" />
           <div id="newMemPhotoPreview">
             <div onclick="document.getElementById('newMemPhotoFile').click()" style="width: 64px; height: 64px; border-radius: 50%; border: 2px dashed #94a3b8; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); background: white; transition: all 0.2s;" title="Click to upload photo">
@@ -2411,7 +2412,7 @@
         <input type="hidden" id="editMemId" />
         <!-- Member Photo Upload (Optional) -->
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; padding: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
-          <input type="file" id="editMemPhotoFile" accept="image/*" style="display: none;" onchange="handleMemberPhotoUpload(event, 'edit')" />
+          <input type="file" id="editMemPhotoFile" accept="image/*,.heic,.heif,image/heic,image/heif" style="display: none;" onchange="handleMemberPhotoUpload(event, 'edit')" />
           <input type="hidden" id="editMemPhotoUrl" />
           <div id="editMemPhotoPreview">
             <div onclick="document.getElementById('editMemPhotoFile').click()" style="width: 64px; height: 64px; border-radius: 50%; border: 2px dashed #94a3b8; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); background: white; transition: all 0.2s;" title="Click to upload photo">
@@ -2537,11 +2538,11 @@
         <div class="form-group">
           <label for="progFlyerFileInput" class="form-label">Attach Program Flyer / Banner Image *</label>
           <div style="border: 2px dashed var(--line); border-radius: 6px; padding: 18px; text-align: center; background: #fafbfa; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('progFlyerFileInput').click()">
-            <input type="file" id="progFlyerFileInput" accept="image/*" style="display: none;" onchange="handleProgramFlyerAttachment(this)" />
+            <input type="file" id="progFlyerFileInput" accept="image/*,.heic,.heif,image/heic,image/heif" style="display: none;" onchange="handleProgramFlyerAttachment(this)" />
             <div id="progFlyerPlaceholder">
               <i class="fas fa-cloud-arrow-up" style="font-size: 28px; color: var(--accent); margin-bottom: 6px;"></i>
               <div style="font-weight: 700; font-size: 13.5px; color: var(--ink);">Click to Browse & Attach Flyer Image</div>
-              <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Select image from your computer (JPG, PNG, WEBP)</div>
+              <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Select image from your computer or phone (JPG, PNG, WEBP, HEIC)</div>
             </div>
             <div id="progFlyerPreviewWrap" style="display: none; align-items: center; justify-content: center; gap: 14px;">
               <img id="progFlyerPreviewImg" src="" style="width: 64px; height: 64px; object-fit: contain; border-radius: 4px; border: 1.5px solid var(--accent); background: #000;" />
@@ -2629,12 +2630,12 @@
         <div class="form-group">
           <label for="editProgFlyerFileInput" class="form-label">Service Flyer / Banner Image</label>
           <div style="border: 2px dashed var(--line); border-radius: 6px; padding: 16px; text-align: center; background: #fafbfa; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('editProgFlyerFileInput').click()">
-            <input type="file" id="editProgFlyerFileInput" accept="image/*" style="display: none;" onchange="handleEditProgramFlyerAttachment(this)" />
+            <input type="file" id="editProgFlyerFileInput" accept="image/*,.heic,.heif,image/heic,image/heif" style="display: none;" onchange="handleEditProgramFlyerAttachment(this)" />
             <div style="display: flex; align-items: center; justify-content: center; gap: 14px;">
               <img id="editProgFlyerPreviewImg" src="/Sunday.JPG" style="width: 72px; height: 72px; object-fit: contain; border-radius: 4px; border: 1.5px solid var(--accent); background: #000;" />
               <div style="text-align: left;">
                 <div style="font-weight: 700; font-size: 13px; color: var(--ink);" id="editProgFlyerFileName">Current Service Image</div>
-                <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Click anywhere in this box to upload a new flyer image (JPG, PNG, WEBP)</div>
+                <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Click anywhere in this box to upload a new flyer image (JPG, PNG, WEBP, HEIC)</div>
               </div>
             </div>
           </div>
@@ -3518,8 +3519,8 @@
       checkAuthSession();
     });
 
-    /* ── 30-MINUTE INACTIVITY AUTO-LOGOUT SYSTEM ── */
-    const INACTIVITY_LIMIT_MS = 30 * 60 * 1000; // 30 minutes
+    /* ── 12-HOUR EXTENDED INACTIVITY AUTO-LOGOUT SYSTEM ── */
+    const INACTIVITY_LIMIT_MS = 12 * 60 * 60 * 1000; // 12 hours (extended working shift)
     let inactivityTimer = null;
 
     function initInactivityListeners() {
@@ -3578,7 +3579,7 @@
       if (inactivityTimer) clearTimeout(inactivityTimer);
       purgeAuthSession();
       showLogin();
-      showToast('You were automatically logged out due to 30 minutes of inactivity.', 'warning', 'Session Timeout');
+      showToast('You were automatically logged out due to extended inactivity (12 hours).', 'warning', 'Session Timeout');
     }
 
     async function checkAuthSession() {
@@ -6256,13 +6257,36 @@
       document.getElementById('lblEditPhone').innerText = isChild ? 'Parent / Contact Phone *' : 'Phone Number *';
     }
 
-    function handleMemberPhotoUpload(e, mode) {
+    async function handleMemberPhotoUpload(e, mode) {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
 
-      if (!file.type.startsWith('image/')) {
-        showToast('Please select a valid image file (JPG, PNG, WebP).', 'warning', 'Invalid File');
+      const fName = (file.name || '').toLowerCase();
+      const isHeic = fName.endsWith('.heic') || fName.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
+      const isStandardImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(fName);
+
+      if (!isHeic && !isStandardImg) {
+        showToast('Please select a valid image file (JPG, PNG, WebP, HEIC).', 'warning', 'Invalid File');
         return;
+      }
+
+      let fileOrBlob = file;
+      if (isHeic) {
+        showToast('Processing iPhone HEIC photo, please wait a moment...', 'info', 'HEIC Conversion');
+        if (typeof heic2any === 'function') {
+          try {
+            const converted = await heic2any({
+              blob: file,
+              toType: 'image/jpeg',
+              quality: 0.85
+            });
+            fileOrBlob = Array.isArray(converted) ? converted[0] : converted;
+          } catch (heicErr) {
+            console.error('Error converting HEIC image:', heicErr);
+            showToast('Could not convert HEIC photo. Please try a JPG or PNG file.', 'error', 'HEIC Error');
+            return;
+          }
+        }
       }
 
       const reader = new FileReader();
@@ -6301,9 +6325,15 @@
             `;
           }
         };
+        img.onerror = function() {
+          showToast('Failed to load image preview. Please try another file.', 'error', 'Image Error');
+        };
         img.src = rawData;
       };
-      reader.readAsDataURL(file);
+      reader.onerror = function() {
+        showToast('Error reading image file.', 'error', 'File Read Error');
+      };
+      reader.readAsDataURL(fileOrBlob);
     }
 
     function clearMemberPhoto(mode) {
@@ -6979,7 +7009,20 @@
       if (modal) modal.classList.remove('active');
     }
 
-    function compressImage(file, maxWidth, maxHeight, quality, callback) {
+    async function compressImage(file, maxWidth, maxHeight, quality, callback) {
+      const fName = (file.name || '').toLowerCase();
+      const isHeic = fName.endsWith('.heic') || fName.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
+      let fileOrBlob = file;
+      if (isHeic && typeof heic2any === 'function') {
+        try {
+          showToast('Converting HEIC flyer image...', 'info', 'Processing Image');
+          const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality });
+          fileOrBlob = Array.isArray(converted) ? converted[0] : converted;
+        } catch (heicErr) {
+          console.error('HEIC conversion in compressImage error:', heicErr);
+        }
+      }
+
       const reader = new FileReader();
       reader.onload = function(e) {
         const img = new Image();
@@ -7003,9 +7046,12 @@
           const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
           callback(compressedDataUrl);
         };
+        img.onerror = function() {
+          showToast('Could not load image preview.', 'error', 'Image Error');
+        };
         img.src = e.target.result;
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(fileOrBlob);
     }
 
     function handleEditProgramFlyerAttachment(input) {
