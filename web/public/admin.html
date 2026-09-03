@@ -7962,30 +7962,61 @@
         const res = await fetch(`${API_BASE}/attendance/visitors`);
         if (res.ok) {
           const json = await res.json();
-          if (json && Array.isArray(json.attendances) && json.attendances.length > 0) {
-            const backendVisits = json.attendances.map(a => {
-              const m = a.member || {};
-              const svcName = canonicalServiceName(a.service?.serviceType?.name || "Sunday: Family & Friends Service");
-              const dStr = formatLocalDate(a.checkedInAt || a.service?.serviceDate || Date.now());
-              return {
-                id: a.id || a.memberId,
-                memberId: a.memberId || m.id,
-                name: `${m.firstName || ""} ${m.lastName || ""}`.trim() || "Visitor Guest",
-                firstName: m.firstName || "Visitor",
-                lastName: m.lastName || "Guest",
-                phone: m.phone || "—",
-                gender: m.gender || "Not specified",
-                address: m.address || "—",
-                serviceName: svcName,
-                dateStr: dStr,
-                time: a.checkedInAt ? new Date(a.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Today",
-                method: a.method || "KIOSK",
-                guardian: m.guardian || "",
-                category: m.category || "Visitor / Guest",
-                role: m.role || "Visitor / First Timer",
-                photoUrl: m.photoUrl || null
-              };
-            });
+          if (json) {
+            const backendVisits = [];
+            if (Array.isArray(json.attendances)) {
+              json.attendances.forEach(a => {
+                const m = a.member || {};
+                const svcName = canonicalServiceName(a.service?.serviceType?.name || "Wednesday: Time with the Lord");
+                const dStr = formatLocalDate(a.checkedInAt || a.service?.serviceDate || Date.now());
+                backendVisits.push({
+                  id: a.id || a.memberId,
+                  memberId: a.memberId || m.id,
+                  name: `${m.firstName || ""} ${m.lastName || ""}`.trim() || "Visitor Guest",
+                  firstName: m.firstName || "Visitor",
+                  lastName: m.lastName || "Guest",
+                  phone: m.phone || "—",
+                  gender: m.gender || "Not specified",
+                  address: m.address || "—",
+                  serviceName: svcName,
+                  dateStr: dStr,
+                  time: a.checkedInAt ? new Date(a.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Today",
+                  method: a.method || "KIOSK",
+                  guardian: m.guardian || "",
+                  category: m.category || "Visitor / Guest",
+                  role: m.role || "Visitor / First Timer",
+                  photoUrl: m.photoUrl || null
+                });
+              });
+            }
+
+            if (Array.isArray(json.visitors)) {
+              json.visitors.forEach(v => {
+                const fullName = `${v.firstName || ""} ${v.lastName || ""}`.trim() || "Visitor Guest";
+                const already = backendVisits.some(b => (b.memberId && b.memberId === v.id) || (b.phone && b.phone !== "—" && b.phone === v.phone) || b.name.toLowerCase() === fullName.toLowerCase());
+                if (!already) {
+                  backendVisits.push({
+                    id: v.id,
+                    memberId: v.id,
+                    name: fullName,
+                    firstName: v.firstName || "Visitor",
+                    lastName: v.lastName || "Guest",
+                    phone: v.phone || "—",
+                    gender: v.gender || "Not specified",
+                    address: v.address || "—",
+                    serviceName: "Wednesday: Time with the Lord",
+                    dateStr: v.createdAt ? formatLocalDate(v.createdAt) : formatLocalDate(new Date()),
+                    time: "First Visit",
+                    method: "REGISTRATION",
+                    guardian: v.guardian || "",
+                    category: v.category || "Visitor / Guest",
+                    role: v.role || "Visitor / First Timer",
+                    photoUrl: v.photoUrl || null
+                  });
+                }
+              });
+            }
+
             rawVisitorsData = backendVisits;
           }
         }
