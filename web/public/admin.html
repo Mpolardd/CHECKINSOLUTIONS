@@ -1736,7 +1736,7 @@
             <!-- Month & Year Selectors -->
             <div style="display: flex; align-items: center; gap: 6px; background: white; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px;">
               <i class="fas fa-calendar-alt" style="color: var(--muted); font-size: 13px;"></i>
-              <select id="analyticsMonthSelect" class="form-ctrl" style="border: none; padding: 2px 4px; font-size: 13px; font-weight: 700; width: 125px;" onchange="handleAnalyticsPeriodChange()">
+              <select id="analyticsMonthSelect" class="form-ctrl" autocomplete="off" style="border: none; padding: 2px 4px; font-size: 13px; font-weight: 700; width: 125px;" onchange="handleAnalyticsPeriodChange()">
                 <option value="1">January</option>
                 <option value="2">February</option>
                 <option value="3">March</option>
@@ -1750,7 +1750,7 @@
                 <option value="11">November</option>
                 <option value="12">December</option>
               </select>
-              <select id="analyticsYearSelect" class="form-ctrl" style="border: none; padding: 2px 4px; font-size: 13px; font-weight: 700; width: 85px;" onchange="handleAnalyticsPeriodChange()">
+              <select id="analyticsYearSelect" class="form-ctrl" autocomplete="off" style="border: none; padding: 2px 4px; font-size: 13px; font-weight: 700; width: 85px;" onchange="handleAnalyticsPeriodChange()">
                 <option value="2025">2025</option>
                 <option value="2026" selected>2026</option>
                 <option value="2027">2027</option>
@@ -1778,6 +1778,19 @@
               <input type="text" id="analyticsSearchInput" class="form-ctrl" placeholder="Search attendee..." style="padding-left: 28px; width: 170px; font-size: 12.5px;" oninput="handleAnalyticsSearch(this.value)" />
               <i class="fas fa-search" style="position: absolute; left: 10px; top: 10px; font-size: 11px; color: var(--muted);"></i>
             </div>
+          </div>
+        </div>
+
+        <!-- 0 Services in Period Notice Banner -->
+        <div id="analyticsZeroServicesBanner" style="display: none; margin-top: 14px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i class="fas fa-circle-info" style="color: #2563eb; font-size: 15px;"></i>
+              <span id="analyticsZeroServicesText">No church services were held in the selected month.</span>
+            </div>
+            <button onclick="quickSwitchAnalyticsMonth(9, 2026)" class="btn-main" style="background: #1e40af; font-size: 11.5px; padding: 4px 10px;">
+              <i class="fas fa-calendar-check"></i> Switch to September 2026 Active Services &rarr;
+            </button>
           </div>
         </div>
 
@@ -8916,11 +8929,12 @@
       const serviceSelect = document.getElementById('analyticsServiceTypeSelect');
       const attendeeSelect = document.getElementById('analyticsAttendeeTypeSelect');
 
-      if (!monthSelect.dataset.initialized) {
+      if (!monthSelect.dataset.userModified) {
         const now = new Date();
-        monthSelect.value = String(now.getMonth() + 1);
-        yearSelect.value = String(now.getFullYear());
-        monthSelect.dataset.initialized = 'true';
+        const curM = String(now.getMonth() + 1);
+        const curY = String(now.getFullYear());
+        if (monthSelect.value !== curM) monthSelect.value = curM;
+        if (yearSelect.value !== curY) yearSelect.value = curY;
       }
 
       const year = yearSelect.value;
@@ -8957,6 +8971,19 @@
     }
 
     function handleAnalyticsPeriodChange() {
+      const monthSelect = document.getElementById('analyticsMonthSelect');
+      if (monthSelect) monthSelect.dataset.userModified = 'true';
+      loadAnalyticsDashboard(true);
+    }
+
+    function quickSwitchAnalyticsMonth(m, y) {
+      const monthSelect = document.getElementById('analyticsMonthSelect');
+      const yearSelect = document.getElementById('analyticsYearSelect');
+      if (monthSelect) {
+        monthSelect.value = String(m);
+        monthSelect.dataset.userModified = 'true';
+      }
+      if (yearSelect) yearSelect.value = String(y);
       loadAnalyticsDashboard(true);
     }
 
@@ -9091,6 +9118,19 @@
       else if (s.averageEngagementScore < 40) scoreLabel = '⚠️ Needs Outreach';
       const avgScoreLbl = document.getElementById('statAnAvgScoreLabel');
       if (avgScoreLbl) avgScoreLbl.innerText = scoreLabel;
+
+      // Zero services in selected month notice banner
+      const zeroBanner = document.getElementById('analyticsZeroServicesBanner');
+      const zeroText = document.getElementById('analyticsZeroServicesText');
+      const totalServicesInPeriod = (sb.sunday?.servicesCount || 0) + (sb.wednesday?.servicesCount || 0) + (sb.friday?.servicesCount || 0) + (sb.event?.servicesCount || 0);
+      if (zeroBanner) {
+        if (totalServicesInPeriod === 0) {
+          zeroBanner.style.display = 'block';
+          if (zeroText) zeroText.innerHTML = `No church services were held in <strong>${s.monthLabel || 'this period'}</strong>, so monthly rates show 0% (0/0).`;
+        } else {
+          zeroBanner.style.display = 'none';
+        }
+      }
     }
 
     function renderStreakCommandCenter(data) {
