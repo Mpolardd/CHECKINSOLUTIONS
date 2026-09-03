@@ -104,7 +104,10 @@ function calculateConsecutiveStreaks(targetServices = [], allAttendances = [], e
         totalMissed++;
         runningStreak = 0;
         currentStreakStartedAt = null;
-        consecutiveMissed++;
+        // Only count consecutive missed if the member has attended church in this category before
+        if (totalAttended > 0) {
+          consecutiveMissed++;
+        }
       }
     }
 
@@ -115,7 +118,12 @@ function calculateConsecutiveStreaks(targetServices = [], allAttendances = [], e
     let alertLabel = `${serviceTypeLabel} Faithful`;
     let alertColor = '#137333';
 
-    if (consecutiveMissed >= 8) {
+    if (totalAttended === 0) {
+      alertStatus = 'NOT_ATTENDED';
+      alertLabel = `No ${serviceTypeLabel} Check-ins`;
+      alertColor = '#94a3b8';
+      consecutiveMissed = 0;
+    } else if (consecutiveMissed >= 8) {
       alertStatus = 'INACTIVE';
       alertLabel = `${serviceTypeLabel} Inactive`;
       alertColor = '#475569';
@@ -265,9 +273,9 @@ function createDefaultProfile(label) {
     attendancePct: 0,
     lastAttendedDate: null,
     streakStartDate: null,
-    alertStatus: 'WATCH',
-    alertLabel: `${label} Watch`,
-    alertColor: '#d97706',
+    alertStatus: 'NOT_ATTENDED',
+    alertLabel: `No ${label} Check-ins`,
+    alertColor: '#94a3b8',
     currentSundayStreak: 0,
     longestSundayStreak: 0,
     consecutiveSundaysMissed: 0,
@@ -593,7 +601,7 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
 
     // Pastoral Care Status
     const followUp = memberLatestFollowUp.get(member.id) || {
-      status: sunProfile.consecutiveMissed >= 3 ? 'Follow-Up Required' : 'None',
+      status: (ovProfile.consecutiveMissed >= 3 && ovProfile.totalAttended > 0) ? 'Follow-Up Required' : 'None',
       note: '',
       updatedAt: null
     };
@@ -621,6 +629,7 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
         currentStreak: sunProfile.currentStreak,
         longestStreak: sunProfile.longestStreak,
         consecutiveMissed: sunProfile.consecutiveMissed,
+        totalAttended: sunProfile.totalAttended,
         totalSundaysExcused: sunProfile.totalExcused,
         lastAttendedDate: sunProfile.lastAttendedDate,
         streakStartDate: sunProfile.streakStartDate,
@@ -637,6 +646,7 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
         currentStreak: wedProfile.currentStreak,
         longestStreak: wedProfile.longestStreak,
         consecutiveMissed: wedProfile.consecutiveMissed,
+        totalAttended: wedProfile.totalAttended,
         lastAttendedDate: wedProfile.lastAttendedDate,
         streakStartDate: wedProfile.streakStartDate,
         alertStatus: wedProfile.alertStatus,
@@ -652,6 +662,7 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
         currentStreak: friProfile.currentStreak,
         longestStreak: friProfile.longestStreak,
         consecutiveMissed: friProfile.consecutiveMissed,
+        totalAttended: friProfile.totalAttended,
         lastAttendedDate: friProfile.lastAttendedDate,
         streakStartDate: friProfile.streakStartDate,
         alertStatus: friProfile.alertStatus,
@@ -675,6 +686,7 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
         currentStreak: ovProfile.currentStreak,
         longestStreak: ovProfile.longestStreak,
         consecutiveMissed: ovProfile.consecutiveMissed,
+        totalAttended: ovProfile.totalAttended,
         lastAttendedDate: ovProfile.lastAttendedDate,
         streakStartDate: ovProfile.streakStartDate,
         alertStatus: ovProfile.alertStatus,
@@ -713,34 +725,34 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
   // Sunday
   const currentSundayStreaks = [...memberMetrics].filter(m => m.sunday.currentStreak > 0).sort((a, b) => b.sunday.currentStreak - a.sunday.currentStreak).slice(0, 15);
   const longestSundayStreaks = [...memberMetrics].filter(m => m.sunday.longestStreak > 0).sort((a, b) => b.sunday.longestStreak - a.sunday.longestStreak).slice(0, 15);
-  const sundayWatch = memberMetrics.filter(m => m.sunday.consecutiveMissed === 1);
-  const sundayConcern = memberMetrics.filter(m => m.sunday.consecutiveMissed === 2);
-  const sundayFollowUp = memberMetrics.filter(m => m.sunday.consecutiveMissed >= 3);
-  const sundayFaithful = memberMetrics.filter(m => m.sunday.consecutiveMissed === 0);
+  const sundayWatch = memberMetrics.filter(m => m.sunday.consecutiveMissed === 1 && m.sunday.totalAttended > 0);
+  const sundayConcern = memberMetrics.filter(m => m.sunday.consecutiveMissed === 2 && m.sunday.totalAttended > 0);
+  const sundayFollowUp = memberMetrics.filter(m => m.sunday.consecutiveMissed >= 3 && m.sunday.totalAttended > 0);
+  const sundayFaithful = memberMetrics.filter(m => m.sunday.consecutiveMissed === 0 && m.sunday.totalAttended > 0);
 
   // Wednesday
   const currentWednesdayStreaks = [...memberMetrics].filter(m => m.wednesday.currentStreak > 0).sort((a, b) => b.wednesday.currentStreak - a.wednesday.currentStreak).slice(0, 15);
   const longestWednesdayStreaks = [...memberMetrics].filter(m => m.wednesday.longestStreak > 0).sort((a, b) => b.wednesday.longestStreak - a.wednesday.longestStreak).slice(0, 15);
-  const wednesdayWatch = memberMetrics.filter(m => m.wednesday.consecutiveMissed === 1);
-  const wednesdayConcern = memberMetrics.filter(m => m.wednesday.consecutiveMissed === 2);
-  const wednesdayFollowUp = memberMetrics.filter(m => m.wednesday.consecutiveMissed >= 3);
-  const wednesdayFaithful = memberMetrics.filter(m => m.wednesday.consecutiveMissed === 0);
+  const wednesdayWatch = memberMetrics.filter(m => m.wednesday.consecutiveMissed === 1 && m.wednesday.totalAttended > 0);
+  const wednesdayConcern = memberMetrics.filter(m => m.wednesday.consecutiveMissed === 2 && m.wednesday.totalAttended > 0);
+  const wednesdayFollowUp = memberMetrics.filter(m => m.wednesday.consecutiveMissed >= 3 && m.wednesday.totalAttended > 0);
+  const wednesdayFaithful = memberMetrics.filter(m => m.wednesday.consecutiveMissed === 0 && m.wednesday.totalAttended > 0);
 
   // Friday
   const currentFridayStreaks = [...memberMetrics].filter(m => m.friday.currentStreak > 0).sort((a, b) => b.friday.currentStreak - a.friday.currentStreak).slice(0, 15);
   const longestFridayStreaks = [...memberMetrics].filter(m => m.friday.longestStreak > 0).sort((a, b) => b.friday.longestStreak - a.friday.longestStreak).slice(0, 15);
-  const fridayWatch = memberMetrics.filter(m => m.friday.consecutiveMissed === 1);
-  const fridayConcern = memberMetrics.filter(m => m.friday.consecutiveMissed === 2);
-  const fridayFollowUp = memberMetrics.filter(m => m.friday.consecutiveMissed >= 3);
-  const fridayFaithful = memberMetrics.filter(m => m.friday.consecutiveMissed === 0);
+  const fridayWatch = memberMetrics.filter(m => m.friday.consecutiveMissed === 1 && m.friday.totalAttended > 0);
+  const fridayConcern = memberMetrics.filter(m => m.friday.consecutiveMissed === 2 && m.friday.totalAttended > 0);
+  const fridayFollowUp = memberMetrics.filter(m => m.friday.consecutiveMissed >= 3 && m.friday.totalAttended > 0);
+  const fridayFaithful = memberMetrics.filter(m => m.friday.consecutiveMissed === 0 && m.friday.totalAttended > 0);
 
   // Overall
   const currentOverallStreaks = [...memberMetrics].filter(m => m.overall.currentStreak > 0).sort((a, b) => b.overall.currentStreak - a.overall.currentStreak).slice(0, 15);
   const longestOverallStreaks = [...memberMetrics].filter(m => m.overall.longestStreak > 0).sort((a, b) => b.overall.longestStreak - a.overall.longestStreak).slice(0, 15);
-  const overallWatch = memberMetrics.filter(m => m.overall.consecutiveMissed === 1);
-  const overallConcern = memberMetrics.filter(m => m.overall.consecutiveMissed === 2);
-  const overallFollowUp = memberMetrics.filter(m => m.overall.consecutiveMissed >= 3);
-  const overallFaithful = memberMetrics.filter(m => m.overall.consecutiveMissed === 0);
+  const overallWatch = memberMetrics.filter(m => m.overall.consecutiveMissed === 1 && m.overall.totalAttended > 0);
+  const overallConcern = memberMetrics.filter(m => m.overall.consecutiveMissed === 2 && m.overall.totalAttended > 0);
+  const overallFollowUp = memberMetrics.filter(m => m.overall.consecutiveMissed >= 3 && m.overall.totalAttended > 0);
+  const overallFaithful = memberMetrics.filter(m => m.overall.consecutiveMissed === 0 && m.overall.totalAttended > 0);
 
   // Special Lists
   const rapidlyDecliningList = memberMetrics
@@ -1089,7 +1101,7 @@ async function getMemberAttendanceAnalytics(memberId) {
     note: (followUpLogs[0].metadata && followUpLogs[0].metadata.note) || '',
     updatedAt: followUpLogs[0].createdAt
   } : {
-    status: sunProfile.consecutiveMissed >= 3 ? 'Follow-Up Required' : 'None',
+    status: (ovProfile.consecutiveMissed >= 3 && ovProfile.totalAttended > 0) ? 'Follow-Up Required' : 'None',
     note: '',
     updatedAt: null
   };

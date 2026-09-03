@@ -1745,7 +1745,7 @@
                 <option value="6">June</option>
                 <option value="7">July</option>
                 <option value="8">August</option>
-                <option value="9">September</option>
+                <option value="9" selected>September</option>
                 <option value="10">October</option>
                 <option value="11">November</option>
                 <option value="12">December</option>
@@ -8916,10 +8916,11 @@
       const serviceSelect = document.getElementById('analyticsServiceTypeSelect');
       const attendeeSelect = document.getElementById('analyticsAttendeeTypeSelect');
 
-      if (!monthSelect.value) {
+      if (!monthSelect.dataset.initialized) {
         const now = new Date();
         monthSelect.value = String(now.getMonth() + 1);
         yearSelect.value = String(now.getFullYear());
+        monthSelect.dataset.initialized = 'true';
       }
 
       const year = yearSelect.value;
@@ -9110,40 +9111,40 @@
       if (cat === 'sunday') {
         catLabel = 'Sunday Services';
         itemUnit = 'Sundays';
-        faithfulCount = alertCounts.sundayFaithful ?? (data.members || []).filter(m => m.sunday.consecutiveMissed === 0).length;
+        faithfulCount = alertCounts.sundayFaithful ?? (data.members || []).filter(m => m.sunday.consecutiveMissed === 0 && m.sunday.totalAttended > 0).length;
         watchCount = alertCounts.sundayWatch ?? 0;
         concernCount = alertCounts.sundayConcern ?? 0;
         followUpCount = alertCounts.sundayFollowUpRequired ?? 0;
         streaks = lb.sunday?.currentStreaks || lb.currentSundayStreaks || [];
-        urgentMembers = (data.members || []).filter(m => m.sunday.consecutiveMissed >= 2);
+        urgentMembers = (data.members || []).filter(m => m.sunday.consecutiveMissed >= 2 && m.sunday.totalAttended > 0);
       } else if (cat === 'wednesday') {
         catLabel = 'Wednesday Midweek';
         itemUnit = 'Midweek';
-        faithfulCount = alertCounts.wednesdayFaithful ?? (data.members || []).filter(m => m.wednesday.consecutiveMissed === 0).length;
+        faithfulCount = alertCounts.wednesdayFaithful ?? (data.members || []).filter(m => m.wednesday.consecutiveMissed === 0 && m.wednesday.totalAttended > 0).length;
         watchCount = alertCounts.wednesdayWatch ?? 0;
         concernCount = alertCounts.wednesdayConcern ?? 0;
         followUpCount = alertCounts.wednesdayFollowUpRequired ?? 0;
         streaks = lb.wednesday?.currentStreaks || [];
-        urgentMembers = (data.members || []).filter(m => m.wednesday.consecutiveMissed >= 2);
+        urgentMembers = (data.members || []).filter(m => m.wednesday.consecutiveMissed >= 2 && m.wednesday.totalAttended > 0);
       } else if (cat === 'friday') {
         catLabel = 'Friday Prophetic';
         itemUnit = 'Friday';
-        faithfulCount = alertCounts.fridayFaithful ?? (data.members || []).filter(m => m.friday.consecutiveMissed === 0).length;
+        faithfulCount = alertCounts.fridayFaithful ?? (data.members || []).filter(m => m.friday.consecutiveMissed === 0 && m.friday.totalAttended > 0).length;
         watchCount = alertCounts.fridayWatch ?? 0;
         concernCount = alertCounts.fridayConcern ?? 0;
         followUpCount = alertCounts.fridayFollowUpRequired ?? 0;
         streaks = lb.friday?.currentStreaks || [];
-        urgentMembers = (data.members || []).filter(m => m.friday.consecutiveMissed >= 2);
+        urgentMembers = (data.members || []).filter(m => m.friday.consecutiveMissed >= 2 && m.friday.totalAttended > 0);
       } else {
         // Overall
         catLabel = 'All Church Services';
         itemUnit = 'Services';
-        faithfulCount = alertCounts.overallFaithful ?? (data.members || []).filter(m => m.overall.consecutiveMissed === 0).length;
+        faithfulCount = alertCounts.overallFaithful ?? (data.members || []).filter(m => m.overall.consecutiveMissed === 0 && m.overall.totalAttended > 0).length;
         watchCount = alertCounts.overallWatch ?? 0;
         concernCount = alertCounts.overallConcern ?? 0;
         followUpCount = alertCounts.overallFollowUpRequired ?? 0;
         streaks = lb.overall?.currentStreaks || [];
-        urgentMembers = (data.members || []).filter(m => m.overall.consecutiveMissed >= 2);
+        urgentMembers = (data.members || []).filter(m => m.overall.consecutiveMissed >= 2 && m.overall.totalAttended > 0);
       }
 
       // Update 4 Progressive Alert Boxes
@@ -9345,7 +9346,7 @@
       // Update Tab Counts
       const pillars = mems.filter(m => m.overall.rate >= 75 || m.sunday.rate >= 80);
       const declining = mems.filter(m => m.overall.isRapidlyDeclining || (m.overall.rateDelta <= -30 && m.overall.prevMonthRate >= 35));
-      const absent = mems.filter(m => m.overall.attended === 0 || m.sunday.consecutiveMissed >= 3);
+      const absent = mems.filter(m => (m.overall.attended === 0 && m.overall.totalAttended > 0) || (m.sunday.consecutiveMissed >= 3 && m.sunday.totalAttended > 0));
       const newMems = mems.filter(m => m.isNewMember);
 
       const countPillarsEl = document.getElementById('countWatchlistPillars');
@@ -9371,9 +9372,12 @@
         const phoneClean = (m.phone || '').replace(/[^0-9]/g, '');
         const waLink = phoneClean ? `https://wa.me/${phoneClean.startsWith('0') ? '233' + phoneClean.slice(1) : phoneClean}` : '#';
 
-        const streakBadge = m.overall.currentStreak > 0
-          ? `<span style="background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">🔥 ${m.overall.currentStreak} All</span>`
-          : `<span style="background: #fecaca; color: #dc2626; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">❌ Missed ${m.overall.consecutiveMissed}</span>`;
+        let streakBadge = `<span style="background: #f1f5f9; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700;">All: —</span>`;
+        if (m.overall.currentStreak > 0) {
+          streakBadge = `<span style="background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">🔥 ${m.overall.currentStreak} All</span>`;
+        } else if (m.overall.totalAttended > 0 && m.overall.consecutiveMissed > 0) {
+          streakBadge = `<span style="background: #fecaca; color: #dc2626; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">❌ Missed ${m.overall.consecutiveMissed}</span>`;
+        }
 
         return `
           <div style="background: white; border: 1px solid var(--line); border-radius: 6px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
@@ -9422,17 +9426,17 @@
       const elCountVisitors = document.getElementById('anCountVisitors');
       if (elCountVisitors) elCountVisitors.innerText = list.filter(m => m.isVisitor).length;
       const elCountSun = document.getElementById('anCountSundayFaithful');
-      if (elCountSun) elCountSun.innerText = list.filter(m => m.sunday.consecutiveMissed === 0).length;
+      if (elCountSun) elCountSun.innerText = list.filter(m => m.sunday.consecutiveMissed === 0 && (m.sunday.attended > 0 || m.sunday.currentStreak > 0 || m.sunday.totalAttended > 0)).length;
       const elCountWed = document.getElementById('anCountWedFaithful');
-      if (elCountWed) elCountWed.innerText = list.filter(m => m.wednesday.consecutiveMissed === 0 && (m.wednesday.attended > 0 || m.wednesday.currentStreak > 0)).length;
+      if (elCountWed) elCountWed.innerText = list.filter(m => m.wednesday.consecutiveMissed === 0 && (m.wednesday.attended > 0 || m.wednesday.currentStreak > 0 || m.wednesday.totalAttended > 0)).length;
       const elCountFri = document.getElementById('anCountFriFaithful');
-      if (elCountFri) elCountFri.innerText = list.filter(m => m.friday.consecutiveMissed === 0 && (m.friday.attended > 0 || m.friday.currentStreak > 0)).length;
+      if (elCountFri) elCountFri.innerText = list.filter(m => m.friday.consecutiveMissed === 0 && (m.friday.attended > 0 || m.friday.currentStreak > 0 || m.friday.totalAttended > 0)).length;
       const elCountPillars = document.getElementById('anCountPillars');
       if (elCountPillars) elCountPillars.innerText = list.filter(m => m.overall.rate >= 75 || m.sunday.rate >= 80).length;
       const elCountDeclining = document.getElementById('anCountDeclining');
       if (elCountDeclining) elCountDeclining.innerText = list.filter(m => m.overall.isRapidlyDeclining || m.overall.rateDelta <= -30).length;
       const elCountFollowUp = document.getElementById('anCountFollowUp');
-      if (elCountFollowUp) elCountFollowUp.innerText = list.filter(m => m.sunday.consecutiveMissed >= 3 || m.overall.consecutiveMissed >= 3 || (m.pastoralFollowUp?.status || '').includes('Required')).length;
+      if (elCountFollowUp) elCountFollowUp.innerText = list.filter(m => (m.sunday.consecutiveMissed >= 3 && m.sunday.totalAttended > 0) || (m.overall.consecutiveMissed >= 3 && m.overall.totalAttended > 0) || (m.pastoralFollowUp?.status || '').includes('Required')).length;
       const elCountZero = document.getElementById('anCountZero');
       if (elCountZero) elCountZero.innerText = list.filter(m => m.overall.attended === 0).length;
 
@@ -9442,17 +9446,17 @@
       } else if (currentAnalyticsFilter === 'VISITORS_ONLY') {
         list = list.filter(m => m.isVisitor);
       } else if (currentAnalyticsFilter === 'SUNDAY_FAITHFUL') {
-        list = list.filter(m => m.sunday.consecutiveMissed === 0);
+        list = list.filter(m => m.sunday.consecutiveMissed === 0 && (m.sunday.attended > 0 || m.sunday.currentStreak > 0 || m.sunday.totalAttended > 0));
       } else if (currentAnalyticsFilter === 'WEDNESDAY_FAITHFUL') {
-        list = list.filter(m => m.wednesday.consecutiveMissed === 0 && (m.wednesday.attended > 0 || m.wednesday.currentStreak > 0));
+        list = list.filter(m => m.wednesday.consecutiveMissed === 0 && (m.wednesday.attended > 0 || m.wednesday.currentStreak > 0 || m.wednesday.totalAttended > 0));
       } else if (currentAnalyticsFilter === 'FRIDAY_FAITHFUL') {
-        list = list.filter(m => m.friday.consecutiveMissed === 0 && (m.friday.attended > 0 || m.friday.currentStreak > 0));
+        list = list.filter(m => m.friday.consecutiveMissed === 0 && (m.friday.attended > 0 || m.friday.currentStreak > 0 || m.friday.totalAttended > 0));
       } else if (currentAnalyticsFilter === 'PILLARS') {
         list = list.filter(m => m.overall.rate >= 75 || m.sunday.rate >= 80);
       } else if (currentAnalyticsFilter === 'DECLINING') {
         list = list.filter(m => m.overall.isRapidlyDeclining || m.overall.rateDelta <= -30);
       } else if (currentAnalyticsFilter === 'FOLLOW_UP_REQUIRED') {
-        list = list.filter(m => m.sunday.consecutiveMissed >= 3 || m.overall.consecutiveMissed >= 3 || (m.pastoralFollowUp?.status || '').includes('Required'));
+        list = list.filter(m => (m.sunday.consecutiveMissed >= 3 && m.sunday.totalAttended > 0) || (m.overall.consecutiveMissed >= 3 && m.overall.totalAttended > 0) || (m.pastoralFollowUp?.status || '').includes('Required'));
       } else if (currentAnalyticsFilter === 'ZERO') {
         list = list.filter(m => m.overall.attended === 0);
       } else if (currentAnalyticsFilter.startsWith('ACTIVE_STREAK_')) {
@@ -9461,13 +9465,13 @@
         const tier = parts.slice(1).join('_').toUpperCase();
 
         if (tier === 'FAITHFUL') {
-          list = list.filter(m => m[svcCat]?.consecutiveMissed === 0);
+          list = list.filter(m => m[svcCat]?.consecutiveMissed === 0 && (m[svcCat]?.currentStreak > 0 || m[svcCat]?.totalAttended > 0));
         } else if (tier === 'WATCH') {
-          list = list.filter(m => m[svcCat]?.consecutiveMissed === 1);
+          list = list.filter(m => m[svcCat]?.consecutiveMissed === 1 && m[svcCat]?.totalAttended > 0);
         } else if (tier === 'CONCERN') {
-          list = list.filter(m => m[svcCat]?.consecutiveMissed === 2);
+          list = list.filter(m => m[svcCat]?.consecutiveMissed === 2 && m[svcCat]?.totalAttended > 0);
         } else if (tier === 'FOLLOW_UP_REQUIRED') {
-          list = list.filter(m => (m[svcCat]?.consecutiveMissed || 0) >= 3);
+          list = list.filter(m => (m[svcCat]?.consecutiveMissed || 0) >= 3 && m[svcCat]?.totalAttended > 0);
         }
       }
 
@@ -9485,21 +9489,37 @@
         return;
       }
 
+      const formatPill = (code, catObj, activeBg, activeColor) => {
+        if (!catObj) return '';
+        if (catObj.currentStreak > 0) {
+          return `<span style="background: ${activeBg}; color: ${activeColor}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;" title="${code} Streak">
+            ${code}: 🔥 ${catObj.currentStreak}
+          </span>`;
+        }
+        if (catObj.totalAttended > 0 && catObj.consecutiveMissed > 0) {
+          return `<span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;" title="${code} Missed">
+            ${code}: ❌ ${catObj.consecutiveMissed}
+          </span>`;
+        }
+        return `<span style="background: #f1f5f9; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap;" title="No check-ins">
+          ${code}: —
+        </span>`;
+      };
+
+      const formatMobileStreak = (catObj) => {
+        if (!catObj) return '—';
+        if (catObj.currentStreak > 0) return `🔥${catObj.currentStreak}`;
+        if (catObj.totalAttended > 0 && catObj.consecutiveMissed > 0) return `❌${catObj.consecutiveMissed}`;
+        return '—';
+      };
+
       tbody.innerHTML = list.map((m, i) => {
         const streaksHtml = `
           <div style="display: flex; flex-wrap: wrap; gap: 4px; max-width: 230px;">
-            <span style="background: ${m.sunday.currentStreak > 0 ? '#dbeafe' : '#f1f5f9'}; color: ${m.sunday.currentStreak > 0 ? '#1d4ed8' : '#64748b'}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;" title="Sunday Streak">
-              Sun: ${m.sunday.currentStreak > 0 ? `🔥 ${m.sunday.currentStreak}` : `❌ ${m.sunday.consecutiveMissed}`}
-            </span>
-            <span style="background: ${m.wednesday.currentStreak > 0 ? '#ede9fe' : '#f1f5f9'}; color: ${m.wednesday.currentStreak > 0 ? '#6d28d9' : '#64748b'}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;" title="Wednesday Streak">
-              Wed: ${m.wednesday.currentStreak > 0 ? `🔥 ${m.wednesday.currentStreak}` : `❌ ${m.wednesday.consecutiveMissed}`}
-            </span>
-            <span style="background: ${m.friday.currentStreak > 0 ? '#fce7f3' : '#f1f5f9'}; color: ${m.friday.currentStreak > 0 ? '#be185d' : '#64748b'}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;" title="Friday Streak">
-              Fri: ${m.friday.currentStreak > 0 ? `🔥 ${m.friday.currentStreak}` : `❌ ${m.friday.consecutiveMissed}`}
-            </span>
-            <span style="background: ${m.overall.currentStreak > 0 ? '#dcfce7' : '#fee2e2'}; color: ${m.overall.currentStreak > 0 ? '#15803d' : '#b91c1c'}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; white-space: nowrap;" title="Overall Streak across all services">
-              All: ${m.overall.currentStreak > 0 ? `🔥 ${m.overall.currentStreak}` : `❌ ${m.overall.consecutiveMissed}`}
-            </span>
+            ${formatPill('Sun', m.sunday, '#dbeafe', '#1d4ed8')}
+            ${formatPill('Wed', m.wednesday, '#ede9fe', '#6d28d9')}
+            ${formatPill('Fri', m.friday, '#fce7f3', '#be185d')}
+            ${formatPill('All', m.overall, '#dcfce7', '#15803d')}
           </div>
         `;
 
@@ -9552,35 +9572,42 @@
 
       // Render Mobile Cards
       if (mobContainer) {
-        mobContainer.innerHTML = list.map((m, i) => `
-          <div class="mob-card">
-            <div class="mob-card-header">
-              <div class="mob-card-name" onclick="openMemberAnalyticsModal('${m.memberId}')">
-                ${i + 1}. ${escapeHtml(m.name)}
-                ${m.isVisitor ? `<span style="background:#fef3c7;color:#b45309;font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px;">Visitor</span>` : ''}
+        mobContainer.innerHTML = list.map((m, i) => {
+          let mobAllBadge = `<span style="background:#f1f5f9;color:#94a3b8;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;">All: —</span>`;
+          if (m.overall.currentStreak > 0) {
+            mobAllBadge = `<span style="background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:800;">All: 🔥 ${m.overall.currentStreak}</span>`;
+          } else if (m.overall.totalAttended > 0 && m.overall.consecutiveMissed > 0) {
+            mobAllBadge = `<span style="background:#fee2e2;color:#b91c1c;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:800;">All: ❌ ${m.overall.consecutiveMissed}</span>`;
+          }
+
+          return `
+            <div class="mob-card">
+              <div class="mob-card-header">
+                <div class="mob-card-name" onclick="openMemberAnalyticsModal('${m.memberId}')">
+                  ${i + 1}. ${escapeHtml(m.name)}
+                  ${m.isVisitor ? `<span style="background:#fef3c7;color:#b45309;font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px;">Visitor</span>` : ''}
+                </div>
+                ${mobAllBadge}
               </div>
-              <span style="background:${m.overall.currentStreak > 0 ? '#dcfce7' : '#fee2e2'};color:${m.overall.currentStreak > 0 ? '#15803d' : '#b91c1c'};padding:2px 6px;border-radius:4px;font-size:11px;font-weight:800;">
-                All: ${m.overall.currentStreak > 0 ? `🔥 ${m.overall.currentStreak}` : `❌ ${m.overall.consecutiveMissed}`}
-              </span>
-            </div>
-            <div class="mob-card-meta">
-              <div class="mob-card-row">
-                <span>Streaks</span>
-                <strong>Sun: ${m.sunday.currentStreak > 0 ? `🔥${m.sunday.currentStreak}` : `❌${m.sunday.consecutiveMissed}`} · Wed: ${m.wednesday.currentStreak > 0 ? `🔥${m.wednesday.currentStreak}` : `❌${m.wednesday.consecutiveMissed}`} · Fri: ${m.friday.currentStreak > 0 ? `🔥${m.friday.currentStreak}` : `❌${m.friday.consecutiveMissed}`}</strong>
+              <div class="mob-card-meta">
+                <div class="mob-card-row">
+                  <span>Streaks</span>
+                  <strong>Sun: ${formatMobileStreak(m.sunday)} · Wed: ${formatMobileStreak(m.wednesday)} · Fri: ${formatMobileStreak(m.friday)}</strong>
+                </div>
+                <div class="mob-card-row"><span>Sunday %</span><strong>${m.sunday.rate}% (${m.sunday.attended}/${m.sunday.available})</strong></div>
+                <div class="mob-card-row"><span>Wednesday %</span><strong>${m.wednesday.rate}% (${m.wednesday.attended}/${m.wednesday.available})</strong></div>
+                <div class="mob-card-row"><span>Friday %</span><strong>${m.friday.rate}% (${m.friday.attended}/${m.friday.available})</strong></div>
+                <div class="mob-card-row"><span>Overall %</span><strong style="color:var(--emerald);">${m.overall.rate}% (${m.overall.attended}/${m.overall.available})</strong></div>
+                <div class="mob-card-row"><span>Score</span><strong style="color:${m.engagement.badgeColor};">${m.engagement.score}/100 (${m.engagement.tierLabel})</strong></div>
+                <div class="mob-card-row"><span>Pastoral Status</span><strong>${m.pastoralFollowUp.status}</strong></div>
               </div>
-              <div class="mob-card-row"><span>Sunday %</span><strong>${m.sunday.rate}% (${m.sunday.attended}/${m.sunday.available})</strong></div>
-              <div class="mob-card-row"><span>Wednesday %</span><strong>${m.wednesday.rate}% (${m.wednesday.attended}/${m.wednesday.available})</strong></div>
-              <div class="mob-card-row"><span>Friday %</span><strong>${m.friday.rate}% (${m.friday.attended}/${m.friday.available})</strong></div>
-              <div class="mob-card-row"><span>Overall %</span><strong style="color:var(--emerald);">${m.overall.rate}% (${m.overall.attended}/${m.overall.available})</strong></div>
-              <div class="mob-card-row"><span>Score</span><strong style="color:${m.engagement.badgeColor};">${m.engagement.score}/100 (${m.engagement.tierLabel})</strong></div>
-              <div class="mob-card-row"><span>Pastoral Status</span><strong>${m.pastoralFollowUp.status}</strong></div>
+              <div class="mob-card-actions">
+                <button class="btn-main" style="background:#14532d;" onclick="openMemberAnalyticsModal('${m.memberId}')"><i class="fas fa-user-pen"></i> Open Dossier</button>
+                ${m.phone ? `<a href="tel:${m.phone}" class="btn-main" style="background:#0284c7;text-decoration:none;"><i class="fas fa-phone"></i> Call</a>` : ''}
+              </div>
             </div>
-            <div class="mob-card-actions">
-              <button class="btn-main" style="background:#14532d;" onclick="openMemberAnalyticsModal('${m.memberId}')"><i class="fas fa-user-pen"></i> Open Dossier</button>
-              ${m.phone ? `<a href="tel:${m.phone}" class="btn-main" style="background:#0284c7;text-decoration:none;"><i class="fas fa-phone"></i> Call</a>` : ''}
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       }
     }
 
@@ -9696,11 +9723,11 @@
           <!-- Sunday Streak -->
           <div style="background: #f0f9ff; border: 1.5px solid #0284c7; border-radius: 6px; padding: 10px;">
             <div style="font-size: 11px; font-weight: 800; color: #0369a1; text-transform: uppercase;">⛪ Sunday Streak</div>
-            <div style="font-size: 18px; font-weight: 800; color: #b45309; margin-top: 2px;">
-              ${sun.currentStreak > 0 ? `🔥 ${sun.currentStreak} Sundays` : `❌ 0 Streak`}
+            <div style="font-size: 17px; font-weight: 800; color: #b45309; margin-top: 2px;">
+              ${sun.currentStreak > 0 ? `🔥 ${sun.currentStreak} Sundays` : (sun.totalAttended > 0 ? `❌ ${sun.consecutiveMissed} Missed` : `— No Attendance`)}
             </div>
             <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">
-              Longest: <strong>${sun.longestStreak || 0}</strong> · Missed: <strong>${sun.consecutiveMissed || 0}</strong>
+              Longest: <strong>${sun.longestStreak || 0}</strong> · Missed: <strong>${sun.totalAttended > 0 ? (sun.consecutiveMissed || 0) : 0}</strong>
             </div>
             <div style="font-size: 10.5px; color: ${sun.alertColor || '#0369a1'}; font-weight: 700; margin-top: 4px;">
               ${sun.alertLabel || 'Sunday'}
@@ -9710,11 +9737,11 @@
           <!-- Wednesday Streak -->
           <div style="background: #faf5ff; border: 1.5px solid #8b5cf6; border-radius: 6px; padding: 10px;">
             <div style="font-size: 11px; font-weight: 800; color: #7c3aed; text-transform: uppercase;">📖 Wednesday Streak</div>
-            <div style="font-size: 18px; font-weight: 800; color: #7c3aed; margin-top: 2px;">
-              ${wed.currentStreak > 0 ? `🔥 ${wed.currentStreak} Midweek` : `❌ 0 Streak`}
+            <div style="font-size: 17px; font-weight: 800; color: #7c3aed; margin-top: 2px;">
+              ${wed.currentStreak > 0 ? `🔥 ${wed.currentStreak} Midweek` : (wed.totalAttended > 0 ? `❌ ${wed.consecutiveMissed} Missed` : `— No Attendance`)}
             </div>
             <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">
-              Longest: <strong>${wed.longestStreak || 0}</strong> · Missed: <strong>${wed.consecutiveMissed || 0}</strong>
+              Longest: <strong>${wed.longestStreak || 0}</strong> · Missed: <strong>${wed.totalAttended > 0 ? (wed.consecutiveMissed || 0) : 0}</strong>
             </div>
             <div style="font-size: 10.5px; color: ${wed.alertColor || '#7c3aed'}; font-weight: 700; margin-top: 4px;">
               ${wed.alertLabel || 'Wednesday'}
@@ -9724,11 +9751,11 @@
           <!-- Friday Streak -->
           <div style="background: #fdf2f8; border: 1.5px solid #ec4899; border-radius: 6px; padding: 10px;">
             <div style="font-size: 11px; font-weight: 800; color: #db2777; text-transform: uppercase;">🔥 Friday Streak</div>
-            <div style="font-size: 18px; font-weight: 800; color: #db2777; margin-top: 2px;">
-              ${fri.currentStreak > 0 ? `🔥 ${fri.currentStreak} Friday` : `❌ 0 Streak`}
+            <div style="font-size: 17px; font-weight: 800; color: #db2777; margin-top: 2px;">
+              ${fri.currentStreak > 0 ? `🔥 ${fri.currentStreak} Friday` : (fri.totalAttended > 0 ? `❌ ${fri.consecutiveMissed} Missed` : `— No Attendance`)}
             </div>
             <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">
-              Longest: <strong>${fri.longestStreak || 0}</strong> · Missed: <strong>${fri.consecutiveMissed || 0}</strong>
+              Longest: <strong>${fri.longestStreak || 0}</strong> · Missed: <strong>${fri.totalAttended > 0 ? (fri.consecutiveMissed || 0) : 0}</strong>
             </div>
             <div style="font-size: 10.5px; color: ${fri.alertColor || '#db2777'}; font-weight: 700; margin-top: 4px;">
               ${fri.alertLabel || 'Friday'}
@@ -9738,11 +9765,11 @@
           <!-- Overall Streak -->
           <div style="background: #f0fdf4; border: 1.5px solid #16a34a; border-radius: 6px; padding: 10px;">
             <div style="font-size: 11px; font-weight: 800; color: #15803d; text-transform: uppercase;">⚡ Overall Streak</div>
-            <div style="font-size: 18px; font-weight: 800; color: #15803d; margin-top: 2px;">
-              ${ov.currentStreak > 0 ? `🔥 ${ov.currentStreak} Services` : `❌ 0 Streak`}
+            <div style="font-size: 17px; font-weight: 800; color: #15803d; margin-top: 2px;">
+              ${ov.currentStreak > 0 ? `🔥 ${ov.currentStreak} Services` : (ov.totalAttended > 0 ? `❌ ${ov.consecutiveMissed} Missed` : `— No Attendance`)}
             </div>
             <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">
-              Longest: <strong>${ov.longestStreak || 0}</strong> · Missed: <strong>${ov.consecutiveMissed || 0}</strong>
+              Longest: <strong>${ov.longestStreak || 0}</strong> · Missed: <strong>${ov.totalAttended > 0 ? (ov.consecutiveMissed || 0) : 0}</strong>
             </div>
             <div style="font-size: 10.5px; color: ${ov.alertColor || '#15803d'}; font-weight: 700; margin-top: 4px;">
               ${ov.alertLabel || 'Overall'}
