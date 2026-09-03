@@ -5690,6 +5690,27 @@
           }
         } catch (hErr) {}
 
+        // Always query service totals from /attendance/services for Services & Programs Setup
+        try {
+          const sRes = await fetch(`${API_BASE}/attendance/services`, { headers });
+          if (sRes.ok) {
+            const sList = await sRes.json();
+            const programTotalCounts = {};
+            sList.forEach(s => {
+              const cName = canonicalServiceName(s.serviceType?.name || '');
+              const exactName = s.serviceType?.name || '';
+              const attCnt = (s._count && s._count.attendance) || 0;
+              if (cName) {
+                programTotalCounts[cName] = (programTotalCounts[cName] || 0) + attCnt;
+              }
+              if (exactName && exactName !== cName) {
+                programTotalCounts[exactName] = (programTotalCounts[exactName] || 0) + attCnt;
+              }
+            });
+            window._programTotalCounts = programTotalCounts;
+          }
+        } catch (sErr) {}
+
         // Fallback / supplement with live endpoint
         if (!Array.isArray(rawItems) || rawItems.length === 0) {
           let apiUrl = `${API_BASE}/attendance/by-service-name?name=${encodeURIComponent(targetService)}`;
@@ -6956,7 +6977,12 @@
 
       tbody.innerHTML = allList.map((item, i) => {
         const isKioskActive = activeKiosk === item.name || (!activeKiosk && item.isStandard && item.name.includes('Sunday'));
-        const count = (serviceAttendanceMap[item.name] || []).length;
+        const canon = canonicalServiceName(item.name);
+        const liveCount = (serviceAttendanceMap[item.name] || serviceAttendanceMap[canon] || []).length;
+        const count = (window._programTotalCounts && (window._programTotalCounts[item.name] !== undefined || window._programTotalCounts[canon] !== undefined))
+          ? (window._programTotalCounts[item.name] !== undefined ? window._programTotalCounts[item.name] : window._programTotalCounts[canon])
+          : liveCount;
+
         const statusBadge = isKioskActive
           ? `<span class="badge-present" style="background:#e6f4ea;color:#137333;"><i class="fas fa-tower-broadcast"></i> Live on Kiosk</span>`
           : `<span style="color:var(--muted);font-size:12px;">Standby</span>`;
@@ -6986,7 +7012,12 @@
           ? `<div style="text-align:center;color:var(--muted);padding:28px 0;">No services or programs configured.</div>`
           : allList.map((item, i) => {
             const isKioskActive = activeKiosk === item.name || (!activeKiosk && item.isStandard && item.name.includes('Sunday'));
-            const count = (serviceAttendanceMap[item.name] || []).length;
+            const canon = canonicalServiceName(item.name);
+            const liveCount = (serviceAttendanceMap[item.name] || serviceAttendanceMap[canon] || []).length;
+            const count = (window._programTotalCounts && (window._programTotalCounts[item.name] !== undefined || window._programTotalCounts[canon] !== undefined))
+              ? (window._programTotalCounts[item.name] !== undefined ? window._programTotalCounts[item.name] : window._programTotalCounts[canon])
+              : liveCount;
+
             const statusBadge = isKioskActive
               ? `<span class="badge-present" style="background:#e6f4ea;color:#137333;font-size:11px;"><i class="fas fa-tower-broadcast"></i> Live</span>`
               : `<span style="color:var(--muted);font-size:11px;">Standby</span>`;

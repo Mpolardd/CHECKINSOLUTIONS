@@ -106,55 +106,72 @@ router.post('/checkin', async (req, res, next) => {
         let matched = null;
         const { start: startOfDay, end: endOfDay } = getDayRange();
 
+        let svcType = null;
         if (b.serviceName) {
-          const prefix = b.serviceName.split(':')[0].trim();
-          matched = await tx.service.findFirst({
-            where: {
-              serviceType: { name: { contains: prefix, mode: 'insensitive' } },
-              serviceDate: { gte: startOfDay, lte: endOfDay },
-              active: true
-            },
-            orderBy: { startsAt: 'desc' }
-          });
-        }
-        if (!matched) {
-          matched = await tx.service.findFirst({
-            where: {
-              serviceDate: { gte: startOfDay, lte: endOfDay },
-              active: true
-            },
-            orderBy: { startsAt: 'desc' }
-          });
-        }
-        if (!matched) {
-          // Find or create service type
-          let svcType = null;
-          if (b.serviceName) {
-            const prefix = b.serviceName.split(':')[0].trim();
-            svcType = await tx.serviceType.findFirst({
-              where: { name: { contains: prefix, mode: 'insensitive' }, active: true }
-            });
-          }
-          if (!svcType) {
-            svcType = await tx.serviceType.findFirst({ where: { active: true } });
-          }
-          if (!svcType) {
-            svcType = await tx.serviceType.create({
-              data: { name: 'Family & Friends Service (Sunday)', dayOfWeek: 0, startTime: '07:00', endTime: '11:00' }
-            });
+          const raw = b.serviceName.trim();
+          const clean = raw.replace(/^(Sunday|Wednesday|Friday)[:\s—-]+/i, '').trim();
+          const prefix = raw.split(/[:\&\(\)\—\-]+/)[0].trim();
+
+          const typeOrList = [
+            { name: { contains: clean, mode: 'insensitive' } },
+            { name: { contains: prefix, mode: 'insensitive' } },
+            { name: { contains: raw, mode: 'insensitive' } }
+          ];
+
+          const lower = raw.toLowerCase();
+          if (lower.includes('prophetic') || lower.includes('deliverance') || lower.includes('friday')) {
+            typeOrList.push({ name: { contains: 'Prophetic', mode: 'insensitive' } });
+            typeOrList.push({ name: { contains: 'Deliverance', mode: 'insensitive' } });
+          } else if (lower.includes('wednesday') || lower.includes('time with')) {
+            typeOrList.push({ name: { contains: 'Time with the Lord', mode: 'insensitive' } });
+          } else if (lower.includes('sunday') || lower.includes('family')) {
+            typeOrList.push({ name: { contains: 'Family & Friends', mode: 'insensitive' } });
           }
 
+          svcType = await tx.serviceType.findFirst({
+            where: { OR: typeOrList, active: true }
+          });
+        }
+
+        if (svcType) {
           matched = await tx.service.findFirst({
             where: {
               serviceTypeId: svcType.id,
-              serviceDate: { gte: startOfDay, lte: endOfDay }
-            }
+              serviceDate: { gte: startOfDay, lte: endOfDay },
+              active: true
+            },
+            orderBy: { startsAt: 'desc' }
           });
 
           if (!matched) {
             matched = await tx.service.create({
               data: {
                 serviceTypeId: svcType.id,
+                serviceDate: startOfDay,
+                startsAt: new Date(),
+                active: true
+              }
+            });
+          }
+        } else {
+          matched = await tx.service.findFirst({
+            where: {
+              serviceDate: { gte: startOfDay, lte: endOfDay },
+              active: true
+            },
+            orderBy: { startsAt: 'desc' }
+          });
+
+          if (!matched) {
+            let defType = await tx.serviceType.findFirst({ where: { active: true } });
+            if (!defType) {
+              defType = await tx.serviceType.create({
+                data: { name: 'Family & Friends Service (Sunday)', dayOfWeek: 0, startTime: '07:00', endTime: '11:00' }
+              });
+            }
+            matched = await tx.service.create({
+              data: {
+                serviceTypeId: defType.id,
                 serviceDate: startOfDay,
                 startsAt: new Date(),
                 active: true
@@ -626,7 +643,10 @@ router.get('/services', async (req, res, next) => {
 
     const services = await prisma.service.findMany({
       where,
-      include: { serviceType: true },
+      include: {
+        serviceType: true,
+        _count: { select: { attendance: true } }
+      },
       orderBy: [
         { serviceDate: 'desc' },
         { startsAt: 'desc' }
@@ -769,72 +789,72 @@ router.post('/quick-register-checkin', async (req, res, next) => {
         let matched = null;
         const { start: startOfDay, end: endOfDay } = getDayRange();
 
+        let svcType = null;
         if (body.serviceName) {
           const raw = body.serviceName.trim();
           const clean = raw.replace(/^(Sunday|Wednesday|Friday)[:\s—-]+/i, '').trim();
           const prefix = raw.split(/[:\&\(\)\—\-]+/)[0].trim();
 
-          matched = await tx.service.findFirst({
-            where: {
-              serviceType: {
-                OR: [
-                  { name: { contains: clean, mode: 'insensitive' } },
-                  { name: { contains: prefix, mode: 'insensitive' } },
-                  { name: { contains: raw, mode: 'insensitive' } }
-                ]
-              },
-              serviceDate: { gte: startOfDay, lte: endOfDay },
-              active: true
-            },
-            orderBy: { startsAt: 'desc' }
-          });
-        }
-        if (!matched) {
-          matched = await tx.service.findFirst({
-            where: {
-              serviceDate: { gte: startOfDay, lte: endOfDay },
-              active: true
-            },
-            orderBy: { startsAt: 'desc' }
-          });
-        }
-        if (!matched) {
-          let svcType = null;
-          if (body.serviceName) {
-            const raw = body.serviceName.trim();
-            const clean = raw.replace(/^(Sunday|Wednesday|Friday)[:\s—-]+/i, '').trim();
-            const prefix = raw.split(/[:\&\(\)\—\-]+/)[0].trim();
-            svcType = await tx.serviceType.findFirst({
-              where: {
-                OR: [
-                  { name: { contains: clean, mode: 'insensitive' } },
-                  { name: { contains: prefix, mode: 'insensitive' } },
-                  { name: { contains: raw, mode: 'insensitive' } }
-                ],
-                active: true
-              }
-            });
-          }
-          if (!svcType) {
-            svcType = await tx.serviceType.findFirst({ where: { active: true } });
-          }
-          if (!svcType) {
-            svcType = await tx.serviceType.create({
-              data: { name: 'Family & Friends Service (Sunday)', dayOfWeek: 0, startTime: '07:00', endTime: '11:00' }
-            });
+          const typeOrList = [
+            { name: { contains: clean, mode: 'insensitive' } },
+            { name: { contains: prefix, mode: 'insensitive' } },
+            { name: { contains: raw, mode: 'insensitive' } }
+          ];
+
+          const lower = raw.toLowerCase();
+          if (lower.includes('prophetic') || lower.includes('deliverance') || lower.includes('friday')) {
+            typeOrList.push({ name: { contains: 'Prophetic', mode: 'insensitive' } });
+            typeOrList.push({ name: { contains: 'Deliverance', mode: 'insensitive' } });
+          } else if (lower.includes('wednesday') || lower.includes('time with')) {
+            typeOrList.push({ name: { contains: 'Time with the Lord', mode: 'insensitive' } });
+          } else if (lower.includes('sunday') || lower.includes('family')) {
+            typeOrList.push({ name: { contains: 'Family & Friends', mode: 'insensitive' } });
           }
 
+          svcType = await tx.serviceType.findFirst({
+            where: { OR: typeOrList, active: true }
+          });
+        }
+
+        if (svcType) {
           matched = await tx.service.findFirst({
             where: {
               serviceTypeId: svcType.id,
-              serviceDate: { gte: startOfDay, lte: endOfDay }
-            }
+              serviceDate: { gte: startOfDay, lte: endOfDay },
+              active: true
+            },
+            orderBy: { startsAt: 'desc' }
           });
 
           if (!matched) {
             matched = await tx.service.create({
               data: {
                 serviceTypeId: svcType.id,
+                serviceDate: startOfDay,
+                startsAt: new Date(),
+                active: true
+              }
+            });
+          }
+        } else {
+          matched = await tx.service.findFirst({
+            where: {
+              serviceDate: { gte: startOfDay, lte: endOfDay },
+              active: true
+            },
+            orderBy: { startsAt: 'desc' }
+          });
+
+          if (!matched) {
+            let defType = await tx.serviceType.findFirst({ where: { active: true } });
+            if (!defType) {
+              defType = await tx.serviceType.create({
+                data: { name: 'Family & Friends Service (Sunday)', dayOfWeek: 0, startTime: '07:00', endTime: '11:00' }
+              });
+            }
+            matched = await tx.service.create({
+              data: {
+                serviceTypeId: defType.id,
                 serviceDate: startOfDay,
                 startsAt: new Date(),
                 active: true
