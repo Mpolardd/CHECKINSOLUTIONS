@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/heic-to@1.5.2/dist/iife/heic-to.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   
   <style>
@@ -6257,12 +6258,59 @@
       document.getElementById('lblEditPhone').innerText = isChild ? 'Parent / Contact Phone *' : 'Phone Number *';
     }
 
+    async function convertHeicToJpeg(file) {
+      // 1. Native browser decoding (Safari iOS/macOS decodes HEIC natively)
+      if (typeof createImageBitmap === 'function') {
+        try {
+          const bmp = await createImageBitmap(file);
+          if (bmp && bmp.width > 0 && bmp.height > 0) {
+            const canvas = document.createElement('canvas');
+            canvas.width = bmp.width;
+            canvas.height = bmp.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(bmp, 0, 0);
+            const nativeBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+            if (nativeBlob) return nativeBlob;
+          }
+        } catch (nativeErr) {}
+      }
+
+      // 2. Modern HeicTo library (uses modern libheif WebAssembly)
+      if (typeof HeicTo === 'function') {
+        try {
+          const resBlob = await HeicTo({ blob: file, type: 'image/jpeg', quality: 0.85 });
+          if (resBlob) return resBlob;
+        } catch (heicToErr) {
+          console.warn('HeicTo conversion attempt:', heicToErr);
+        }
+      }
+
+      // 3. Fallback to heic2any
+      if (typeof heic2any === 'function') {
+        try {
+          const res = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 });
+          const resBlob = Array.isArray(res) ? res[0] : res;
+          if (resBlob) return resBlob;
+        } catch (h2aErr) {
+          console.warn('heic2any conversion attempt:', h2aErr);
+        }
+      }
+
+      return null;
+    }
+
     async function handleMemberPhotoUpload(e, mode) {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
 
       const fName = (file.name || '').toLowerCase();
-      const isHeic = fName.endsWith('.heic') || fName.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
+      let isHeic = fName.endsWith('.heic') || fName.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
+      if (!isHeic && typeof HeicTo !== 'undefined' && typeof HeicTo.isHeic === 'function') {
+        try {
+          isHeic = await HeicTo.isHeic(file);
+        } catch (err) {}
+      }
+
       const isStandardImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(fName);
 
       if (!isHeic && !isStandardImg) {
@@ -6272,20 +6320,13 @@
 
       let fileOrBlob = file;
       if (isHeic) {
-        showToast('Processing iPhone HEIC photo, please wait a moment...', 'info', 'HEIC Conversion');
-        if (typeof heic2any === 'function') {
-          try {
-            const converted = await heic2any({
-              blob: file,
-              toType: 'image/jpeg',
-              quality: 0.85
-            });
-            fileOrBlob = Array.isArray(converted) ? converted[0] : converted;
-          } catch (heicErr) {
-            console.error('Error converting HEIC image:', heicErr);
-            showToast('Could not convert HEIC photo. Please try a JPG or PNG file.', 'error', 'HEIC Error');
-            return;
-          }
+        showToast('Converting iPhone HEIC photo, please wait...', 'info', 'HEIC Conversion');
+        const converted = await convertHeicToJpeg(file);
+        if (converted) {
+          fileOrBlob = converted;
+        } else {
+          showToast('Could not convert this HEIC file automatically. Please take or select a standard JPG/PNG photo.', 'error', 'HEIC Conversion Failed');
+          return;
         }
       }
 
