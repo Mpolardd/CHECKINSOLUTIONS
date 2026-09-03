@@ -1631,7 +1631,7 @@
       <div class="metrics-row">
         <div class="metric-box">
           <div class="metric-num" id="statTodayCount">0</div>
-          <div class="metric-label">Total Directory</div>
+          <div class="metric-label">Regular Church Members</div>
         </div>
         <div class="metric-box">
           <div class="metric-num" style="color: #137333;" id="statPresentCount">0 (0%)</div>
@@ -5326,14 +5326,17 @@
         }
       });
 
-      let totalDirectory = directoryList.length;
-      let presentCount = 0;
-      let absentCount = 0;
+      // Separate regular church members vs visitors/guests
+      const regularDirectory = directoryList.filter(m => !isGuestMember(m));
+      const guestDirectory = directoryList.filter(isGuestMember);
+
+      let regularPresentCount = 0;
+      let regularAbsentCount = 0;
+      let attendingGuestCount = 0;
       let attendingMale = 0;
       let attendingFemale = 0;
       let attendingChild = 0;
       let attendingOther = 0;
-      let attendingGuest = 0;
 
       const processedMembers = directoryList.map(m => {
         const mNormPhone = normalizePhoneClient(m.phone);
@@ -5349,14 +5352,15 @@
           return false;
         });
         const isPresent = Boolean(found);
-
         const isGuest = (found && Boolean(found.isGuest)) || isGuestMember(m);
 
         if (isPresent) {
-          presentCount++;
           if (isGuest) {
-            attendingGuest++;
+            attendingGuestCount++;
+          } else {
+            regularPresentCount++;
           }
+
           const isChild = (m.category || '').toLowerCase() === 'child' || (m.role && m.role.toLowerCase().includes('child'));
           if (isChild) {
             attendingChild++;
@@ -5367,7 +5371,9 @@
             else attendingOther++;
           }
         } else {
-          absentCount++;
+          if (!isGuest) {
+            regularAbsentCount++;
+          }
         }
 
         return {
@@ -5379,26 +5385,34 @@
         };
       });
 
-      const presentPct = totalDirectory > 0 ? Math.round((presentCount / totalDirectory) * 100) : 0;
-      const absentPct = totalDirectory > 0 ? Math.round((absentCount / totalDirectory) * 100) : 0;
-      
-      const malePct = presentCount > 0 ? Math.round((attendingMale / presentCount) * 100) : 0;
-      const femalePct = presentCount > 0 ? Math.round((attendingFemale / presentCount) * 100) : 0;
-      const childPct = presentCount > 0 ? Math.round((attendingChild / presentCount) * 100) : 0;
+      const totalRegular = regularDirectory.length;
+      const totalGuests = guestDirectory.length;
+      const totalPresent = regularPresentCount + attendingGuestCount;
 
-      // Update Filter Counts in Toolbar
-      document.getElementById('countAllFilter').innerText = totalDirectory;
-      document.getElementById('countPresentFilter').innerText = presentCount;
-      document.getElementById('countAbsentFilter').innerText = absentCount;
+      const presentPct = totalRegular > 0 ? Math.round((regularPresentCount / totalRegular) * 100) : 0;
+      const absentPct = totalRegular > 0 ? Math.round((regularAbsentCount / totalRegular) * 100) : 0;
+      
+      const malePct = totalPresent > 0 ? Math.round((attendingMale / totalPresent) * 100) : 0;
+      const femalePct = totalPresent > 0 ? Math.round((attendingFemale / totalPresent) * 100) : 0;
+      const childPct = totalPresent > 0 ? Math.round((attendingChild / totalPresent) * 100) : 0;
+
+      // Update Filter Counts in Toolbar:
+      // "All Members" strictly reflects regular church members
+      document.getElementById('countAllFilter').innerText = totalRegular;
+      // "Present" reflects total attendees who came
+      document.getElementById('countPresentFilter').innerText = totalPresent;
+      // "Absent / Missed" reflects only regular members who missed
+      document.getElementById('countAbsentFilter').innerText = regularAbsentCount;
+      // "First-Timers / Guests" reflects all guests in the system
       const guestFilterCount = document.getElementById('countGuestFilter');
-      if (guestFilterCount) guestFilterCount.innerText = attendingGuest;
+      if (guestFilterCount) guestFilterCount.innerText = totalGuests;
 
       // Update Metric Cards
-      document.getElementById('statTodayCount').innerText = totalDirectory;
-      document.getElementById('statPresentCount').innerText = `${presentCount} (${presentPct}%)`;
-      document.getElementById('statAbsentCount').innerText = `${absentCount} (${absentPct}%)`;
+      document.getElementById('statTodayCount').innerText = totalRegular;
+      document.getElementById('statPresentCount').innerText = `${totalPresent} (${regularPresentCount} Mems + ${attendingGuestCount} Guests)`;
+      document.getElementById('statAbsentCount').innerText = `${regularAbsentCount} (${absentPct}%)`;
       const guestStatCard = document.getElementById('statAttGuestCount');
-      if (guestStatCard) guestStatCard.innerText = `${attendingGuest} Guests`;
+      if (guestStatCard) guestStatCard.innerText = attendingGuestCount > 0 ? `${attendingGuestCount} Attended (${totalGuests} Total)` : `${totalGuests} Guests`;
       document.getElementById('statAttMaleCount').innerText = `${attendingMale} (${malePct}%)`;
       document.getElementById('statAttFemaleCount').innerText = `${attendingFemale} (${femalePct}%)`;
       document.getElementById('statAttChildCount').innerText = `${attendingChild} (${childPct}%)`;
@@ -5408,7 +5422,7 @@
       document.getElementById('ratioFillFemale').style.width = `${femalePct}%`;
       document.getElementById('ratioFillChild').style.width = `${childPct}%`;
 
-      let ratioText = `${attendingMale} Men (${malePct}%) · ${attendingFemale} Women (${femalePct}%) · ${attendingChild} Children (${childPct}%) · ${attendingGuest} First-Timer Guests`;
+      let ratioText = `${attendingMale} Men (${malePct}%) · ${attendingFemale} Women (${femalePct}%) · ${attendingChild} Children (${childPct}%) · ${attendingGuestCount} First-Timer Guests`;
       if (attendingOther > 0) {
         ratioText += ` · ${attendingOther} Unspecified Gender`;
       }
@@ -5419,11 +5433,17 @@
 
       // Filter by Active View Mode (ALL, PRESENT, ABSENT, GUEST)
       let listToDisplay = processedMembers;
-      if (currentAttFilter === 'PRESENT') {
+      if (currentAttFilter === 'ALL') {
+        // Only show regular church members in "All Members" tab - never mix in inactive visitors
+        listToDisplay = processedMembers.filter(m => !m.isGuest);
+      } else if (currentAttFilter === 'PRESENT') {
+        // Show everyone who attended
         listToDisplay = processedMembers.filter(m => m.isPresent);
       } else if (currentAttFilter === 'ABSENT') {
-        listToDisplay = processedMembers.filter(m => !m.isPresent);
+        // Only show regular church members who missed, NEVER visitors
+        listToDisplay = processedMembers.filter(m => !m.isGuest && !m.isPresent);
       } else if (currentAttFilter === 'GUEST') {
+        // Show First-Timers & Guests
         listToDisplay = processedMembers.filter(m => m.isGuest);
       }
 
@@ -5598,16 +5618,18 @@
       let csv = `Service Name,Full Name,Category,Phone Number,Parent / Guardian,Gender,Residential Location,Ministry Role,Attendance Status,Check-In Time\n`;
 
       allMembers.forEach(m => {
+        const isGuest = isGuestMember(m);
         const mNorm = normalizePhoneClient(m.phone);
         const found = activeAttList.find(a => (a.phone && m.phone && (a.phone === m.phone || normalizePhoneClient(a.phone) === mNorm)) || `${m.firstName} ${m.lastName}`.toLowerCase() === (a.name || '').toLowerCase());
         const isPresent = Boolean(found);
+        if (isGuest && !isPresent) return; // Exclude visitors who did not attend this service from absentee list
         const status = isPresent ? 'PRESENT (Attended)' : 'ABSENT (Did Not Attend)';
         const checkTime = found ? found.time : 'N/A';
         const name = `"${m.firstName} ${m.lastName}"`;
-        const cat = `"${m.category || 'Adult'}"`;
+        const cat = `"${m.category || (isGuest ? 'Visitor / Guest' : 'Adult')}"`;
         const guardian = `"${(m.guardian || '').replace(/"/g, '""')}"`;
         const addr = `"${(m.address || '').replace(/"/g, '""')}"`;
-        const role = `"${m.role || 'Member'}"`;
+        const role = `"${m.role || (isGuest ? 'Visitor / First Timer' : 'Member')}"`;
 
         csv += `"${currentSelectedService}",${name},${cat},"${m.phone || ''}",${guardian},${m.gender || ''},${addr},${role},"${status}","${checkTime}"\n`;
       });
