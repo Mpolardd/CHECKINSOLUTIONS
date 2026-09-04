@@ -1175,13 +1175,16 @@ const analyticsService = require('./attendanceAnalytics.service');
 // Monthly Attendance Analytics Dashboard
 router.get('/analytics/monthly', requireAuth, async (req, res, next) => {
   try {
-    const { year, month, serviceType, attendeeType } = req.query;
+    const { year, month, serviceType, attendeeType, refresh } = req.query;
+    const forceRefresh = refresh === 'true' || refresh === '1';
     const data = await analyticsService.getMonthlyAttendanceAnalytics({
       year,
       month,
       serviceTypeFilter: serviceType || 'ALL',
-      attendeeType: attendeeType || 'ALL'
+      attendeeType: attendeeType || 'ALL',
+      forceRefresh
     });
+    res.setHeader('Cache-Control', 'private, max-age=15');
     res.json(data);
   } catch (e) {
     next(e);
@@ -1191,8 +1194,10 @@ router.get('/analytics/monthly', requireAuth, async (req, res, next) => {
 // Dedicated Sunday Streak Leaderboards & Pastoral Alerts
 router.get('/analytics/sunday-streaks', requireAuth, async (req, res, next) => {
   try {
-    const { year, month } = req.query;
-    const data = await analyticsService.getMonthlyAttendanceAnalytics({ year, month });
+    const { year, month, refresh } = req.query;
+    const forceRefresh = refresh === 'true' || refresh === '1';
+    const data = await analyticsService.getMonthlyAttendanceAnalytics({ year, month, forceRefresh });
+    res.setHeader('Cache-Control', 'private, max-age=15');
     res.json({
       success: true,
       period: data.period,
@@ -1212,7 +1217,9 @@ router.get('/analytics/sunday-streaks', requireAuth, async (req, res, next) => {
 router.get('/analytics/trends', requireAuth, async (req, res, next) => {
   try {
     const months = req.query.months ? parseInt(req.query.months, 10) : 12;
-    const trends = await analyticsService.getAttendanceTrends({ months });
+    const forceRefresh = req.query.refresh === 'true' || req.query.refresh === '1';
+    const trends = await analyticsService.getAttendanceTrends({ months, forceRefresh });
+    res.setHeader('Cache-Control', 'private, max-age=60');
     res.json({ success: true, trends });
   } catch (e) {
     next(e);
@@ -1223,6 +1230,7 @@ router.get('/analytics/trends', requireAuth, async (req, res, next) => {
 router.get('/analytics/member/:id', requireAuth, async (req, res, next) => {
   try {
     const data = await analyticsService.getMemberAttendanceAnalytics(req.params.id);
+    res.setHeader('Cache-Control', 'private, max-age=30');
     res.json({ success: true, ...data });
   } catch (e) {
     next(e);
@@ -1239,6 +1247,7 @@ router.post('/analytics/pastoral-followup', requireAuth, async (req, res, next) 
     const actorId = req.user?.userId || null;
     const actorName = req.user?.email || 'Admin / Pastor';
     const result = await analyticsService.logPastoralFollowUp({ memberId, status, note, actorId, actorName });
+    analyticsService.invalidateAnalyticsCache();
     res.json(result);
   } catch (e) {
     next(e);

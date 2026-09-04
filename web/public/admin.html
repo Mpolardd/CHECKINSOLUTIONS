@@ -8945,11 +8945,37 @@
       const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
+      // Immediate visual feedback so the table never appears frozen
+      const tableBody = document.getElementById('analyticsMasterTableBody');
+      if (tableBody && (!currentAnalyticsData || forceRefresh)) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="10" style="text-align:center; padding: 48px 16px;">
+              <div style="display:inline-flex; align-items:center; gap:12px; color:var(--text-muted); font-size:14px; font-weight:500;">
+                <span class="spinner" style="width:22px; height:22px; border-width:2.5px; border-color:var(--primary, #1e3a8a) transparent var(--primary, #1e3a8a) transparent;"></span>
+                <span>Calculating attendance streaks, participation rates, and pastoral watchlists...</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+
       try {
-        // 1. Fetch Monthly Analytics & Multi-Service Streaks
-        const anUrl = `${API_BASE}/attendance/analytics/monthly?year=${year}&month=${month}&serviceType=${serviceType}&attendeeType=${attendeeType}`;
-        const anRes = await fetch(anUrl, { headers });
-        if (anRes.ok) {
+        const refreshParam = forceRefresh ? '&refresh=true' : '';
+        const anUrl = `${API_BASE}/attendance/analytics/monthly?year=${year}&month=${month}&serviceType=${serviceType}&attendeeType=${attendeeType}${refreshParam}`;
+        
+        // Concurrently fetch Monthly Analytics and Multi-Month Trends in parallel
+        const shouldFetchTrends = !currentAnalyticsTrends || currentAnalyticsTrends.length === 0 || forceRefresh;
+        const trUrl = `${API_BASE}/attendance/analytics/trends?months=6${refreshParam}`;
+
+        const promises = [fetch(anUrl, { headers })];
+        if (shouldFetchTrends) {
+          promises.push(fetch(trUrl, { headers }));
+        }
+
+        const [anRes, trRes] = await Promise.all(promises);
+
+        if (anRes && anRes.ok) {
           currentAnalyticsData = await anRes.json();
           renderAnalyticsKPIs(currentAnalyticsData);
           renderStreakCommandCenter(currentAnalyticsData);
@@ -8957,10 +8983,7 @@
           renderAnalyticsMasterTable();
         }
 
-        // 2. Fetch Multi-Month Trends for Visual Charts
-        const trUrl = `${API_BASE}/attendance/analytics/trends?months=6`;
-        const trRes = await fetch(trUrl, { headers });
-        if (trRes.ok) {
+        if (trRes && trRes.ok) {
           const trData = await trRes.json();
           currentAnalyticsTrends = trData.trends || [];
           renderAnalyticsCharts();

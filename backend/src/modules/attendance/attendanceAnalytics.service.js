@@ -289,13 +289,45 @@ function createDefaultProfile(label) {
   };
 }
 
+// Lightweight in-memory cache for analytics queries (60s TTL)
+const analyticsCache = new Map();
+const CACHE_TTL_MS = 60 * 1000;
+
+function getCachedAnalytics(key) {
+  const item = analyticsCache.get(key);
+  if (!item) return null;
+  if (Date.now() - item.timestamp > CACHE_TTL_MS) {
+    analyticsCache.delete(key);
+    return null;
+  }
+  return item.data;
+}
+
+function setCachedAnalytics(key, data) {
+  analyticsCache.set(key, { data, timestamp: Date.now() });
+  if (analyticsCache.size > 100) {
+    const oldestKey = analyticsCache.keys().next().value;
+    analyticsCache.delete(oldestKey);
+  }
+}
+
+function invalidateAnalyticsCache() {
+  analyticsCache.clear();
+}
+
 /**
  * Main Monthly Attendance Analytics Engine
  */
-async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 'ALL', attendeeType = 'ALL' } = {}) {
+async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 'ALL', attendeeType = 'ALL', forceRefresh = false } = {}) {
   const now = new Date();
   const currentYear = year ? parseInt(year, 10) : now.getUTCFullYear();
   const currentMonth = month ? parseInt(month, 10) : now.getUTCMonth() + 1;
+
+  const cacheKey = `monthly_${currentYear}_${currentMonth}_${serviceTypeFilter}_${attendeeType}`;
+  if (!forceRefresh) {
+    const cached = getCachedAnalytics(cacheKey);
+    if (cached) return cached;
+  }
 
   // Month date ranges
   const startOfMonth = new Date(Date.UTC(currentYear, currentMonth - 1, 1, 0, 0, 0, 0));
@@ -311,23 +343,114 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
   const startOfTwoMonthsAgo = new Date(Date.UTC(twoMonthsAgoDate.getUTCFullYear(), twoMonthsAgoDate.getUTCMonth(), 1, 0, 0, 0, 0));
   const endOfTwoMonthsAgo = new Date(Date.UTC(twoMonthsAgoDate.getUTCFullYear(), twoMonthsAgoDate.getUTCMonth() + 1, 0, 23, 59, 59, 999));
 
-  // 1. Fetch All Active Registered Members
-  const allMembers = await prisma.member.findMany({
-    where: { active: true, deletedAt: null },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      phone: true,
-      email: true,
-      gender: true,
-      category: true,
-      role: true,
-      photoUrl: true,
-      createdAt: true
-    },
-    orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }]
+  // 1. Fetch 5 core data requirements in parallel via Promise.all (zero sequential waterfalls)
+  const [
+    allMembers,
+    allHistoricalServices,
+    allHistoricalAttendances,
+    outOfTownRecords,
+    pastoralFollowUpLogs
+  ] = await Promise.all([
+    // Active Registered Members
+    prisma.member.findMany({
+      where: { active: true, deletedAt: null },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        email: true,
+        gender: true,
+        category: true,
+        role: true,
+        photoUrl: true,
+        createdAt: true
+      },
+      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }]
+    }),
+
+    // All Historical Services categorized for Multi-Service Streaks
+    prisma.service.findMany({
+      where: { active: true },
+      include: { serviceType: true },
+      orderBy: { serviceDate: 'asc' }
+    }),
+
+    // All Attendance Records across History for Streak Calculations
+    prisma.attendance.findMany({
+      where: { member: { active: true, deletedAt: null } },
+      select: { id: true, memberId: true, serviceId: true, checkedInAt: true, method: true }
+    }),
+
+    // OutOfTown / Excused Absences
+    prisma.outOfTown.findMany({
+      select: { memberId: true, startsAt: true, endsAt: true, note: true }
+    }),
+
+    // Pastoral Follow-Up History from AuditLog
+    prisma.auditLog.findMany({
+      where: { action: 'PASTORAL_FOLLOW_UP' },
+      orderBy: { createdAt: 'desc' },
+      take: 500
+    })
+  ]);
+
+  // Index services and calculate attendance count per service in-memory (sub-millisecond)
+  const serviceMap = new Map();
+  allHistoricalServices.forEach(s => serviceMap.set(s.id, s));
+
+  const serviceAttendanceCountMap = new Map();
+  allHistoricalAttendances.forEach(att => {
+    serviceAttendanceCountMap.set(att.serviceId, (serviceAttendanceCountMap.get(att.serviceId) || 0) + 1);
   });
+
+  // Derive Month Services with attendance count
+  const monthServices = allHistoricalServices
+    .filter(s => {
+      const dt = new Date(s.serviceDate);
+      return dt >= startOfMonth && dt <= endOfMonth;
+    })
+    .map(s => ({
+      ...s,
+      _count: { attendance: serviceAttendanceCountMap.get(s.id) || 0 }
+    }));
+
+  // Derive Month, M-1, and M-2 attendances in-memory without extra DB round-trips
+  const monthAttendances = [];
+  const prevMonthAttendances = [];
+  const twoMonthsAgoAttendances = [];
+
+  allHistoricalAttendances.forEach(att => {
+    const s = serviceMap.get(att.serviceId);
+    if (!s) return;
+    const dt = new Date(s.serviceDate);
+    if (dt >= startOfMonth && dt <= endOfMonth) {
+      monthAttendances.push({
+        ...att,
+        service: s
+      });
+    } else if (dt >= startOfPrevMonth && dt <= endOfPrevMonth) {
+      prevMonthAttendances.push({
+        memberId: att.memberId,
+        serviceId: att.serviceId
+      });
+    } else if (dt >= startOfTwoMonthsAgo && dt <= endOfTwoMonthsAgo) {
+      twoMonthsAgoAttendances.push({
+        memberId: att.memberId,
+        serviceId: att.serviceId
+      });
+    }
+  });
+
+  const prevMonthServicesCount = allHistoricalServices.filter(s => {
+    const dt = new Date(s.serviceDate);
+    return dt >= startOfPrevMonth && dt <= endOfPrevMonth;
+  }).length;
+
+  const twoMonthsAgoServicesCount = allHistoricalServices.filter(s => {
+    const dt = new Date(s.serviceDate);
+    return dt >= startOfTwoMonthsAgo && dt <= endOfTwoMonthsAgo;
+  }).length;
 
   const regularMembers = allMembers.filter(m => {
     const role = (m.role || '').toLowerCase();
@@ -344,26 +467,6 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
     targetMembers = visitorMembers;
   }
 
-  // 2. Fetch All Services Held in Month
-  const monthServices = await prisma.service.findMany({
-    where: {
-      active: true,
-      serviceDate: { gte: startOfMonth, lte: endOfMonth }
-    },
-    include: {
-      serviceType: true,
-      _count: { select: { attendance: true } }
-    },
-    orderBy: { serviceDate: 'asc' }
-  });
-
-  // 3. Fetch All Historical Services categorized for Multi-Service Streaks
-  const allHistoricalServices = await prisma.service.findMany({
-    where: { active: true },
-    include: { serviceType: true },
-    orderBy: { serviceDate: 'asc' }
-  });
-
   const allSundayServices = [];
   const allWednesdayServices = [];
   const allFridayServices = [];
@@ -377,16 +480,6 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
     else allEventServices.push(s);
   });
 
-  // 4. Fetch All Attendance Records across History for Streak Calculations
-  const allHistoricalAttendances = await prisma.attendance.findMany({
-    where: { member: { active: true, deletedAt: null } },
-    select: { id: true, memberId: true, serviceId: true, checkedInAt: true, method: true }
-  });
-
-  // 5. Fetch OutOfTown / Excused Absences
-  const outOfTownRecords = await prisma.outOfTown.findMany({
-    select: { memberId: true, startsAt: true, endsAt: true, note: true }
-  });
   const excusedMap = new Map();
   outOfTownRecords.forEach(rec => {
     if (!excusedMap.has(rec.memberId)) excusedMap.set(rec.memberId, []);
@@ -400,7 +493,7 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
   const fridayProfiles = calculateConsecutiveStreaks(allFridayServices, allHistoricalAttendances, excusedMap, targetMemberIds, 'Friday');
   const overallProfiles = calculateConsecutiveStreaks(allHistoricalServices, allHistoricalAttendances, excusedMap, targetMemberIds, 'Overall');
 
-  // 6. Filter Month Services by Service Category
+  // Filter Month Services by Service Category
   const categorizedMonthServices = monthServices.map(s => {
     const category = classifyServiceCategory(s.serviceType?.name || '', s.serviceType?.name || '');
     return { ...s, category };
@@ -416,41 +509,6 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
   const totalFridayOpportunities = fridaysInMonth.length;
   const totalEventOpportunities = eventsInMonth.length;
   const totalMonthOpportunities = categorizedMonthServices.length;
-
-  // 7. Fetch Attendance Records for this Month, M-1, and M-2
-  const monthAttendances = await prisma.attendance.findMany({
-    where: {
-      service: { serviceDate: { gte: startOfMonth, lte: endOfMonth }, active: true },
-      member: { active: true, deletedAt: null }
-    },
-    include: {
-      service: { include: { serviceType: true } }
-    }
-  });
-
-  const prevMonthAttendances = await prisma.attendance.findMany({
-    where: {
-      service: { serviceDate: { gte: startOfPrevMonth, lte: endOfPrevMonth }, active: true },
-      member: { active: true, deletedAt: null }
-    },
-    select: { memberId: true, serviceId: true }
-  });
-
-  const prevMonthServicesCount = await prisma.service.count({
-    where: { serviceDate: { gte: startOfPrevMonth, lte: endOfPrevMonth }, active: true }
-  });
-
-  const twoMonthsAgoAttendances = await prisma.attendance.findMany({
-    where: {
-      service: { serviceDate: { gte: startOfTwoMonthsAgo, lte: endOfTwoMonthsAgo }, active: true },
-      member: { active: true, deletedAt: null }
-    },
-    select: { memberId: true, serviceId: true }
-  });
-
-  const twoMonthsAgoServicesCount = await prisma.service.count({
-    where: { serviceDate: { gte: startOfTwoMonthsAgo, lte: endOfTwoMonthsAgo }, active: true }
-  });
 
   // Map member attendances for this month
   const memberMonthAttendances = new Map();
@@ -471,13 +529,6 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
   const memberTwoMonthsAgoCount = new Map();
   twoMonthsAgoAttendances.forEach(att => {
     memberTwoMonthsAgoCount.set(att.memberId, (memberTwoMonthsAgoCount.get(att.memberId) || 0) + 1);
-  });
-
-  // 8. Fetch Pastoral Follow-Up History from AuditLog
-  const pastoralFollowUpLogs = await prisma.auditLog.findMany({
-    where: { action: 'PASTORAL_FOLLOW_UP' },
-    orderBy: { createdAt: 'desc' },
-    take: 500
   });
   const memberLatestFollowUp = new Map();
   pastoralFollowUpLogs.forEach(log => {
@@ -915,14 +966,45 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
     },
     members: filteredMetrics
   };
+
+  setCachedAnalytics(cacheKey, payload);
+  return payload;
 }
 
 /**
  * 6 to 12 Month Attendance Trends for Visual Charts
  */
-async function getAttendanceTrends({ months = 12 } = {}) {
-  const trendPoints = [];
+async function getAttendanceTrends({ months = 12, forceRefresh = false } = {}) {
+  const cacheKey = `trends_${months}`;
+  if (!forceRefresh) {
+    const cached = getCachedAnalytics(cacheKey);
+    if (cached) return cached;
+  }
+
   const now = new Date();
+  const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (months - 1), 1, 0, 0, 0, 0));
+  const endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+
+  // Fetch all services and all attendances across the multi-month window in 2 parallel queries
+  const [allPeriodServices, allPeriodAttendances] = await Promise.all([
+    prisma.service.findMany({
+      where: { active: true, serviceDate: { gte: startDate, lte: endDate } },
+      select: { id: true, serviceDate: true, serviceType: { select: { name: true } } }
+    }),
+    prisma.attendance.findMany({
+      where: {
+        service: { active: true, serviceDate: { gte: startDate, lte: endDate } },
+        member: { active: true, deletedAt: null }
+      },
+      select: {
+        id: true,
+        memberId: true,
+        service: { select: { serviceDate: true, serviceType: { select: { name: true } } } }
+      }
+    })
+  ]);
+
+  const trendPoints = [];
 
   for (let i = months - 1; i >= 0; i--) {
     const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
@@ -934,18 +1016,15 @@ async function getAttendanceTrends({ months = 12 } = {}) {
 
     const monthLabel = d.toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 
-    const totalSvcs = await prisma.service.count({
-      where: { active: true, serviceDate: { gte: start, lte: end } }
+    // In-memory filter (sub-millisecond)
+    const monthSvcs = allPeriodServices.filter(s => {
+      const dt = new Date(s.serviceDate);
+      return dt >= start && dt <= end;
     });
 
-    const attendances = await prisma.attendance.findMany({
-      where: {
-        service: { active: true, serviceDate: { gte: start, lte: end } },
-        member: { active: true, deletedAt: null }
-      },
-      include: {
-        service: { include: { serviceType: true } }
-      }
+    const monthAtts = allPeriodAttendances.filter(a => {
+      const dt = new Date(a.service?.serviceDate);
+      return dt >= start && dt <= end;
     });
 
     let sundayCheckins = 0;
@@ -953,7 +1032,7 @@ async function getAttendanceTrends({ months = 12 } = {}) {
     let fridayCheckins = 0;
     let eventCheckins = 0;
 
-    attendances.forEach(a => {
+    monthAtts.forEach(a => {
       const cat = classifyServiceCategory(a.service?.serviceType?.name || '', a.service?.serviceType?.name || '');
       if (cat === 'SUNDAY') sundayCheckins++;
       else if (cat === 'WEDNESDAY') wednesdayCheckins++;
@@ -961,14 +1040,14 @@ async function getAttendanceTrends({ months = 12 } = {}) {
       else eventCheckins++;
     });
 
-    const uniqueAttendees = new Set(attendances.map(a => a.memberId)).size;
+    const uniqueAttendees = new Set(monthAtts.map(a => a.memberId)).size;
 
     trendPoints.push({
       year: y,
       month: m,
       monthLabel,
-      totalServices: totalSvcs,
-      totalCheckins: attendances.length,
+      totalServices: monthSvcs.length,
+      totalCheckins: monthAtts.length,
       uniqueAttendeesCount: uniqueAttendees,
       sundayCheckins,
       wednesdayCheckins,
@@ -977,17 +1056,27 @@ async function getAttendanceTrends({ months = 12 } = {}) {
     });
   }
 
+  setCachedAnalytics(cacheKey, trendPoints);
   return trendPoints;
 }
 
 /**
- * Individual Member Attendance Dossier & Historical Streaks
+ * Individual Attendee Attendance Dossier (Pastoral Deep Dive)
  */
 async function getMemberAttendanceAnalytics(memberId) {
+  // Fetch Member Details
   const member = await prisma.member.findUnique({
     where: { id: memberId },
-    include: {
-      outOfTown: true
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      email: true,
+      role: true,
+      category: true,
+      photoUrl: true,
+      createdAt: true
     }
   });
   if (!member) {
@@ -1021,31 +1110,35 @@ async function getMemberAttendanceAnalytics(memberId) {
     orderBy: { checkedInAt: 'desc' }
   });
 
-  // All historical attendances
+  // Excused Absences for Member
+  const outOfTownRecords = await prisma.outOfTown.findMany({
+    where: { memberId },
+    select: { startsAt: true, endsAt: true, note: true }
+  });
+  const memberExcusedList = outOfTownRecords;
+
+  const excusedMap = new Map();
+  excusedMap.set(memberId, memberExcusedList);
+
+  // Run streak algorithms for all four streams
   const allHistoricalAttendances = await prisma.attendance.findMany({
     where: { member: { active: true, deletedAt: null } },
     select: { id: true, memberId: true, serviceId: true, checkedInAt: true, method: true }
   });
 
-  const excusedMap = new Map();
-  if (member.outOfTown) {
-    excusedMap.set(member.id, [member.outOfTown]);
-  }
+  const sundayProfile = calculateConsecutiveStreaks(allSundayServices, allHistoricalAttendances, excusedMap, [memberId], 'Sunday').get(memberId) || {};
+  const wednesdayProfile = calculateConsecutiveStreaks(allWednesdayServices, allHistoricalAttendances, excusedMap, [memberId], 'Wednesday').get(memberId) || {};
+  const fridayProfile = calculateConsecutiveStreaks(allFridayServices, allHistoricalAttendances, excusedMap, [memberId], 'Friday').get(memberId) || {};
+  const overallProfile = calculateConsecutiveStreaks(allHistoricalServices, allHistoricalAttendances, excusedMap, [memberId], 'Overall').get(memberId) || {};
 
-  const targetId = [member.id];
-  const sunProfile = calculateConsecutiveStreaks(allSundayServices, allHistoricalAttendances, excusedMap, targetId, 'Sunday').get(member.id) || createDefaultProfile('Sunday');
-  const wedProfile = calculateConsecutiveStreaks(allWednesdayServices, allHistoricalAttendances, excusedMap, targetId, 'Wednesday').get(member.id) || createDefaultProfile('Wednesday');
-  const friProfile = calculateConsecutiveStreaks(allFridayServices, allHistoricalAttendances, excusedMap, targetId, 'Friday').get(member.id) || createDefaultProfile('Friday');
-  const ovProfile = calculateConsecutiveStreaks(allHistoricalServices, allHistoricalAttendances, excusedMap, targetId, 'Overall').get(member.id) || createDefaultProfile('Overall');
-
-  // Lifetime counts by service category
+  // Cumulative service type check-in totals
   let sundayTotal = 0;
   let wednesdayTotal = 0;
   let fridayTotal = 0;
   let eventTotal = 0;
 
   allMemberAttendances.forEach(a => {
-    const cat = classifyServiceCategory(a.service?.serviceType?.name || '', a.service?.serviceType?.name || '');
+    const cat = classifyServiceCategory(a.service?.serviceType?.name || '', a.service?.name || '');
     if (cat === 'SUNDAY') sundayTotal++;
     else if (cat === 'WEDNESDAY') wednesdayTotal++;
     else if (cat === 'FRIDAY') fridayTotal++;
@@ -1057,7 +1150,7 @@ async function getMemberAttendanceAnalytics(memberId) {
   const totalAttended = allMemberAttendances.length;
   const overallRate = totalServicesHeld > 0 ? Math.round((totalAttended / totalServicesHeld) * 100) : 0;
 
-  // Month-by-month breakdown for past 12 months
+  // Month-by-month breakdown for past 12 months (in-memory services count)
   const monthlyHistory = [];
   const now = new Date();
 
@@ -1068,9 +1161,11 @@ async function getMemberAttendanceAnalytics(memberId) {
     const start = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0));
     const end = new Date(Date.UTC(y, m, 0, 23, 59, 59, 999));
 
-    const totalSvcs = await prisma.service.count({
-      where: { active: true, serviceDate: { gte: start, lte: end } }
-    });
+    // Zero extra DB round-trips: filter from already retrieved allHistoricalServices
+    const totalSvcs = allHistoricalServices.filter(s => {
+      const dt = new Date(s.serviceDate);
+      return dt >= start && dt <= end;
+    }).length;
 
     const monthAtts = allMemberAttendances.filter(a => {
       const sDate = new Date(a.service?.serviceDate || a.checkedInAt);
@@ -1272,5 +1367,6 @@ module.exports = {
   getMemberAttendanceAnalytics,
   logPastoralFollowUp,
   saveMonthlyReportSnapshot,
-  listSavedMonthlyReports
+  listSavedMonthlyReports,
+  invalidateAnalyticsCache
 };
