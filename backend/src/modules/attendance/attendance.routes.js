@@ -930,10 +930,7 @@ router.post('/clear', async (req, res, next) => {
         await prisma.attendance.deleteMany({ where: { serviceId: { in: svcIds } } });
       }
     } else {
-      const { start: startOfDay, end: endOfDay } = getDayRange();
-      await prisma.attendance.deleteMany({
-        where: { checkedInAt: { gte: startOfDay, lte: endOfDay } }
-      });
+      return res.status(400).json({ error: 'serviceId, serviceName, or memberId is required' });
     }
     analyticsService.invalidateAnalyticsCache();
     res.json({ success: true, message: 'Attendance records cleared successfully' });
