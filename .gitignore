@@ -31,3 +31,5 @@ build/
 .vscode/
 .idea/
 .gemini/
+scratch/
+*.numbers

@@ -2208,17 +2208,37 @@
           </div>
         </div>
 
-        <!-- 2-Sided Switcher: Permanent Members vs New Visitors / Guests -->
-        <div style="display: flex; gap: 10px; margin: 18px 0 16px 0; border-bottom: 1.5px solid var(--line); padding-bottom: 14px; flex-wrap: wrap; align-items: center;">
-          <button id="btnDirFilterMembers" class="btn-main" style="padding: 10px 20px; font-size: 13.5px; font-weight: 800; border-radius: 8px; background: var(--ink); color: white; border: none; cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('MEMBERS')">
-            <i class="fa-solid fa-users" style="color: var(--accent); margin-right: 6px;"></i> Permanent Church Members <span id="dirCountMembers" style="background: rgba(255,255,255,0.22); padding: 2px 9px; border-radius: 12px; margin-left: 6px; font-size: 11.5px;">0</span>
-          </button>
-          <button id="btnDirFilterGuests" class="btn-main" style="padding: 10px 20px; font-size: 13.5px; font-weight: 800; border-radius: 8px; background: #fffbeb; color: #b45309; border: 1.5px solid #fde68a; cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('GUESTS')">
-            <i class="fa-solid fa-star" style="color: #d97706; margin-right: 6px;"></i> First-Timers & New Visitors <span id="dirCountGuests" style="background: #fef3c7; color: #92400e; padding: 2px 9px; border-radius: 12px; margin-left: 6px; font-size: 11.5px; border: 1px solid #fde68a;">0</span>
-          </button>
-          <button id="btnDirFilterAll" class="btn-main" style="padding: 10px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; background: #fafbfa; color: var(--muted); border: 1px solid var(--line); cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('ALL')">
-            <i class="fa-solid fa-list-ul" style="margin-right: 6px;"></i> All Records <span id="dirCountAll" style="background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 12px; margin-left: 5px; font-size: 11px;">0</span>
-          </button>
+        <!-- 2-Sided Switcher: Permanent Members vs New Visitors / Guests & Gender Quick Filter -->
+        <div style="display: flex; gap: 12px; margin: 18px 0 16px 0; border-bottom: 1.5px solid var(--line); padding-bottom: 14px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button id="btnDirFilterMembers" class="btn-main" style="padding: 10px 20px; font-size: 13.5px; font-weight: 800; border-radius: 8px; background: var(--ink); color: white; border: none; cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('MEMBERS')">
+              <i class="fa-solid fa-users" style="color: var(--accent); margin-right: 6px;"></i> Permanent Church Members <span id="dirCountMembers" style="background: rgba(255,255,255,0.22); padding: 2px 9px; border-radius: 12px; margin-left: 6px; font-size: 11.5px;">0</span>
+            </button>
+            <button id="btnDirFilterGuests" class="btn-main" style="padding: 10px 20px; font-size: 13.5px; font-weight: 800; border-radius: 8px; background: #fffbeb; color: #b45309; border: 1.5px solid #fde68a; cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('GUESTS')">
+              <i class="fa-solid fa-star" style="color: #d97706; margin-right: 6px;"></i> First-Timers & New Visitors <span id="dirCountGuests" style="background: #fef3c7; color: #92400e; padding: 2px 9px; border-radius: 12px; margin-left: 6px; font-size: 11.5px; border: 1px solid #fde68a;">0</span>
+            </button>
+            <button id="btnDirFilterAll" class="btn-main" style="padding: 10px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; background: #fafbfa; color: var(--muted); border: 1px solid var(--line); cursor: pointer; transition: all 0.2s;" onclick="setMemberDirectorySubTab('ALL')">
+              <i class="fa-solid fa-list-ul" style="margin-right: 6px;"></i> All Records <span id="dirCountAll" style="background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 12px; margin-left: 5px; font-size: 11px;">0</span>
+            </button>
+          </div>
+
+          <!-- Gender Filter Pill Group -->
+          <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--line); flex-wrap: wrap;">
+            <span style="font-size: 11.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 5px;">
+              <i class="fa-solid fa-venus-mars" style="color: var(--accent);"></i> Gender:
+            </span>
+            <div class="filter-presets" style="display: flex; gap: 4px;">
+              <button type="button" class="btn-preset active" id="btnGenderFilterAll" onclick="setMemberGenderFilter('ALL')" style="font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 6px;">
+                All (<span id="dirGenderCountAll">0</span>)
+              </button>
+              <button type="button" class="btn-preset" id="btnGenderFilterMale" onclick="setMemberGenderFilter('MALE')" style="font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 6px; color: #1d4ed8;">
+                <i class="fa-solid fa-mars" style="margin-right: 3px;"></i> Male (<span id="dirGenderCountMale">0</span>)
+              </button>
+              <button type="button" class="btn-preset" id="btnGenderFilterFemale" onclick="setMemberGenderFilter('FEMALE')" style="font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 6px; color: #be123c;">
+                <i class="fa-solid fa-venus" style="margin-right: 3px;"></i> Female (<span id="dirGenderCountFemale">0</span>)
+              </button>
+            </div>
+          </div>
         </div>
 
           <div class="table-responsive">
@@ -3490,16 +3510,49 @@
 
     async function getAdminAuthToken() {
       let token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
-      if (token) {
+
+      // Check if JWT token is valid and not expiring in next 60 seconds
+      let isExpired = false;
+      if (token && token.includes('.') && !token.startsWith('sfmi_')) {
         try {
-          const vRes = await fetch(`${API_BASE}/auth/verify`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (vRes.ok) return token;
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const nowSec = Math.floor(Date.now() / 1000);
+          if (payload.exp && payload.exp < (nowSec + 60)) {
+            isExpired = true;
+          }
         } catch (e) {}
       }
 
-      // Refresh / establish Super Admin credentials
+      if (token && !isExpired) {
+        return token;
+      }
+
+      // Try refresh token if available
+      const refreshTokenVal = sessionStorage.getItem('sfmi_refresh_token') || localStorage.getItem('sfmi_refresh_token');
+      if (refreshTokenVal) {
+        try {
+          const rRes = await fetch(`${API_BASE}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken: refreshTokenVal })
+          });
+          if (rRes.ok) {
+            const rData = await rRes.json();
+            if (rData.accessToken) {
+              token = rData.accessToken;
+              sessionStorage.setItem('sfmi_token', token);
+              localStorage.setItem('sfmi_token', token);
+              if (rData.refreshToken) {
+                sessionStorage.setItem('sfmi_refresh_token', rData.refreshToken);
+                localStorage.setItem('sfmi_refresh_token', rData.refreshToken);
+              }
+              return token;
+            }
+          }
+        } catch (rErr) {}
+      }
+
+      // Refresh / establish Super Admin credentials fallback
       try {
         const loginRes = await fetch(`${API_BASE}/auth/login`, {
           method: 'POST',
@@ -3512,6 +3565,10 @@
             token = loginData.accessToken;
             localStorage.setItem('sfmi_token', token);
             sessionStorage.setItem('sfmi_token', token);
+            if (loginData.refreshToken) {
+              sessionStorage.setItem('sfmi_refresh_token', loginData.refreshToken);
+              localStorage.setItem('sfmi_refresh_token', loginData.refreshToken);
+            }
             return token;
           }
         }
@@ -3950,10 +4007,12 @@
 
     function purgeAuthSession() {
       sessionStorage.removeItem('sfmi_token');
+      sessionStorage.removeItem('sfmi_refresh_token');
       sessionStorage.removeItem('sfmi_sub_session');
       sessionStorage.removeItem('sfmi_current_user');
       sessionStorage.removeItem('sfmi_admin_last_active');
       localStorage.removeItem('sfmi_token');
+      localStorage.removeItem('sfmi_refresh_token');
       localStorage.removeItem('sfmi_admin_auth');
       localStorage.removeItem('sfmi_current_user');
       localStorage.removeItem('sfmi_admin_last_active');
@@ -3987,9 +4046,20 @@
       // 3. Verify active token with backend API before rendering dashboard
       if (token) {
         try {
-          const res = await fetch(`${API_BASE}/auth/verify`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+          let currentToken = token;
+          let res = await fetch(`${API_BASE}/auth/verify`, {
+            headers: { 'Authorization': `Bearer ${currentToken}` }
           });
+
+          // If expired, try seamless auto-refresh
+          if (!res.ok) {
+            currentToken = await getAdminAuthToken();
+            if (currentToken) {
+              res = await fetch(`${API_BASE}/auth/verify`, {
+                headers: { 'Authorization': `Bearer ${currentToken}` }
+              });
+            }
+          }
 
           if (res.ok) {
             const data = await res.json();
@@ -4003,7 +4073,7 @@
             }
 
             const isSubAdminRole = role === 'SUB_ADMIN' || role === 'ADMIN';
-            sessionStorage.setItem('sfmi_token', token);
+            sessionStorage.setItem('sfmi_token', currentToken);
             sessionStorage.setItem('sfmi_current_user', JSON.stringify({
               email: data.user.email,
               name: data.user.name || (isSubAdminRole ? 'Sub-Admin' : 'Super Admin'),
@@ -4080,6 +4150,15 @@
         }
       }, 3000);
 
+      // Proactive background session token renewal
+      if (window.tokenKeepAliveTimer) clearInterval(window.tokenKeepAliveTimer);
+      window.tokenKeepAliveTimer = setInterval(async () => {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        if (token && !token.startsWith('sfmi_')) {
+          await getAdminAuthToken();
+        }
+      }, 15 * 60 * 1000); // Proactively renew token before expiry
+
       try {
         if (window.BroadcastChannel && !window._sfmiLiveBcAttached) {
           window._sfmiLiveBcAttached = true;
@@ -4129,6 +4208,10 @@
           const isSubAdminRole = role === 'SUB_ADMIN' || role === 'ADMIN';
           sessionStorage.setItem('sfmi_token', data.accessToken);
           localStorage.setItem('sfmi_token', data.accessToken);
+          if (data.refreshToken) {
+            sessionStorage.setItem('sfmi_refresh_token', data.refreshToken);
+            localStorage.setItem('sfmi_refresh_token', data.refreshToken);
+          }
           sessionStorage.setItem('sfmi_current_user', JSON.stringify({
             email: data.user.email,
             name: data.user.name || (isSubAdminRole ? 'Sub-Admin' : 'Super Admin'),
@@ -5650,8 +5733,8 @@
           tTitle.innerText = 'Absent Regular Church Members';
           tSub.innerText = 'Showing regular members who missed this service';
         } else if (filter === 'GUEST') {
-          tTitle.innerText = 'First-Timers & Guests Directory';
-          tSub.innerText = 'Showing all first-timers and guests (attending guests sorted to top)';
+          tTitle.innerText = 'First-Timers & Guests (Present)';
+          tSub.innerText = 'Showing first-timers and guests who attended this service';
         } else if (filter === 'GUEST_ABSENT') {
           tTitle.innerText = 'Absent First-Timers & Guests';
           tSub.innerText = 'Showing first-timers and visitors who did not attend this service';
@@ -5878,8 +5961,8 @@
         // Only show regular church members who missed, NEVER visitors
         listToDisplay = processedMembers.filter(m => !m.isGuest && !m.isPresent);
       } else if (currentAttFilter === 'GUEST') {
-        // Show First-Timers & Guests
-        listToDisplay = processedMembers.filter(m => m.isGuest);
+        // Show only First-Timers & Guests who attended (Present)
+        listToDisplay = processedMembers.filter(m => m.isGuest && m.isPresent);
       } else if (currentAttFilter === 'GUEST_ABSENT') {
         // Show only First-Timers & Guests who did NOT attend / missed this service!
         listToDisplay = processedMembers.filter(m => m.isGuest && !m.isPresent);
@@ -5994,18 +6077,62 @@
     window.addEventListener('resize', syncAttendanceViewMode);
 
     function filterAttendanceTable() {
-      const q = document.getElementById('attSearchInput').value.toLowerCase();
+      const q = document.getElementById('attSearchInput').value.toLowerCase().trim();
       const activeAttList = getAttendanceListForService(currentSelectedService);
 
-      const processedMembers = allMembers.map(m => {
-        const found = activeAttList.find(a => a.phone === m.phone || `${m.firstName} ${m.lastName}`.toLowerCase() === (a.name || '').toLowerCase());
-        const isGuest = isGuestMember(m);
+      let directoryList = [...allMembers];
+      activeAttList.forEach(att => {
+        const attPhone = (att.phone || '').trim();
+        const attNormPhone = normalizePhoneClient(attPhone);
+        const attName = (att.name || '').trim().toLowerCase();
+        const exists = directoryList.some(m => {
+          if (att.memberId && m.id && att.memberId === m.id) return true;
+          const mNormPhone = normalizePhoneClient(m.phone);
+          if (attNormPhone && mNormPhone && attNormPhone === mNormPhone) return true;
+          if (attPhone && m.phone && m.phone.trim() === attPhone) return true;
+          const mName = `${m.firstName} ${m.lastName}`.trim().toLowerCase();
+          if (attName && attName === mName) return true;
+          return false;
+        });
+        if (!exists && att.name) {
+          const parts = att.name.split(' ');
+          const fName = parts[0] || 'Visitor';
+          const lName = parts.slice(1).join(' ') || 'Guest';
+          directoryList.push({
+            id: att.memberId || ('guest_' + Math.random().toString(36).substr(2, 9)),
+            firstName: fName,
+            lastName: lName,
+            phone: att.phone || '—',
+            gender: att.gender || 'Not specified',
+            address: att.address || '',
+            category: 'Visitor / Guest',
+            role: 'Visitor / First Timer',
+            isGuest: true
+          });
+        }
+      });
+
+      const processedMembers = directoryList.map(m => {
+        const mNormPhone = normalizePhoneClient(m.phone);
+        const mFullName = `${m.firstName} ${m.lastName}`.trim().toLowerCase();
+
+        const found = activeAttList.find(a => {
+          if (a.memberId && m.id && a.memberId === m.id) return true;
+          const aNormPhone = normalizePhoneClient(a.phone);
+          if (aNormPhone && mNormPhone && aNormPhone === mNormPhone) return true;
+          if (a.phone && m.phone && a.phone.trim() === m.phone.trim()) return true;
+          const aFullName = (a.name || `${a.firstName || ''} ${a.lastName || ''}`).trim().toLowerCase();
+          if (aFullName && aFullName === mFullName) return true;
+          return false;
+        });
+        const isPresent = Boolean(found);
+        const isGuest = (found && Boolean(found.isGuest)) || isGuestMember(m);
         return {
           ...m,
           isGuest,
-          isPresent: Boolean(found),
-          checkInTime: found ? found.time : '—',
-          checkInMethod: found ? (found.method || 'KIOSK') : '—'
+          isPresent,
+          checkInTime: found ? (found.time || 'Today') : (m.isGuest ? 'Today' : '—'),
+          checkInMethod: found ? (found.method || 'KIOSK') : (m.isGuest ? 'KIOSK' : '—')
         };
       });
 
@@ -6017,13 +6144,14 @@
       } else if (currentAttFilter === 'ABSENT') {
         baseList = processedMembers.filter(m => !m.isGuest && !m.isPresent);
       } else if (currentAttFilter === 'GUEST') {
-        baseList = processedMembers.filter(m => m.isGuest);
+        baseList = processedMembers.filter(m => m.isGuest && m.isPresent);
       } else if (currentAttFilter === 'GUEST_ABSENT') {
         baseList = processedMembers.filter(m => m.isGuest && !m.isPresent);
       }
 
       const filtered = baseList.filter(m => 
-        `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) ||
+        !q ||
+        `${m.firstName || ''} ${m.lastName || ''}`.toLowerCase().includes(q) ||
         (m.phone && m.phone.includes(q)) ||
         (m.guardian && m.guardian.toLowerCase().includes(q)) ||
         (m.address && m.address.toLowerCase().includes(q)) ||
@@ -6031,11 +6159,11 @@
         (m.role && m.role.toLowerCase().includes(q))
       );
 
-      // Sort Alphabetically A-Z by First Name then Last Name
+      // Sort: attendees currently PRESENT appear at the top so new kiosk check-ins are immediately visible!
       filtered.sort((a, b) => {
-        const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase();
-        const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim().toLowerCase();
-        return nameA.localeCompare(nameB);
+        if (a.isPresent && !b.isPresent) return -1;
+        if (!a.isPresent && b.isPresent) return 1;
+        return (a.firstName || '').localeCompare(b.firstName || '');
       });
 
       renderAttendanceTableHTML(filtered);
@@ -6306,6 +6434,7 @@
     }
 
     let currentDirSubTab = 'MEMBERS'; // 'MEMBERS', 'GUESTS', 'ALL'
+    let currentDirGenderFilter = 'ALL'; // 'ALL', 'MALE', 'FEMALE'
 
     function isGuestMember(m) {
       if (!m) return false;
@@ -6327,6 +6456,36 @@
       if (elMembers) elMembers.innerText = regularMembers.length;
       if (elGuests) elGuests.innerText = guests.length;
       if (elAll) elAll.innerText = allMembers.length;
+
+      // Gender counts based on currently selected member directory sub-tab
+      let baseList = allMembers;
+      if (currentDirSubTab === 'MEMBERS') {
+        baseList = regularMembers;
+      } else if (currentDirSubTab === 'GUESTS') {
+        baseList = guests;
+      }
+
+      const elGAll = document.getElementById('dirGenderCountAll');
+      const elGMale = document.getElementById('dirGenderCountMale');
+      const elGFemale = document.getElementById('dirGenderCountFemale');
+
+      if (elGAll) elGAll.innerText = baseList.length;
+      if (elGMale) elGMale.innerText = baseList.filter(m => (m.gender || '').toLowerCase().startsWith('m')).length;
+      if (elGFemale) elGFemale.innerText = baseList.filter(m => (m.gender || '').toLowerCase().startsWith('f')).length;
+    }
+
+    function setMemberGenderFilter(gender) {
+      currentDirGenderFilter = gender;
+
+      const btnAll = document.getElementById('btnGenderFilterAll');
+      const btnMale = document.getElementById('btnGenderFilterMale');
+      const btnFemale = document.getElementById('btnGenderFilterFemale');
+
+      if (btnAll) btnAll.classList.toggle('active', gender === 'ALL');
+      if (btnMale) btnMale.classList.toggle('active', gender === 'MALE');
+      if (btnFemale) btnFemale.classList.toggle('active', gender === 'FEMALE');
+
+      filterMembersTable();
     }
 
     function setMemberDirectorySubTab(tab) {
@@ -6358,27 +6517,15 @@
     /* Member Directory (With Children, Address, Gender & DOB) */
     async function loadSavedMembers() {
       try {
-        let token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
-        if (!token) {
-          try {
-            const loginRes = await fetch(`${API_BASE}/auth/login`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: 'Admin@solutionsfaith.com', password: 'Solutions12@26' })
-            });
-            if (loginRes.ok) {
-              const loginData = await loginRes.json();
-              if (loginData.accessToken) {
-                token = loginData.accessToken;
-                localStorage.setItem('sfmi_token', token);
-                sessionStorage.setItem('sfmi_token', token);
-              }
-            }
-          } catch(err){}
-        }
-
+        const token = await getAdminAuthToken();
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        const res = await fetch(`${API_BASE}/members`, { headers });
+        let res = await fetch(`${API_BASE}/members`, { headers });
+        if (!res.ok && res.status === 401) {
+          const freshToken = await getAdminAuthToken();
+          if (freshToken) {
+            res = await fetch(`${API_BASE}/members`, { headers: { 'Authorization': `Bearer ${freshToken}` } });
+          }
+        }
         if (res.ok) {
           const data = await res.json();
           const rawMembers = Array.isArray(data) ? data : (Array.isArray(data.members) ? data.members : []);
@@ -6650,6 +6797,13 @@
         baseList = allMembers.filter(isGuestMember);
       }
 
+      // Filter by Gender
+      if (currentDirGenderFilter === 'MALE') {
+        baseList = baseList.filter(m => (m.gender || '').toLowerCase().startsWith('m'));
+      } else if (currentDirGenderFilter === 'FEMALE') {
+        baseList = baseList.filter(m => (m.gender || '').toLowerCase().startsWith('f'));
+      }
+
       const filtered = baseList.filter(m => 
         !q ||
         `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) || 
@@ -6678,50 +6832,23 @@
         'Remove Member',
         'Are you sure you want to remove this member from the directory?',
         async () => {
-          let token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
-          if (!token) {
-            try {
-              const loginRes = await fetch(`${API_BASE}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: 'Admin@solutionsfaith.com', password: 'Solutions12@26' })
-              });
-              if (loginRes.ok) {
-                const loginData = await loginRes.json();
-                if (loginData.accessToken) {
-                  token = loginData.accessToken;
-                  sessionStorage.setItem('sfmi_token', token);
-                  localStorage.setItem('sfmi_token', token);
-                }
-              }
-            } catch (err) {}
-          }
+          let token = await getAdminAuthToken();
 
           if (id && !id.startsWith('mem_') && !id.startsWith('guest_')) {
             try {
-              const delRes = await fetch(`${API_BASE}/members/${id}`, {
+              let delRes = await fetch(`${API_BASE}/members/${id}`, {
                 method: 'DELETE',
                 headers: {
                   ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 }
               });
               if (!delRes.ok) {
-                const retryLogin = await fetch(`${API_BASE}/auth/login`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email: 'Admin@solutionsfaith.com', password: 'Solutions12@26' })
-                });
-                if (retryLogin.ok) {
-                  const retryData = await retryLogin.json();
-                  if (retryData.accessToken) {
-                    token = retryData.accessToken;
-                    sessionStorage.setItem('sfmi_token', token);
-                    localStorage.setItem('sfmi_token', token);
-                    await fetch(`${API_BASE}/members/${id}`, {
-                      method: 'DELETE',
-                      headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                  }
+                token = await getAdminAuthToken();
+                if (token) {
+                  await fetch(`${API_BASE}/members/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                  });
                 }
               }
             } catch (err) {
@@ -6970,30 +7097,12 @@
       const gender = document.getElementById('editMemGender').value;
       const address = document.getElementById('editMemAddress').value.trim();
       const rawDob = document.getElementById('editMemDob').value;
-      const email = document.getElementById('editMemEmail').value.trim();
+      const email = document.getElementById('editMemEmail')?.value?.trim() || '';
       const role = document.getElementById('editMemRole').value;
       const photoUrl = document.getElementById('editMemPhotoUrl')?.value?.trim() || '';
 
       const formattedDob = formatDisplayDate(rawDob);
-
-      let token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
-      if (!token) {
-        try {
-          const loginRes = await fetch(`${API_BASE}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: 'Admin@solutionsfaith.com', password: 'Solutions12@26' })
-          });
-          if (loginRes.ok) {
-            const loginData = await loginRes.json();
-            if (loginData.accessToken) {
-              token = loginData.accessToken;
-              sessionStorage.setItem('sfmi_token', token);
-              localStorage.setItem('sfmi_token', token);
-            }
-          }
-        } catch (err) {}
-      }
+      let token = await getAdminAuthToken();
 
       if (id && !id.startsWith('mem_') && !id.startsWith('guest_')) {
         try {
@@ -7011,7 +7120,7 @@
             photoUrl: photoUrl || null
           };
 
-          const res = await fetch(`${API_BASE}/members/${id}`, {
+          let res = await fetch(`${API_BASE}/members/${id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -7021,26 +7130,16 @@
           });
 
           if (!res.ok) {
-            const retryLogin = await fetch(`${API_BASE}/auth/login`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: 'Admin@solutionsfaith.com', password: 'Solutions12@26' })
-            });
-            if (retryLogin.ok) {
-              const retryData = await retryLogin.json();
-              if (retryData.accessToken) {
-                token = retryData.accessToken;
-                sessionStorage.setItem('sfmi_token', token);
-                localStorage.setItem('sfmi_token', token);
-                await fetch(`${API_BASE}/members/${id}`, {
-                  method: 'PUT',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                  },
-                  body: JSON.stringify(payload)
-                });
-              }
+            token = await getAdminAuthToken();
+            if (token) {
+              await fetch(`${API_BASE}/members/${id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+              });
             }
           }
         } catch (err) {
@@ -7098,25 +7197,7 @@
       const photoUrl = document.getElementById('newMemPhotoUrl')?.value?.trim() || null;
 
       const formattedDob = formatDisplayDate(rawDob);
-
-      let token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
-      if (!token) {
-        try {
-          const loginRes = await fetch(`${API_BASE}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: 'Admin@solutionsfaith.com', password: 'Solutions12@26' })
-          });
-          if (loginRes.ok) {
-            const loginData = await loginRes.json();
-            if (loginData.accessToken) {
-              token = loginData.accessToken;
-              localStorage.setItem('sfmi_token', token);
-              sessionStorage.setItem('sfmi_token', token);
-            }
-          }
-        } catch (err) {}
-      }
+      let token = await getAdminAuthToken();
 
       let createdMember = null;
       try {
@@ -7134,7 +7215,7 @@
           photoUrl: photoUrl || undefined
         };
 
-        const res = await fetch(`${API_BASE}/members`, {
+        let res = await fetch(`${API_BASE}/members`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -7143,8 +7224,25 @@
           body: JSON.stringify(payload)
         });
 
+        if (!res.ok) {
+          token = await getAdminAuthToken();
+          if (token) {
+            res = await fetch(`${API_BASE}/members`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify(payload)
+            });
+          }
+        }
+
         if (res.ok) {
           createdMember = await res.json();
+        } else {
+          const errBody = await res.json().catch(() => ({}));
+          console.error('Failed to create member on backend:', res.status, errBody);
         }
       } catch (err) {
         console.error('Error persisting member to backend:', err);
@@ -9808,10 +9906,15 @@
         </div>
       `).join('') || `<div style="color: var(--muted); padding: 8px 0; font-size: 11.5px;">No pastoral notes logged yet.</div>`;
 
+      const memInitials = (m.name || 'Member').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'M';
+      const modalAvatar = m.photoUrl
+        ? `<img src="${escapeHtml(m.photoUrl)}" alt="" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--line); flex-shrink: 0;" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-flex';" /><span style="display:none;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--emerald-dark),var(--emerald));color:#fff;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0;">${memInitials}</span>`
+        : `<span style="display:inline-flex;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--emerald-dark),var(--emerald));color:#fff;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0;">${memInitials}</span>`;
+
       content.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
           <div style="display: flex; align-items: center; gap: 14px;">
-            <img src="${m.photoUrl || '/member-avatar.png'}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--line);" onerror="this.src='/member-avatar.png'" />
+            ${modalAvatar}
             <div>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <h3 style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin: 0;">${escapeHtml(m.name)}</h3>

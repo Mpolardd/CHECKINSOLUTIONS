@@ -1,3 +1,5 @@
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
@@ -34,7 +36,7 @@ if (process.env.NODE_ENV !== 'test') {
 // Global API rate limiter (300 requests / minute)
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 300,
+  max: process.env.NODE_ENV === 'test' ? 10000 : 300,
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -43,7 +45,7 @@ app.use(globalLimiter);
 // Dedicated security rate limiter for authentication endpoints (15 attempts / 15 minutes)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: process.env.NODE_ENV === 'test' ? 10000 : 15,
   message: { error: 'Too many authentication attempts. Please try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false

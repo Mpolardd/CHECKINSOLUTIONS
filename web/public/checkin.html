@@ -761,13 +761,20 @@
           <div class="brand-sub">Self-Service Attendance Check-In</div>
         </div>
       </a>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em;">Active Service:</span>
-        <select id="kioskServiceSelector" class="kiosk-service-select" aria-label="Active Church Service Selection" onchange="applySelectedService(this.value)">
-          <option value="Sunday: Family & Friends Service">Sunday — Family & Friends Service</option>
-          <option value="Wednesday: Time with the Lord">Wednesday — Time with the Lord</option>
-          <option value="Friday: Prophetic Healing & Deliverance">Friday — Prophetic Deliverance</option>
-        </select>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <!-- Kiosk Network Sync Status Pill -->
+        <div id="kioskNetworkStatusPill" style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.12); padding: 5px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 700; border: 1px solid rgba(255,255,255,0.22); transition: all 0.3s;">
+          <span id="kioskStatusDot" style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block;"></span>
+          <span id="kioskStatusText" style="color: #f1f5f9;">Live Cloud Sync</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em;">Active Service:</span>
+          <select id="kioskServiceSelector" class="kiosk-service-select" aria-label="Active Church Service Selection" onchange="applySelectedService(this.value)">
+            <option value="Sunday: Family & Friends Service">Sunday — Family & Friends Service</option>
+            <option value="Wednesday: Time with the Lord">Wednesday — Time with the Lord</option>
+            <option value="Friday: Prophetic Healing & Deliverance">Friday — Prophetic Deliverance</option>
+          </select>
+        </div>
       </div>
     </div>
   </header>
@@ -795,7 +802,10 @@
           <p style="font-size: 13.5px; color: var(--muted);">Type your first name, last name, or phone number to check in</p>
 
           <div class="input-wrapper">
-            <input type="text" id="searchInput" class="search-input" aria-label="Search your name or phone number" placeholder="e.g. Kelvin or 055..." autofocus autocomplete="off" oninput="handleSearch(this.value)" />
+            <input type="text" id="searchInput" class="search-input" aria-label="Search your name or phone number" placeholder="e.g. Kelvin or 055..." autofocus autocomplete="off" oninput="onSearchInput(this.value)" />
+            <div id="searchSpinner" style="display: none; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); pointer-events: none;">
+              <i class="fas fa-circle-notch fa-spin" style="color: var(--accent); font-size: 18px;"></i>
+            </div>
           </div>
         </div>
 
@@ -841,7 +851,7 @@
 
       <!-- STEP 3: PASS / SLIP PRINT VIEW -->
       <div class="terminal-content" id="viewPass" style="display: none;">
-        <div class="pass-card">
+        <div class="pass-card" onclick="finishCheckIn()" style="cursor: pointer;" title="Tap anywhere to return to search">
           <div class="pass-header">
             <div class="pass-church">SOLUTIONS FAITH MINISTRY INTERNATIONAL</div>
             <div class="pass-type">Official Attendance Pass Ticket</div>
@@ -855,8 +865,16 @@
             "I was glad when they said unto me, Let us go into the house of the Lord." — Psalm 122:1
           </div>
 
-          <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap;">
-            <button class="btn btn-accent" style="width: 100%; max-width: 260px; justify-content: center;" onclick="finishCheckIn()">Done / Next Person</button>
+          <!-- Fast Queue Visual Countdown -->
+          <div class="pass-countdown-wrap" style="margin-top: 14px; text-align: center;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px;" id="passCountdownText">Screen resetting in 7s...</div>
+            <div style="width: 100%; max-width: 260px; height: 5px; background: #e2e8f0; border-radius: 99px; margin: 0 auto; overflow: hidden;">
+              <div id="passCountdownBar" style="width: 100%; height: 100%; background: var(--accent); transition: width 1s linear;"></div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap;" onclick="event.stopPropagation();">
+            <button class="btn btn-accent" style="width: 100%; max-width: 280px; justify-content: center; font-size: 15px; font-weight: 800; padding: 12px 20px;" onclick="finishCheckIn()"><i class="fas fa-arrow-right" style="margin-right: 6px;"></i> Done / Next Attendee</button>
           </div>
         </div>
       </div>
@@ -935,9 +953,15 @@
     let currentServiceTime = '7:00 AM – 11:00 AM';
     let selectedMember = null;
     let autoResetTimer = null;
+    let countdownInterval = null;
+    let countdownSecondsLeft = 7;
 
     let mockMembers = [];
     let currentSearchMatches = [];
+    let searchDebounceTimer = null;
+    let searchAbortController = null;
+
+    const OFFLINE_QUEUE_KEY = 'sfmi_kiosk_offline_queue';
 
     const SCRIPTURES = [
       { text: "The Lord bless you and keep you; the Lord make his face shine upon you and be gracious to you.", ref: "Numbers 6:24-25" },
@@ -950,12 +974,147 @@
       loadCustomPrograms();
       determineActiveService();
       loadBranding();
+      updateNetworkStatusUI();
+      flushOfflineQueue();
 
+      // Feature 2: Periodic background sync for active programs & flyers (every 25s)
       setInterval(() => {
         loadCustomPrograms();
-        determineActiveService();
-      }, 4000);
+      }, 25000);
+
+      // Feature 6: Periodic background queue flusher when back online
+      setInterval(() => {
+        if (navigator.onLine) {
+          flushOfflineQueue();
+        }
+      }, 12000);
     });
+
+    // Offline & Online Network Listeners
+    window.addEventListener('online', () => {
+      updateNetworkStatusUI();
+      flushOfflineQueue();
+      showToast('Network connection restored. Kiosk is online.', 'success', 'Cloud Connected');
+    });
+
+    window.addEventListener('offline', () => {
+      updateNetworkStatusUI();
+      showToast('Internet connection dropped. Kiosk is running in Offline Mode with local queueing.', 'warning', 'Offline Queue Active');
+    });
+
+    // Feature 3: Keyboard shortcuts to quickly reset queue on pass screen
+    window.addEventListener('keydown', (e) => {
+      const passView = document.getElementById('viewPass');
+      if (passView && passView.style.display !== 'none') {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+          e.preventDefault();
+          finishCheckIn();
+        }
+      }
+    });
+
+    /* ============================================================
+       OFFLINE QUEUEING ENGINE (Feature 6)
+       ============================================================ */
+    function getOfflineQueue() {
+      try {
+        const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveToOfflineQueue(item) {
+      try {
+        const queue = getOfflineQueue();
+        queue.push(item);
+        localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+        updateNetworkStatusUI();
+      } catch (e) {
+        console.error('Failed to save item to offline queue:', e);
+      }
+    }
+
+    function removeFromOfflineQueue(itemId) {
+      try {
+        let queue = getOfflineQueue();
+        queue = queue.filter(q => q.id !== itemId);
+        localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+        updateNetworkStatusUI();
+      } catch (e) {}
+    }
+
+    function updateNetworkStatusUI() {
+      const pill = document.getElementById('kioskNetworkStatusPill');
+      const dot = document.getElementById('kioskStatusDot');
+      const text = document.getElementById('kioskStatusText');
+      if (!pill || !dot || !text) return;
+
+      const isOnline = navigator.onLine;
+      const queue = getOfflineQueue();
+      const count = queue.length;
+
+      if (!isOnline) {
+        dot.style.background = '#ef4444';
+        text.innerText = count > 0 ? `Offline (${count} Queued)` : 'Offline Mode';
+        pill.style.background = 'rgba(239, 68, 68, 0.22)';
+        pill.style.borderColor = 'rgba(239, 68, 68, 0.55)';
+      } else if (count > 0) {
+        dot.style.background = '#f59e0b';
+        text.innerText = `Syncing (${count} Queued)...`;
+        pill.style.background = 'rgba(245, 158, 11, 0.22)';
+        pill.style.borderColor = 'rgba(245, 158, 11, 0.55)';
+      } else {
+        dot.style.background = '#22c55e';
+        text.innerText = 'Live Cloud Sync';
+        pill.style.background = 'rgba(255, 255, 255, 0.12)';
+        pill.style.borderColor = 'rgba(255, 255, 255, 0.22)';
+      }
+    }
+
+    let isFlushingQueue = false;
+    async function flushOfflineQueue() {
+      if (isFlushingQueue || !navigator.onLine) return;
+      const queue = getOfflineQueue();
+      if (queue.length === 0) {
+        updateNetworkStatusUI();
+        return;
+      }
+
+      isFlushingQueue = true;
+      updateNetworkStatusUI();
+
+      let syncedCount = 0;
+      for (const item of queue) {
+        try {
+          const endpoint = item.type === 'VISITOR' 
+            ? `${API_BASE}/attendance/quick-register-checkin` 
+            : `${API_BASE}/attendance/checkin`;
+
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item.payload)
+          });
+
+          if (res.ok || res.status === 409) {
+            removeFromOfflineQueue(item.id);
+            syncedCount++;
+          }
+        } catch (err) {
+          console.warn('Network sync paused during offline queue flush:', err);
+          break;
+        }
+      }
+
+      isFlushingQueue = false;
+      updateNetworkStatusUI();
+
+      if (syncedCount > 0) {
+        showToast(`Synced <strong>${syncedCount}</strong> offline check-in${syncedCount > 1 ? 's' : ''} to church cloud database.`, 'success', 'Sync Successful');
+      }
+    }
 
     function loadBranding() {
       const logo = localStorage.getItem('sfmi_logo_url');
@@ -964,23 +1123,36 @@
       if (name) document.getElementById('navChurchName').innerText = name;
     }
 
+    /* ============================================================
+       KIOSK AUTO-SWITCHING & CUSTOM PROGRAMS (Feature 2)
+       ============================================================ */
     async function loadCustomPrograms() {
       try {
         const [progRes, kioskRes] = await Promise.all([
           fetch(`${API_BASE}/attendance/programs`).catch(() => null),
           fetch(`${API_BASE}/attendance/active-kiosk`).catch(() => null)
         ]);
+
         if (progRes && progRes.ok) {
           const progs = await progRes.json();
           if (Array.isArray(progs) && progs.length > 0) {
             localStorage.setItem('sfmi_custom_programs', JSON.stringify(progs));
           }
         }
+
         if (kioskRes && kioskRes.ok) {
           const kData = await kioskRes.json();
           if (kData && kData.activeKiosk !== undefined) {
-            if (kData.activeKiosk) localStorage.setItem('sfmi_active_kiosk_service', kData.activeKiosk);
-            else localStorage.removeItem('sfmi_active_kiosk_service');
+            const previousKiosk = localStorage.getItem('sfmi_active_kiosk_service');
+            if (kData.activeKiosk) {
+              localStorage.setItem('sfmi_active_kiosk_service', kData.activeKiosk);
+            } else {
+              localStorage.removeItem('sfmi_active_kiosk_service');
+            }
+            // Auto-switch in real time if admin updated active kiosk program
+            if (previousKiosk !== (kData.activeKiosk || null) && !selectedMember) {
+              determineActiveService();
+            }
           }
         }
       } catch (e) {}
@@ -1000,11 +1172,13 @@
           });
         } catch(e) {}
       }
-      determineActiveService();
+
+      if (!selectedMember) {
+        determineActiveService();
+      }
     }
 
     function determineActiveService() {
-      // Check if admin set a specific active program on the kiosk
       const forcedService = localStorage.getItem('sfmi_active_kiosk_service');
       if (forcedService) {
         const selector = document.getElementById('kioskServiceSelector');
@@ -1045,7 +1219,6 @@
         hours = '7:00 AM – 11:00 AM';
         img = localStorage.getItem('sfmi_svc_img_sun') || '/Sunday.JPG';
       } else {
-        // Custom Program / Convention from Admin
         const savedPrograms = localStorage.getItem('sfmi_custom_programs');
         let customProg = null;
         if (savedPrograms) {
@@ -1070,28 +1243,76 @@
       document.getElementById('serviceHeroImg').src = img;
     }
 
+    /* ============================================================
+       DEBOUNCED SEARCH & CANCEL (Feature 1)
+       ============================================================ */
+    function onSearchInput(val) {
+      const q = val.trim();
+      const spinner = document.getElementById('searchSpinner');
+      const grid = document.getElementById('resultsGrid');
+      const noRes = document.getElementById('noResultsBox');
+
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+      }
+
+      if (searchAbortController) {
+        searchAbortController.abort();
+        searchAbortController = null;
+      }
+
+      if (q.length < 2) {
+        if (spinner) spinner.style.display = 'none';
+        if (grid) grid.style.display = 'none';
+        if (noRes) noRes.style.display = 'none';
+        return;
+      }
+
+      if (spinner) spinner.style.display = 'block';
+
+      // 180ms debounce for responsive multi-device query throttling
+      searchDebounceTimer = setTimeout(() => {
+        handleSearch(q);
+      }, 180);
+    }
+
     async function handleSearch(query) {
       const q = query.trim().toLowerCase();
       const grid = document.getElementById('resultsGrid');
       const noRes = document.getElementById('noResultsBox');
+      const spinner = document.getElementById('searchSpinner');
 
       if (q.length < 2) {
-        grid.style.display = 'none';
-        noRes.style.display = 'none';
+        if (grid) grid.style.display = 'none';
+        if (noRes) noRes.style.display = 'none';
+        if (spinner) spinner.style.display = 'none';
         return;
       }
+
+      if (searchAbortController) {
+        searchAbortController.abort();
+      }
+      searchAbortController = new AbortController();
+      const signal = searchAbortController.signal;
 
       let matches = [];
 
       try {
-        const res = await fetch(`${API_BASE}/attendance/search?q=${encodeURIComponent(q)}`);
+        const res = await fetch(`${API_BASE}/attendance/search?q=${encodeURIComponent(q)}`, { signal });
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {
             matches = data;
           }
         }
-      } catch (err) {}
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          return;
+        }
+        console.warn('Kiosk search query error (offline fallback):', err);
+      } finally {
+        if (spinner) spinner.style.display = 'none';
+      }
 
       if (matches.length === 0) {
         grid.style.display = 'none';
@@ -1174,10 +1395,15 @@
       selectedMember = null;
       document.getElementById('viewConfirm').style.display = 'none';
       document.getElementById('viewSearch').style.display = 'block';
-      document.getElementById('searchInput').value = '';
+      const input = document.getElementById('searchInput');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
       document.getElementById('resultsGrid').style.display = 'none';
       document.getElementById('noResultsBox').style.display = 'none';
-      document.getElementById('searchInput').focus();
+      const spinner = document.getElementById('searchSpinner');
+      if (spinner) spinner.style.display = 'none';
     }
 
     function proceedCheckIn() {
@@ -1187,52 +1413,76 @@
     async function handleConfirmCheckIn() {
       if (!selectedMember) return;
 
-      let isDuplicate = false;
-      let checkinTimeStr = null;
+      const payload = {
+        memberId: selectedMember.id,
+        phone: selectedMember.phone,
+        serviceName: currentServiceName,
+        gender: selectedMember.gender,
+        address: selectedMember.address,
+        method: 'KIOSK'
+      };
 
-      try {
-        const checkinRes = await fetch(`${API_BASE}/attendance/checkin`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            memberId: selectedMember.id,
-            phone: selectedMember.phone,
-            serviceName: currentServiceName,
-            gender: selectedMember.gender,
-            address: selectedMember.address,
-            method: 'KIOSK'
-          })
-        });
-        if (checkinRes.ok) {
-          const checkinData = await checkinRes.json();
-          if (checkinData.member) {
-            selectedMember = { ...selectedMember, ...checkinData.member };
-          }
-          if (checkinData.alreadyCheckedIn) {
-            showToast(`Notice: <strong>${escapeHtml(selectedMember.firstName)} ${escapeHtml(selectedMember.lastName)}</strong> is ALREADY checked in for today's service!`, 'warning', 'Already Checked In');
-            setTimeout(() => { cancelConfirm(); }, 2500);
-            return;
-          }
+      let networkFailed = false;
 
-          try {
-            if (window.BroadcastChannel) {
-              const bc = new BroadcastChannel('sfmi_attendance_live');
-              bc.postMessage({
-                type: 'CHECKIN',
-                name: `${selectedMember.firstName} ${selectedMember.lastName}`,
-                isGuest: Boolean(selectedMember.isGuest),
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                service: currentServiceName
-              });
-              setTimeout(() => bc.close(), 500);
+      if (!navigator.onLine) {
+        networkFailed = true;
+      } else {
+        try {
+          const checkinRes = await fetch(`${API_BASE}/attendance/checkin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (checkinRes.ok) {
+            const checkinData = await checkinRes.json();
+            if (checkinData.member) {
+              selectedMember = { ...selectedMember, ...checkinData.member };
             }
-          } catch (bErr) {}
+            if (checkinData.alreadyCheckedIn) {
+              showToast(`Notice: <strong>${escapeHtml(selectedMember.firstName)} ${escapeHtml(selectedMember.lastName)}</strong> is ALREADY checked in for today's service!`, 'warning', 'Already Checked In');
+              setTimeout(() => { cancelConfirm(); }, 2500);
+              return;
+            }
+
+            try {
+              if (window.BroadcastChannel) {
+                const bc = new BroadcastChannel('sfmi_attendance_live');
+                bc.postMessage({
+                  type: 'CHECKIN',
+                  name: `${selectedMember.firstName} ${selectedMember.lastName}`,
+                  isGuest: Boolean(selectedMember.isGuest),
+                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  service: currentServiceName
+                });
+                setTimeout(() => bc.close(), 500);
+              }
+            } catch (bErr) {}
+          } else {
+            networkFailed = true;
+          }
+        } catch (err) {
+          networkFailed = true;
         }
-      } catch (err) {}
+      }
+
+      if (networkFailed) {
+        saveToOfflineQueue({
+          id: 'queue_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          type: 'MEMBER',
+          name: `${selectedMember.firstName} ${selectedMember.lastName}`,
+          payload: payload,
+          timestamp: new Date().toISOString()
+        });
+        showToast(`Offline Mode: Check-in saved locally on device. Will auto-sync when Wi-Fi reconnects.`, 'info', 'Saved to Offline Queue');
+      }
 
       showPassScreen(selectedMember, false, null);
     }
 
+    /* ============================================================
+       STEP 3: FAST QUEUE RESET WITH COUNTDOWN (Feature 3)
+       ============================================================ */
     function showPassScreen(member, isDuplicate = false, checkedInTime = null) {
       document.getElementById('viewConfirm').style.display = 'none';
       document.getElementById('viewPass').style.display = 'block';
@@ -1261,10 +1511,30 @@
       const randomScrip = SCRIPTURES[Math.floor(Math.random() * SCRIPTURES.length)];
       document.getElementById('passScripture').innerText = `"${randomScrip.text}" — ${randomScrip.ref}`;
 
+      // Reset fast 7s visual countdown timer
       if (autoResetTimer) clearTimeout(autoResetTimer);
-      autoResetTimer = setTimeout(() => {
-        finishCheckIn();
-      }, 15000);
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      countdownSecondsLeft = 7;
+      const countBar = document.getElementById('passCountdownBar');
+      const countText = document.getElementById('passCountdownText');
+
+      if (countBar) countBar.style.width = '100%';
+      if (countText) countText.innerText = `Screen resetting in ${countdownSecondsLeft}s...`;
+
+      countdownInterval = setInterval(() => {
+        countdownSecondsLeft -= 1;
+        if (countText) countText.innerText = `Screen resetting in ${Math.max(0, countdownSecondsLeft)}s...`;
+        if (countBar) {
+          const pct = Math.max(0, (countdownSecondsLeft / 7) * 100);
+          countBar.style.width = `${pct}%`;
+        }
+        if (countdownSecondsLeft <= 0) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+          finishCheckIn();
+        }
+      }, 1000);
     }
 
     function printPassTicket() {
@@ -1272,15 +1542,30 @@
     }
 
     function finishCheckIn() {
-      if (autoResetTimer) clearTimeout(autoResetTimer);
+      if (autoResetTimer) {
+        clearTimeout(autoResetTimer);
+        autoResetTimer = null;
+      }
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
       selectedMember = null;
       document.getElementById('viewPass').style.display = 'none';
       document.getElementById('viewConfirm').style.display = 'none';
       document.getElementById('viewSearch').style.display = 'block';
-      document.getElementById('searchInput').value = '';
+
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+      }
+
+      const spinner = document.getElementById('searchSpinner');
+      if (spinner) spinner.style.display = 'none';
+
       document.getElementById('resultsGrid').style.display = 'none';
       document.getElementById('noResultsBox').style.display = 'none';
-      document.getElementById('searchInput').focus();
     }
 
     function toggleRegGuardian(val) {
@@ -1324,37 +1609,58 @@
         isGuest: true
       };
 
-      try {
-        const regRes = await fetch(`${API_BASE}/attendance/quick-register-checkin`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            firstName, lastName, category, guardian, phone, gender, address, email,
-            serviceName: currentServiceName
-          })
-        });
-        if (regRes.ok) {
-          const regData = await regRes.json();
-          if (regData.member && regData.member.id) {
-            newMember.id = regData.member.id;
-          }
+      const payload = {
+        firstName, lastName, category, guardian, phone, gender, address, email,
+        serviceName: currentServiceName
+      };
 
-          try {
-            if (window.BroadcastChannel) {
-              const bc = new BroadcastChannel('sfmi_attendance_live');
-              bc.postMessage({
-                type: 'CHECKIN',
-                name: `${firstName} ${lastName}`,
-                isGuest: true,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                service: currentServiceName
-              });
-              setTimeout(() => bc.close(), 500);
+      let networkFailed = false;
+
+      if (!navigator.onLine) {
+        networkFailed = true;
+      } else {
+        try {
+          const regRes = await fetch(`${API_BASE}/attendance/quick-register-checkin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (regRes.ok) {
+            const regData = await regRes.json();
+            if (regData.member && regData.member.id) {
+              newMember.id = regData.member.id;
             }
-          } catch (bErr) {}
+
+            try {
+              if (window.BroadcastChannel) {
+                const bc = new BroadcastChannel('sfmi_attendance_live');
+                bc.postMessage({
+                  type: 'CHECKIN',
+                  name: `${firstName} ${lastName}`,
+                  isGuest: true,
+                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  service: currentServiceName
+                });
+                setTimeout(() => bc.close(), 500);
+              }
+            } catch (bErr) {}
+          } else {
+            networkFailed = true;
+          }
+        } catch (err) {
+          networkFailed = true;
         }
-      } catch (err) {
-        console.error('Visitor registration request error:', err);
+      }
+
+      if (networkFailed) {
+        saveToOfflineQueue({
+          id: 'queue_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          type: 'VISITOR',
+          name: `${firstName} ${lastName}`,
+          payload: payload,
+          timestamp: new Date().toISOString()
+        });
+        showToast(`Offline Mode: Visitor check-in stored on device. Will auto-sync when online.`, 'info', 'Saved to Offline Queue');
       }
 
       closeRegisterModal();

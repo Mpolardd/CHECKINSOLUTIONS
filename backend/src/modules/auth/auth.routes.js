@@ -17,10 +17,12 @@ const loginSchema = z.object({ email: z.string().email(), password: z.string().m
 
 function accessToken(user) {
   const secret = process.env.JWT_ACCESS_SECRET || 'church_mgmt_secret_dev_fallback_only';
+  const rawMin = parseInt(process.env.ACCESS_TOKEN_MINUTES, 10);
+  const minutes = (!isNaN(rawMin) && rawMin >= 45) ? rawMin : 1440;
   return jwt.sign(
     { sub: user.id, role: user.role, memberId: user.memberId || null },
     secret,
-    { expiresIn: `${process.env.ACCESS_TOKEN_MINUTES || 1440}m` }
+    { expiresIn: `${minutes}m` }
   );
 }
 
@@ -180,12 +182,8 @@ router.get('/verify', async (req, res) => {
 
 // ── Sub-Admin Cloud Persistence Endpoints (Strictly Protected for Super Admin Only) ──
 
-router.get('/subadmins', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (req, res) => {
+router.get('/subadmins', requireAuth, requireRoles('SUPER_ADMIN'), async (req, res) => {
   try {
-    if (req.user?.role !== 'SUPER_ADMIN') {
-      return res.json([]);
-    }
-
     const subAdminUsers = await prisma.user.findMany({
       where: { role: 'ADMIN' },
       orderBy: { createdAt: 'desc' },

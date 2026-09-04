@@ -30,14 +30,14 @@ const serviceFinanceSchema = z.object({
 });
 
 // Accounts List - Protected for Finance and Administrators
-router.get('/accounts', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
+router.get('/accounts', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     res.json(await prisma.financialAccount.findMany({ where: { active: true }, orderBy: { name: 'asc' } }));
   } catch (e) { next(e); }
 });
 
 // Record Service Financial Figures - Atomic creation with ledger cross-posting
-router.post('/service-entry', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
+router.post('/service-entry', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const b = serviceFinanceSchema.parse(req.body);
     const computedTotal = (b.tithes + b.offering + b.buildingFund + b.specialSeed + b.thanksgiving + b.other);
@@ -106,7 +106,7 @@ router.post('/service-entry', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 
 });
 
 // Get List of Service Financial Entries - Protected
-router.get('/service-entries', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
+router.get('/service-entries', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const entries = await prisma.serviceFinance.findMany({
       orderBy: { serviceDate: 'desc' },
@@ -117,7 +117,7 @@ router.get('/service-entries', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN',
 });
 
 // Get Comprehensive Financial Analytics - Protected
-router.get('/analytics', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
+router.get('/analytics', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const entries = await prisma.serviceFinance.findMany({
       orderBy: { serviceDate: 'asc' }
@@ -510,7 +510,7 @@ router.get('/partnerships/matrix', async (req, res, next) => {
 });
 
 // Clear / Reset Financial Overview & Analytics Records - Protected
-router.post('/clear', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'FINANCE'), async (req, res, next) => {
+router.post('/clear', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const result = await prisma.$transaction(async (tx) => {
       const deletedEntries = await tx.serviceFinance.deleteMany({});

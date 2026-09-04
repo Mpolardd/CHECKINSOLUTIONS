@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "npx prisma generate --schema=backend/prisma/schema.prisma && cd web && npm install && npm run build",
-    "start": "node backend/src/server.js"
+    "start": "node backend/src/server.js",
+    "test": "node backend/test/security_and_remediation.test.js && node scratch/production_readiness_e2e.test.js"
   },
   "dependencies": {
     "@prisma/client": "^6.16.0",
