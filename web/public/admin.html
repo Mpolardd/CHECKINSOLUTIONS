@@ -7338,8 +7338,14 @@
 
         if (progRes && progRes.ok) {
           const cloudProgs = await progRes.json();
-          if (Array.isArray(cloudProgs) && cloudProgs.length > 0) {
-            customPrograms = cloudProgs;
+          if (Array.isArray(cloudProgs)) {
+            const seen = new Set();
+            customPrograms = cloudProgs.filter(p => {
+              const k = (p.name || '').trim().toLowerCase();
+              if (!k || seen.has(k)) return false;
+              seen.add(k);
+              return true;
+            });
             localStorage.setItem('sfmi_custom_programs', JSON.stringify(customPrograms));
           }
         }
@@ -7355,9 +7361,20 @@
         }
       } catch (err) {}
 
-      const saved = localStorage.getItem('sfmi_custom_programs');
-      if (saved && customPrograms.length === 0) {
-        try { customPrograms = JSON.parse(saved); } catch(e){}
+      if (customPrograms.length === 0) {
+        const saved = localStorage.getItem('sfmi_custom_programs');
+        if (saved) {
+          try {
+            const list = JSON.parse(saved);
+            const seen = new Set();
+            customPrograms = list.filter(p => {
+              const k = (p.name || '').trim().toLowerCase();
+              if (!k || seen.has(k)) return false;
+              seen.add(k);
+              return true;
+            });
+          } catch(e){}
+        }
       }
       populateServiceDropdowns();
     }
@@ -7556,6 +7573,17 @@
           isStandard: true
         }
       ];
+
+      // Ensure custom programs are deduplicated by name
+      const seenProgNames = new Set();
+      const dedupedCustom = [];
+      for (const p of customPrograms) {
+        const k = (p.name || '').trim().toLowerCase();
+        if (!k || seenProgNames.has(k)) continue;
+        seenProgNames.add(k);
+        dedupedCustom.push(p);
+      }
+      customPrograms = dedupedCustom;
 
       const allList = [...regularServices, ...customPrograms];
 
@@ -7842,16 +7870,49 @@
       showToast(`Kiosk check-in is now set live for: <strong>${escapeHtml(name)}</strong>`, 'success', 'Live Kiosk Updated');
     }
 
-    async function deleteCustomProgram(id) {
-      if (!confirm('Are you sure you want to delete this special program?')) return;
-      customPrograms = customPrograms.filter(p => p.id !== id);
-      localStorage.setItem('sfmi_custom_programs', JSON.stringify(customPrograms));
-      try {
-        await fetch(`${API_BASE}/attendance/programs/${id}`, { method: 'DELETE' });
-      } catch (err) {}
-      populateServiceDropdowns();
-      renderProgramsManager();
-      showToast('Special program deleted.', 'info', 'Program Removed');
+    function deleteCustomProgram(id) {
+      const prog = customPrograms.find(p => p.id === id || p.name === id);
+      const progName = prog ? prog.name : id;
+
+      showConfirmModal(
+        'Delete Special Program',
+        `Are you sure you want to permanently delete "${progName}"? This will remove it from all kiosk and admin lists.`,
+        async () => {
+          // Remove from local customPrograms array
+          customPrograms = customPrograms.filter(p => p.id !== id && p.name !== id && (!progName || p.name.toLowerCase() !== progName.toLowerCase()));
+          localStorage.setItem('sfmi_custom_programs', JSON.stringify(customPrograms));
+
+          // If active kiosk was this program, reset it
+          const activeKiosk = localStorage.getItem('sfmi_active_kiosk_service');
+          if (activeKiosk === progName || activeKiosk === id) {
+            localStorage.removeItem('sfmi_active_kiosk_service');
+            try {
+              await fetch(`${API_BASE}/attendance/active-kiosk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ programName: '' })
+              });
+            } catch (e) {}
+          }
+
+          // Delete from cloud backend
+          try {
+            await fetch(`${API_BASE}/attendance/programs/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            if (prog && prog.name && prog.name !== id) {
+              await fetch(`${API_BASE}/attendance/programs/${encodeURIComponent(prog.name)}`, { method: 'DELETE' }).catch(() => {});
+            }
+          } catch (err) {
+            console.error('Failed to delete program from server:', err);
+          }
+
+          populateServiceDropdowns();
+          renderProgramsManager();
+          showToast(`Special Program <strong>"${escapeHtml(progName)}"</strong> deleted successfully.`, 'info', 'Program Removed');
+        },
+        'fas fa-trash-alt',
+        'Delete Program',
+        '#c5221f'
+      );
     }
 
     async function handleAdminSetKioskActive(serviceKey) {
@@ -7951,23 +8012,6 @@
       populateServiceDropdowns();
       renderProgramsManager();
       showToast(`Special Program <strong>"${name}"</strong> with attached flyer registered successfully!`, 'success', 'Program Created');
-    }
-
-    function deleteCustomProgram(id) {
-      showConfirmModal(
-        'Remove Special Program',
-        'Are you sure you want to remove this special program?',
-        () => {
-          customPrograms = customPrograms.filter(p => p.id !== id);
-          saveCustomPrograms();
-          populateServiceDropdowns();
-          renderProgramsManager();
-          showToast('Special program removed successfully.', 'info', 'Program Removed');
-        },
-        'fas fa-trash-alt',
-        'Remove Program',
-        '#c5221f'
-      );
     }
 
     /* ════════════════════════════════════════════════════════════════════
