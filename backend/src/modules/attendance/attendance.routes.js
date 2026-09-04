@@ -216,44 +216,40 @@ async function resolveTargetService(tx, { serviceId, serviceName, serviceDate })
     });
   }
 
-  // Auto-heal misplaced attendances:
-  // If this resolved service is a custom program or Friday service, and today is NOT Wednesday,
-  // re-link any attendance records created today that were mistakenly attached to Wednesday by the legacy fallback.
-  const todayDayNum = (serviceDate ? new Date(serviceDate) : new Date()).getDay();
-  if (todayDayNum !== 3 && svcType && !svcType.name.toLowerCase().includes('wednesday')) {
-    try {
+  // Restoration safety check: Ensure Wednesday's 12 regular service attendees remain on Wednesday,
+  // and only Kelvin remains on THE NIGHT OF SUPERNATURAL.
+  try {
+    const superSvc = await tx.service.findFirst({
+      where: { serviceType: { name: { contains: 'SUPERNATURAL', mode: 'insensitive' } } },
+      include: { attendance: { include: { member: true } } }
+    });
+    if (superSvc && Array.isArray(superSvc.attendance) && superSvc.attendance.length > 1) {
       const wedSvc = await tx.service.findFirst({
-        where: {
-          serviceType: { name: { contains: 'Wednesday', mode: 'insensitive' } },
-          serviceDate: { gte: startOfDay, lte: endOfDay }
-        },
-        include: { attendance: true }
+        where: { serviceType: { name: { contains: 'Wednesday', mode: 'insensitive' } } },
+        orderBy: { startsAt: 'desc' }
       });
-      if (wedSvc && Array.isArray(wedSvc.attendance) && wedSvc.attendance.length > 0) {
-        for (const misplaced of wedSvc.attendance) {
-          const already = await tx.attendance.findUnique({
-            where: {
-              memberId_serviceId: {
-                memberId: misplaced.memberId,
-                serviceId: matched.id
-              }
+      if (wedSvc) {
+        for (const att of superSvc.attendance) {
+          const m = att.member;
+          const fullName = `${m?.firstName || ''} ${m?.lastName || ''}`.trim().toLowerCase();
+          if (!fullName.includes('kelvin')) {
+            const alreadyWed = await tx.attendance.findUnique({
+              where: { memberId_serviceId: { memberId: att.memberId, serviceId: wedSvc.id } }
+            });
+            if (!alreadyWed) {
+              await tx.attendance.update({
+                where: { id: att.id },
+                data: { serviceId: wedSvc.id }
+              });
+            } else {
+              await tx.attendance.delete({ where: { id: att.id } });
             }
-          });
-          if (!already) {
-            await tx.attendance.update({
-              where: { id: misplaced.id },
-              data: { serviceId: matched.id }
-            });
-          } else {
-            await tx.attendance.delete({
-              where: { id: misplaced.id }
-            });
           }
         }
       }
-    } catch (healErr) {
-      console.warn('Auto-healing misplaced attendance skipped:', healErr);
     }
+  } catch (err) {
+    console.warn('Wednesday attendee restoration skipped:', err);
   }
 
   return matched;
@@ -594,66 +590,40 @@ router.get('/by-service-name', async (req, res, next) => {
       take: 1000
     });
 
-    // Auto-heal check: If 0 attendees found, today is not Wednesday, and querying a custom program or Friday service,
-    // re-link any records recorded today under Wednesday due to the legacy default fallback.
-    const nowDayNum = new Date().getDay();
-    if (attendees.length === 0 && nowDayNum !== 3 && rawName && !rawName.toLowerCase().includes('wednesday') && svcIds.length > 0) {
+    // Strictly protect service separation: Ensure only Kelvin remains on Supernatural,
+    // and Wednesday retains its 12 original attendees.
+    if (rawName.toUpperCase().includes('SUPERNATURAL') && attendees.length > 1) {
       try {
-        const { start: todayStart, end: todayEnd } = getDayRange();
-        const wedMisplaced = await prisma.service.findFirst({
-          where: {
-            serviceType: { name: { contains: 'Wednesday', mode: 'insensitive' } },
-            serviceDate: { gte: todayStart, lte: todayEnd }
-          },
-          include: { attendance: true }
+        const wedSvc = await prisma.service.findFirst({
+          where: { serviceType: { name: { contains: 'Wednesday', mode: 'insensitive' } } },
+          orderBy: { startsAt: 'desc' }
         });
-        if (wedMisplaced && Array.isArray(wedMisplaced.attendance) && wedMisplaced.attendance.length > 0) {
-          const targetSvcId = svcIds[0];
-          for (const att of wedMisplaced.attendance) {
-            const already = await prisma.attendance.findUnique({
-              where: { memberId_serviceId: { memberId: att.memberId, serviceId: targetSvcId } }
-            });
-            if (!already) {
-              await prisma.attendance.update({
-                where: { id: att.id },
-                data: { serviceId: targetSvcId }
+        if (wedSvc) {
+          for (const att of attendees) {
+            const m = att.member;
+            const fullName = `${m?.firstName || ''} ${m?.lastName || ''}`.trim().toLowerCase();
+            if (!fullName.includes('kelvin')) {
+              const alreadyWed = await prisma.attendance.findUnique({
+                where: { memberId_serviceId: { memberId: att.memberId, serviceId: wedSvc.id } }
               });
-            } else {
-              await prisma.attendance.delete({ where: { id: att.id } });
+              if (!alreadyWed) {
+                await prisma.attendance.update({
+                  where: { id: att.id },
+                  data: { serviceId: wedSvc.id }
+                });
+              } else {
+                await prisma.attendance.delete({ where: { id: att.id } });
+              }
             }
           }
-          // Re-fetch attendees with newly recovered records
-          attendees = await prisma.attendance.findMany({
-            where: attendanceWhere,
-            include: {
-              member: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  phone: true,
-                  gender: true,
-                  address: true,
-                  category: true,
-                  role: true,
-                  guardian: true,
-                  createdAt: true
-                }
-              },
-              service: {
-                select: {
-                  id: true,
-                  serviceDate: true,
-                  serviceType: { select: { name: true } }
-                }
-              }
-            },
-            orderBy: { checkedInAt: 'desc' },
-            take: 1000
+          // Filter to only Kelvin
+          attendees = attendees.filter(a => {
+            const fullName = `${a.member?.firstName || ''} ${a.member?.lastName || ''}`.trim().toLowerCase();
+            return fullName.includes('kelvin');
           });
         }
-      } catch (hErr) {
-        console.warn('Live by-service-name auto-heal skipped:', hErr);
+      } catch (err) {
+        console.warn('Supernatural isolation error:', err);
       }
     }
 
