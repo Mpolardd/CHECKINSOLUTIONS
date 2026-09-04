@@ -540,6 +540,15 @@ router.get('/by-service-name', async (req, res, next) => {
       });
       const svcIds = svcs.map(s => s.id);
 
+      if (svcIds.length === 0) {
+        try {
+          const autoSvc = await resolveTargetService(prisma, { serviceName: rawName, serviceDate: dateParam });
+          if (autoSvc) {
+            svcIds.push(autoSvc.id);
+          }
+        } catch (rErr) {}
+      }
+
       if (svcIds.length > 0) {
         attendanceWhere.serviceId = { in: svcIds };
       } else {
