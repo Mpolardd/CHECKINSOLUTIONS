@@ -5746,17 +5746,22 @@
 
     function canonicalServiceName(raw) {
       if (!raw) return 'Sunday: Family & Friends Service';
-      const s = String(raw).trim().toLowerCase();
-      if (s.includes('family') || s.includes('friends') || (s.includes('sunday') && !s.includes('school'))) {
+      const trimmed = String(raw).trim();
+      if (typeof customPrograms !== 'undefined' && Array.isArray(customPrograms)) {
+        const found = customPrograms.find(p => p.name.toLowerCase() === trimmed.toLowerCase());
+        if (found) return found.name;
+      }
+      const s = trimmed.toLowerCase();
+      if (s.includes('family & friends') || s.includes('family and friends') || s === 'sunday' || s.startsWith('sunday:')) {
         return 'Sunday: Family & Friends Service';
       }
-      if (s.includes('time with the lord') || s.includes('time with lord') || s.includes('wednesday')) {
+      if (s.includes('time with the lord') || s.includes('time with lord') || s === 'wednesday' || s.startsWith('wednesday:')) {
         return 'Wednesday: Time with the Lord';
       }
-      if (s.includes('prophetic') || s.includes('deliverance') || s.includes('friday')) {
+      if (s.includes('prophetic healing') || s.includes('prophetic deliverance') || s === 'friday' || s.startsWith('friday:')) {
         return 'Friday: Prophetic Healing & Deliverance';
       }
-      return raw.trim();
+      return trimmed;
     }
 
     function getAttendanceListForService(serviceName) {
@@ -6170,14 +6175,24 @@
     }
 
     async function toggleMemberAttendance(phone, makePresent) {
+      const activeLiveService = localStorage.getItem('sfmi_active_kiosk_service') || (new Date().getDay() === 5 ? 'Friday: Prophetic Healing & Deliverance' : (new Date().getDay() === 3 ? 'Wednesday: Time with the Lord' : 'Sunday: Family & Friends Service'));
+      const effectiveServiceName = (currentSelectedService && currentSelectedService !== 'ALL') ? currentSelectedService : activeLiveService;
+
       if (!serviceAttendanceMap[currentSelectedService]) {
         serviceAttendanceMap[currentSelectedService] = [];
+      }
+      if (effectiveServiceName !== currentSelectedService && !serviceAttendanceMap[effectiveServiceName]) {
+        serviceAttendanceMap[effectiveServiceName] = [];
       }
 
       const norm = normalizePhoneClient(phone);
       if (makePresent) {
         const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        serviceAttendanceMap[currentSelectedService].push({ phone, time: timeNow, method: 'ADMIN_MANUAL' });
+        const entry = { phone, time: timeNow, method: 'ADMIN_MANUAL' };
+        serviceAttendanceMap[currentSelectedService].push(entry);
+        if (effectiveServiceName !== currentSelectedService) {
+          serviceAttendanceMap[effectiveServiceName].push(entry);
+        }
         try {
           const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
           await fetch(`${API_BASE}/attendance/checkin`, {
@@ -6186,15 +6201,19 @@
               'Content-Type': 'application/json',
               ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             },
-            body: JSON.stringify({ phone, serviceName: currentSelectedService, method: 'MANUAL' })
+            body: JSON.stringify({ phone, serviceName: effectiveServiceName, method: 'MANUAL' })
           });
         } catch (e) {}
       } else {
-        serviceAttendanceMap[currentSelectedService] = serviceAttendanceMap[currentSelectedService].filter(a => {
+        const filterFn = a => {
           if (a.phone === phone) return false;
           if (norm && normalizePhoneClient(a.phone) === norm) return false;
           return true;
-        });
+        };
+        serviceAttendanceMap[currentSelectedService] = serviceAttendanceMap[currentSelectedService].filter(filterFn);
+        if (effectiveServiceName !== currentSelectedService && serviceAttendanceMap[effectiveServiceName]) {
+          serviceAttendanceMap[effectiveServiceName] = serviceAttendanceMap[effectiveServiceName].filter(filterFn);
+        }
       }
 
       renderAttendanceAndDemographics();
@@ -6271,12 +6290,43 @@
                 programTotalCounts[exactName] = (programTotalCounts[exactName] || 0) + attCnt;
               }
             });
+
+              // Custom program attendance may still be linked to a legacy weekly service.
+              // Ask the exact service endpoint so the program card reflects recovered live records.
+              const customCountResults = await Promise.all(customPrograms.map(async (program) => {
+                try {
+                  const countRes = await fetch(`${API_BASE}/attendance/by-service-name?name=${encodeURIComponent(program.name)}`, { headers });
+                  if (!countRes.ok) return null;
+                  const countData = await countRes.json();
+                  return { name: program.name, count: Number(countData.count) || 0 };
+                } catch (countErr) {
+                  return null;
+                }
+              }));
+              customCountResults.forEach(result => {
+                if (result) programTotalCounts[result.name] = result.count;
+              });
             window._programTotalCounts = programTotalCounts;
           }
         } catch (sErr) {}
 
+          const selectedCustomProgram = customPrograms.find(program =>
+            program.name.toLowerCase() === targetService.trim().toLowerCase()
+          );
+          if (selectedCustomProgram) {
+            let apiUrl = `${API_BASE}/attendance/by-service-name?name=${encodeURIComponent(selectedCustomProgram.name)}`;
+            if (selectedDate) apiUrl += `&date=${encodeURIComponent(selectedDate)}`;
+            try {
+              const liveRes = await fetch(apiUrl, { headers });
+              if (liveRes.ok) {
+                const live = await liveRes.json();
+                rawItems = Array.isArray(live.recent) ? live.recent : [];
+              }
+            } catch (lErr) {}
+          }
+
         // Fallback / supplement with live endpoint
-        if (!Array.isArray(rawItems) || rawItems.length === 0) {
+          if ((!Array.isArray(rawItems) || rawItems.length === 0) && !selectedCustomProgram) {
           let apiUrl = `${API_BASE}/attendance/by-service-name?name=${encodeURIComponent(targetService)}`;
           if (selectedDate) {
             apiUrl += `&date=${encodeURIComponent(selectedDate)}`;
@@ -8574,11 +8624,12 @@
         if (res.ok) {
           const json = await res.json();
           if (json) {
+            const defaultFallbackSvc = localStorage.getItem('sfmi_active_kiosk_service') || (new Date().getDay() === 5 ? 'Friday: Prophetic Healing & Deliverance' : (new Date().getDay() === 3 ? 'Wednesday: Time with the Lord' : 'Sunday: Family & Friends Service'));
             const backendVisits = [];
             if (Array.isArray(json.attendances)) {
               json.attendances.forEach(a => {
                 const m = a.member || {};
-                const svcName = canonicalServiceName(a.service?.serviceType?.name || "Wednesday: Time with the Lord");
+                const svcName = canonicalServiceName(a.service?.serviceType?.name || defaultFallbackSvc);
                 const dStr = formatLocalDate(a.checkedInAt || a.service?.serviceDate || Date.now());
                 backendVisits.push({
                   id: a.id || a.memberId,
@@ -8615,7 +8666,7 @@
                     phone: v.phone || "—",
                     gender: v.gender || "Not specified",
                     address: v.address || "—",
-                    serviceName: "Wednesday: Time with the Lord",
+                    serviceName: defaultFallbackSvc,
                     dateStr: v.createdAt ? formatLocalDate(v.createdAt) : formatLocalDate(new Date()),
                     time: "First Visit",
                     method: "REGISTRATION",

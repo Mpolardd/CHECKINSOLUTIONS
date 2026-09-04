@@ -28,6 +28,237 @@ function getDayRange(dateInput) {
   return { start, end };
 }
 
+function getScheduledDay(schedule = '') {
+  const match = String(schedule).match(/\b(SUNDAY|MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY)\b/i);
+  if (!match) return null;
+  return ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'].indexOf(match[1].toUpperCase());
+}
+
+/**
+ * Accurately resolves or creates a Service and its underlying ServiceType.
+ * Ensures custom events/programs (e.g. "THE NIGHT OF SUPERNATURAL") get their own dedicated
+ * ServiceType and Service record, preventing cross-service attendance collisions or false duplicate checkin errors.
+ */
+async function resolveTargetService(tx, { serviceId, serviceName, serviceDate }) {
+  if (serviceId) {
+    const s = await tx.service.findUnique({
+      where: { id: serviceId },
+      include: { serviceType: true }
+    });
+    if (s) return s;
+  }
+
+  const { start: startOfDay, end: endOfDay } = getDayRange(serviceDate);
+
+  let svcType = null;
+  if (serviceName && typeof serviceName === 'string') {
+    const raw = serviceName.trim();
+    if (raw && raw.toUpperCase() !== 'ALL') {
+      // 1. Exact match on ServiceType name (case-insensitive)
+      svcType = await tx.serviceType.findFirst({
+        where: { name: { equals: raw, mode: 'insensitive' }, active: true }
+      });
+
+      // Older custom programs were assigned the weekday on which they were created.
+      // Repair that metadata from the saved program schedule when available.
+      if (svcType) {
+        const programLog = await tx.auditLog.findFirst({
+          where: {
+            entity: 'CUSTOM_PROGRAM',
+            metadata: { path: ['name'], equals: raw }
+          },
+          orderBy: { createdAt: 'desc' }
+        });
+        const scheduledDay = getScheduledDay(programLog?.metadata?.schedule);
+        if (scheduledDay !== null && svcType.dayOfWeek !== scheduledDay) {
+          svcType = await tx.serviceType.update({
+            where: { id: svcType.id },
+            data: { dayOfWeek: scheduledDay }
+          });
+        }
+      }
+
+      // 2. If not found, check standard regular weekly services explicitly
+      if (!svcType) {
+        const lower = raw.toLowerCase();
+        if (lower.includes('family & friends') || lower.includes('family and friends') || lower === 'sunday' || lower.startsWith('sunday:')) {
+          svcType = await tx.serviceType.findFirst({
+            where: { name: { contains: 'Family & Friends', mode: 'insensitive' }, active: true }
+          });
+        } else if (lower.includes('time with the lord') || lower.includes('time with lord') || lower === 'wednesday' || lower.startsWith('wednesday:')) {
+          svcType = await tx.serviceType.findFirst({
+            where: { name: { contains: 'Time with the Lord', mode: 'insensitive' }, active: true }
+          });
+        } else if (lower.includes('prophetic healing') || lower.includes('prophetic deliverance') || lower === 'friday' || lower.startsWith('friday:')) {
+          svcType = await tx.serviceType.findFirst({
+            where: {
+              OR: [
+                { name: { contains: 'Prophetic', mode: 'insensitive' } },
+                { name: { contains: 'Deliverance', mode: 'insensitive' } }
+              ],
+              active: true
+            }
+          });
+        }
+      }
+
+      // 3. If not found, check prefix/clean match
+      if (!svcType) {
+        const clean = raw.replace(/^(Sunday|Wednesday|Friday)[:\s—-]+/i, '').trim();
+        const prefix = raw.split(/[:\&\(\)\—\-]+/)[0].trim();
+        svcType = await tx.serviceType.findFirst({
+          where: {
+            OR: [
+              { name: { contains: clean, mode: 'insensitive' } },
+              { name: { contains: prefix, mode: 'insensitive' } },
+              { name: { contains: raw, mode: 'insensitive' } }
+            ],
+            active: true
+          }
+        });
+      }
+
+      // 4. If still no ServiceType exists, dynamically create a dedicated ServiceType for this custom program/event
+      if (!svcType) {
+        const dayOfWeek = (serviceDate ? new Date(serviceDate) : new Date()).getDay() || 0;
+        svcType = await tx.serviceType.create({
+          data: {
+            name: raw,
+            dayOfWeek,
+            startTime: '00:00',
+            endTime: '23:59',
+            active: true
+          }
+        });
+      }
+    }
+  }
+
+  // If no serviceName was provided (or was ALL), check if there is an active kiosk program currently running
+  if (!svcType) {
+    try {
+      const activeKioskLog = await tx.auditLog.findFirst({
+        where: { entity: 'ACTIVE_KIOSK_PROGRAM' },
+        orderBy: { createdAt: 'desc' }
+      });
+      const progName = activeKioskLog?.metadata?.programName;
+      if (progName && typeof progName === 'string' && progName.trim()) {
+        const rawProg = progName.trim();
+        svcType = await tx.serviceType.findFirst({
+          where: { name: { equals: rawProg, mode: 'insensitive' }, active: true }
+        });
+        if (!svcType) {
+          svcType = await tx.serviceType.create({
+            data: {
+              name: rawProg,
+              dayOfWeek: (serviceDate ? new Date(serviceDate) : new Date()).getDay() || 0,
+              startTime: '00:00',
+              endTime: '23:59',
+              active: true
+            }
+          });
+        }
+      }
+    } catch (kErr) {}
+  }
+
+  // Fallback to today's day-of-week active service
+  if (!svcType) {
+    const todayDay = (serviceDate ? new Date(serviceDate) : new Date()).getDay();
+    svcType = await tx.serviceType.findFirst({
+      where: { dayOfWeek: todayDay, active: true }
+    });
+    if (!svcType) {
+      // Prioritize matching day: 5 = Friday, 3 = Wednesday, 0 = Sunday
+      const preferredDay = todayDay === 5 ? 5 : (todayDay === 3 ? 3 : 0);
+      svcType = await tx.serviceType.findFirst({
+        where: { dayOfWeek: preferredDay, active: true }
+      });
+    }
+    if (!svcType) {
+      svcType = await tx.serviceType.findFirst({
+        where: { active: true },
+        orderBy: { dayOfWeek: 'asc' }
+      });
+    }
+    if (!svcType) {
+      svcType = await tx.serviceType.create({
+        data: {
+          name: 'Family & Friends Service (Sunday)',
+          dayOfWeek: 0,
+          startTime: '07:00',
+          endTime: '11:00',
+          active: true
+        }
+      });
+    }
+  }
+
+  let matched = await tx.service.findFirst({
+    where: {
+      serviceTypeId: svcType.id,
+      serviceDate: { gte: startOfDay, lte: endOfDay },
+      active: true
+    },
+    include: { serviceType: true },
+    orderBy: { startsAt: 'desc' }
+  });
+
+  if (!matched) {
+    matched = await tx.service.create({
+      data: {
+        serviceTypeId: svcType.id,
+        serviceDate: startOfDay,
+        startsAt: new Date(),
+        active: true
+      },
+      include: { serviceType: true }
+    });
+  }
+
+  // Auto-heal misplaced attendances:
+  // If this resolved service is a custom program or Friday service, and today is NOT Wednesday,
+  // re-link any attendance records created today that were mistakenly attached to Wednesday by the legacy fallback.
+  const todayDayNum = (serviceDate ? new Date(serviceDate) : new Date()).getDay();
+  if (todayDayNum !== 3 && svcType && !svcType.name.toLowerCase().includes('wednesday')) {
+    try {
+      const wedSvc = await tx.service.findFirst({
+        where: {
+          serviceType: { name: { contains: 'Wednesday', mode: 'insensitive' } },
+          serviceDate: { gte: startOfDay, lte: endOfDay }
+        },
+        include: { attendance: true }
+      });
+      if (wedSvc && Array.isArray(wedSvc.attendance) && wedSvc.attendance.length > 0) {
+        for (const misplaced of wedSvc.attendance) {
+          const already = await tx.attendance.findUnique({
+            where: {
+              memberId_serviceId: {
+                memberId: misplaced.memberId,
+                serviceId: matched.id
+              }
+            }
+          });
+          if (!already) {
+            await tx.attendance.update({
+              where: { id: misplaced.id },
+              data: { serviceId: matched.id }
+            });
+          } else {
+            await tx.attendance.delete({
+              where: { id: misplaced.id }
+            });
+          }
+        }
+      }
+    } catch (healErr) {
+      console.warn('Auto-healing misplaced attendance skipped:', healErr);
+    }
+  }
+
+  return matched;
+}
+
 router.get('/search', async (req, res, next) => {
   try {
     const q = String(req.query.q || '').trim();
@@ -100,102 +331,33 @@ router.post('/checkin', async (req, res, next) => {
         throw e;
       }
 
-      // Resolve targetServiceId strictly for today's service date
-      let targetServiceId = b.serviceId;
-      if (!targetServiceId) {
-        let matched = null;
-        const { start: startOfDay, end: endOfDay } = getDayRange();
-
-        let svcType = null;
-        if (b.serviceName) {
-          const raw = b.serviceName.trim();
-          const clean = raw.replace(/^(Sunday|Wednesday|Friday)[:\s—-]+/i, '').trim();
-          const prefix = raw.split(/[:\&\(\)\—\-]+/)[0].trim();
-
-          const typeOrList = [
-            { name: { contains: clean, mode: 'insensitive' } },
-            { name: { contains: prefix, mode: 'insensitive' } },
-            { name: { contains: raw, mode: 'insensitive' } }
-          ];
-
-          const lower = raw.toLowerCase();
-          if (lower.includes('prophetic') || lower.includes('deliverance') || lower.includes('friday')) {
-            typeOrList.push({ name: { contains: 'Prophetic', mode: 'insensitive' } });
-            typeOrList.push({ name: { contains: 'Deliverance', mode: 'insensitive' } });
-          } else if (lower.includes('wednesday') || lower.includes('time with')) {
-            typeOrList.push({ name: { contains: 'Time with the Lord', mode: 'insensitive' } });
-          } else if (lower.includes('sunday') || lower.includes('family')) {
-            typeOrList.push({ name: { contains: 'Family & Friends', mode: 'insensitive' } });
-          }
-
-          svcType = await tx.serviceType.findFirst({
-            where: { OR: typeOrList, active: true }
-          });
-        }
-
-        if (svcType) {
-          matched = await tx.service.findFirst({
-            where: {
-              serviceTypeId: svcType.id,
-              serviceDate: { gte: startOfDay, lte: endOfDay },
-              active: true
-            },
-            orderBy: { startsAt: 'desc' }
-          });
-
-          if (!matched) {
-            matched = await tx.service.create({
-              data: {
-                serviceTypeId: svcType.id,
-                serviceDate: startOfDay,
-                startsAt: new Date(),
-                active: true
-              }
-            });
-          }
-        } else {
-          matched = await tx.service.findFirst({
-            where: {
-              serviceDate: { gte: startOfDay, lte: endOfDay },
-              active: true
-            },
-            orderBy: { startsAt: 'desc' }
-          });
-
-          if (!matched) {
-            let defType = await tx.serviceType.findFirst({ where: { active: true } });
-            if (!defType) {
-              defType = await tx.serviceType.create({
-                data: { name: 'Family & Friends Service (Sunday)', dayOfWeek: 0, startTime: '07:00', endTime: '11:00' }
-              });
-            }
-            matched = await tx.service.create({
-              data: {
-                serviceTypeId: defType.id,
-                serviceDate: startOfDay,
-                startsAt: new Date(),
-                active: true
-              }
-            });
-          }
-        }
-        targetServiceId = matched.id;
-      }
+      // Resolve targetService strictly for this service/event
+      const matchedService = await resolveTargetService(tx, {
+        serviceId: b.serviceId,
+        serviceName: b.serviceName
+      });
+      const targetServiceId = matchedService.id;
 
       const existing = await tx.attendance.findUnique({
         where: { memberId_serviceId: { memberId: member.id, serviceId: targetServiceId } }
       });
       if (existing) {
-        return { attendance: existing, member, alreadyCheckedIn: true };
+        return { attendance: existing, member, alreadyCheckedIn: true, service: matchedService };
       }
 
       const attendance = await tx.attendance.create({
         data: { memberId: member.id, serviceId: targetServiceId, method: b.method }
       });
-      return { attendance, member, alreadyCheckedIn: false };
+      return { attendance, member, alreadyCheckedIn: false, service: matchedService };
     });
 
-    res.status(200).json({ success: true, attendance: result.attendance, member: result.member, alreadyCheckedIn: result.alreadyCheckedIn });
+    res.status(200).json({
+      success: true,
+      attendance: result.attendance,
+      member: result.member,
+      service: result.service,
+      alreadyCheckedIn: result.alreadyCheckedIn
+    });
   } catch (e) {
     next(e);
   }
@@ -203,15 +365,27 @@ router.post('/checkin', async (req, res, next) => {
 
 router.post('/family-checkin', async (req, res, next) => {
   try {
-    const b = z.object({ householdId: z.string(), memberIds: z.array(z.string()).min(1), serviceId: z.string() }).parse(req.body);
+    const b = z.object({
+      householdId: z.string(),
+      memberIds: z.array(z.string()).min(1),
+      serviceId: z.string().optional(),
+      serviceName: z.string().optional()
+    }).parse(req.body);
+
     const result = await prisma.$transaction(async (tx) => {
+      const matchedService = await resolveTargetService(tx, {
+        serviceId: b.serviceId,
+        serviceName: b.serviceName
+      });
+      const targetServiceId = matchedService.id;
+
       const members = await tx.member.findMany({ where: { id: { in: b.memberIds }, householdId: b.householdId, active: true, deletedAt: null } });
       const valid = new Set(members.map(m => m.id));
       const created = [];
       for (const id of b.memberIds) {
         if (!valid.has(id)) continue;
-        const exists = await tx.attendance.findUnique({ where: { memberId_serviceId: { memberId: id, serviceId: b.serviceId } } });
-        if (!exists) created.push(await tx.attendance.create({ data: { memberId: id, serviceId: b.serviceId, method: 'FAMILY' } }));
+        const exists = await tx.attendance.findUnique({ where: { memberId_serviceId: { memberId: id, serviceId: targetServiceId } } });
+        if (!exists) created.push(await tx.attendance.create({ data: { memberId: id, serviceId: targetServiceId, method: 'FAMILY' } }));
       }
       return created;
     });
@@ -340,11 +514,25 @@ router.get('/by-service-name', async (req, res, next) => {
     }
 
     if (rawName && rawName.toUpperCase() !== 'ALL') {
+      const clean = rawName.replace(/^(Sunday|Wednesday|Friday)[:\s—-]+/i, '').trim();
+      const prefix = rawName.split(/[:\&\(\)\—\-]+/)[0].trim();
       const parts = rawName.split(/[:\&\(\)\—\-]+/).map(p => p.trim()).filter(p => p.length >= 3);
-      const serviceTypeOr = parts.map(p => ({
-        serviceType: { name: { contains: p, mode: 'insensitive' } }
-      }));
-      serviceTypeOr.push({ serviceType: { name: { contains: rawName, mode: 'insensitive' } } });
+
+      const serviceTypeOr = [
+        { serviceType: { name: { equals: rawName, mode: 'insensitive' } } },
+        { serviceType: { name: { contains: rawName, mode: 'insensitive' } } }
+      ];
+      if (clean && clean !== rawName) {
+        serviceTypeOr.push({ serviceType: { name: { contains: clean, mode: 'insensitive' } } });
+      }
+      if (prefix && prefix !== rawName) {
+        serviceTypeOr.push({ serviceType: { name: { contains: prefix, mode: 'insensitive' } } });
+      }
+      parts.forEach(p => {
+        if (p !== rawName && p !== clean && p !== prefix) {
+          serviceTypeOr.push({ serviceType: { name: { contains: p, mode: 'insensitive' } } });
+        }
+      });
 
       const svcs = await prisma.service.findMany({
         where: { OR: serviceTypeOr },
@@ -354,6 +542,15 @@ router.get('/by-service-name', async (req, res, next) => {
 
       if (svcIds.length > 0) {
         attendanceWhere.serviceId = { in: svcIds };
+      } else {
+        // No services matching this name exist yet, return clean empty result (0 attended)
+        return res.json({
+          count: 0,
+          maleCount: 0,
+          femaleCount: 0,
+          otherCount: 0,
+          recent: []
+        });
       }
     }
 
@@ -388,42 +585,66 @@ router.get('/by-service-name', async (req, res, next) => {
       take: 1000
     });
 
-    // If a specific service filter returned 0, fallback to all recent active check-ins so no attendee is hidden
-    if (attendees.length === 0 && attendanceWhere.serviceId) {
-      const fallbackWhere = { ...attendanceWhere };
-      delete fallbackWhere.serviceId;
-      const fallbackAttendees = await prisma.attendance.findMany({
-        where: fallbackWhere,
-        include: {
-          member: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              phone: true,
-              gender: true,
-              address: true,
-              category: true,
-              role: true,
-              guardian: true,
-              createdAt: true
-            }
+    // Auto-heal check: If 0 attendees found, today is not Wednesday, and querying a custom program or Friday service,
+    // re-link any records recorded today under Wednesday due to the legacy default fallback.
+    const nowDayNum = new Date().getDay();
+    if (attendees.length === 0 && nowDayNum !== 3 && rawName && !rawName.toLowerCase().includes('wednesday') && svcIds.length > 0) {
+      try {
+        const { start: todayStart, end: todayEnd } = getDayRange();
+        const wedMisplaced = await prisma.service.findFirst({
+          where: {
+            serviceType: { name: { contains: 'Wednesday', mode: 'insensitive' } },
+            serviceDate: { gte: todayStart, lte: todayEnd }
           },
-          service: {
-            select: {
-              id: true,
-              serviceDate: true,
-              serviceType: {
-                select: { name: true }
-              }
+          include: { attendance: true }
+        });
+        if (wedMisplaced && Array.isArray(wedMisplaced.attendance) && wedMisplaced.attendance.length > 0) {
+          const targetSvcId = svcIds[0];
+          for (const att of wedMisplaced.attendance) {
+            const already = await prisma.attendance.findUnique({
+              where: { memberId_serviceId: { memberId: att.memberId, serviceId: targetSvcId } }
+            });
+            if (!already) {
+              await prisma.attendance.update({
+                where: { id: att.id },
+                data: { serviceId: targetSvcId }
+              });
+            } else {
+              await prisma.attendance.delete({ where: { id: att.id } });
             }
           }
-        },
-        orderBy: { checkedInAt: 'desc' },
-        take: 1000
-      });
-      if (fallbackAttendees.length > 0) {
-        attendees = fallbackAttendees;
+          // Re-fetch attendees with newly recovered records
+          attendees = await prisma.attendance.findMany({
+            where: attendanceWhere,
+            include: {
+              member: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  phone: true,
+                  gender: true,
+                  address: true,
+                  category: true,
+                  role: true,
+                  guardian: true,
+                  createdAt: true
+                }
+              },
+              service: {
+                select: {
+                  id: true,
+                  serviceDate: true,
+                  serviceType: { select: { name: true } }
+                }
+              }
+            },
+            orderBy: { checkedInAt: 'desc' },
+            take: 1000
+          });
+        }
+      } catch (hErr) {
+        console.warn('Live by-service-name auto-heal skipped:', hErr);
       }
     }
 
@@ -512,7 +733,6 @@ router.get('/by-service-name', async (req, res, next) => {
 });
 
 router.get('/service-types', async (req, res, next) => {
-
   try {
     const types = await prisma.serviceType.findMany({ where: { active: true }, orderBy: { dayOfWeek: 'asc' } });
     res.json(types);
@@ -563,6 +783,8 @@ router.post('/programs', async (req, res, next) => {
       return res.status(400).json({ error: 'id and name are required' });
     }
 
+    const progName = program.name.trim();
+
     // Upsert custom program in AuditLog storage
     await prisma.auditLog.deleteMany({
       where: { entity: 'CUSTOM_PROGRAM', entityId: program.id }
@@ -575,7 +797,7 @@ router.post('/programs', async (req, res, next) => {
         entity: 'CUSTOM_PROGRAM',
         entityId: program.id,
         metadata: {
-          name: program.name,
+          name: progName,
           category: program.category || 'Special Program / Convention',
           schedule: program.schedule || '',
           cutoffTime: program.cutoffTime || '11:30',
@@ -585,7 +807,29 @@ router.post('/programs', async (req, res, next) => {
       }
     });
 
-    res.status(201).json({ success: true, program });
+    // Ensure a corresponding ServiceType exists in the database
+    const existingType = await prisma.serviceType.findFirst({
+      where: { name: { equals: progName, mode: 'insensitive' } }
+    });
+    const scheduledDay = getScheduledDay(program.schedule);
+    if (!existingType) {
+      await prisma.serviceType.create({
+        data: {
+          name: progName,
+          dayOfWeek: scheduledDay === null ? new Date().getDay() : scheduledDay,
+          startTime: '00:00',
+          endTime: '23:59',
+          active: true
+        }
+      });
+    } else if (scheduledDay !== null && existingType.dayOfWeek !== scheduledDay) {
+      await prisma.serviceType.update({
+        where: { id: existingType.id },
+        data: { dayOfWeek: scheduledDay }
+      });
+    }
+
+    res.status(201).json({ success: true, program: { ...program, name: progName } });
   } catch (e) { next(e); }
 });
 
@@ -783,95 +1027,24 @@ router.post('/quick-register-checkin', async (req, res, next) => {
         });
       }
 
-      // Resolve Service ID strictly for today's active service
-      let targetServiceId = body.serviceId;
-      if (!targetServiceId) {
-        let matched = null;
-        const { start: startOfDay, end: endOfDay } = getDayRange();
-
-        let svcType = null;
-        if (body.serviceName) {
-          const raw = body.serviceName.trim();
-          const clean = raw.replace(/^(Sunday|Wednesday|Friday)[:\s—-]+/i, '').trim();
-          const prefix = raw.split(/[:\&\(\)\—\-]+/)[0].trim();
-
-          const typeOrList = [
-            { name: { contains: clean, mode: 'insensitive' } },
-            { name: { contains: prefix, mode: 'insensitive' } },
-            { name: { contains: raw, mode: 'insensitive' } }
-          ];
-
-          const lower = raw.toLowerCase();
-          if (lower.includes('prophetic') || lower.includes('deliverance') || lower.includes('friday')) {
-            typeOrList.push({ name: { contains: 'Prophetic', mode: 'insensitive' } });
-            typeOrList.push({ name: { contains: 'Deliverance', mode: 'insensitive' } });
-          } else if (lower.includes('wednesday') || lower.includes('time with')) {
-            typeOrList.push({ name: { contains: 'Time with the Lord', mode: 'insensitive' } });
-          } else if (lower.includes('sunday') || lower.includes('family')) {
-            typeOrList.push({ name: { contains: 'Family & Friends', mode: 'insensitive' } });
-          }
-
-          svcType = await tx.serviceType.findFirst({
-            where: { OR: typeOrList, active: true }
-          });
-        }
-
-        if (svcType) {
-          matched = await tx.service.findFirst({
-            where: {
-              serviceTypeId: svcType.id,
-              serviceDate: { gte: startOfDay, lte: endOfDay },
-              active: true
-            },
-            orderBy: { startsAt: 'desc' }
-          });
-
-          if (!matched) {
-            matched = await tx.service.create({
-              data: {
-                serviceTypeId: svcType.id,
-                serviceDate: startOfDay,
-                startsAt: new Date(),
-                active: true
-              }
-            });
-          }
-        } else {
-          matched = await tx.service.findFirst({
-            where: {
-              serviceDate: { gte: startOfDay, lte: endOfDay },
-              active: true
-            },
-            orderBy: { startsAt: 'desc' }
-          });
-
-          if (!matched) {
-            let defType = await tx.serviceType.findFirst({ where: { active: true } });
-            if (!defType) {
-              defType = await tx.serviceType.create({
-                data: { name: 'Family & Friends Service (Sunday)', dayOfWeek: 0, startTime: '07:00', endTime: '11:00' }
-              });
-            }
-            matched = await tx.service.create({
-              data: {
-                serviceTypeId: defType.id,
-                serviceDate: startOfDay,
-                startsAt: new Date(),
-                active: true
-              }
-            });
-          }
-        }
-        targetServiceId = matched.id;
-      }
+      // Resolve Service ID strictly for this event / service
+      const matchedService = await resolveTargetService(tx, {
+        serviceId: body.serviceId,
+        serviceName: body.serviceName
+      });
+      const targetServiceId = matchedService.id;
 
       let attendance = null;
+      let alreadyCheckedIn = false;
       if (targetServiceId) {
-        attendance = await tx.attendance.findUnique({
+        const existing = await tx.attendance.findUnique({
           where: { memberId_serviceId: { memberId: member.id, serviceId: targetServiceId } }
         });
 
-        if (!attendance) {
+        if (existing) {
+          attendance = existing;
+          alreadyCheckedIn = true;
+        } else {
           attendance = await tx.attendance.create({
             data: {
               memberId: member.id,
@@ -879,6 +1052,7 @@ router.post('/quick-register-checkin', async (req, res, next) => {
               method: 'KIOSK'
             }
           });
+          alreadyCheckedIn = false;
 
           await tx.auditLog.create({
             data: {
@@ -896,7 +1070,7 @@ router.post('/quick-register-checkin', async (req, res, next) => {
         }
       }
 
-      return { member, attendance, alreadyCheckedIn: !!attendance && attendance.createdAt < new Date(Date.now() - 5000) };
+      return { member, attendance, service: matchedService, alreadyCheckedIn };
     });
 
     res.status(201).json({ success: true, ...result });
@@ -915,12 +1089,14 @@ router.post('/clear', async (req, res, next) => {
     } else if (serviceId) {
       await prisma.attendance.deleteMany({ where: { serviceId } });
     } else if (serviceName && serviceName.toUpperCase() !== 'ALL') {
-      const prefix = serviceName.split(/[:\&\(\)\—\-]+/)[0].trim();
+      const raw = serviceName.trim();
+      const prefix = raw.split(/[:\&\(\)\—\-]+/)[0].trim();
       const svcs = await prisma.service.findMany({
         where: {
           OR: [
-            { serviceType: { name: { contains: prefix, mode: 'insensitive' } } },
-            { serviceType: { name: { contains: serviceName, mode: 'insensitive' } } }
+            { serviceType: { name: { equals: raw, mode: 'insensitive' } } },
+            { serviceType: { name: { contains: raw, mode: 'insensitive' } } },
+            { serviceType: { name: { contains: prefix, mode: 'insensitive' } } }
           ]
         },
         select: { id: true }
@@ -964,9 +1140,10 @@ router.get('/history', async (req, res, next) => {
       const svcs = await prisma.service.findMany({
         where: {
           OR: [
+            { serviceType: { name: { equals: raw, mode: 'insensitive' } } },
+            { serviceType: { name: { contains: raw, mode: 'insensitive' } } },
             { serviceType: { name: { contains: clean, mode: 'insensitive' } } },
-            { serviceType: { name: { contains: prefix, mode: 'insensitive' } } },
-            { serviceType: { name: { contains: raw, mode: 'insensitive' } } }
+            { serviceType: { name: { contains: prefix, mode: 'insensitive' } } }
           ]
         },
         select: { id: true }

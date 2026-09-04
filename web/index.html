@@ -1203,34 +1203,44 @@
       let hours = '7:00 AM – 11:00 AM';
       let img = '/Sunday.JPG';
 
-      if (serviceKey.includes('Wednesday') || serviceKey.toLowerCase().includes('time with the lord')) {
-        dayName = 'Wednesday';
-        title = 'Time with the Lord';
-        hours = '6:00 PM – 8:00 PM';
-        img = localStorage.getItem('sfmi_svc_img_wed') || '/WEDNESDAY.JPG';
-      } else if (serviceKey.includes('Friday') || serviceKey.toLowerCase().includes('prophetic')) {
-        dayName = 'Friday';
-        title = 'Prophetic Healing & Deliverance';
-        hours = '6:00 PM – 8:00 PM';
-        img = localStorage.getItem('sfmi_svc_img_fri') || '/FRIDAY.JPG';
-      } else if (serviceKey.includes('Sunday')) {
-        dayName = 'Sunday';
-        title = 'Family & Friends Service';
-        hours = '7:00 AM – 11:00 AM';
-        img = localStorage.getItem('sfmi_svc_img_sun') || '/Sunday.JPG';
+      // 1. Check if serviceKey matches a configured custom program first
+      const savedPrograms = localStorage.getItem('sfmi_custom_programs');
+      let customProg = null;
+      if (savedPrograms) {
+        try {
+          const list = JSON.parse(savedPrograms);
+          customProg = list.find(p => p.name.trim().toLowerCase() === String(serviceKey).trim().toLowerCase());
+        } catch(e) {}
+      }
+
+      if (customProg) {
+        dayName = customProg.tag || customProg.category || 'SPECIAL PROGRAM';
+        title = customProg.name;
+        hours = customProg.schedule || 'Active Program · Main Sanctuary';
+        img = customProg.flyerUrl || '/Sunday.JPG';
       } else {
-        const savedPrograms = localStorage.getItem('sfmi_custom_programs');
-        let customProg = null;
-        if (savedPrograms) {
-          try {
-            const list = JSON.parse(savedPrograms);
-            customProg = list.find(p => p.name === serviceKey);
-          } catch(e) {}
+        const lower = String(serviceKey).toLowerCase().trim();
+        if (lower.includes('time with the lord') || lower.includes('time with lord') || lower === 'wednesday' || lower.startsWith('wednesday:')) {
+          dayName = 'Wednesday';
+          title = localStorage.getItem('sfmi_svc_name_wed') || 'Wednesday: Time with the Lord';
+          hours = localStorage.getItem('sfmi_svc_sched_wed') || '6:00 PM – 8:00 PM';
+          img = localStorage.getItem('sfmi_svc_img_wed') || '/WEDNESDAY.JPG';
+        } else if (lower.includes('prophetic healing') || lower.includes('prophetic deliverance') || lower === 'friday' || lower.startsWith('friday:')) {
+          dayName = 'Friday';
+          title = localStorage.getItem('sfmi_svc_name_fri') || 'Friday: Prophetic Healing & Deliverance';
+          hours = localStorage.getItem('sfmi_svc_sched_fri') || '6:00 PM – 8:00 PM';
+          img = localStorage.getItem('sfmi_svc_img_fri') || '/FRIDAY.JPG';
+        } else if (lower.includes('family & friends') || lower.includes('family and friends') || lower === 'sunday' || lower.startsWith('sunday:')) {
+          dayName = 'Sunday';
+          title = localStorage.getItem('sfmi_svc_name_sun') || 'Sunday: Family & Friends Service';
+          hours = localStorage.getItem('sfmi_svc_sched_sun') || '7:00 AM – 11:00 AM';
+          img = localStorage.getItem('sfmi_svc_img_sun') || '/Sunday.JPG';
+        } else {
+          title = serviceKey;
+          dayName = 'SPECIAL PROGRAM';
+          hours = 'Active Program · Main Sanctuary';
+          img = '/Sunday.JPG';
         }
-        dayName = customProg?.tag || 'SPECIAL PROGRAM';
-        title = serviceKey;
-        hours = customProg?.schedule || 'Active Program · Main Sanctuary';
-        img = customProg?.flyerUrl || '/Sunday.JPG';
       }
 
       currentDay = dayName;
