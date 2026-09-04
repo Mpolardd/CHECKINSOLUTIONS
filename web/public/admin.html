@@ -7290,7 +7290,7 @@
               'Content-Type': 'application/json',
               'Authorization': token ? `Bearer ${token}` : ''
             },
-            body: JSON.stringify({ serviceName: programName || currentSelectedService, clearAll: true })
+            body: JSON.stringify({ serviceName: programName || currentSelectedService })
           });
           await fetch(`${API_BASE}/attendance/active-kiosk`, {
             method: 'POST',
@@ -7317,7 +7317,7 @@
             'Content-Type': 'application/json',
             'Authorization': token ? `Bearer ${token}` : ''
           },
-          body: JSON.stringify({ serviceName: currentSelectedService, clearAll: true })
+          body: JSON.stringify({ serviceName: currentSelectedService })
         });
         if (res.ok) {
           serviceAttendanceMap = {};

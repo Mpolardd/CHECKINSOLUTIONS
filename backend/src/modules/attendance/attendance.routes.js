@@ -905,33 +905,33 @@ router.post('/quick-register-checkin', async (req, res, next) => {
 
 router.post('/clear', async (req, res, next) => {
   try {
-    const { serviceId, serviceName, clearAll } = req.body || {};
-    if (clearAll) {
+    const { serviceId, serviceName, clearAll, confirmAll } = req.body || {};
+    if (clearAll === true && confirmAll === 'CONFIRM_PURGE_ALL_RECORDS') {
       await prisma.attendance.deleteMany({});
     } else if (serviceId) {
       await prisma.attendance.deleteMany({ where: { serviceId } });
+    } else if (serviceName && serviceName.toUpperCase() !== 'ALL') {
+      const prefix = serviceName.split(/[:\&\(\)\—\-]+/)[0].trim();
+      const svcs = await prisma.service.findMany({
+        where: {
+          OR: [
+            { serviceType: { name: { contains: prefix, mode: 'insensitive' } } },
+            { serviceType: { name: { contains: serviceName, mode: 'insensitive' } } }
+          ]
+        },
+        select: { id: true }
+      });
+      const svcIds = svcs.map(s => s.id);
+      if (svcIds.length > 0) {
+        await prisma.attendance.deleteMany({ where: { serviceId: { in: svcIds } } });
+      }
     } else {
       const { start: startOfDay, end: endOfDay } = getDayRange();
-
-      if (serviceName) {
-        const prefix = serviceName.split(':')[0].trim();
-        const svcs = await prisma.service.findMany({
-          where: { serviceType: { name: { contains: prefix, mode: 'insensitive' } } },
-          select: { id: true }
-        });
-        const svcIds = svcs.map(s => s.id);
-        if (svcIds.length > 0) {
-          await prisma.attendance.deleteMany({ where: { serviceId: { in: svcIds } } });
-        }
-        await prisma.attendance.deleteMany({
-          where: { checkedInAt: { gte: startOfDay, lte: endOfDay } }
-        });
-      } else {
-        await prisma.attendance.deleteMany({
-          where: { checkedInAt: { gte: startOfDay, lte: endOfDay } }
-        });
-      }
+      await prisma.attendance.deleteMany({
+        where: { checkedInAt: { gte: startOfDay, lte: endOfDay } }
+      });
     }
+    analyticsService.invalidateAnalyticsCache();
     res.json({ success: true, message: 'Attendance records cleared successfully' });
   } catch (e) { next(e); }
 });
