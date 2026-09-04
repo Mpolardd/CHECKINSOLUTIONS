@@ -9376,6 +9376,36 @@
       }
     }
 
+    function getPastoralStatusBadgeStyle(status) {
+      const s = (status || '').toLowerCase();
+      if (s.includes('good') || s.includes('resolved') || s.includes('faithful') || s.includes('active')) {
+        return 'background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-weight: 700;';
+      }
+      if (s.includes('required') || s.includes('critical')) {
+        return 'background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; font-weight: 700;';
+      }
+      if (s.includes('concern')) {
+        return 'background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; font-weight: 700;';
+      }
+      if (s.includes('watch')) {
+        return 'background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; font-weight: 700;';
+      }
+      if (s.includes('welcome') || s.includes('outreach') || s.includes('first')) {
+        return 'background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 700;';
+      }
+      return 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-weight: 600;';
+    }
+
+    function getPastoralStatusColor(status) {
+      const s = (status || '').toLowerCase();
+      if (s.includes('good') || s.includes('resolved') || s.includes('faithful') || s.includes('active')) return '#15803d';
+      if (s.includes('required') || s.includes('critical')) return '#b91c1c';
+      if (s.includes('concern')) return '#c2410c';
+      if (s.includes('watch')) return '#854d0e';
+      if (s.includes('welcome') || s.includes('outreach') || s.includes('first')) return '#0369a1';
+      return '#475569';
+    }
+
     function renderAnalyticsWatchlistGrid() {
       if (!currentAnalyticsData || !currentAnalyticsData.members) return;
       const container = document.getElementById('analyticsWatchlistGrid');
@@ -9459,7 +9489,7 @@
               </div>
             </div>
             <div style="display: flex; gap: 6px; align-items: center; border-top: 1px solid var(--line); padding-top: 8px;">
-              <span style="font-size: 11px; color: var(--muted); flex: 1;">Status: <strong>${m.pastoralFollowUp?.status || 'None'}</strong></span>
+              <span style="font-size: 11px; color: var(--muted); flex: 1;">Status: <strong style="color: ${getPastoralStatusColor(m.pastoralFollowUp?.status)};">${escapeHtml(m.pastoralFollowUp?.status || 'In Good Standing')}</strong></span>
               ${phoneClean ? `<a href="${waLink}" target="_blank" class="btn-main" style="padding: 3px 8px; font-size: 11px; background: #25d366; text-decoration: none;"><i class="fab fa-whatsapp"></i></a>` : ''}
               <button class="btn-main" style="padding: 3px 10px; font-size: 11px; background: #0284c7;" onclick="openMemberAnalyticsModal('${m.memberId}')">Dossier</button>
             </div>
@@ -9613,8 +9643,8 @@
             <td><strong style="color: var(--emerald); font-weight:800;">${m.overall.rate}%</strong> <span style="font-size:11px;color:var(--muted);">(${m.overall.attended}/${m.overall.available})</span></td>
             <td>${scoreGauge}</td>
             <td>
-              <span class="badge-check" style="font-size: 11px; background: ${m.pastoralFollowUp.status === 'Resolved' ? '#dcfce7;color:#15803d;' : (m.pastoralFollowUp.status.includes('Required') ? '#fee2e2;color:#b91c1c;' : '#f1f5f9;color:#475569;')}">
-                ${escapeHtml(m.pastoralFollowUp.status)}
+              <span class="badge-check" style="font-size: 11px; ${getPastoralStatusBadgeStyle(m.pastoralFollowUp?.status)}">
+                ${escapeHtml(m.pastoralFollowUp?.status || 'In Good Standing')}
               </span>
             </td>
             <td style="text-align: right;">
@@ -9657,7 +9687,7 @@
                 <div class="mob-card-row"><span>Friday %</span><strong>${m.friday.rate}% (${m.friday.attended}/${m.friday.available})</strong></div>
                 <div class="mob-card-row"><span>Overall %</span><strong style="color:var(--emerald);">${m.overall.rate}% (${m.overall.attended}/${m.overall.available})</strong></div>
                 <div class="mob-card-row"><span>Score</span><strong style="color:${m.engagement.badgeColor};">${m.engagement.score}/100 (${m.engagement.tierLabel})</strong></div>
-                <div class="mob-card-row"><span>Pastoral Status</span><strong>${m.pastoralFollowUp.status}</strong></div>
+                <div class="mob-card-row"><span>Pastoral Status</span><strong style="color:${getPastoralStatusColor(m.pastoralFollowUp?.status)};">${escapeHtml(m.pastoralFollowUp?.status || 'In Good Standing')}</strong></div>
               </div>
               <div class="mob-card-actions">
                 <button class="btn-main" style="background:#14532d;" onclick="openMemberAnalyticsModal('${m.memberId}')"><i class="fas fa-user-pen"></i> Open Dossier</button>

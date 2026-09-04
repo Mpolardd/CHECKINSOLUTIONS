@@ -600,10 +600,24 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
     const isVisitor = visitorMembers.some(v => v.id === member.id);
 
     // Pastoral Care Status
+    let defaultStatus = 'In Good Standing';
+    if (ovProfile.consecutiveMissed >= 3 && ovProfile.totalAttended > 0) {
+      defaultStatus = 'Follow-Up Required';
+    } else if (ovProfile.consecutiveMissed === 2 && ovProfile.totalAttended > 0) {
+      defaultStatus = 'Concern (Missed 2)';
+    } else if (ovProfile.consecutiveMissed === 1 && ovProfile.totalAttended > 0) {
+      defaultStatus = 'Watch (Missed 1)';
+    } else if (ovProfile.totalAttended === 0) {
+      defaultStatus = isVisitor ? 'First-Timer Welcome' : 'First Outreach Needed';
+    } else {
+      defaultStatus = 'In Good Standing';
+    }
+
     const followUp = memberLatestFollowUp.get(member.id) || {
-      status: (ovProfile.consecutiveMissed >= 3 && ovProfile.totalAttended > 0) ? 'Follow-Up Required' : 'None',
+      status: defaultStatus,
       note: '',
-      updatedAt: null
+      updatedAt: null,
+      isAutoAssigned: true
     };
 
     return {
@@ -1096,14 +1110,26 @@ async function getMemberAttendanceAnalytics(memberId) {
     take: 20
   });
 
+  let defaultDossierStatus = 'In Good Standing';
+  if (ovProfile.consecutiveMissed >= 3 && ovProfile.totalAttended > 0) {
+    defaultDossierStatus = 'Follow-Up Required';
+  } else if (ovProfile.consecutiveMissed === 2 && ovProfile.totalAttended > 0) {
+    defaultDossierStatus = 'Concern (Missed 2)';
+  } else if (ovProfile.consecutiveMissed === 1 && ovProfile.totalAttended > 0) {
+    defaultDossierStatus = 'Watch (Missed 1)';
+  } else if (ovProfile.totalAttended === 0) {
+    defaultDossierStatus = (member.role || '').toLowerCase().includes('visitor') ? 'First-Timer Welcome' : 'First Outreach Needed';
+  }
+
   const latestFollowUp = followUpLogs[0] ? {
     status: (followUpLogs[0].metadata && followUpLogs[0].metadata.status) || 'Follow-Up Required',
     note: (followUpLogs[0].metadata && followUpLogs[0].metadata.note) || '',
     updatedAt: followUpLogs[0].createdAt
   } : {
-    status: (ovProfile.consecutiveMissed >= 3 && ovProfile.totalAttended > 0) ? 'Follow-Up Required' : 'None',
+    status: defaultDossierStatus,
     note: '',
-    updatedAt: null
+    updatedAt: null,
+    isAutoAssigned: true
   };
 
   return {
