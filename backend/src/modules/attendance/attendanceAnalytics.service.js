@@ -1126,10 +1126,10 @@ async function getMemberAttendanceAnalytics(memberId) {
     select: { id: true, memberId: true, serviceId: true, checkedInAt: true, method: true }
   });
 
-  const sundayProfile = calculateConsecutiveStreaks(allSundayServices, allHistoricalAttendances, excusedMap, [memberId], 'Sunday').get(memberId) || {};
-  const wednesdayProfile = calculateConsecutiveStreaks(allWednesdayServices, allHistoricalAttendances, excusedMap, [memberId], 'Wednesday').get(memberId) || {};
-  const fridayProfile = calculateConsecutiveStreaks(allFridayServices, allHistoricalAttendances, excusedMap, [memberId], 'Friday').get(memberId) || {};
-  const overallProfile = calculateConsecutiveStreaks(allHistoricalServices, allHistoricalAttendances, excusedMap, [memberId], 'Overall').get(memberId) || {};
+  const sunProfile = calculateConsecutiveStreaks(allSundayServices, allHistoricalAttendances, excusedMap, [memberId], 'Sunday').get(memberId) || createDefaultProfile('Sunday');
+  const wedProfile = calculateConsecutiveStreaks(allWednesdayServices, allHistoricalAttendances, excusedMap, [memberId], 'Wednesday').get(memberId) || createDefaultProfile('Wednesday');
+  const friProfile = calculateConsecutiveStreaks(allFridayServices, allHistoricalAttendances, excusedMap, [memberId], 'Friday').get(memberId) || createDefaultProfile('Friday');
+  const ovProfile = calculateConsecutiveStreaks(allHistoricalServices, allHistoricalAttendances, excusedMap, [memberId], 'Overall').get(memberId) || createDefaultProfile('Overall');
 
   // Cumulative service type check-in totals
   let sundayTotal = 0;

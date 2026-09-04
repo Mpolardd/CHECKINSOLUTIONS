@@ -905,9 +905,13 @@ router.post('/quick-register-checkin', async (req, res, next) => {
 
 router.post('/clear', async (req, res, next) => {
   try {
-    const { serviceId, serviceName, clearAll, confirmAll } = req.body || {};
+    const { serviceId, serviceName, memberId, clearAll, confirmAll } = req.body || {};
     if (clearAll === true && confirmAll === 'CONFIRM_PURGE_ALL_RECORDS') {
       await prisma.attendance.deleteMany({});
+    } else if (memberId && serviceId) {
+      await prisma.attendance.deleteMany({ where: { memberId, serviceId } });
+    } else if (memberId) {
+      await prisma.attendance.deleteMany({ where: { memberId } });
     } else if (serviceId) {
       await prisma.attendance.deleteMany({ where: { serviceId } });
     } else if (serviceName && serviceName.toUpperCase() !== 'ALL') {
