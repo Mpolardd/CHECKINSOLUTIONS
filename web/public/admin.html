@@ -2724,9 +2724,16 @@
           <div class="form-group">
             <label for="newMemCategory" class="form-label">Member Category *</label>
             <select required id="newMemCategory" class="form-ctrl" onchange="toggleAddGuardianField(this.value)">
-              <option value="Adult" selected>Adult Member</option>
-              <option value="Child">Child (Kids Church / Sunday School)</option>
-              <option value="Youth">Youth / Teen</option>
+              <optgroup label="Permanent Church Members">
+                <option value="Adult" selected>Adult Member</option>
+                <option value="Child">Child (Kids Church / Sunday School)</option>
+                <option value="Youth">Youth / Teen</option>
+              </optgroup>
+              <optgroup label="Visitors / Guests">
+                <option value="Visitor / Guest">Visitor / Guest (Adult)</option>
+                <option value="Visitor (Child)">Visitor (Child / Kids Church)</option>
+                <option value="Visitor (Youth)">Visitor (Youth / Teen)</option>
+              </optgroup>
             </select>
           </div>
           <div class="form-group">
@@ -2763,14 +2770,19 @@
           <div class="form-group">
             <label for="newMemRole" class="form-label">Role / Department / Class</label>
             <select id="newMemRole" class="form-ctrl">
-              <option value="Member">Member</option>
-              <option value="Child / Sunday School">Child / Sunday School</option>
-              <option value="Youth / Teen">Youth / Teen</option>
-              <option value="Worker / Usher">Worker / Usher</option>
-              <option value="Choir / Praise">Choir / Praise</option>
-              <option value="Youth Leader">Youth Leader</option>
-              <option value="Minister / Deacon">Minister / Deacon</option>
-              <option value="Elder / Pastor">Elder / Pastor</option>
+              <optgroup label="Member Roles & Departments">
+                <option value="Member">Member</option>
+                <option value="Child / Sunday School">Child / Sunday School</option>
+                <option value="Youth / Teen">Youth / Teen</option>
+                <option value="Worker / Usher">Worker / Usher</option>
+                <option value="Choir / Praise">Choir / Praise</option>
+                <option value="Youth Leader">Youth Leader</option>
+                <option value="Minister / Deacon">Minister / Deacon</option>
+                <option value="Elder / Pastor">Elder / Pastor</option>
+              </optgroup>
+              <optgroup label="Visitor Roles">
+                <option value="Visitor / First Timer">Visitor / First Timer</option>
+              </optgroup>
             </select>
           </div>
         </div>
@@ -2789,11 +2801,12 @@
   <div class="modal-backdrop" id="editMemberModal">
     <div class="modal-card">
       <button class="modal-close" onclick="closeEditMemberModal()">✕</button>
-      <h3 style="font-family: Manrope, sans-serif; font-size: 20px; margin-bottom: 4px;">Edit Member Profile</h3>
-      <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Update personal details, category, Guardian, Date of Birth (DOB), or address.</p>
+      <h3 style="font-family: Manrope, sans-serif; font-size: 20px; margin-bottom: 4px;" id="editMemModalTitle">Edit Profile</h3>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;" id="editMemModalSubtitle">Update personal details, category, Guardian, Date of Birth (DOB), or address.</p>
       
       <form onsubmit="handleUpdateMember(event)">
         <input type="hidden" id="editMemId" />
+        <input type="hidden" id="editMemOriginalIsGuest" value="false" />
         <!-- Member Photo Upload (Optional) -->
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; padding: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
           <input type="file" id="editMemPhotoFile" accept="image/*,.heic,.heif,image/heic,image/heif" style="display: none;" onchange="handleMemberPhotoUpload(event, 'edit')" />
@@ -2824,11 +2837,18 @@
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
-            <label for="editMemCategory" class="form-label">Member Category *</label>
+            <label for="editMemCategory" class="form-label">Category *</label>
             <select required id="editMemCategory" class="form-ctrl" onchange="toggleEditGuardianField(this.value)">
-              <option value="Adult">Adult Member</option>
-              <option value="Child">Child (Kids Church / Sunday School)</option>
-              <option value="Youth">Youth / Teen</option>
+              <optgroup label="Visitor / Guest Categories">
+                <option value="Visitor / Guest">Visitor / Guest (Adult)</option>
+                <option value="Visitor (Child)">Visitor (Child / Sunday School)</option>
+                <option value="Visitor (Youth)">Visitor (Youth / Teen)</option>
+              </optgroup>
+              <optgroup label="Church Member Categories">
+                <option value="Adult">Adult Member</option>
+                <option value="Child">Child (Kids Church / Sunday School)</option>
+                <option value="Youth">Youth / Teen</option>
+              </optgroup>
             </select>
           </div>
           <div class="form-group">
@@ -2864,14 +2884,19 @@
           <div class="form-group">
             <label for="editMemRole" class="form-label">Role / Department / Class</label>
             <select id="editMemRole" class="form-ctrl">
-              <option value="Member">Member</option>
-              <option value="Child / Sunday School">Child / Sunday School</option>
-              <option value="Youth / Teen">Youth / Teen</option>
-              <option value="Worker / Usher">Worker / Usher</option>
-              <option value="Choir / Praise">Choir / Praise</option>
-              <option value="Youth Leader">Youth Leader</option>
-              <option value="Minister / Deacon">Minister / Deacon</option>
-              <option value="Elder / Pastor">Elder / Pastor</option>
+              <optgroup label="Visitor Roles">
+                <option value="Visitor / First Timer">Visitor / First Timer</option>
+              </optgroup>
+              <optgroup label="Member Roles & Departments">
+                <option value="Member">Member</option>
+                <option value="Child / Sunday School">Child / Sunday School</option>
+                <option value="Youth / Teen">Youth / Teen</option>
+                <option value="Worker / Usher">Worker / Usher</option>
+                <option value="Choir / Praise">Choir / Praise</option>
+                <option value="Youth Leader">Youth Leader</option>
+                <option value="Minister / Deacon">Minister / Deacon</option>
+                <option value="Elder / Pastor">Elder / Pastor</option>
+              </optgroup>
             </select>
           </div>
         </div>
@@ -6924,18 +6949,25 @@
     }
 
     function toggleAddGuardianField(val) {
-      const isChild = val === 'Child';
-      document.getElementById('wrapAddGuardian').style.display = isChild ? 'block' : 'none';
-      document.getElementById('lblAddPhone').innerText = isChild ? 'Parent / Contact Phone *' : 'Phone Number *';
+      const isChild = val === 'Child' || (typeof val === 'string' && val.toLowerCase().includes('child'));
+      const wrap = document.getElementById('wrapAddGuardian');
+      if (wrap) wrap.style.display = isChild ? 'block' : 'none';
+      const lbl = document.getElementById('lblAddPhone');
+      if (lbl) lbl.innerText = isChild ? 'Parent / Contact Phone *' : 'Phone Number *';
       if (isChild) {
-        document.getElementById('newMemRole').value = 'Child / Sunday School';
+        const roleEl = document.getElementById('newMemRole');
+        if (roleEl && !roleEl.value.includes('Visitor')) {
+          roleEl.value = 'Child / Sunday School';
+        }
       }
     }
 
     function toggleEditGuardianField(val) {
-      const isChild = val === 'Child';
-      document.getElementById('wrapEditGuardian').style.display = isChild ? 'block' : 'none';
-      document.getElementById('lblEditPhone').innerText = isChild ? 'Parent / Contact Phone *' : 'Phone Number *';
+      const isChild = val === 'Child' || (typeof val === 'string' && val.toLowerCase().includes('child'));
+      const wrap = document.getElementById('wrapEditGuardian');
+      if (wrap) wrap.style.display = isChild ? 'block' : 'none';
+      const lbl = document.getElementById('lblEditPhone');
+      if (lbl) lbl.innerText = isChild ? 'Parent / Contact Phone *' : 'Phone Number *';
     }
 
     async function convertHeicToJpeg(file) {
@@ -7095,19 +7127,99 @@
     }
 
     function openEditMemberModal(id) {
-      const member = allMembers.find(m => m.id === id);
+      let member = allMembers.find(m => m.id === id);
+      if (!member) {
+        // Fallback check in processedVisitorsList
+        const vis = (processedVisitorsList || []).find(v => v.id === id || v.memberId === id);
+        if (vis) {
+          member = {
+            id: vis.memberId || vis.id,
+            firstName: vis.firstName || (vis.name ? vis.name.split(' ')[0] : 'Visitor'),
+            lastName: vis.lastName || (vis.name ? vis.name.split(' ').slice(1).join(' ') : 'Guest'),
+            category: vis.category || 'Visitor / Guest',
+            guardian: vis.guardian || '',
+            phone: vis.phone !== '—' ? vis.phone : '',
+            gender: vis.gender !== 'Not specified' ? vis.gender : 'Male',
+            address: vis.address !== '—' ? vis.address : '',
+            dob: '',
+            rawDob: null,
+            role: vis.role || 'Visitor / First Timer',
+            email: '',
+            photoUrl: vis.photoUrl || null,
+            isGuest: true
+          };
+        }
+      }
       if (!member) return;
+
+      const isGuest = isGuestMember(member);
+
+      const titleEl = document.getElementById('editMemModalTitle');
+      const subTitleEl = document.getElementById('editMemModalSubtitle');
+      if (titleEl) {
+        titleEl.innerHTML = isGuest 
+          ? `<i class="fa-solid fa-user-clock" style="color: var(--gold); margin-right: 6px;"></i> Edit Visitor / Guest Profile`
+          : `Edit Member Profile`;
+      }
+      if (subTitleEl) {
+        subTitleEl.innerText = isGuest
+          ? `Update visitor details or correct spelling of their name without altering their visitor status.`
+          : `Update personal details, category, Guardian, Date of Birth (DOB), or address.`;
+      }
+
+      const origIsGuestInput = document.getElementById('editMemOriginalIsGuest');
+      if (origIsGuestInput) origIsGuestInput.value = isGuest ? 'true' : 'false';
 
       document.getElementById('editMemId').value = member.id;
       document.getElementById('editMemFirst').value = member.firstName || '';
       document.getElementById('editMemLast').value = member.lastName || '';
-      document.getElementById('editMemCategory').value = member.category || 'Adult';
+
+      // Determine correct Category select value
+      let selectedCat = 'Adult';
+      const rawCat = (member.category || '').trim();
+      const rawRole = (member.role || '').trim();
+      const isChild = rawCat.toLowerCase().includes('child') || rawRole.toLowerCase().includes('child');
+      const isYouth = rawCat.toLowerCase().includes('youth') || rawRole.toLowerCase().includes('youth');
+
+      if (isGuest) {
+        if (isChild) {
+          selectedCat = 'Visitor (Child)';
+        } else if (isYouth) {
+          selectedCat = 'Visitor (Youth)';
+        } else {
+          selectedCat = 'Visitor / Guest';
+        }
+      } else {
+        if (isChild) {
+          selectedCat = 'Child';
+        } else if (isYouth) {
+          selectedCat = 'Youth';
+        } else {
+          selectedCat = 'Adult';
+        }
+      }
+
+      const catSelect = document.getElementById('editMemCategory');
+      if (catSelect) catSelect.value = selectedCat;
+
       document.getElementById('editMemGuardian').value = member.guardian || '';
       document.getElementById('editMemPhone').value = member.phone || '';
       document.getElementById('editMemGender').value = member.gender || 'Male';
       document.getElementById('editMemAddress').value = member.address || '';
       document.getElementById('editMemDob').value = convertToInputDateFormat(member.dob, member.rawDob);
-      document.getElementById('editMemRole').value = member.role || 'Member';
+
+      // Determine Role select value
+      let selectedRole = 'Member';
+      if (isGuest) {
+        selectedRole = 'Visitor / First Timer';
+      } else if (isChild) {
+        selectedRole = 'Child / Sunday School';
+      } else if (member.role) {
+        selectedRole = member.role;
+      }
+      const roleSelect = document.getElementById('editMemRole');
+      if (roleSelect) roleSelect.value = selectedRole;
+
       document.getElementById('editMemEmail').value = member.email || '';
 
       const editPhotoUrl = member.photoUrl || '';
@@ -7126,7 +7238,7 @@
         }
       }
 
-      toggleEditGuardianField(member.category || 'Adult');
+      toggleEditGuardianField(selectedCat);
 
       document.getElementById('editMemberModal').classList.add('active');
       document.getElementById('editMemFirst').focus();
@@ -7148,8 +7260,20 @@
       const address = document.getElementById('editMemAddress').value.trim();
       const rawDob = document.getElementById('editMemDob').value;
       const email = document.getElementById('editMemEmail')?.value?.trim() || '';
-      const role = document.getElementById('editMemRole').value;
+      let role = document.getElementById('editMemRole').value;
       const photoUrl = document.getElementById('editMemPhotoUrl')?.value?.trim() || '';
+      const wasGuest = document.getElementById('editMemOriginalIsGuest')?.value === 'true';
+
+      const isChild = category.toLowerCase().includes('child');
+      const isVisitorCat = category.toLowerCase().includes('visitor') || category.toLowerCase().includes('guest');
+      const isVisitorRole = role.toLowerCase().includes('visitor') || role.toLowerCase().includes('first timer');
+      
+      // If was a visitor and category is a visitor category or still has visitor role, keep as visitor!
+      const isGuest = isVisitorCat || isVisitorRole || (wasGuest && category.startsWith('Visitor'));
+
+      if (isGuest && (!role || role === 'Member')) {
+        role = 'Visitor / First Timer';
+      }
 
       const formattedDob = formatDisplayDate(rawDob);
       let token = await getAdminAuthToken();
@@ -7160,12 +7284,12 @@
             firstName: first,
             lastName: last,
             category,
-            guardian: category === 'Child' ? guardian : undefined,
+            guardian: isChild ? guardian : undefined,
             phone: phone || undefined,
             gender: gender || undefined,
             address: address || undefined,
             dateOfBirth: rawDob ? new Date(rawDob).toISOString() : undefined,
-            role: role || (category === 'Child' ? 'Child / Sunday School' : 'Member'),
+            role: role || (isGuest ? 'Visitor / First Timer' : (isChild ? 'Child / Sunday School' : 'Member')),
             email: email || undefined,
             photoUrl: photoUrl || null
           };
@@ -7197,6 +7321,7 @@
         }
       }
 
+      const updatedFullName = `${first} ${last}`.trim();
       const index = allMembers.findIndex(m => m.id === id);
       if (index !== -1) {
         allMembers[index] = {
@@ -7204,7 +7329,7 @@
           firstName: first,
           lastName: last,
           category,
-          guardian: category === 'Child' ? guardian : '',
+          guardian: isChild ? guardian : '',
           phone,
           gender,
           address,
@@ -7213,16 +7338,56 @@
           email,
           role,
           photoUrl: photoUrl || null,
-          isGuest: category.toLowerCase().includes('visitor') || category.toLowerCase().includes('guest')
+          isGuest
         };
-
-        saveMembersToStorage();
-        updateDirectoryCounts();
-        filterMembersTable();
-        renderAttendanceAndDemographics();
-        closeEditMemberModal();
-        showToast(`Member profile for <strong>${escapeHtml(first)} ${escapeHtml(last)}</strong> updated in cloud database!`, 'success', 'Profile Updated');
       }
+
+      // Propagate updated name and details to in-memory attendance and visitor records
+      if (Array.isArray(rawVisitorsData)) {
+        rawVisitorsData.forEach(v => {
+          if (v.memberId === id || v.id === id || (phone && v.phone === phone)) {
+            v.name = updatedFullName;
+            v.firstName = first;
+            v.lastName = last;
+            v.phone = phone || v.phone;
+            v.gender = gender || v.gender;
+            v.address = address || v.address;
+            v.category = category;
+            v.role = role;
+            if (isChild) v.guardian = guardian;
+            if (photoUrl) v.photoUrl = photoUrl;
+          }
+        });
+      }
+
+      if (typeof serviceAttendanceMap === 'object' && serviceAttendanceMap !== null) {
+        Object.keys(serviceAttendanceMap).forEach(k => {
+          (serviceAttendanceMap[k] || []).forEach(att => {
+            if (att.memberId === id || att.id === id || att.member?.id === id || (phone && att.phone === phone)) {
+              att.name = updatedFullName;
+              att.firstName = first;
+              att.lastName = last;
+              att.category = category;
+              att.role = role;
+              if (att.member) {
+                att.member.firstName = first;
+                att.member.lastName = last;
+                att.member.category = category;
+                att.member.role = role;
+                att.member.isGuest = isGuest;
+              }
+            }
+          });
+        });
+      }
+
+      saveMembersToStorage();
+      updateDirectoryCounts();
+      filterMembersTable();
+      renderAttendanceAndDemographics();
+      renderVisitorsSection();
+      closeEditMemberModal();
+      showToast(`${isGuest ? 'Visitor' : 'Member'} profile for <strong>${escapeHtml(updatedFullName)}</strong> updated in cloud database!`, 'success', 'Profile Updated');
     }
 
     function formatDisplayDate(dateStr) {
@@ -8933,6 +9098,9 @@
             <td><span class="badge badge-method">${escapeHtml(v.method || "KIOSK")}</span></td>
             <td>
               <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn-ghost" style="padding: 4px 8px; font-size: 11px; font-weight: 600; color: #1e293b; border-color: #cbd5e1; background: #f8fafc;" onclick="openEditMemberModal('${escapeHtml(v.memberId || v.id)}')" title="Edit Visitor Name or Details">
+                  <i class="fas fa-edit" style="color: var(--accent);"></i> Edit
+                </button>
                 ${hasValidPhone ? `
                   <button type="button" class="btn-ghost" style="padding: 4px 8px; font-size: 11px; color: #059669; border-color: #a7f3d0; background: #ecfdf5;" onclick="openWhatsAppToVisitor('${escapeHtml(intlPhone)}', '${escapeHtml(v.name)}')" title="Send Welcome WhatsApp">
                     <i class="fa-brands fa-whatsapp" style="font-size: 13px;"></i> WhatsApp
@@ -8982,6 +9150,9 @@
                 ${hasValidPhone ? `<div style="margin-top: 2px;"><i class="fas fa-phone"></i> ${escapeHtml(v.phone)}</div>` : ""}
               </div>
               <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn-ghost" style="padding: 6px 12px; font-size: 11.5px; font-weight: 600; color: #1e293b; border-color: #cbd5e1; background: #f8fafc; flex: 1; justify-content: center; display: inline-flex; align-items: center; gap: 4px;" onclick="openEditMemberModal('${escapeHtml(v.memberId || v.id)}')" title="Edit Visitor Name or Details">
+                  <i class="fas fa-edit" style="color: var(--accent);"></i> Edit
+                </button>
                 ${hasValidPhone ? `
                   <button type="button" class="btn-ghost" style="padding: 6px 12px; font-size: 11.5px; color: #059669; border-color: #a7f3d0; background: #ecfdf5; flex: 1; justify-content: center;" onclick="openWhatsAppToVisitor('${escapeHtml(intlPhone)}', '${escapeHtml(v.name)}')">
                     <i class="fa-brands fa-whatsapp" style="font-size: 14px;"></i> WhatsApp
@@ -9020,7 +9191,7 @@
           try {
             const token = sessionStorage.getItem("sfmi_token") || localStorage.getItem("sfmi_token");
             const res = await fetch(`${API_BASE}/members/${memberId}`, {
-              method: "PATCH",
+              method: "PUT",
               headers: {
                 "Content-Type": "application/json",
                 ...(token ? { "Authorization": `Bearer ${token}` } : {})
@@ -9061,7 +9232,7 @@
 
     function openAddVisitorModal() {
       openAddMemberModal();
-      const catSelect = document.getElementById("newMemCat");
+      const catSelect = document.getElementById("newMemCategory");
       const roleSelect = document.getElementById("newMemRole");
       if (catSelect) catSelect.value = "Visitor / Guest";
       if (roleSelect) roleSelect.value = "Visitor / First Timer";

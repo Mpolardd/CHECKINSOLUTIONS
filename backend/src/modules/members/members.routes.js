@@ -178,7 +178,7 @@ router.post('/upload-photo', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', '
   }
 });
 
-router.put('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION'), async (req, res, next) => {
+const updateMemberHandler = async (req, res, next) => {
   try {
     const b = memberSchema.partial().parse(req.body);
     const data = {};
@@ -188,8 +188,14 @@ router.put('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATI
     if (b.phone !== undefined) data.phone = normalizePhone(b.phone) || b.phone?.trim() || null;
     if (b.gender !== undefined) data.gender = b.gender ? b.gender.trim() : null;
     if (b.address !== undefined) data.address = b.address ? b.address.trim() : null;
-    if (b.category !== undefined) data.category = b.category ? b.category.trim() : 'Adult';
-    if (b.role !== undefined) data.role = b.role ? b.role.trim() : 'Member';
+    if (b.category !== undefined) {
+      const catVal = b.category ? b.category.trim() : null;
+      if (catVal) data.category = catVal;
+    }
+    if (b.role !== undefined) {
+      const roleVal = b.role ? b.role.trim() : null;
+      if (roleVal) data.role = roleVal;
+    }
     if (b.guardian !== undefined) data.guardian = b.guardian ? b.guardian.trim() : null;
     if (b.dateOfBirth !== undefined) data.dateOfBirth = parseOptionalDate(b.dateOfBirth);
     if (b.anniversary !== undefined) data.anniversary = parseOptionalDate(b.anniversary);
@@ -218,7 +224,10 @@ router.put('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATI
   } catch (e) {
     next(e);
   }
-});
+};
+
+router.put('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION'), updateMemberHandler);
+router.patch('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION'), updateMemberHandler);
 
 // Soft Delete to safeguard historical attendance and reporting data
 router.delete('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
