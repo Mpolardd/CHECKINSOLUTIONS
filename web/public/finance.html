@@ -132,6 +132,28 @@
       color: white;
     }
 
+    .btn-header-settings {
+      background: rgba(255, 255, 255, 0.12);
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      padding: 7px 13px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn-header-settings:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: white;
+    }
+
     .btn-header-logout {
       background: #c5221f;
       color: white;
@@ -872,16 +894,99 @@
           <div class="brand-sub">Church Treasury &amp; Financial Entry Portal</div>
         </div>
       </div>
-      <div class="nav-logout-wrap" id="finLogoutWrap" style="display: none;">
+      <div class="nav-logout-wrap" id="finLogoutWrap" style="display: none; align-items: center; gap: 8px;">
         <a href="/partnership" class="btn-header-partner" title="Open Partnership Portal">
           <i class="fas fa-handshake"></i> <span class="nav-btn-text">Partnership Portal</span>
         </a>
+        <button type="button" class="btn-header-settings" onclick="openFinProfileSettingsModal()" title="My Profile &amp; Change Password" id="btnFinSettings">
+          <i class="fas fa-user-gear"></i> <span class="nav-btn-text" id="finNavUserBadge">Settings</span>
+        </button>
         <button id="btnFinLogout" class="btn-header-logout" onclick="handleFinLogout()" title="Log Out">
           <i class="fas fa-sign-out-alt"></i> <span class="nav-btn-text">Log Out</span>
         </button>
       </div>
     </div>
   </header>
+
+  <!-- Treasury Officer Account Profile & Change Password Modal -->
+  <div class="modal-backdrop" id="finProfileSettingsModal" style="display: none;" onclick="if(event.target===this)closeFinProfileSettingsModal()">
+    <div class="modal-card" style="max-width: 500px; text-align: left; padding: 26px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(200, 155, 85, 0.18); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 18px;">
+            <i class="fas fa-user-shield"></i>
+          </div>
+          <div>
+            <h3 style="font-family: Manrope, sans-serif; font-size: 18px; font-weight: 800; color: var(--ink); margin: 0;">Treasury Profile &amp; Settings</h3>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Manage officer credentials and security password</div>
+          </div>
+        </div>
+        <button type="button" class="modal-close" onclick="closeFinProfileSettingsModal()">✕</button>
+      </div>
+
+      <!-- Profile Snapshot Card -->
+      <div style="background: #f8fafc; border: 1.5px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-bottom: 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div>
+            <strong style="font-size: 14px; color: var(--ink);" id="finProfileNameDisplay">Treasury Officer</strong>
+            <div style="font-size: 12px; color: var(--muted);" id="finProfileEmailDisplay">finance@solutionsfaith.com</div>
+          </div>
+          <span style="font-size: 10.5px; font-weight: 800; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">
+            TREASURY ACCESS
+          </span>
+        </div>
+        <div style="font-size: 11.5px; color: var(--muted);">
+          Authorized to record Sunday, Midweek, and Special Service remittances and submit financial collection ledgers.
+        </div>
+      </div>
+
+      <!-- Change Password Form -->
+      <form onsubmit="handleFinChangePasswordSubmit(event)" autocomplete="off">
+        <h4 style="font-size: 13.5px; font-weight: 800; color: var(--ink); margin: 0 0 12px 0;">
+          <i class="fas fa-key" style="color: var(--accent); margin-right: 6px;"></i> Change Account Password
+        </h4>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label for="finCurrentPassword" class="form-label" style="font-size: 12px;">Current Password *</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input required type="password" id="finCurrentPassword" class="form-ctrl" placeholder="Enter current password" style="padding-right: 42px;" />
+            <button type="button" onclick="togglePasswordVisibility('finCurrentPassword', 'eyeIconFinCur')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+              <i class="fas fa-eye" id="eyeIconFinCur"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label for="finNewPassword" class="form-label" style="font-size: 12px;">New Password *</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input required type="password" id="finNewPassword" class="form-ctrl" placeholder="Enter new password (min. 6 chars)" style="padding-right: 42px;" />
+            <button type="button" onclick="togglePasswordVisibility('finNewPassword', 'eyeIconFinNew')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+              <i class="fas fa-eye" id="eyeIconFinNew"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="finConfirmPassword" class="form-label" style="font-size: 12px;">Confirm New Password *</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input required type="password" id="finConfirmPassword" class="form-ctrl" placeholder="Re-enter new password to confirm" style="padding-right: 42px;" />
+            <button type="button" onclick="togglePasswordVisibility('finConfirmPassword', 'eyeIconFinConfirm')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+              <i class="fas fa-eye" id="eyeIconFinConfirm"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="finPasswordErrorMsg" style="display: none; padding: 10px; margin-bottom: 14px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 4px; font-size: 12.5px; font-weight: 600;"></div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn-main" style="flex: 1; background: #f1f5f9; color: var(--ink); border: 1px solid var(--line); justify-content: center;" onclick="closeFinProfileSettingsModal()">Cancel</button>
+          <button type="submit" class="btn-main" id="btnFinSavePassword" style="flex: 1.5; justify-content: center; background: var(--emerald-dark);">
+            <i class="fas fa-shield-halved"></i> Save New Password
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Reusable Custom Confirmation Modal -->
   <div class="modal-backdrop" id="customConfirmModal" style="display: none;" onclick="if(event.target===this)closeCustomConfirmModal(false)">
@@ -1301,6 +1406,14 @@
       const btn = document.getElementById('btnFinLogout');
       if (btn) btn.style.display = 'inline-flex';
 
+      try {
+        const u = JSON.parse(sessionStorage.getItem('sfmi_fin_user') || localStorage.getItem('sfmi_fin_user') || '{}');
+        const badge = document.getElementById('finNavUserBadge');
+        if (badge && (u.name || u.email)) {
+          badge.innerText = u.name || u.email.split('@')[0];
+        }
+      } catch (e) {}
+
       loadBranding();
       document.getElementById('finServiceDate').value = formatLocalDate(new Date());
       document.getElementById('liveDateDisplay').innerText = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
@@ -1421,6 +1534,126 @@
         input.type = 'password';
         icon.classList.remove('fa-eye-slash');
         icon.classList.add('fa-eye');
+      }
+    }
+
+    /* ── PROFILE & SETTINGS SYSTEM (FINANCE) ── */
+    function openFinProfileSettingsModal() {
+      let user = null;
+      try {
+        user = JSON.parse(sessionStorage.getItem('sfmi_fin_user') || localStorage.getItem('sfmi_fin_user') || '{}');
+      } catch (e) {
+        user = {};
+      }
+
+      const email = user.email || 'finance@solutionsfaith.com';
+      const name = user.name || (email.split('@')[0].toUpperCase());
+      const role = (user.role || 'FINANCE').replace(/_/g, ' ');
+
+      const avatarEl = document.getElementById('finProfileAvatarText');
+      if (avatarEl) avatarEl.innerText = (name.charAt(0) || 'F').toUpperCase();
+
+      const nameEl = document.getElementById('finProfileName');
+      if (nameEl) nameEl.innerText = name;
+
+      const emailEl = document.getElementById('finProfileEmail');
+      if (emailEl) emailEl.innerText = email;
+
+      const badgeEl = document.getElementById('finProfileRoleBadge');
+      if (badgeEl) badgeEl.innerText = role;
+
+      const cur = document.getElementById('finCurrentPassword');
+      if (cur) cur.value = '';
+      const np = document.getElementById('finNewPassword');
+      if (np) np.value = '';
+      const cp = document.getElementById('finConfirmPassword');
+      if (cp) cp.value = '';
+
+      const err = document.getElementById('finPasswordErrorMsg');
+      if (err) {
+        err.style.display = 'none';
+        err.innerText = '';
+      }
+
+      const modal = document.getElementById('finProfileSettingsModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeFinProfileSettingsModal() {
+      const modal = document.getElementById('finProfileSettingsModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    async function handleFinChangePasswordSubmit(e) {
+      e.preventDefault();
+      const currentPassword = document.getElementById('finCurrentPassword').value;
+      const newPassword = document.getElementById('finNewPassword').value;
+      const confirmPassword = document.getElementById('finConfirmPassword').value;
+      const errorMsg = document.getElementById('finPasswordErrorMsg');
+      const submitBtn = document.getElementById('btnFinSavePassword');
+
+      errorMsg.style.display = 'none';
+      errorMsg.innerText = '';
+
+      if (!currentPassword) {
+        errorMsg.innerText = 'Current password is required.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      if (!newPassword || newPassword.length < 6) {
+        errorMsg.innerText = 'New password must be at least 6 characters.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        errorMsg.innerText = 'New passwords do not match.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token');
+      if (!token || token.startsWith('sfmi_fin_offline_session_')) {
+        errorMsg.innerText = 'Cannot update password in offline fallback mode. Please ensure the backend server is reachable.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/change-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          errorMsg.innerText = data.error || 'Failed to update password. Check your current password.';
+          errorMsg.style.display = 'block';
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-shield-halved"></i> Save New Password';
+          }
+          return;
+        }
+
+        closeFinProfileSettingsModal();
+        showToast('Password updated successfully! Please keep your new password secure.', 'success', 'Password Changed');
+      } catch (err) {
+        errorMsg.innerText = 'Network error: could not connect to server.';
+        errorMsg.style.display = 'block';
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-shield-halved"></i> Save New Password';
+        }
       }
     }
 

@@ -342,4 +342,67 @@ router.delete('/subadmins/:id', requireAuth, requireRoles('SUPER_ADMIN'), async 
   }
 });
 
+// ── Change Password Endpoint (Accessible by all authenticated users: Super Admin, Sub-Admin, Finance) ──
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Confirmation password is required')
+});
+
+router.post('/change-password', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user?.sub;
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = changePasswordSchema.parse(req.body);
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ error: 'New password and confirmation password do not match' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'User account not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash }
+    });
+
+    // Revoke previous refresh tokens for safety
+    await prisma.refreshToken.updateMany({
+      where: { userId: user.id, revokedAt: null },
+      data: { revokedAt: new Date() }
+    });
+
+    try {
+      await prisma.auditLog.create({
+        data: {
+          actorId: user.id,
+          action: 'CHANGE_PASSWORD',
+          entity: 'USER',
+          entityId: user.id,
+          metadata: { email: user.email, role: user.role }
+        }
+      });
+    } catch (e) {}
+
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    if (err.issues && err.issues.length > 0) {
+      return res.status(400).json({ error: err.issues[0].message });
+    }
+    next(err);
+  }
+});
+
 module.exports = router;

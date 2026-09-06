@@ -134,6 +134,26 @@
       color: white;
     }
 
+    .btn-header-settings {
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #f1f5f9;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-header-settings:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
     /* Container */
     .fin-container {
       max-width: 900px;
@@ -537,6 +557,12 @@
         border-radius: 6px !important;
         gap: 5px !important;
       }
+      .btn-header-settings {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        border-radius: 6px !important;
+        gap: 5px !important;
+      }
       .btn-main {
         width: 100% !important;
         justify-content: center !important;
@@ -548,10 +574,15 @@
         font-size: 11px !important;
       }
       .btn-header-link .nav-btn-text,
+      .btn-header-settings .nav-btn-text,
       .btn-header-logout .nav-btn-text {
         display: none !important;
       }
       .btn-header-link {
+        padding: 7px 10px !important;
+        font-size: 13px !important;
+      }
+      .btn-header-settings {
         padding: 7px 10px !important;
         font-size: 13px !important;
       }
@@ -579,12 +610,91 @@
         <a href="/finance" class="btn-header-link" title="Open Post-Service Figures Entry">
           <i class="fas fa-coins"></i> <span class="nav-btn-text">Service Collections</span>
         </a>
+        <button type="button" class="btn-header-settings" onclick="openPartnerProfileSettingsModal()" title="My Profile & Change Password" id="btnPartnerSettings">
+          <i class="fas fa-user-gear"></i> <span class="nav-btn-text" id="partnerNavUserBadge">Settings</span>
+        </button>
         <button id="btnPartnerLogout" class="btn-header-logout" onclick="handlePartnerLogout()" title="Log Out">
           <i class="fas fa-sign-out-alt"></i> <span class="nav-btn-text">Log Out</span>
         </button>
       </div>
     </div>
   </header>
+
+  <!-- User Profile & Password Settings Modal -->
+  <div class="modal-backdrop" id="partnerProfileSettingsModal" style="display: none;" onclick="if(event.target===this)closePartnerProfileSettingsModal()">
+    <div class="modal-card" style="max-width: 460px; padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: #eff6ff; color: #2563eb; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">
+            <i class="fas fa-user-gear"></i>
+          </div>
+          <div>
+            <h3 style="font-family: Manrope, sans-serif; font-size: 17px; font-weight: 800; color: var(--ink); margin: 0;">Account Profile &amp; Settings</h3>
+            <p style="font-size: 12px; color: var(--muted); margin: 0;">Manage your profile and update your login password</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" onclick="closePartnerProfileSettingsModal()">✕</button>
+      </div>
+
+      <!-- Profile Snapshot Card -->
+      <div style="background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: 14px; margin-bottom: 18px; display: flex; align-items: center; gap: 14px;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: #1e293b; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; flex-shrink: 0;" id="partnerProfileAvatarText">P</div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 800; font-size: 15px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="partnerProfileName">Partnership Officer</div>
+          <div style="font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="partnerProfileEmail">partner@solutionsfaith.com</div>
+          <div style="margin-top: 4px;">
+            <span style="font-size: 10px; font-weight: 800; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;" id="partnerProfileRoleBadge">PARTNERSHIP</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Password Change Section -->
+      <h4 style="font-size: 13.5px; font-weight: 700; color: var(--ink); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+        <i class="fas fa-lock" style="color: #64748b;"></i> Change Password
+      </h4>
+
+      <form id="partnerChangePasswordForm" onsubmit="handlePartnerChangePasswordSubmit(event)">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Current Password</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input required type="password" id="partnerCurrentPassword" class="form-ctrl" style="padding-right: 42px; font-size: 13px;" placeholder="Enter current password" autocomplete="current-password" />
+            <button type="button" onclick="togglePasswordVisibility('partnerCurrentPassword', 'eyeIconPartnerCur')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+              <i class="fas fa-eye" id="eyeIconPartnerCur"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">New Password (min. 6 characters)</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input required type="password" id="partnerNewPassword" minlength="6" class="form-ctrl" style="padding-right: 42px; font-size: 13px;" placeholder="Enter new password" autocomplete="new-password" />
+            <button type="button" onclick="togglePasswordVisibility('partnerNewPassword', 'eyeIconPartnerNew')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+              <i class="fas fa-eye" id="eyeIconPartnerNew"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Confirm New Password</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input required type="password" id="partnerConfirmPassword" minlength="6" class="form-ctrl" style="padding-right: 42px; font-size: 13px;" placeholder="Repeat new password" autocomplete="new-password" />
+            <button type="button" onclick="togglePasswordVisibility('partnerConfirmPassword', 'eyeIconPartnerConfirm')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+              <i class="fas fa-eye" id="eyeIconPartnerConfirm"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="partnerPasswordErrorMsg" style="display: none; padding: 10px; margin-bottom: 14px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 4px; font-size: 12.5px; font-weight: 600;"></div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn-main" style="flex: 1; background: #f1f5f9; color: var(--ink); border: 1px solid var(--line); justify-content: center;" onclick="closePartnerProfileSettingsModal()">Cancel</button>
+          <button type="submit" class="btn-main" id="btnPartnerSavePassword" style="flex: 1.5; justify-content: center; background: #0f766e;">
+            <i class="fas fa-shield-halved"></i> Save New Password
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Custom Confirmation Modal -->
   <div class="modal-backdrop" id="customConfirmModal" style="display: none;" onclick="if(event.target===this)closeCustomConfirmModal(false)">
@@ -944,6 +1054,14 @@
       document.getElementById('partnerLoginScreen').style.display = 'none';
       document.getElementById('partnerDashboardContent').style.display = 'block';
       document.getElementById('partnerNavActions').style.display = 'flex';
+
+      try {
+        const u = JSON.parse(sessionStorage.getItem('sfmi_fin_user') || localStorage.getItem('sfmi_fin_user') || sessionStorage.getItem('sfmi_current_user') || '{}');
+        const badge = document.getElementById('partnerNavUserBadge');
+        if (badge && (u.name || u.email)) {
+          badge.innerText = u.name || u.email.split('@')[0];
+        }
+      } catch (e) {}
 
       loadBranding();
 
@@ -1417,6 +1535,126 @@
         input.type = 'password';
         icon.classList.remove('fa-eye-slash');
         icon.classList.add('fa-eye');
+      }
+    }
+
+    /* ── PROFILE & SETTINGS SYSTEM (PARTNERSHIP) ── */
+    function openPartnerProfileSettingsModal() {
+      let user = null;
+      try {
+        user = JSON.parse(sessionStorage.getItem('sfmi_fin_user') || localStorage.getItem('sfmi_fin_user') || sessionStorage.getItem('sfmi_current_user') || '{}');
+      } catch (e) {
+        user = {};
+      }
+
+      const email = user.email || 'partner@solutionsfaith.com';
+      const name = user.name || (email.split('@')[0].toUpperCase());
+      const role = (user.role || 'PARTNERSHIP').replace(/_/g, ' ');
+
+      const avatarEl = document.getElementById('partnerProfileAvatarText');
+      if (avatarEl) avatarEl.innerText = (name.charAt(0) || 'P').toUpperCase();
+
+      const nameEl = document.getElementById('partnerProfileName');
+      if (nameEl) nameEl.innerText = name;
+
+      const emailEl = document.getElementById('partnerProfileEmail');
+      if (emailEl) emailEl.innerText = email;
+
+      const badgeEl = document.getElementById('partnerProfileRoleBadge');
+      if (badgeEl) badgeEl.innerText = role;
+
+      const cur = document.getElementById('partnerCurrentPassword');
+      if (cur) cur.value = '';
+      const np = document.getElementById('partnerNewPassword');
+      if (np) np.value = '';
+      const cp = document.getElementById('partnerConfirmPassword');
+      if (cp) cp.value = '';
+
+      const err = document.getElementById('partnerPasswordErrorMsg');
+      if (err) {
+        err.style.display = 'none';
+        err.innerText = '';
+      }
+
+      const modal = document.getElementById('partnerProfileSettingsModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closePartnerProfileSettingsModal() {
+      const modal = document.getElementById('partnerProfileSettingsModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    async function handlePartnerChangePasswordSubmit(e) {
+      e.preventDefault();
+      const currentPassword = document.getElementById('partnerCurrentPassword').value;
+      const newPassword = document.getElementById('partnerNewPassword').value;
+      const confirmPassword = document.getElementById('partnerConfirmPassword').value;
+      const errorMsg = document.getElementById('partnerPasswordErrorMsg');
+      const submitBtn = document.getElementById('btnPartnerSavePassword');
+
+      errorMsg.style.display = 'none';
+      errorMsg.innerText = '';
+
+      if (!currentPassword) {
+        errorMsg.innerText = 'Current password is required.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      if (!newPassword || newPassword.length < 6) {
+        errorMsg.innerText = 'New password must be at least 6 characters.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        errorMsg.innerText = 'New passwords do not match.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      if (!token || token.startsWith('sfmi_fin_offline_session_')) {
+        errorMsg.innerText = 'Cannot update password in offline fallback mode. Please ensure the backend server is reachable.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/change-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          errorMsg.innerText = data.error || 'Failed to update password. Check your current password.';
+          errorMsg.style.display = 'block';
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-shield-halved"></i> Save New Password';
+          }
+          return;
+        }
+
+        closePartnerProfileSettingsModal();
+        showToast('Password updated successfully! Please keep your new password secure.', 'success', 'Password Changed');
+      } catch (err) {
+        errorMsg.innerText = 'Network error: could not connect to server.';
+        errorMsg.style.display = 'block';
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-shield-halved"></i> Save New Password';
+        }
       }
     }
 

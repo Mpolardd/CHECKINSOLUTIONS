@@ -1228,8 +1228,11 @@
           <span class="brand-sub">Administration Portal</span>
         </div>
       </a>
-      <div class="admin-nav-actions" id="headerNavActions" style="display: none;">
+      <div class="admin-nav-actions" id="headerNavActions" style="display: none; align-items: center; gap: 8px;">
         <a href="/checkin" class="btn-nav-outline nav-btn-text"><i class="fas fa-desktop"></i> Open Kiosk</a>
+        <button type="button" class="btn-nav-outline nav-btn-text" onclick="switchTab('settings')" id="btnHeaderSettings" title="Account Profile &amp; Settings" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); color: white; cursor: pointer;">
+          <i class="fas fa-user-gear"></i> <span id="headerUserBadge">My Profile</span>
+        </button>
       </div>
     </div>
     <div class="nav-logout-wrap" id="adminLogoutWrap" style="display: none;">
@@ -1299,6 +1302,9 @@
       <button class="tab-btn" id="tabBtnReports" onclick="switchTab('reports')">
         <i class="fas fa-file-excel"></i> Historical Reports & Archives
       </button>
+      <button class="tab-btn" id="tabBtnSettings" onclick="switchTab('settings')">
+        <i class="fas fa-user-gear"></i> Settings
+      </button>
     </div>
 
     <!-- Mobile Hamburger Navigation -->
@@ -1334,6 +1340,9 @@
         </button>
         <button class="mobile-menu-item" id="mobBtnReports" onclick="mobileSwitchTab('reports')">
           <i class="fas fa-file-excel menu-icon"></i> Historical Reports & Archives
+        </button>
+        <button class="mobile-menu-item" id="mobBtnSettings" onclick="mobileSwitchTab('settings')">
+          <i class="fas fa-user-gear menu-icon"></i> Settings &amp; Profile
         </button>
       </div>
     </div>
@@ -2702,6 +2711,111 @@
       </div>
     </div>
 
+    <!-- TAB 8: ACCOUNT PROFILE & SETTINGS -->
+    <div id="secSettings" style="display: none;">
+      <div style="margin-bottom: 22px;">
+        <h2 style="font-family: Manrope, sans-serif; font-size: 22px; font-weight: 800; color: var(--ink);">
+          <i class="fas fa-user-gear" style="color: var(--accent); margin-right: 8px;"></i> Account Profile &amp; Settings
+        </h2>
+        <p style="font-size: 13.5px; color: var(--muted); margin-top: 4px;">
+          Manage your administrator profile details, view your assigned role privileges, and update your security password.
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; align-items: flex-start;">
+        <!-- Left Column: User Profile Card -->
+        <div class="admin-card" style="margin-bottom: 0; padding: 24px; border: 1px solid var(--line);">
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid #f1f5f9;">
+            <div id="settingsProfileAvatar" style="width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, var(--emerald-dark) 0%, #064e3b 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; box-shadow: 0 4px 12px rgba(9,38,25,0.25); flex-shrink: 0;">
+              A
+            </div>
+            <div>
+              <h3 id="settingsProfileName" style="font-family: Manrope, sans-serif; font-size: 18px; font-weight: 800; color: var(--ink); margin: 0 0 4px 0;">Administrator</h3>
+              <div id="settingsProfileEmail" style="font-size: 13px; color: var(--muted);">admin@solutionsfaith.com</div>
+              <div id="settingsProfileRoleBadge" style="display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">
+                SUPER ADMIN
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 14px; font-size: 13px;">
+            <div>
+              <span style="color: var(--muted); display: block; font-size: 11.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">Account Status</span>
+              <span style="color: var(--emerald-dark); font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); display: inline-block;"></span> Active &amp; Verified Session
+              </span>
+            </div>
+
+            <div>
+              <span style="color: var(--muted); display: block; font-size: 11.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Assigned Module Privileges</span>
+              <div id="settingsProfilePermsList" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
+                <!-- Filled dynamically -->
+              </div>
+            </div>
+
+            <div style="border-top: 1px solid #f1f5f9; padding-top: 14px; margin-top: 6px;">
+              <span style="color: var(--muted); display: block; font-size: 11.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">Session Security</span>
+              <div style="font-size: 12.5px; color: var(--ink); line-height: 1.45;">
+                Protected by 256-bit encrypted JWT authentication with automatic 15-minute token renewal and proactive session keep-alive.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Change Password Card -->
+        <div class="admin-card" style="margin-bottom: 0; padding: 24px; border: 1px solid var(--line);">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(200, 155, 85, 0.15); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 16px;">
+              <i class="fas fa-key"></i>
+            </div>
+            <div>
+              <h3 style="font-family: Manrope, sans-serif; font-size: 16.5px; font-weight: 800; color: var(--ink); margin: 0;">Change Account Password</h3>
+              <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0 0;">Update your login credentials securely</p>
+            </div>
+          </div>
+
+          <form onsubmit="handleSettingsChangePasswordSubmit(event)" autocomplete="off">
+            <div class="form-group" style="margin-bottom: 14px;">
+              <label for="settingsCurrentPassword" class="form-label" style="font-size: 12.5px;">Current Password *</label>
+              <div style="position: relative; display: flex; align-items: center;">
+                <input required type="password" id="settingsCurrentPassword" class="form-ctrl" placeholder="Enter your current password" style="padding-right: 42px;" />
+                <button type="button" onclick="togglePasswordVisibility('settingsCurrentPassword', 'eyeIconCurrentPass')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+                  <i class="fas fa-eye" id="eyeIconCurrentPass"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+              <label for="settingsNewPassword" class="form-label" style="font-size: 12.5px;">New Password *</label>
+              <div style="position: relative; display: flex; align-items: center;">
+                <input required type="password" id="settingsNewPassword" class="form-ctrl" placeholder="Enter new password (min. 6 characters)" style="padding-right: 42px;" />
+                <button type="button" onclick="togglePasswordVisibility('settingsNewPassword', 'eyeIconNewPass')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+                  <i class="fas fa-eye" id="eyeIconNewPass"></i>
+                </button>
+              </div>
+              <div style="font-size: 11.5px; color: var(--muted); margin-top: 4px;">Must contain at least 6 characters</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 18px;">
+              <label for="settingsConfirmPassword" class="form-label" style="font-size: 12.5px;">Confirm New Password *</label>
+              <div style="position: relative; display: flex; align-items: center;">
+                <input required type="password" id="settingsConfirmPassword" class="form-ctrl" placeholder="Re-enter new password to confirm" style="padding-right: 42px;" />
+                <button type="button" onclick="togglePasswordVisibility('settingsConfirmPassword', 'eyeIconConfirmPass')" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+                  <i class="fas fa-eye" id="eyeIconConfirmPass"></i>
+                </button>
+              </div>
+            </div>
+
+            <div id="settingsPasswordErrorMsg" style="display: none; padding: 10px; margin-bottom: 14px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 4px; font-size: 12.5px; font-weight: 600;"></div>
+
+            <button type="submit" class="btn-main" id="btnSettingsSavePassword" style="width: 100%; justify-content: center; padding: 12px; font-size: 13.5px;">
+              <i class="fas fa-shield-halved"></i> Save New Password
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- SFMI Clean Footer -->
     <footer class="app-footer" style="text-align: center; padding: 24px 0 28px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; margin-top: 40px;">
       &copy; 2026 Solutions Faith Ministries International. All rights reserved.
@@ -3749,14 +3863,15 @@
         : ['attendance', 'members', 'programs', 'partnership'];
 
       const permissions = isSuperAdmin 
-        ? ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'reports', 'subAdmins']
+        ? ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'reports', 'settings', 'subAdmins']
         : rawPerms.filter(p => p !== 'finance' && p !== 'subAdmins');
       if (!isSuperAdmin && (rawPerms.includes('attendance') || rawPerms.includes('members') || rawPerms.includes('visitors'))) {
         if (!permissions.includes('analytics')) permissions.push('analytics');
         if (!permissions.includes('visitors')) permissions.push('visitors');
       }
+      if (!permissions.includes('settings')) permissions.push('settings');
 
-      const allTabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'reports', 'subAdmins'];
+      const allTabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'reports', 'settings', 'subAdmins'];
       let firstAllowedTab = null;
 
       allTabs.forEach(t => {
@@ -4438,7 +4553,8 @@
       programs: '<i class="fas fa-calendar-star"></i> Services & Programs Setup',
       partnership: '<i class="fas fa-handshake"></i> Pledges',
       subAdmins: '<i class="fas fa-user-shield"></i> Staff & Sub-Admins',
-      reports: '<i class="fas fa-file-excel"></i> Historical Reports & Archives'
+      reports: '<i class="fas fa-file-excel"></i> Historical Reports & Archives',
+      settings: '<i class="fas fa-user-gear"></i> Account Settings & Profile'
     };
 
     function switchTab(tab) {
@@ -4450,19 +4566,21 @@
       // Hard guard: Sub-Admins cannot access Financial Overview & Analytics or Sub-Admin management under any circumstances
       const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
       if (isSubAdmin) {
-        const allowed = Array.isArray(currentUser.permissions) 
-          ? currentUser.permissions.filter(p => p !== 'finance' && p !== 'subAdmins') 
-          : ['attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'reports'];
+        const rawPerms = Array.isArray(currentUser.permissions) 
+          ? currentUser.permissions 
+          : ['attendance', 'members', 'programs', 'partnership'];
+        const allowed = rawPerms.filter(p => p !== 'finance' && p !== 'subAdmins');
         if (allowed.includes('attendance') || allowed.includes('members')) {
           if (!allowed.includes('analytics')) allowed.push('analytics');
           if (!allowed.includes('visitors')) allowed.push('visitors');
         }
+        if (!allowed.includes('settings')) allowed.push('settings');
         if (tab === 'finance' || tab === 'subAdmins' || !allowed.includes(tab)) {
           tab = allowed[0] || 'attendance';
         }
       }
 
-      const tabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'subAdmins', 'reports'];
+      const tabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'reports', 'settings', 'subAdmins'];
       tabs.forEach(t => {
         const sec = document.getElementById(`sec${t.charAt(0).toUpperCase() + t.slice(1)}`);
         const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -4484,6 +4602,124 @@
       if (tab === 'partnership') { loadPartnershipMatrix(); syncPartnershipViewMode(); }
       if (tab === 'subAdmins') { renderSubAdminsList(); syncSubAdminsViewMode(); }
       if (tab === 'reports') { initReportsHub(); syncReportsViewMode(); }
+      if (tab === 'settings') { renderSettingsProfile(); }
+    }
+
+    function renderSettingsProfile() {
+      let currentUser = null;
+      try {
+        currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
+      } catch (e) {}
+
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
+      const isSuperAdmin = !isSubAdmin;
+
+      const name = (currentUser && currentUser.name) ? currentUser.name : (isSuperAdmin ? 'Super Administrator' : 'Staff Officer');
+      const email = (currentUser && currentUser.email) ? currentUser.email : 'admin@solutionsfaith.com';
+      const roleLabel = isSuperAdmin ? 'SUPER ADMIN (Executive)' : 'SUB ADMIN (Staff)';
+      const avatarChar = (name.trim().charAt(0) || 'A').toUpperCase();
+
+      const avatarEl = document.getElementById('settingsProfileAvatar');
+      const nameEl = document.getElementById('settingsProfileName');
+      const emailEl = document.getElementById('settingsProfileEmail');
+      const roleBadgeEl = document.getElementById('settingsProfileRoleBadge');
+      const headerBadge = document.getElementById('headerUserBadge');
+
+      if (avatarEl) avatarEl.innerText = avatarChar;
+      if (nameEl) nameEl.innerText = name;
+      if (emailEl) emailEl.innerText = email;
+      if (roleBadgeEl) {
+        roleBadgeEl.innerText = roleLabel;
+        roleBadgeEl.style.background = isSuperAdmin ? '#fef3c7' : '#e0f2fe';
+        roleBadgeEl.style.color = isSuperAdmin ? '#92400e' : '#0369a1';
+        roleBadgeEl.style.borderColor = isSuperAdmin ? '#fde68a' : '#bae6fd';
+      }
+      if (headerBadge) {
+        headerBadge.innerText = name.split(' ')[0] || 'Profile';
+      }
+
+      // Render assigned privileges
+      const permsEl = document.getElementById('settingsProfilePermsList');
+      if (permsEl) {
+        if (isSuperAdmin) {
+          permsEl.innerHTML = `
+            <span style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:3px 8px; border-radius:4px; font-size:11.5px; font-weight:700;"><i class="fas fa-check-circle"></i> Full Executive Authority</span>
+            <span style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:3px 8px; border-radius:4px; font-size:11.5px; font-weight:700;"><i class="fas fa-check-circle"></i> Financial Management</span>
+            <span style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:3px 8px; border-radius:4px; font-size:11.5px; font-weight:700;"><i class="fas fa-check-circle"></i> Staff &amp; Sub-Admins</span>
+          `;
+        } else {
+          const rawPerms = (currentUser && Array.isArray(currentUser.permissions)) ? currentUser.permissions : ['attendance', 'members', 'programs', 'partnership'];
+          const readable = {
+            attendance: 'Attendance & Demographics',
+            analytics: 'Engagement Analytics',
+            visitors: 'Visitors & First-Timers',
+            members: 'Member Directory',
+            programs: 'Services & Programs Setup',
+            partnership: 'Pledges & Collections',
+            reports: 'Historical Attendance Reports'
+          };
+          permsEl.innerHTML = rawPerms.map(p => `
+            <span style="background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; padding:3px 8px; border-radius:4px; font-size:11.5px; font-weight:700;">
+              <i class="fas fa-check" style="color:var(--emerald);"></i> ${escapeHtml(readable[p] || p)}
+            </span>
+          `).join('') || '<span style="color:var(--muted); font-size:12px;">Standard operational privileges</span>';
+        }
+      }
+    }
+
+    async function handleSettingsChangePasswordSubmit(e) {
+      e.preventDefault();
+      const currentPassword = document.getElementById('settingsCurrentPassword').value;
+      const newPassword = document.getElementById('settingsNewPassword').value;
+      const confirmPassword = document.getElementById('settingsConfirmPassword').value;
+      const errEl = document.getElementById('settingsPasswordErrorMsg');
+      const submitBtn = document.getElementById('btnSettingsSavePassword');
+
+      if (errEl) errEl.style.display = 'none';
+
+      if (newPassword.length < 6) {
+        if (errEl) { errEl.style.display = 'block'; errEl.innerText = 'New password must be at least 6 characters.'; }
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        if (errEl) { errEl.style.display = 'block'; errEl.innerText = 'New password and confirm password do not match.'; }
+        return;
+      }
+
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating password…'; }
+
+      try {
+        const token = await getAdminAuthToken();
+        const res = await fetch(`${API_BASE}/auth/change-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+        });
+
+        if (res.ok) {
+          showToast('Account password updated successfully!', 'success', 'Password Changed');
+          document.getElementById('settingsCurrentPassword').value = '';
+          document.getElementById('settingsNewPassword').value = '';
+          document.getElementById('settingsConfirmPassword').value = '';
+        } else {
+          const data = await res.json().catch(() => ({}));
+          if (errEl) {
+            errEl.style.display = 'block';
+            errEl.innerText = data.error || 'Failed to update password. Please verify your current password.';
+          }
+          showToast(data.error || 'Password update failed.', 'error', 'Update Failed');
+        }
+      } catch (err) {
+        if (errEl) {
+          errEl.style.display = 'block';
+          errEl.innerText = 'Network error updating password. Please try again.';
+        }
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-shield-halved"></i> Save New Password'; }
+      }
     }
 
     function syncPartnershipViewMode() {
