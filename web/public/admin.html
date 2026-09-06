@@ -48,13 +48,17 @@
       flex-direction: column;
     }
 
-    /* Top Nav */
+    /* Top Nav (Executive Church Portal Header) */
     .admin-nav {
-      background: var(--emerald-dark);
+      background: linear-gradient(180deg, #072216 0%, #051a11 100%);
       color: white;
-      padding: 14px 20px;
-      border-bottom: 2px solid var(--accent);
-      position: relative;
+      padding: 12px 24px;
+      border-bottom: 1px solid rgba(200, 155, 85, 0.38);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      width: 100%;
     }
 
     .admin-nav-inner {
@@ -63,8 +67,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 14px;
-      padding-right: 130px;
+      gap: 16px;
+      width: 100%;
     }
 
     .brand-admin {
@@ -73,8 +77,8 @@
       gap: 12px;
       text-decoration: none;
       color: white;
-      flex: 1;
       min-width: 0;
+      flex: 1 1 auto;
     }
 
     .brand-admin img {
@@ -84,93 +88,151 @@
       border: 1.5px solid var(--accent);
       object-fit: cover;
       flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      background: #ffffff;
     }
 
     .brand-text-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      flex-wrap: wrap;
+      min-width: 0;
+      overflow: hidden;
+      flex-wrap: nowrap;
     }
 
     .brand-title {
-      font-family: Manrope, sans-serif;
-      font-size: 15px;
+      font-family: Manrope, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14.5px;
       font-weight: 800;
-      letter-spacing: 0.03em;
-      line-height: 1.2;
-      color: white;
+      letter-spacing: 0.025em;
+      line-height: 1.25;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .brand-sub {
       font-size: 10px;
       font-weight: 700;
-      color: var(--accent);
-      background: rgba(200, 155, 85, 0.18);
-      border: 1px solid rgba(200, 155, 85, 0.4);
-      padding: 3px 9px;
-      border-radius: 20px;
-      letter-spacing: 0.1em;
+      color: #dfb26c;
+      background: rgba(200, 155, 85, 0.14);
+      border: 1px solid rgba(200, 155, 85, 0.35);
+      padding: 2.5px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .admin-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
     .admin-nav-actions {
       display: flex;
-      gap: 10px;
       align-items: center;
+      gap: 8px;
       flex-shrink: 0;
     }
 
     .nav-logout-wrap {
-      position: absolute;
-      right: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 100;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
     }
 
-    .btn-header-logout {
-      background: #c5221f;
-      color: white;
-      border: none;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
+    /* Executive action buttons */
+    .btn-header-action {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 7px;
-      box-shadow: 0 2px 8px rgba(197,34,31,0.35);
-      transition: background 0.2s, transform 0.15s;
+      background: rgba(255, 255, 255, 0.08);
+      color: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 6px;
+      padding: 7px 13px;
+      font-size: 12.5px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
       white-space: nowrap;
+      font-family: inherit;
+      line-height: 1.2;
     }
 
-    .btn-header-logout:hover {
-      background: #a51815;
+    .btn-header-action:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.35);
       transform: translateY(-1px);
     }
 
-    .btn-nav-outline {
-      color: #cfd8d3;
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 7px 16px;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 4px;
-      transition: all 0.2s;
-      cursor: pointer;
-      background: transparent;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+    .btn-header-profile {
+      background: rgba(200, 155, 85, 0.14);
+      border-color: rgba(200, 155, 85, 0.35);
+      color: #fae8c8;
     }
 
-    .btn-nav-outline:hover {
-      color: white;
-      border-color: white;
+    .btn-header-profile:hover {
+      background: rgba(200, 155, 85, 0.26);
+      border-color: rgba(200, 155, 85, 0.55);
+      color: #ffffff;
+    }
+
+    .btn-header-logout {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      background: #b91c1c;
+      color: #ffffff;
+      border: 1px solid #991b1b;
+      border-radius: 6px;
+      padding: 7px 13px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(185, 28, 28, 0.3);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      font-family: inherit;
+      line-height: 1.2;
+    }
+
+    .btn-header-logout:hover {
+      background: #991b1b;
+      border-color: #7f1d1d;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(185, 28, 28, 0.45);
+    }
+
+    /* Fallback support for legacy btn-nav-outline */
+    .btn-nav-outline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 6px;
+      padding: 7px 13px;
+      font-size: 12.5px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      font-family: inherit;
+      line-height: 1.2;
     }
 
     /* Login Screen Container */
@@ -950,8 +1012,6 @@
     }
 
     @media (max-width: 900px) {
-      .admin-nav-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .admin-nav-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
       .fin-analytics-grid { grid-template-columns: 1fr; }
       .metrics-row { grid-template-columns: repeat(2, 1fr); }
       .filter-toolbar { flex-direction: column; align-items: stretch; }
@@ -1031,23 +1091,137 @@
       .toast-title { font-size: 13px !important; }
       .toast-text { font-size: 12px !important; word-break: break-word !important; }
 
-      /* Nav bar & Logout button on mobile */
-      .admin-nav { padding: 10px 12px; }
+      /* Nav bar & action buttons on mobile / tablet */
+      .admin-nav {
+        padding: 10px 14px;
+      }
       .admin-nav-inner {
         flex-direction: row !important;
         align-items: center !important;
         justify-content: space-between !important;
         gap: 10px !important;
-        padding-right: 48px !important;
+        padding-right: 0 !important;
       }
-      .brand-title { font-size: 12px !important; line-height: 1.25; }
-      .brand-sub { font-size: 9.5px !important; }
-      .brand-admin img { width: 34px !important; height: 34px !important; }
-      .brand-admin { gap: 8px !important; }
-      .nav-btn-text { display: none !important; }
-      .nav-logout-wrap { right: 12px !important; top: 50% !important; transform: translateY(-50%) !important; }
-      .btn-header-logout { padding: 0 !important; width: 36px !important; height: 36px !important; border-radius: 50% !important; font-size: 14px !important; justify-content: center !important; align-items: center !important; flex-shrink: 0 !important; }
-      .btn-header-logout .logout-text { display: none !important; }
+      .brand-admin {
+        gap: 10px !important;
+        min-width: 0 !important;
+      }
+      .brand-admin img {
+        width: 36px !important;
+        height: 36px !important;
+      }
+      .brand-text-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1px !important;
+      }
+      .brand-title {
+        font-size: 13px !important;
+        line-height: 1.2 !important;
+      }
+      .brand-sub {
+        font-size: 9px !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        color: #dfb26c !important;
+        letter-spacing: 0.06em !important;
+      }
+      .admin-header-actions {
+        gap: 6px !important;
+      }
+      .admin-nav-actions {
+        gap: 6px !important;
+      }
+      .btn-header-action .nav-btn-text,
+      .btn-header-logout .nav-btn-text,
+      .logout-text {
+        display: none !important;
+      }
+      .btn-header-action,
+      .btn-header-logout,
+      .btn-nav-outline {
+        padding: 0 !important;
+        width: 35px !important;
+        height: 35px !important;
+        border-radius: 7px !important;
+        font-size: 13.5px !important;
+        justify-content: center !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+        gap: 0 !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .admin-nav {
+        padding: 8px 10px;
+      }
+      .admin-nav-inner {
+        gap: 8px !important;
+      }
+      .brand-admin {
+        gap: 8px !important;
+      }
+      .brand-admin img {
+        width: 33px !important;
+        height: 33px !important;
+      }
+      .brand-title {
+        font-size: 12px !important;
+      }
+      .brand-sub {
+        font-size: 8.5px !important;
+        letter-spacing: 0.04em !important;
+      }
+      .admin-header-actions {
+        gap: 5px !important;
+      }
+      .admin-nav-actions {
+        gap: 5px !important;
+      }
+      .btn-header-action,
+      .btn-header-logout,
+      .btn-nav-outline {
+        width: 33px !important;
+        height: 33px !important;
+        font-size: 13px !important;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .admin-nav {
+        padding: 6px 8px;
+      }
+      .admin-nav-inner {
+        gap: 6px !important;
+      }
+      .brand-admin {
+        gap: 6px !important;
+      }
+      .brand-admin img {
+        width: 28px !important;
+        height: 28px !important;
+      }
+      .brand-title {
+        font-size: 11px !important;
+      }
+      .brand-sub {
+        display: none !important;
+      }
+      .admin-header-actions {
+        gap: 4px !important;
+      }
+      .admin-nav-actions {
+        gap: 4px !important;
+      }
+      .btn-header-action,
+      .btn-header-logout,
+      .btn-nav-outline {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 12px !important;
+      }
     }
 
     @media (max-width: 420px) {
@@ -1221,24 +1395,28 @@
   <!-- Top Bar -->
   <header class="admin-nav">
     <div class="admin-nav-inner">
-      <a href="/admin" class="brand-admin">
+      <a href="/admin" class="brand-admin" title="SOLUTIONS FAITH MINISTRY INTERNATIONAL - Administration Portal">
         <img id="navAdminLogo" src="/church-logo.jpg" alt="Logo">
         <div class="brand-text-row">
           <span class="brand-title" id="navAdminChurchName">SOLUTIONS FAITH MINISTRY INTERNATIONAL</span>
           <span class="brand-sub">Administration Portal</span>
         </div>
       </a>
-      <div class="admin-nav-actions" id="headerNavActions" style="display: none; align-items: center; gap: 8px;">
-        <a href="/checkin" class="btn-nav-outline nav-btn-text"><i class="fas fa-desktop"></i> Open Kiosk</a>
-        <button type="button" class="btn-nav-outline nav-btn-text" onclick="switchTab('settings')" id="btnHeaderSettings" title="Account Profile &amp; Settings" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); color: white; cursor: pointer;">
-          <i class="fas fa-user-gear"></i> <span id="headerUserBadge">My Profile</span>
-        </button>
+      <div class="admin-header-actions">
+        <div class="admin-nav-actions" id="headerNavActions" style="display: none;">
+          <a href="/checkin" class="btn-header-action" title="Open Self Check-in Kiosk">
+            <i class="fas fa-desktop"></i> <span class="nav-btn-text">Open Kiosk</span>
+          </a>
+          <button type="button" class="btn-header-action btn-header-profile" onclick="switchTab('settings')" id="btnHeaderSettings" title="Account Profile &amp; Settings">
+            <i class="fas fa-user-gear"></i> <span class="nav-btn-text" id="headerUserBadge">My Profile</span>
+          </button>
+        </div>
+        <div class="nav-logout-wrap" id="adminLogoutWrap" style="display: none;">
+          <button id="btnLogout" class="btn-header-logout" style="display: none;" onclick="handleLogout()" title="Log Out of Portal">
+            <i class="fas fa-sign-out-alt"></i> <span class="nav-btn-text logout-text">Log Out</span>
+          </button>
+        </div>
       </div>
-    </div>
-    <div class="nav-logout-wrap" id="adminLogoutWrap" style="display: none;">
-      <button id="btnLogout" class="btn-header-logout" style="display: none;" onclick="handleLogout()" title="Log Out">
-        <i class="fas fa-sign-out-alt"></i> <span class="logout-text">Log Out</span>
-      </button>
     </div>
   </header>
 
@@ -4392,7 +4570,7 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboardContent').style.display = 'block';
       const wrap = document.getElementById('adminLogoutWrap');
-      if (wrap) wrap.style.display = 'block';
+      if (wrap) wrap.style.display = 'flex';
       const btn = document.getElementById('btnLogout');
       if (btn) btn.style.display = 'inline-flex';
       const actions = document.getElementById('headerNavActions');
