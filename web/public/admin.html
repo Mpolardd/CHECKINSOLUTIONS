@@ -1291,7 +1291,7 @@
         <i class="fas fa-calendar-star"></i> Services & Programs Setup
       </button>
       <button class="tab-btn" id="tabBtnPartnership" onclick="switchTab('partnership')">
-        <i class="fas fa-handshake"></i> Partnership &amp; Pledges
+        <i class="fas fa-handshake"></i> Pledges
       </button>
       <button class="tab-btn" id="tabBtnSubAdmins" onclick="switchTab('subAdmins')">
         <i class="fas fa-user-shield"></i> Staff & Sub-Admins
@@ -1327,7 +1327,7 @@
           <i class="fas fa-calendar-star menu-icon"></i> Services & Programs Setup
         </button>
         <button class="mobile-menu-item" id="mobBtnPartnership" onclick="mobileSwitchTab('partnership')">
-          <i class="fas fa-handshake menu-icon"></i> Partnership &amp; Pledges
+          <i class="fas fa-handshake menu-icon"></i> Pledges
         </button>
         <button class="mobile-menu-item" id="mobBtnSubAdmins" onclick="mobileSwitchTab('subAdmins')">
           <i class="fas fa-user-shield menu-icon"></i> Staff & Sub-Admins
@@ -2399,6 +2399,9 @@
           </div>
         </div>
 
+        <!-- Quick Collection Tabs Strip -->
+        <div id="collectionTabsNav" style="display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;"></div>
+
         <div id="collectionTypesGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
           <!-- Injected dynamically by renderCollectionTypeCards() -->
         </div>
@@ -3155,7 +3158,7 @@
 
             <label for="permPartnership" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="permPartnership" aria-label="Partnership Privilege" checked style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span><i class="fa-solid fa-handshake" style="color: var(--accent); margin-right: 6px;"></i> Partnership &amp; Monthly Pledges</span>
+              <span><i class="fa-solid fa-handshake" style="color: var(--accent); margin-right: 6px;"></i> Pledges &amp; Collections</span>
             </label>
 
             <label for="permReports" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
@@ -3228,7 +3231,7 @@
 
             <label for="editPermPartnership" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="editPermPartnership" aria-label="Edit Partnership Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span><i class="fa-solid fa-handshake" style="color: var(--accent); margin-right: 6px;"></i> Partnership &amp; Monthly Pledges</span>
+              <span><i class="fa-solid fa-handshake" style="color: var(--accent); margin-right: 6px;"></i> Pledges &amp; Collections</span>
             </label>
 
             <label for="editPermReports" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
@@ -4407,7 +4410,7 @@
       visitors: '<i class="fas fa-user-plus"></i> Visitors & First-Timers',
       members: '<i class="fas fa-users"></i> Member Directory',
       programs: '<i class="fas fa-calendar-star"></i> Services & Programs Setup',
-      partnership: '<i class="fas fa-handshake"></i> Partnership &amp; Pledges',
+      partnership: '<i class="fas fa-handshake"></i> Pledges',
       subAdmins: '<i class="fas fa-user-shield"></i> Staff & Sub-Admins',
       reports: '<i class="fas fa-file-excel"></i> Historical Reports & Archives'
     };
@@ -8510,26 +8513,90 @@ closeCreateProgramModal();
     }
 
     /* ════════════════════════════════════════════════════════════════════
-       PARTNERSHIP & MONTHLY PLEDGES MANAGEMENT SYSTEM (ADMIN)
+       PLEDGES & COLLECTION FUNDS MANAGEMENT SYSTEM (ADMIN)
     ════════════════════════════════════════════════════════════════════ */
     let rawPartnershipMatrix = [];
+    let allPartnershipMatrix = []; // Full matrix cached across all collection funds for instant switching
     let cachedPartnersListAdmin = [];
     let currentMatrixYear = new Date().getFullYear();
     let activeCollectionType = 'Partnership';
     let cachedCollectionTypes = [];
+    let cachedCollectionBreakdown = {};
+    let isPartnershipDataFetched = false;
 
-    async function loadPartnershipMatrix(year) {
-      if (year) currentMatrixYear = Number(year);
+    function applyActiveCollectionTypeUI() {
+      // 1. Render Collection Fund Cards & Pill Tabs immediately with active highlight
+      renderCollectionTypeCards(cachedCollectionBreakdown);
+
+      // 2. Filter rawPartnershipMatrix for activeCollectionType
+      const normActive = (activeCollectionType || 'Partnership').toLowerCase();
+      rawPartnershipMatrix = allPartnershipMatrix.filter(item => {
+        const itemType = (item.collectionType || 'PARTNERSHIP').toLowerCase();
+        return itemType === normActive;
+      });
+
+      // 3. Compute live KPIs for this activeCollectionType instantly
+      const currentMonthNum = new Date().getMonth() + 1;
+      const curMonthKey = String(currentMonthNum).padStart(2, '0');
+
+      let totalPartners = rawPartnershipMatrix.length;
+      let totalPledged = 0;
+      let currentMonthCollected = 0;
+      let currentMonthMissed = 0;
+
+      rawPartnershipMatrix.forEach(item => {
+        const pAmt = Number(item.pledgeAmount) || 0;
+        totalPledged += pAmt;
+        const mInfo = item.monthlyStatus && item.monthlyStatus[curMonthKey];
+        if (mInfo) {
+          currentMonthCollected += (Number(mInfo.paid) || 0);
+          if (mInfo.status === 'MISSED' || mInfo.status === 'DUE') {
+            currentMonthMissed++;
+          }
+        }
+      });
+
+      const statCount = document.getElementById('statPartCount');
+      const statPledged = document.getElementById('statPartPledged');
+      const statCollected = document.getElementById('statPartCollected');
+      const statMissed = document.getElementById('statPartMissed');
+
+      if (statCount) statCount.innerText = totalPartners;
+      if (statPledged) statPledged.innerText = `GHS ${totalPledged.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      if (statCollected) {
+        const currentMonthPledged = totalPledged;
+        const pct = currentMonthPledged > 0 ? Math.round((currentMonthCollected / currentMonthPledged) * 100) : 0;
+        statCollected.innerHTML = `GHS ${currentMonthCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span style="font-size:12px; color:var(--emerald-dark); font-weight:700;">(${pct}%)</span>`;
+      }
+      if (statMissed) statMissed.innerText = currentMonthMissed;
+
+      // 4. Render Desktop Table & Mobile Cards immediately
+      renderPartnershipMatrix();
+
+      // 5. Update partner dropdown for Record Payment modal
+      filterAdminPayPartnerOptions(activeCollectionType);
+    }
+
+    async function loadPartnershipMatrix(year, isBackground = false) {
+      if (year && Number(year) !== currentMatrixYear) {
+        currentMatrixYear = Number(year);
+        isPartnershipDataFetched = false;
+      }
       const yearSelect = document.getElementById('partnerYearSelect');
       if (yearSelect) yearSelect.value = String(currentMatrixYear);
+
+      // If already in memory, render immediately with 0ms delay!
+      if (isPartnershipDataFetched) {
+        applyActiveCollectionTypeUI();
+      }
 
       try {
         const token = await getAdminAuthToken();
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
         const [matrixRes, partnersRes, colTypesRes] = await Promise.all([
-          fetch(`${API_BASE}/finance/partnerships/matrix?year=${currentMatrixYear}&collectionType=${encodeURIComponent(activeCollectionType)}`, { headers }).catch(() => null),
-          fetch(`${API_BASE}/finance/partners?collectionType=${encodeURIComponent(activeCollectionType)}`, { headers }).catch(() => null),
+          fetch(`${API_BASE}/finance/partnerships/matrix?year=${currentMatrixYear}&collectionType=ALL`, { headers }).catch(() => null),
+          fetch(`${API_BASE}/finance/partners?collectionType=ALL`, { headers }).catch(() => null),
           fetch(`${API_BASE}/finance/collection-types`, { headers }).catch(() => null)
         ]);
 
@@ -8538,33 +8605,18 @@ closeCreateProgramModal();
           populateCollectionTypeDropdowns();
         }
 
-        if (matrixRes && matrixRes.ok) {
-          const data = await matrixRes.json();
-          rawPartnershipMatrix = data.matrix || [];
-
-          // Render Collection Cards with live stats
-          renderCollectionTypeCards(data.collectionBreakdown || {});
-
-          // Render KPI Summary
-          const summary = data.summary || {};
-          const statCount = document.getElementById('statPartCount');
-          const statPledged = document.getElementById('statPartPledged');
-          const statCollected = document.getElementById('statPartCollected');
-          const statMissed = document.getElementById('statPartMissed');
-
-          if (statCount) statCount.innerText = summary.totalPartners || 0;
-          if (statPledged) statPledged.innerText = `GHS ${(summary.totalMonthlyPledged || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-          if (statCollected) {
-            statCollected.innerHTML = `GHS ${(summary.currentMonthCollected || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span style="font-size:12px; color:var(--emerald-dark); font-weight:700;">(${summary.currentMonthFulfillmentPct || 0}%)</span>`;
-          }
-          if (statMissed) statMissed.innerText = summary.currentMonthMissedCount || 0;
-
-          renderPartnershipMatrix();
-        }
-
         if (partnersRes && partnersRes.ok) {
           cachedPartnersListAdmin = await partnersRes.json();
-          populateAdminPartnerSelectOptions();
+        }
+
+        if (matrixRes && matrixRes.ok) {
+          const data = await matrixRes.json();
+          allPartnershipMatrix = data.matrix || [];
+          cachedCollectionBreakdown = data.collectionBreakdown || {};
+          isPartnershipDataFetched = true;
+
+          // Apply UI with fresh server data
+          applyActiveCollectionTypeUI();
         }
       } catch (err) {
         console.error('Failed to load partnership matrix:', err);
@@ -8573,6 +8625,7 @@ closeCreateProgramModal();
 
     function renderCollectionTypeCards(breakdown = {}) {
       const grid = document.getElementById('collectionTypesGrid');
+      const tabsNav = document.getElementById('collectionTabsNav');
       if (!grid) return;
 
       const types = (cachedCollectionTypes && cachedCollectionTypes.length > 0)
@@ -8582,6 +8635,25 @@ closeCreateProgramModal();
             { id: 'partnership', name: 'Partnership', category: 'Covenant Partnership', description: 'Monthly ministry partnership pledges, vision builders, and covenant partners', icon: 'fas fa-handshake', color: '#c89b55', isStandard: true }
           ];
 
+      // Render instant clickable pill tabs
+      if (tabsNav) {
+        tabsNav.innerHTML = types.map(type => {
+          const isActive = activeCollectionType.toLowerCase() === type.name.toLowerCase();
+          const typeColor = type.color || '#10b981';
+          const safeName = type.name.replace(/'/g, "\\'");
+          return `
+            <button type="button" onclick="selectCollectionType('${safeName}')" style="display: inline-flex; align-items: center; gap: 8px; padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1.5px solid ${isActive ? typeColor : 'var(--line)'}; background: ${isActive ? typeColor : '#ffffff'}; color: ${isActive ? '#ffffff' : 'var(--ink)'}; transition: all 0.12s ease; white-space: nowrap; box-shadow: ${isActive ? '0 2px 8px ' + typeColor + '35' : 'none'};">
+              <i class="${type.icon || 'fas fa-layer-group'}"></i>
+              ${escapeHtml(type.name)}
+            </button>
+          `;
+        }).join('') + `
+          <button type="button" onclick="openCreateCollectionTypeModal()" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 700; cursor: pointer; border: 1.5px dashed var(--line); background: #f8fafc; color: var(--muted); transition: all 0.12s ease; white-space: nowrap;">
+            <i class="fas fa-plus"></i> New Fund
+          </button>
+        `;
+      }
+
       grid.innerHTML = types.map(type => {
         const isActive = activeCollectionType.toLowerCase() === type.name.toLowerCase();
         const typeColor = type.color || '#10b981';
@@ -8589,7 +8661,7 @@ closeCreateProgramModal();
         const safeName = type.name.replace(/'/g, "\\'");
 
         return `
-          <div class="col-type-card" onclick="selectCollectionType('${safeName}')" style="cursor:pointer; border-radius:10px; border:${isActive ? '2.5px solid ' + typeColor : '1.5px solid var(--line)'}; padding:16px 18px; box-shadow:${isActive ? '0 6px 16px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.02)'}; transition:all 0.2s ease; position:relative; display:flex; flex-direction:column; justify-content:space-between; background:${isActive ? 'linear-gradient(180deg, #ffffff 0%, ' + typeColor + '0d 100%)' : '#ffffff'};">
+          <div class="col-type-card" onclick="selectCollectionType('${safeName}')" style="cursor:pointer; border-radius:10px; border:${isActive ? '2.5px solid ' + typeColor : '1.5px solid var(--line)'}; padding:16px 18px; box-shadow:${isActive ? '0 6px 16px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.02)'}; transition:all 0.15s ease; position:relative; display:flex; flex-direction:column; justify-content:space-between; background:${isActive ? 'linear-gradient(180deg, #ffffff 0%, ' + typeColor + '0d 100%)' : '#ffffff'};">
             <div>
               <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:10px;">
@@ -8616,7 +8688,7 @@ closeCreateProgramModal();
         `;
       }).join('') + `
         <!-- Quick Add New Card -->
-        <div onclick="openCreateCollectionTypeModal()" style="cursor:pointer; background:#fafafa; border:2px dashed var(--line); border-radius:10px; padding:18px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:140px; transition:all 0.2s ease;" onmouseover="this.style.borderColor='var(--emerald-dark)'; this.style.background='#f0fdf4';" onmouseout="this.style.borderColor='var(--line)'; this.style.background='#fafafa';">
+        <div onclick="openCreateCollectionTypeModal()" style="cursor:pointer; background:#fafafa; border:2px dashed var(--line); border-radius:10px; padding:18px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:140px; transition:all 0.15s ease;" onmouseover="this.style.borderColor='var(--emerald-dark)'; this.style.background='#f0fdf4';" onmouseout="this.style.borderColor='var(--line)'; this.style.background='#fafafa';">
           <div style="width:36px; height:36px; border-radius:50%; background:#e2e8f0; color:#475569; display:flex; align-items:center; justify-content:center; font-size:16px; margin-bottom:8px;">
             <i class="fas fa-plus"></i>
           </div>
@@ -8655,7 +8727,13 @@ closeCreateProgramModal();
         if (payBtn) payBtn.innerHTML = `<i class="fas fa-receipt"></i> Record Collection`;
       }
 
-      loadPartnershipMatrix();
+      // INSTANT 0ms: Render active card selection, live KPIs, filtered table matrix and select options immediately!
+      applyActiveCollectionTypeUI();
+
+      populateCollectionTypeDropdowns();
+
+      // Silent background re-sync
+      loadPartnershipMatrix(null, true);
     }
 
     function populateCollectionTypeDropdowns() {
