@@ -3739,23 +3739,24 @@
         currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
       } catch (e) {}
 
-      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN');
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
       const isSuperAdmin = !isSubAdmin;
 
-      // Sub-Admins NEVER have access to Finance or Staff & Sub-Admins
-      // They are strictly limited to the privileges granted to them (Attendance, Members, Programs, Partnership, Reports)
+      // Sub-Admins NEVER have access to Financial Overview & Analytics or Staff & Sub-Admins
+      // They are strictly limited to the privileges granted to them (Attendance, Members, Programs, Pledges, Reports)
       const rawPerms = (currentUser && Array.isArray(currentUser.permissions)) 
         ? currentUser.permissions 
         : ['attendance', 'members', 'programs', 'partnership'];
 
       const permissions = isSuperAdmin 
-        ? ['finance', 'attendance', 'visitors', 'members', 'programs', 'partnership', 'reports', 'subAdmins']
+        ? ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'reports', 'subAdmins']
         : rawPerms.filter(p => p !== 'finance' && p !== 'subAdmins');
       if (!isSuperAdmin && (rawPerms.includes('attendance') || rawPerms.includes('members') || rawPerms.includes('visitors'))) {
+        if (!permissions.includes('analytics')) permissions.push('analytics');
         if (!permissions.includes('visitors')) permissions.push('visitors');
       }
 
-      const allTabs = ['finance', 'attendance', 'visitors', 'members', 'programs', 'partnership', 'reports', 'subAdmins'];
+      const allTabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'reports', 'subAdmins'];
       let firstAllowedTab = null;
 
       allTabs.forEach(t => {
@@ -3771,6 +3772,14 @@
         if (!isAllowed && sec) sec.style.display = 'none';
       });
 
+      // Strict enforcement: Financial Overview & Analytics tab & section is NEVER visible to Sub-Admins
+      const finBtn = document.getElementById('tabBtnFinance');
+      if (finBtn && !isSuperAdmin) finBtn.style.display = 'none';
+      const mobFinBtn = document.getElementById('mobBtnFinance');
+      if (mobFinBtn && !isSuperAdmin) mobFinBtn.style.display = 'none';
+      const secFin = document.getElementById('secFinance');
+      if (secFin && !isSuperAdmin) secFin.style.display = 'none';
+
       // Manage Sub-Admins button & tab is strictly Super Admin only
       const btnSub = document.getElementById('btnManageSubAdmins');
       if (btnSub) btnSub.style.display = isSuperAdmin ? 'inline-flex' : 'none';
@@ -3778,6 +3787,12 @@
       if (tabSub) tabSub.style.display = isSuperAdmin ? 'inline-flex' : 'none';
       const mobSub = document.getElementById('mobBtnSubAdmins');
       if (mobSub) mobSub.style.display = isSuperAdmin ? 'flex' : 'none';
+
+      // Financial Reports sub-tab in Reports Hub is strictly Super Admin only
+      const finReportBtn = document.getElementById('btnReportSubFin');
+      if (finReportBtn) finReportBtn.style.display = isSuperAdmin ? 'inline-flex' : 'none';
+      const finReportSec = document.getElementById('repSubFinance');
+      if (finReportSec && !isSuperAdmin) finReportSec.style.display = 'none';
 
       // Always switch to their first permitted tab
       if (firstAllowedTab) {
@@ -4243,6 +4258,16 @@
     }
 
     function showDashboard() {
+      let currentUser = null;
+      try {
+        currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
+      } catch (e) {}
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
+      const isSuperAdmin = !isSubAdmin;
+
+      // Apply tab permissions first so sub-admins never see financial tabs
+      applyTabPermissions();
+
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboardContent').style.display = 'block';
       const wrap = document.getElementById('adminLogoutWrap');
@@ -4252,11 +4277,12 @@
       const actions = document.getElementById('headerNavActions');
       if (actions) actions.style.display = 'flex';
 
-      loadSubAdmins();
-      applyTabPermissions();
+      if (isSuperAdmin) {
+        loadSubAdmins();
+        loadFinanceData();
+      }
 
       loadSavedMembers();
-      loadFinanceData();
       loadCustomPrograms();
       loadPartnershipMatrix();
       populateServiceDropdowns();
@@ -4421,8 +4447,9 @@
         currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
       } catch (e) {}
 
-      // Hard guard: Sub-Admins cannot access Finance or Sub-Admin management under any circumstances
-      if (currentUser && currentUser.role === 'SUB_ADMIN') {
+      // Hard guard: Sub-Admins cannot access Financial Overview & Analytics or Sub-Admin management under any circumstances
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
+      if (isSubAdmin) {
         const allowed = Array.isArray(currentUser.permissions) 
           ? currentUser.permissions.filter(p => p !== 'finance' && p !== 'subAdmins') 
           : ['attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'reports'];
@@ -4505,26 +4532,49 @@
     let rawFinReportData = [];
 
     function switchReportSubTab(sub) {
+      let currentUser = null;
+      try {
+        currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
+      } catch (e) {}
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
+
+      // Sub-Admins cannot access Financial Reports
+      if (isSubAdmin && sub === 'FINANCE') {
+        sub = 'ATTENDANCE';
+      }
+
       currentReportSubTab = sub;
       const attBtn = document.getElementById('btnReportSubAtt');
       const finBtn = document.getElementById('btnReportSubFin');
       const attSec = document.getElementById('repSubAttendance');
       const finSec = document.getElementById('repSubFinance');
 
+      if (finBtn) finBtn.style.display = isSubAdmin ? 'none' : 'inline-flex';
       if (attBtn) attBtn.classList.toggle('active', sub === 'ATTENDANCE');
       if (finBtn) finBtn.classList.toggle('active', sub === 'FINANCE');
       if (attSec) attSec.style.display = sub === 'ATTENDANCE' ? 'block' : 'none';
-      if (finSec) finSec.style.display = sub === 'FINANCE' ? 'block' : 'none';
+      if (finSec) finSec.style.display = (sub === 'FINANCE' && !isSubAdmin) ? 'block' : 'none';
 
       if (sub === 'ATTENDANCE') {
         loadHistoricalAttendanceReport();
-      } else {
+      } else if (!isSubAdmin) {
         loadHistoricalFinanceReport();
       }
     }
 
     function initReportsHub() {
-      switchReportSubTab(currentReportSubTab || 'ATTENDANCE');
+      let currentUser = null;
+      try {
+        currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
+      } catch (e) {}
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
+
+      const finBtn = document.getElementById('btnReportSubFin');
+      if (finBtn) finBtn.style.display = isSubAdmin ? 'none' : 'inline-flex';
+      const finSec = document.getElementById('repSubFinance');
+      if (finSec && isSubAdmin) finSec.style.display = 'none';
+
+      switchReportSubTab(isSubAdmin ? 'ATTENDANCE' : (currentReportSubTab || 'ATTENDANCE'));
     }
 
     async function loadHistoricalAttendanceReport() {
@@ -4898,6 +4948,14 @@
     }
 
     async function loadHistoricalFinanceReport() {
+      let currentUser = null;
+      try { currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user')); } catch (e) {}
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
+      if (isSubAdmin) {
+        rawFinReportData = [];
+        return;
+      }
+
       try {
         const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -5530,6 +5588,17 @@
 
     /* Financial Analytics, Date Filtering & Export */
     async function loadFinanceData() {
+      let currentUser = null;
+      try {
+        currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
+      } catch (e) {}
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
+      if (isSubAdmin) {
+        rawFinanceEntries = [];
+        filteredFinanceEntries = [];
+        return;
+      }
+
       try {
         const token = localStorage.getItem('sfmi_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
