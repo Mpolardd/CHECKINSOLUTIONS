@@ -1300,7 +1300,10 @@
         <i class="fas fa-user-shield"></i> Staff & Sub-Admins
       </button>
       <button class="tab-btn" id="tabBtnReports" onclick="switchTab('reports')">
-        <i class="fas fa-file-excel"></i> Historical Reports & Archives
+        <i class="fas fa-clipboard-user"></i> Historical Attendance Reports
+      </button>
+      <button class="tab-btn" id="tabBtnFinReports" onclick="switchTab('finReports')">
+        <i class="fas fa-file-invoice-dollar"></i> Services Financial Reports
       </button>
       <button class="tab-btn" id="tabBtnSettings" onclick="switchTab('settings')">
         <i class="fas fa-user-gear"></i> Settings
@@ -1339,7 +1342,10 @@
           <i class="fas fa-user-shield menu-icon"></i> Staff & Sub-Admins
         </button>
         <button class="mobile-menu-item" id="mobBtnReports" onclick="mobileSwitchTab('reports')">
-          <i class="fas fa-file-excel menu-icon"></i> Historical Reports & Archives
+          <i class="fas fa-clipboard-user menu-icon"></i> Historical Attendance Reports
+        </button>
+        <button class="mobile-menu-item" id="mobBtnFinReports" onclick="mobileSwitchTab('finReports')">
+          <i class="fas fa-file-invoice-dollar menu-icon"></i> Services Financial Reports
         </button>
         <button class="mobile-menu-item" id="mobBtnSettings" onclick="mobileSwitchTab('settings')">
           <i class="fas fa-user-gear menu-icon"></i> Settings &amp; Profile
@@ -2510,31 +2516,21 @@
       <div id="partnershipMobileCards" style="display: none; flex-direction: column; gap: 12px; margin-top: 14px;"></div>
     </div>
 
-    <!-- TAB 6: HISTORICAL REPORTS & EXPORT HUB -->
+    <!-- TAB 6: HISTORICAL ATTENDANCE CHECK-INS REPORT -->
     <div id="secReports" style="display: none;">
       <!-- Section Title Header -->
       <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <div>
           <h2 style="font-family: Manrope, sans-serif; font-size: 22px; font-weight: 800; color: var(--ink);">
-            <i class="fas fa-file-excel" style="color: #107c41; margin-right: 8px;"></i> Historical Reports &amp; Export Hub
+            <i class="fas fa-clipboard-user" style="color: #107c41; margin-right: 8px;"></i> Historical Attendance Check-Ins Report
           </h2>
           <p style="font-size: 13.5px; color: var(--muted); margin-top: 4px;">
-            Access full historical attendance check-in logs and financial analytics reports for past services. Download native Excel / CSV spreadsheets with 1-click.
+            Access full historical attendance check-in logs, completed service reports, and member attendance records. Download native Excel / CSV spreadsheets with 1-click.
           </p>
         </div>
       </div>
 
-      <!-- Reports Navigation Sub-Tabs -->
-      <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 10px;">
-        <button class="btn-preset active" id="btnReportSubAtt" onclick="switchReportSubTab('ATTENDANCE')">
-          <i class="fas fa-clipboard-user"></i> Historical Attendance Check-Ins Report
-        </button>
-        <button class="btn-preset" id="btnReportSubFin" onclick="switchReportSubTab('FINANCE')">
-          <i class="fas fa-chart-line"></i> Services Financial Analytics Report
-        </button>
-      </div>
-
-      <!-- 1. ATTENDANCE HISTORICAL REPORT SECTION -->
+      <!-- ATTENDANCE HISTORICAL REPORT CONTAINER -->
       <div id="repSubAttendance">
         <!-- Filter Toolbar -->
         <div class="filter-toolbar" style="margin-bottom: 20px; background: white; padding: 16px; border-radius: 8px; border: 1px solid var(--line);">
@@ -2627,9 +2623,24 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- 2. FINANCIAL HISTORICAL REPORT SECTION -->
-      <div id="repSubFinance" style="display: none;">
+    <!-- TAB 7: SERVICES FINANCIAL ANALYTICS REPORT -->
+    <div id="secFinReports" style="display: none;">
+      <!-- Section Title Header -->
+      <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h2 style="font-family: Manrope, sans-serif; font-size: 22px; font-weight: 800; color: var(--ink);">
+            <i class="fas fa-file-invoice-dollar" style="color: var(--emerald); margin-right: 8px;"></i> Services Financial Analytics Report
+          </h2>
+          <p style="font-size: 13.5px; color: var(--muted); margin-top: 4px;">
+            Review verified service collection figures, tithes, offerings, seed breakdowns, and grand totals across past services. Download native financial spreadsheets.
+          </p>
+        </div>
+      </div>
+
+      <!-- FINANCIAL HISTORICAL REPORT CONTAINER -->
+      <div id="repSubFinance" style="display: block;">
         <!-- Filter Toolbar -->
         <div class="filter-toolbar" style="margin-bottom: 20px; background: white; padding: 16px; border-radius: 8px; border: 1px solid var(--line);">
           <div style="display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;">
@@ -3253,8 +3264,13 @@
             </label>
 
             <label for="permReports" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
-            <input type="checkbox" id="permReports" aria-label="Historical Reports Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span><i class="fa-solid fa-file-excel" style="color: var(--accent); margin-right: 6px;"></i> Historical Reports &amp; Archives</span>
+            <input type="checkbox" id="permReports" aria-label="Historical Attendance Reports Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span><i class="fa-solid fa-clipboard-user" style="color: var(--accent); margin-right: 6px;"></i> Historical Attendance Check-Ins Report</span>
+            </label>
+
+            <label for="permFinReports" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="permFinReports" aria-label="Services Financial Analytics Report Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span><i class="fa-solid fa-file-invoice-dollar" style="color: var(--emerald); margin-right: 6px;"></i> Services Financial Analytics Report</span>
             </label>
           </div>
         </div>
@@ -3327,7 +3343,12 @@
 
             <label for="editPermReports" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="editPermReports" aria-label="Edit Historical Reports Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
-              <span><i class="fa-solid fa-file-excel" style="color: var(--accent); margin-right: 6px;"></i> Historical Reports &amp; Archives</span>
+              <span><i class="fa-solid fa-clipboard-user" style="color: var(--accent); margin-right: 6px;"></i> Historical Attendance Check-Ins Report</span>
+            </label>
+
+            <label for="editPermFinReports" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="editPermFinReports" aria-label="Edit Services Financial Analytics Report Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
+              <span><i class="fa-solid fa-file-invoice-dollar" style="color: var(--emerald); margin-right: 6px;"></i> Services Financial Analytics Report</span>
             </label>
           </div>
         </div>
@@ -3834,21 +3855,22 @@
       const isSuperAdmin = !isSubAdmin;
 
       // Sub-Admins NEVER have access to Financial Overview & Analytics or Staff & Sub-Admins
-      // They are strictly limited to the privileges granted to them (Attendance, Members, Programs, Pledges, Reports)
+      // They are strictly limited to the privileges granted to them (Attendance, Members, Programs, Pledges, Reports, Financial Reports)
       const rawPerms = (currentUser && Array.isArray(currentUser.permissions)) 
         ? currentUser.permissions 
-        : ['attendance', 'members', 'programs', 'partnership'];
+        : ['attendance', 'members', 'programs', 'partnership', 'reports'];
 
       const permissions = isSuperAdmin 
-        ? ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'reports', 'settings', 'subAdmins']
+        ? ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'subAdmins', 'reports', 'finReports', 'settings']
         : rawPerms.filter(p => p !== 'finance' && p !== 'subAdmins');
+
       if (!isSuperAdmin && (rawPerms.includes('attendance') || rawPerms.includes('members') || rawPerms.includes('visitors'))) {
         if (!permissions.includes('analytics')) permissions.push('analytics');
         if (!permissions.includes('visitors')) permissions.push('visitors');
       }
       if (!permissions.includes('settings')) permissions.push('settings');
 
-      const allTabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'reports', 'settings', 'subAdmins'];
+      const allTabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'subAdmins', 'reports', 'finReports', 'settings'];
       let firstAllowedTab = null;
 
       allTabs.forEach(t => {
@@ -3880,11 +3902,14 @@
       const mobSub = document.getElementById('mobBtnSubAdmins');
       if (mobSub) mobSub.style.display = isSuperAdmin ? 'flex' : 'none';
 
-      // Financial Reports sub-tab in Reports Hub is strictly Super Admin only
-      const finReportBtn = document.getElementById('btnReportSubFin');
-      if (finReportBtn) finReportBtn.style.display = isSuperAdmin ? 'inline-flex' : 'none';
-      const finReportSec = document.getElementById('repSubFinance');
-      if (finReportSec && !isSuperAdmin) finReportSec.style.display = 'none';
+      // Services Financial Analytics Report tab & section strictly governed by 'finReports' permission
+      const hasFinReports = permissions.includes('finReports');
+      const tabFinReports = document.getElementById('tabBtnFinReports');
+      if (tabFinReports) tabFinReports.style.display = hasFinReports ? 'inline-flex' : 'none';
+      const mobFinReports = document.getElementById('mobBtnFinReports');
+      if (mobFinReports) mobFinReports.style.display = hasFinReports ? 'flex' : 'none';
+      const secFinReports = document.getElementById('secFinReports');
+      if (secFinReports && !hasFinReports) secFinReports.style.display = 'none';
 
       // Always switch to their first permitted tab
       if (firstAllowedTab) {
@@ -3937,7 +3962,8 @@
         if (p === 'members') return `<span class="badge-check" style="background:#dcfce7; color:#166534;"><i class="fas fa-users"></i> Directory</span>`;
         if (p === 'programs') return `<span class="badge-check" style="background:#fef3c7; color:#92400e;"><i class="fas fa-calendar-star"></i> Programs</span>`;
         if (p === 'partnership') return `<span class="badge-check" style="background:#fef9c3; color:#854d0e;"><i class="fas fa-handshake"></i> Partnership</span>`;
-        if (p === 'reports') return `<span class="badge-check" style="background:#e0e7ff; color:#3730a3;"><i class="fas fa-file-excel"></i> Reports</span>`;
+        if (p === 'reports') return `<span class="badge-check" style="background:#e0e7ff; color:#3730a3;"><i class="fas fa-clipboard-user"></i> Attendance Reports</span>`;
+        if (p === 'finReports') return `<span class="badge-check" style="background:#fef2f2; color:#b91c1c;"><i class="fas fa-file-invoice-dollar"></i> Financial Reports</span>`;
         if (p === 'finance') return `<span class="badge-check" style="background:#fee2e2; color:#991b1b;"><i class="fas fa-coins"></i> Finance</span>`;
         return '';
       }).join(' ');
@@ -4037,6 +4063,7 @@
       if (document.getElementById('permPrograms').checked) perms.push('programs');
       if (document.getElementById('permPartnership')?.checked) perms.push('partnership');
       if (document.getElementById('permReports')?.checked) perms.push('reports');
+      if (document.getElementById('permFinReports')?.checked) perms.push('finReports');
 
       if (perms.length === 0) {
         showToast('Please select at least one module privilege for this sub-admin.', 'error', 'No Privileges Selected');
@@ -4099,6 +4126,7 @@
       document.getElementById('editPermPrograms').checked = perms.includes('programs');
       if (document.getElementById('editPermPartnership')) document.getElementById('editPermPartnership').checked = perms.includes('partnership');
       if (document.getElementById('editPermReports')) document.getElementById('editPermReports').checked = perms.includes('reports');
+      if (document.getElementById('editPermFinReports')) document.getElementById('editPermFinReports').checked = perms.includes('finReports');
 
       const modal = document.getElementById('editSubAdminModal');
       if (!modal) return;
@@ -4125,6 +4153,7 @@
       if (document.getElementById('editPermPrograms').checked) perms.push('programs');
       if (document.getElementById('editPermPartnership')?.checked) perms.push('partnership');
       if (document.getElementById('editPermReports')?.checked) perms.push('reports');
+      if (document.getElementById('editPermFinReports')?.checked) perms.push('finReports');
 
       if (perms.length === 0) {
         showToast('Please select at least one module privilege.', 'error', 'No Privileges Selected');
@@ -4530,7 +4559,8 @@
       programs: '<i class="fas fa-calendar-star"></i> Services & Programs Setup',
       partnership: '<i class="fas fa-handshake"></i> Pledges',
       subAdmins: '<i class="fas fa-user-shield"></i> Staff & Sub-Admins',
-      reports: '<i class="fas fa-file-excel"></i> Historical Reports & Archives',
+      reports: '<i class="fas fa-clipboard-user"></i> Historical Attendance Check-Ins Report',
+      finReports: '<i class="fas fa-file-invoice-dollar"></i> Services Financial Analytics Report',
       settings: '<i class="fas fa-user-gear"></i> Account Settings & Profile'
     };
 
@@ -4545,7 +4575,7 @@
       if (isSubAdmin) {
         const rawPerms = Array.isArray(currentUser.permissions) 
           ? currentUser.permissions 
-          : ['attendance', 'members', 'programs', 'partnership'];
+          : ['attendance', 'members', 'programs', 'partnership', 'reports'];
         const allowed = rawPerms.filter(p => p !== 'finance' && p !== 'subAdmins');
         if (allowed.includes('attendance') || allowed.includes('members')) {
           if (!allowed.includes('analytics')) allowed.push('analytics');
@@ -4557,7 +4587,7 @@
         }
       }
 
-      const tabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'reports', 'settings', 'subAdmins'];
+      const tabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'subAdmins', 'reports', 'finReports', 'settings'];
       tabs.forEach(t => {
         const sec = document.getElementById(`sec${t.charAt(0).toUpperCase() + t.slice(1)}`);
         const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -4578,7 +4608,8 @@
       if (tab === 'programs') { renderProgramsManager(); syncProgramsViewMode(); fetchLiveCounts(); }
       if (tab === 'partnership') { loadPartnershipMatrix(); syncPartnershipViewMode(); }
       if (tab === 'subAdmins') { renderSubAdminsList(); syncSubAdminsViewMode(); }
-      if (tab === 'reports') { initReportsHub(); syncReportsViewMode(); }
+      if (tab === 'reports') { loadHistoricalAttendanceReport(); syncReportsViewMode(); }
+      if (tab === 'finReports') { loadHistoricalFinanceReport(); syncReportsViewMode(); }
       if (tab === 'settings') { renderSettingsProfile(); }
     }
 
@@ -4717,49 +4748,15 @@
     let rawFinReportData = [];
 
     function switchReportSubTab(sub) {
-      let currentUser = null;
-      try {
-        currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
-      } catch (e) {}
-      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
-
-      // Sub-Admins cannot access Financial Reports
-      if (isSubAdmin && sub === 'FINANCE') {
-        sub = 'ATTENDANCE';
-      }
-
-      currentReportSubTab = sub;
-      const attBtn = document.getElementById('btnReportSubAtt');
-      const finBtn = document.getElementById('btnReportSubFin');
-      const attSec = document.getElementById('repSubAttendance');
-      const finSec = document.getElementById('repSubFinance');
-
-      if (finBtn) finBtn.style.display = isSubAdmin ? 'none' : 'inline-flex';
-      if (attBtn) attBtn.classList.toggle('active', sub === 'ATTENDANCE');
-      if (finBtn) finBtn.classList.toggle('active', sub === 'FINANCE');
-      if (attSec) attSec.style.display = sub === 'ATTENDANCE' ? 'block' : 'none';
-      if (finSec) finSec.style.display = (sub === 'FINANCE' && !isSubAdmin) ? 'block' : 'none';
-
-      if (sub === 'ATTENDANCE') {
-        loadHistoricalAttendanceReport();
-      } else if (!isSubAdmin) {
-        loadHistoricalFinanceReport();
+      if (sub === 'FINANCE') {
+        switchTab('finReports');
+      } else {
+        switchTab('reports');
       }
     }
 
     function initReportsHub() {
-      let currentUser = null;
-      try {
-        currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
-      } catch (e) {}
-      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
-
-      const finBtn = document.getElementById('btnReportSubFin');
-      if (finBtn) finBtn.style.display = isSubAdmin ? 'none' : 'inline-flex';
-      const finSec = document.getElementById('repSubFinance');
-      if (finSec && isSubAdmin) finSec.style.display = 'none';
-
-      switchReportSubTab(isSubAdmin ? 'ATTENDANCE' : (currentReportSubTab || 'ATTENDANCE'));
+      switchTab('reports');
     }
 
     async function loadHistoricalAttendanceReport() {
@@ -5135,8 +5132,9 @@
     async function loadHistoricalFinanceReport() {
       let currentUser = null;
       try { currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user')); } catch (e) {}
-      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
-      if (isSubAdmin) {
+      const isSuperAdmin = !currentUser || currentUser.role === 'SUPER_ADMIN';
+      const hasFinReports = isSuperAdmin || (currentUser && Array.isArray(currentUser.permissions) && currentUser.permissions.includes('finReports'));
+      if (!hasFinReports) {
         rawFinReportData = [];
         return;
       }

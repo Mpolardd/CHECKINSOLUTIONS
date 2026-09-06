@@ -105,14 +105,43 @@ router.post('/service-entry', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'
   } catch (e) { next(e); }
 });
 
-// Get List of Service Financial Entries - Protected
-router.get('/service-entries', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
+// Get List of Service Financial Entries - Protected (Super Admin, Finance, or Sub-Admin with finReports privilege)
+router.get('/service-entries', requireAuth, async (req, res, next) => {
   try {
-    const entries = await prisma.serviceFinance.findMany({
-      orderBy: { serviceDate: 'desc' },
-      take: 100
-    });
-    res.json(entries);
+    const userRole = req.user?.role;
+    if (userRole === 'SUPER_ADMIN' || userRole === 'FINANCE') {
+      const entries = await prisma.serviceFinance.findMany({
+        orderBy: { serviceDate: 'desc' },
+        take: 100
+      });
+      return res.json(entries);
+    }
+
+    if (userRole === 'ADMIN') {
+      let hasFinReports = false;
+      try {
+        const log = await prisma.auditLog.findFirst({
+          where: { entity: 'SUB_ADMIN_PROFILE', entityId: req.user.sub },
+          orderBy: { createdAt: 'desc' }
+        });
+        const perms = (log && log.metadata && Array.isArray(log.metadata.permissions)) ? log.metadata.permissions : [];
+        hasFinReports = perms.includes('finReports');
+      } catch (e) {
+        hasFinReports = false;
+      }
+
+      if (!hasFinReports) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+
+      const entries = await prisma.serviceFinance.findMany({
+        orderBy: { serviceDate: 'desc' },
+        take: 100
+      });
+      return res.json(entries);
+    }
+
+    return res.status(403).json({ error: 'Insufficient permissions' });
   } catch (e) { next(e); }
 });
 
