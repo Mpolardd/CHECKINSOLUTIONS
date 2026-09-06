@@ -2807,6 +2807,7 @@
       <form onsubmit="handleUpdateMember(event)">
         <input type="hidden" id="editMemId" />
         <input type="hidden" id="editMemOriginalIsGuest" value="false" />
+        <div id="editMemStatusBanner" style="display: none; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 12.5px; line-height: 1.45;"></div>
         <!-- Member Photo Upload (Optional) -->
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; padding: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
           <input type="file" id="editMemPhotoFile" accept="image/*,.heic,.heif,image/heic,image/heif" style="display: none;" onchange="handleMemberPhotoUpload(event, 'edit')" />
@@ -2838,7 +2839,7 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label for="editMemCategory" class="form-label">Category *</label>
-            <select required id="editMemCategory" class="form-ctrl" onchange="toggleEditGuardianField(this.value)">
+            <select required id="editMemCategory" class="form-ctrl" onchange="handleEditCategoryChange(this.value)">
               <optgroup label="Visitor / Guest Categories">
                 <option value="Visitor / Guest">Visitor / Guest (Adult)</option>
                 <option value="Visitor (Child)">Visitor (Child / Sunday School)</option>
@@ -2883,7 +2884,7 @@
           </div>
           <div class="form-group">
             <label for="editMemRole" class="form-label">Role / Department / Class</label>
-            <select id="editMemRole" class="form-ctrl">
+            <select id="editMemRole" class="form-ctrl" onchange="handleEditRoleChange(this.value)">
               <optgroup label="Visitor Roles">
                 <option value="Visitor / First Timer">Visitor / First Timer</option>
               </optgroup>
@@ -6513,11 +6514,18 @@
 
     function isGuestMember(m) {
       if (!m) return false;
-      if (m.isGuest) return true;
       const cat = (m.category || '').toLowerCase();
       const role = (m.role || '').toLowerCase();
-      return cat.includes('visitor') || cat.includes('guest') || cat.includes('first-timer') || cat.includes('first timer') ||
-             role.includes('visitor') || role.includes('guest') || role.includes('first timer') || role.includes('first-timer');
+      const isVisitorCat = cat.includes('visitor') || cat.includes('guest');
+      const isVisitorRole = role.includes('visitor') || role.includes('guest') || role.includes('first timer') || role.includes('first-timer');
+
+      // If category is an explicit church member category and role is not visitor, definitely not a guest
+      if (!isVisitorCat && !isVisitorRole && (['adult', 'child', 'youth'].includes(cat) || m.isGuest === false)) {
+        return false;
+      }
+
+      if (m.isGuest === true) return true;
+      return isVisitorCat || isVisitorRole;
     }
 
     function updateDirectoryCounts() {
@@ -6970,6 +6978,94 @@
       if (lbl) lbl.innerText = isChild ? 'Parent / Contact Phone *' : 'Phone Number *';
     }
 
+    function handleEditCategoryChange(val) {
+      toggleEditGuardianField(val);
+      const wasGuest = document.getElementById('editMemOriginalIsGuest')?.value === 'true';
+      const roleSelect = document.getElementById('editMemRole');
+      const banner = document.getElementById('editMemStatusBanner');
+      const titleEl = document.getElementById('editMemModalTitle');
+      const subTitleEl = document.getElementById('editMemModalSubtitle');
+
+      const isMemberCat = ['Adult', 'Child', 'Youth'].includes(val);
+      const isChild = val === 'Child' || (typeof val === 'string' && val.toLowerCase().includes('child'));
+      const isYouth = val === 'Youth' || (typeof val === 'string' && val.toLowerCase().includes('youth'));
+
+      if (isMemberCat) {
+        // If current role is visitor or empty, auto-switch to corresponding member role
+        if (roleSelect && (!roleSelect.value || roleSelect.value.includes('Visitor') || roleSelect.value.includes('First Timer'))) {
+          if (isChild) roleSelect.value = 'Child / Sunday School';
+          else if (isYouth) roleSelect.value = 'Youth / Teen';
+          else roleSelect.value = 'Member';
+        }
+
+        if (wasGuest) {
+          if (titleEl) {
+            titleEl.innerHTML = `<i class="fa-solid fa-user-check" style="color: var(--emerald); margin-right: 6px;"></i> Convert Visitor to Full Church Member`;
+          }
+          if (subTitleEl) {
+            subTitleEl.innerText = `Promoting visitor to official church member. They will appear in the permanent Member Directory.`;
+          }
+          if (banner) {
+            banner.style.display = 'flex';
+            banner.style.alignItems = 'center';
+            banner.style.gap = '10px';
+            banner.style.background = '#ecfdf5';
+            banner.style.border = '1px solid #10b981';
+            banner.style.color = '#065f46';
+            banner.innerHTML = `<i class="fa-solid fa-circle-check" style="font-size: 16px; color: #10b981; flex-shrink: 0;"></i><div><strong>Ready to convert to Church Member:</strong> Category is set to <strong>${escapeHtml(val)} Member</strong>. Saving will move this profile to the permanent Member Directory.</div>`;
+          }
+        } else {
+          if (banner) banner.style.display = 'none';
+          if (titleEl) titleEl.innerText = 'Edit Member Profile';
+          if (subTitleEl) subTitleEl.innerText = 'Update personal details, category, Guardian, Date of Birth (DOB), or address.';
+        }
+      } else {
+        // Visitor category selected
+        if (roleSelect && (roleSelect.value === 'Member' || !roleSelect.value.includes('Visitor'))) {
+          roleSelect.value = 'Visitor / First Timer';
+        }
+        if (titleEl) {
+          titleEl.innerHTML = `<i class="fa-solid fa-user-clock" style="color: var(--gold); margin-right: 6px;"></i> Edit Visitor / Guest Profile`;
+        }
+        if (subTitleEl) {
+          subTitleEl.innerText = `Update visitor details, contact information, or select a Church Member category below to promote them.`;
+        }
+        if (banner) {
+          banner.style.display = 'flex';
+          banner.style.alignItems = 'center';
+          banner.style.gap = '10px';
+          banner.style.background = '#fffbeb';
+          banner.style.border = '1px solid #fde68a';
+          banner.style.color = '#92400e';
+          banner.innerHTML = `<i class="fa-solid fa-circle-info" style="font-size: 16px; color: #d97706; flex-shrink: 0;"></i><div>Currently registered as a <strong>Visitor / First Timer</strong>. To promote them to a full church member, select an Adult, Child, or Youth category below.</div>`;
+        }
+      }
+    }
+
+    function handleEditRoleChange(val) {
+      const catSelect = document.getElementById('editMemCategory');
+      if (!catSelect) return;
+      const currentCat = catSelect.value;
+      const isVisitorRole = val.includes('Visitor') || val.includes('First Timer');
+
+      if (isVisitorRole) {
+        if (currentCat === 'Adult' || currentCat === 'Child' || currentCat === 'Youth') {
+          if (currentCat === 'Child') catSelect.value = 'Visitor (Child)';
+          else if (currentCat === 'Youth') catSelect.value = 'Visitor (Youth)';
+          else catSelect.value = 'Visitor / Guest';
+          handleEditCategoryChange(catSelect.value);
+        }
+      } else {
+        // Member role selected! If category was visitor, switch category to corresponding member category
+        if (currentCat.includes('Visitor') || currentCat.includes('Guest')) {
+          if (currentCat.includes('Child') || val.includes('Child')) catSelect.value = 'Child';
+          else if (currentCat.includes('Youth') || val.includes('Youth')) catSelect.value = 'Youth';
+          else catSelect.value = 'Adult';
+          handleEditCategoryChange(catSelect.value);
+        }
+      }
+    }
+
     async function convertHeicToJpeg(file) {
       // 1. Native browser decoding (Safari iOS/macOS decodes HEIC natively)
       if (typeof createImageBitmap === 'function') {
@@ -7154,19 +7250,6 @@
 
       const isGuest = isGuestMember(member);
 
-      const titleEl = document.getElementById('editMemModalTitle');
-      const subTitleEl = document.getElementById('editMemModalSubtitle');
-      if (titleEl) {
-        titleEl.innerHTML = isGuest 
-          ? `<i class="fa-solid fa-user-clock" style="color: var(--gold); margin-right: 6px;"></i> Edit Visitor / Guest Profile`
-          : `Edit Member Profile`;
-      }
-      if (subTitleEl) {
-        subTitleEl.innerText = isGuest
-          ? `Update visitor details or correct spelling of their name without altering their visitor status.`
-          : `Update personal details, category, Guardian, Date of Birth (DOB), or address.`;
-      }
-
       const origIsGuestInput = document.getElementById('editMemOriginalIsGuest');
       if (origIsGuestInput) origIsGuestInput.value = isGuest ? 'true' : 'false';
 
@@ -7238,7 +7321,7 @@
         }
       }
 
-      toggleEditGuardianField(selectedCat);
+      handleEditCategoryChange(selectedCat);
 
       document.getElementById('editMemberModal').classList.add('active');
       document.getElementById('editMemFirst').focus();
@@ -7246,6 +7329,8 @@
 
     function closeEditMemberModal() {
       document.getElementById('editMemberModal').classList.remove('active');
+      const banner = document.getElementById('editMemStatusBanner');
+      if (banner) banner.style.display = 'none';
     }
 
     async function handleUpdateMember(e) {
@@ -7253,7 +7338,7 @@
       const id = document.getElementById('editMemId').value;
       const first = document.getElementById('editMemFirst').value.trim();
       const last = document.getElementById('editMemLast').value.trim();
-      const category = document.getElementById('editMemCategory').value;
+      let category = document.getElementById('editMemCategory').value;
       const guardian = document.getElementById('editMemGuardian').value.trim();
       const phone = document.getElementById('editMemPhone').value.trim();
       const gender = document.getElementById('editMemGender').value;
@@ -7266,13 +7351,19 @@
 
       const isChild = category.toLowerCase().includes('child');
       const isVisitorCat = category.toLowerCase().includes('visitor') || category.toLowerCase().includes('guest');
-      const isVisitorRole = role.toLowerCase().includes('visitor') || role.toLowerCase().includes('first timer');
+      const isVisitorRole = role.toLowerCase().includes('visitor') || role.toLowerCase().includes('first timer') || role.toLowerCase().includes('first-timer');
       
-      // If was a visitor and category is a visitor category or still has visitor role, keep as visitor!
-      const isGuest = isVisitorCat || isVisitorRole || (wasGuest && category.startsWith('Visitor'));
-
-      if (isGuest && (!role || role === 'Member')) {
-        role = 'Visitor / First Timer';
+      let isGuest = false;
+      if (['Adult', 'Child', 'Youth'].includes(category) || (!isVisitorCat && !isVisitorRole)) {
+        isGuest = false;
+        if (isVisitorRole || !role || role === 'Visitor / First Timer') {
+          role = isChild ? 'Child / Sunday School' : (category === 'Youth' ? 'Youth / Teen' : 'Member');
+        }
+      } else if (isVisitorCat || isVisitorRole) {
+        isGuest = true;
+        if (!role || role === 'Member') {
+          role = 'Visitor / First Timer';
+        }
       }
 
       const formattedDob = formatDisplayDate(rawDob);
@@ -7343,21 +7434,31 @@
       }
 
       // Propagate updated name and details to in-memory attendance and visitor records
-      if (Array.isArray(rawVisitorsData)) {
-        rawVisitorsData.forEach(v => {
-          if (v.memberId === id || v.id === id || (phone && v.phone === phone)) {
-            v.name = updatedFullName;
-            v.firstName = first;
-            v.lastName = last;
-            v.phone = phone || v.phone;
-            v.gender = gender || v.gender;
-            v.address = address || v.address;
-            v.category = category;
-            v.role = role;
-            if (isChild) v.guardian = guardian;
-            if (photoUrl) v.photoUrl = photoUrl;
-          }
-        });
+      if (!isGuest) {
+        // Person is now a regular church member! Purge from visitor lists
+        if (Array.isArray(rawVisitorsData)) {
+          rawVisitorsData = rawVisitorsData.filter(v => v.memberId !== id && v.id !== id && (!phone || v.phone !== phone));
+        }
+        if (Array.isArray(processedVisitorsList)) {
+          processedVisitorsList = processedVisitorsList.filter(v => v.memberId !== id && v.id !== id && (!phone || v.phone !== phone));
+        }
+      } else {
+        if (Array.isArray(rawVisitorsData)) {
+          rawVisitorsData.forEach(v => {
+            if (v.memberId === id || v.id === id || (phone && v.phone === phone)) {
+              v.name = updatedFullName;
+              v.firstName = first;
+              v.lastName = last;
+              v.phone = phone || v.phone;
+              v.gender = gender || v.gender;
+              v.address = address || v.address;
+              v.category = category;
+              v.role = role;
+              if (isChild) v.guardian = guardian;
+              if (photoUrl) v.photoUrl = photoUrl;
+            }
+          });
+        }
       }
 
       if (typeof serviceAttendanceMap === 'object' && serviceAttendanceMap !== null) {
@@ -7369,6 +7470,7 @@
               att.lastName = last;
               att.category = category;
               att.role = role;
+              att.isGuest = isGuest;
               if (att.member) {
                 att.member.firstName = first;
                 att.member.lastName = last;
@@ -7387,7 +7489,12 @@
       renderAttendanceAndDemographics();
       renderVisitorsSection();
       closeEditMemberModal();
-      showToast(`${isGuest ? 'Visitor' : 'Member'} profile for <strong>${escapeHtml(updatedFullName)}</strong> updated in cloud database!`, 'success', 'Profile Updated');
+
+      if (wasGuest && !isGuest) {
+        showToast(`<strong>${escapeHtml(updatedFullName)}</strong> has been successfully converted from a visitor into a permanent Church Member!`, 'success', 'Member Converted');
+      } else {
+        showToast(`${isGuest ? 'Visitor' : 'Member'} profile for <strong>${escapeHtml(updatedFullName)}</strong> updated in cloud database!`, 'success', 'Profile Updated');
+      }
     }
 
     function formatDisplayDate(dateStr) {
@@ -9209,8 +9316,28 @@
                 allMembers[idx].role = "Member";
                 allMembers[idx].isGuest = false;
               }
-              // Remove guest status in local processed list
-              processedVisitorsList = processedVisitorsList.filter(v => v.memberId !== memberId);
+              // Remove guest status in local processed and raw lists
+              rawVisitorsData = (rawVisitorsData || []).filter(v => v.memberId !== memberId && v.id !== memberId);
+              processedVisitorsList = (processedVisitorsList || []).filter(v => v.memberId !== memberId && v.id !== memberId);
+
+              if (typeof serviceAttendanceMap === 'object' && serviceAttendanceMap !== null) {
+                Object.keys(serviceAttendanceMap).forEach(k => {
+                  (serviceAttendanceMap[k] || []).forEach(att => {
+                    if (att.memberId === memberId || att.id === memberId || att.member?.id === memberId) {
+                      att.category = "Adult";
+                      att.role = "Member";
+                      att.isGuest = false;
+                      if (att.member) {
+                        att.member.category = "Adult";
+                        att.member.role = "Member";
+                        att.member.isGuest = false;
+                      }
+                    }
+                  });
+                });
+              }
+
+              updateDirectoryCounts();
               renderVisitorsSection();
               filterMembersTable();
               renderAttendanceAndDemographics();

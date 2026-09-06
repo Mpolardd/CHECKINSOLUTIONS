@@ -68,11 +68,21 @@ router.get('/', requireAuth, async (req, res, next) => {
     const guestIds = new Set(guestLogs.map(l => l.entityId));
 
     const result = rows.map(r => {
-      const isGuest = guestIds.has(r.id) ||
-                      (r.category && r.category.toLowerCase().includes('visitor')) ||
-                      (r.category && r.category.toLowerCase().includes('guest')) ||
-                      (r.role && r.role.toLowerCase().includes('visitor')) ||
-                      (r.role && r.role.toLowerCase().includes('first timer'));
+      const catLower = (r.category || '').toLowerCase();
+      const roleLower = (r.role || '').toLowerCase();
+      const hasVisitorCat = catLower.includes('visitor') || catLower.includes('guest');
+      const hasVisitorRole = roleLower.includes('visitor') || roleLower.includes('first timer') || roleLower.includes('first-timer');
+
+      const isExplicitMember = (!hasVisitorCat && !hasVisitorRole) &&
+        (['adult', 'child', 'youth'].includes(catLower) ||
+         ['member', 'child / sunday school', 'youth / teen', 'worker / usher', 'choir / praise', 'youth leader', 'minister / deacon', 'elder / pastor'].includes(roleLower));
+
+      const isGuest = !isExplicitMember && (
+        guestIds.has(r.id) ||
+        hasVisitorCat ||
+        hasVisitorRole
+      );
+
       return {
         ...r,
         isGuest: Boolean(isGuest),
@@ -200,12 +210,45 @@ const updateMemberHandler = async (req, res, next) => {
     if (b.dateOfBirth !== undefined) data.dateOfBirth = parseOptionalDate(b.dateOfBirth);
     if (b.anniversary !== undefined) data.anniversary = parseOptionalDate(b.anniversary);
     if (b.householdId !== undefined) data.householdId = b.householdId || null;
-    if (b.photoUrl !== undefined) data.photoUrl = b.photoUrl ? b.photoUrl.trim() : null;
+    // Fetch previous member record to detect visitor-to-member conversion
+    let prev = null;
+    try {
+      prev = await prisma.member.findUnique({
+        where: { id: req.params.id },
+        select: { category: true, role: true }
+      });
+    } catch (e) {}
+
+    const finalCat = data.category !== undefined ? data.category : prev?.category;
+    let finalRole = data.role !== undefined ? data.role : prev?.role;
+
+    const isFinalVisitorCat = finalCat && (finalCat.toLowerCase().includes('visitor') || finalCat.toLowerCase().includes('guest'));
+    const isFinalVisitorRole = finalRole && (finalRole.toLowerCase().includes('visitor') || finalRole.toLowerCase().includes('first timer') || finalRole.toLowerCase().includes('first-timer'));
+
+    // If category is set to a church member category (Adult, Child, Youth) and role is still a visitor role, auto-normalize role to Member
+    if (finalCat && ['Adult', 'Child', 'Youth'].includes(finalCat) && !isFinalVisitorCat && (isFinalVisitorRole || !data.role)) {
+      finalRole = finalCat === 'Child' ? 'Child / Sunday School' : (finalCat === 'Youth' ? 'Youth / Teen' : 'Member');
+      data.role = finalRole;
+    }
+
+    const isNowMember = finalCat && ['Adult', 'Child', 'Youth'].includes(finalCat) && !isFinalVisitorCat && (!finalRole || !finalRole.toLowerCase().includes('visitor'));
 
     const m = await prisma.member.update({
       where: { id: req.params.id },
       data
     });
+
+    // If converted to a full member, remove old VISITOR_REGISTRATION audit logs so legacy queries do not re-flag as guest
+    if (isNowMember) {
+      try {
+        await prisma.auditLog.deleteMany({
+          where: {
+            action: 'VISITOR_REGISTRATION',
+            entityId: m.id
+          }
+        });
+      } catch (e) {}
+    }
 
     // Audit Log
     try {
@@ -215,7 +258,7 @@ const updateMemberHandler = async (req, res, next) => {
           action: 'UPDATE_MEMBER',
           entity: 'MEMBER',
           entityId: m.id,
-          metadata: { name: `${m.firstName} ${m.lastName}` }
+          metadata: { name: `${m.firstName} ${m.lastName}`, convertedToMember: isNowMember }
         }
       });
     } catch (e) {}

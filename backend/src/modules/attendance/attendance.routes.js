@@ -1264,13 +1264,35 @@ router.get('/visitors', async (req, res, next) => {
       where: {
         active: true,
         deletedAt: null,
-        OR: [
-          { id: { in: Array.from(guestIdSet) } },
-          { category: { contains: 'Visitor', mode: 'insensitive' } },
-          { category: { contains: 'Guest', mode: 'insensitive' } },
-          { role: { contains: 'Visitor', mode: 'insensitive' } },
-          { role: { contains: 'First Timer', mode: 'insensitive' } },
-          { role: { contains: 'First-Timer', mode: 'insensitive' } }
+        AND: [
+          {
+            NOT: {
+              AND: [
+                { category: { in: ['Adult', 'Child', 'Youth'] } },
+                {
+                  NOT: {
+                    OR: [
+                      { role: { contains: 'Visitor', mode: 'insensitive' } },
+                      { role: { contains: 'First Timer', mode: 'insensitive' } },
+                      { role: { contains: 'First-Timer', mode: 'insensitive' } },
+                      { category: { contains: 'Visitor', mode: 'insensitive' } },
+                      { category: { contains: 'Guest', mode: 'insensitive' } }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            OR: [
+              { id: { in: Array.from(guestIdSet) } },
+              { category: { contains: 'Visitor', mode: 'insensitive' } },
+              { category: { contains: 'Guest', mode: 'insensitive' } },
+              { role: { contains: 'Visitor', mode: 'insensitive' } },
+              { role: { contains: 'First Timer', mode: 'insensitive' } },
+              { role: { contains: 'First-Timer', mode: 'insensitive' } }
+            ]
+          }
         ]
       },
       select: {
@@ -1290,7 +1312,7 @@ router.get('/visitors', async (req, res, next) => {
     });
 
     const visitorMemberIds = visitorMembers.map(m => m.id);
-    const allVisitorIds = Array.from(new Set([...visitorMemberIds, ...Array.from(guestIdSet)]));
+    const allVisitorIds = visitorMemberIds;
 
     const attWhere = {
       member: { active: true, deletedAt: null }
