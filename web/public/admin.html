@@ -2303,7 +2303,7 @@
               <thead><tr>
                 <th>#</th><th>Program / Service Name</th><th>Category</th>
                 <th>Schedule &amp; Hours</th><th>Flyer Image</th>
-                <th>Attendance Count</th><th>Kiosk Status</th><th>Actions</th>
+                <th>Attendance / Sessions</th><th>Kiosk Status</th><th>Actions</th>
               </tr></thead>
               <tbody id="programsTableBody"><!-- Injected by JS --></tbody>
             </table>
@@ -2362,18 +2362,21 @@
       <!-- Header & Action Bar -->
       <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <div>
-          <h2 style="font-family: Manrope, sans-serif; font-size: 22px; font-weight: 800; color: var(--ink);">
+          <h2 style="font-family: Manrope, sans-serif; font-size: 22px; font-weight: 800; color: var(--ink);" id="partnershipHeaderTitle">
             <i class="fas fa-handshake" style="color: var(--accent); margin-right: 8px;"></i> Ministry Partners &amp; Monthly Pledges
           </h2>
-          <p style="font-size: 13.5px; color: var(--muted); margin-top: 4px;">
-            Track registered covenant partners, monthly pledge commitments, fulfillment status, and identify defaulters or missed payments in real-time.
+          <p style="font-size: 13.5px; color: var(--muted); margin-top: 4px;" id="partnershipHeaderDesc">
+            Manage Covenant Partnership, Welfare dues, and custom collections like Men Collection in real-time.
           </p>
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <button type="button" class="btn-main" style="padding: 10px 18px; font-size: 13.5px; background: var(--emerald-dark);" onclick="openAdminRegisterPartnerModal()">
-            <i class="fas fa-user-plus"></i> Register New Partner
+          <button type="button" class="btn-main" style="padding: 10px 18px; font-size: 13.5px; background: #0f172a; color: white;" onclick="openCreateCollectionTypeModal()">
+            <i class="fas fa-plus-circle"></i> + Add Collection Type
           </button>
-          <button type="button" class="btn-main" style="padding: 10px 18px; font-size: 13.5px; background: var(--accent); color: #111;" onclick="openAdminRecordPaymentModal()">
+          <button type="button" class="btn-main" style="padding: 10px 18px; font-size: 13.5px; background: var(--emerald-dark);" onclick="openAdminRegisterPartnerModal()" id="btnRegisterPartnerMain">
+            <i class="fas fa-user-plus"></i> Register Contributor
+          </button>
+          <button type="button" class="btn-main" style="padding: 10px 18px; font-size: 13.5px; background: var(--accent); color: #111;" onclick="openAdminRecordPaymentModal()" id="btnRecordPaymentMain">
             <i class="fas fa-receipt"></i> Record Payment
           </button>
           <button type="button" class="btn-download" onclick="downloadPartnershipExcelReport()">
@@ -2382,11 +2385,30 @@
         </div>
       </div>
 
-      <!-- KPI Metrics Cards -->
+      <!-- COLLECTION & FUND TYPE CARDS (Welfare, Partnership, Men Collection, etc.) -->
+      <div style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <span style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;">
+              <i class="fas fa-layer-group" style="color: var(--accent); margin-right: 4px;"></i> Collection &amp; Pledge Funds
+            </span>
+            <span style="font-size: 12.5px; color: var(--muted); margin-left: 8px;">(Click any card to manage its records &amp; matrix)</span>
+          </div>
+          <div style="font-size: 12.5px; color: var(--ink); font-weight: 700; background: white; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--line);" id="activeCollectionIndicator">
+            Active Fund: <span style="color: var(--emerald-dark);">Partnership</span>
+          </div>
+        </div>
+
+        <div id="collectionTypesGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+          <!-- Injected dynamically by renderCollectionTypeCards() -->
+        </div>
+      </div>
+
+      <!-- KPI Metrics Cards for Selected Fund -->
       <div class="metrics-row" style="margin-bottom: 22px;">
         <div class="metric-box">
           <div class="metric-num" id="statPartCount" style="color: var(--ink);">0</div>
-          <div class="metric-label">Active Partners</div>
+          <div class="metric-label" id="lblStatPartCount">Active Contributors</div>
         </div>
         <div class="metric-box">
           <div class="metric-num" id="statPartPledged" style="color: var(--accent);">GHS 0.00</div>
@@ -3224,16 +3246,82 @@
     </div>
   </div>
 
+  <!-- Create Custom Collection / Fund Type Modal -->
+  <div class="modal-backdrop" id="createCollectionTypeModal" style="display: none;" onclick="if(event.target===this)closeCreateCollectionTypeModal()">
+    <div class="modal-card" style="max-width: 480px;">
+      <button class="modal-close" onclick="closeCreateCollectionTypeModal()">✕</button>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+        <div style="width: 38px; height: 38px; border-radius: 8px; background: rgba(16, 185, 129, 0.12); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+          <i class="fas fa-layer-group"></i>
+        </div>
+        <h2 style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin: 0;">
+          Create New Collection Type
+        </h2>
+      </div>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Add custom giving, dues, or ministry collections (e.g. Men Collection, Youth Harvest, Women Fellowship)</p>
+
+      <form onsubmit="handleCreateCollectionTypeSubmit(event)">
+        <div class="form-group">
+          <label for="newColName" class="form-label">Collection / Fund Name *</label>
+          <input required type="text" id="newColName" class="form-ctrl" placeholder="e.g. Men Collection, Building Project, Youth Wing" />
+        </div>
+
+        <div class="grid-3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label for="newColCategory" class="form-label">Category / Ministry *</label>
+            <input required type="text" id="newColCategory" class="form-ctrl" placeholder="e.g. Men's Ministry, Special Projects" value="Ministry Department" />
+          </div>
+
+          <div class="form-group">
+            <label for="newColFrequency" class="form-label">Frequency *</label>
+            <select id="newColFrequency" class="form-ctrl">
+              <option value="MONTHLY" selected>Monthly Dues / Pledges</option>
+              <option value="WEEKLY">Weekly Collections</option>
+              <option value="ONE_TIME">One-Time / Project Fund</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="newColDesc" class="form-label">Purpose / Description</label>
+          <input type="text" id="newColDesc" class="form-ctrl" placeholder="e.g. Men's ministry monthly dues and project commitments" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Theme Color &amp; Badge Accent</label>
+          <div style="display: flex; gap: 10px; align-items: center; margin-top: 4px;">
+            <input type="color" id="newColColor" value="#059669" style="width: 44px; height: 36px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; padding: 2px;" />
+            <span style="font-size: 12px; color: var(--muted);">Click to choose a distinct card accent color</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="submit" class="btn-main" id="btnSubmitNewColType" style="flex: 1; justify-content: center; padding: 12px; background: #0f172a; color: white;">
+            <i class="fas fa-plus-circle"></i> Create Collection Fund
+          </button>
+          <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeCreateCollectionTypeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Register New Partner Modal (Admin) -->
   <div class="modal-backdrop" id="adminRegisterPartnerModal" style="display: none;" onclick="if(event.target===this)closeAdminRegisterPartnerModal()">
       <div class="modal-card" style="max-width: 500px;">
         <button class="modal-close" onclick="closeAdminRegisterPartnerModal()">✕</button>
         <h2 style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
-          Register New Covenant Partner
+          Register New Contributor / Partner
         </h2>
-        <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Create a covenant partner record with monthly pledge commitment</p>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Create a partner or contributor record with monthly pledge commitment</p>
 
         <form onsubmit="handleAdminSavePartnerSubmit(event)">
+          <div class="form-group">
+            <label for="adminRegPartnerCollectionType" class="form-label">Collection / Fund Type *</label>
+            <select required id="adminRegPartnerCollectionType" class="form-ctrl" style="font-weight: 700; color: var(--ink);">
+              <!-- Populated dynamically: Welfare, Partnership, Men Collection, etc. -->
+            </select>
+          </div>
+
           <div class="form-group">
             <label for="adminRegPartnerName" class="form-label">Member Full Name *</label>
             <input required type="text" id="adminRegPartnerName" class="form-ctrl" placeholder="e.g. Deaconess Mary Mensah" />
@@ -3246,7 +3334,7 @@
 
           <div class="grid-3" style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
             <div class="form-group">
-              <label for="adminRegPartnerPledge" class="form-label">Monthly Pledge (GHS) *</label>
+              <label for="adminRegPartnerPledge" class="form-label">Monthly Pledge / Dues (GHS) *</label>
               <input required type="number" step="0.01" min="1" id="adminRegPartnerPledge" class="form-ctrl" placeholder="e.g. 250.00" />
             </div>
             <div class="form-group">
@@ -3262,12 +3350,12 @@
 
           <div class="form-group">
             <label for="adminRegPartnerNotes" class="form-label">Notes (Optional)</label>
-            <input type="text" id="adminRegPartnerNotes" class="form-ctrl" placeholder="e.g. Special partnership commitment" />
+            <input type="text" id="adminRegPartnerNotes" class="form-ctrl" placeholder="e.g. Monthly dues / special commitment" />
           </div>
 
           <div style="display: flex; gap: 10px; margin-top: 18px;">
             <button type="submit" class="btn-main" id="btnAdminSubmitPartner" style="flex: 1; justify-content: center; padding: 12px; background: var(--emerald-dark);">
-              <i class="fas fa-handshake"></i> Save Partner Record
+              <i class="fas fa-handshake"></i> Save Contributor Record
             </button>
             <button type="button" class="btn-main" style="background: #e2e8f0; color: #111;" onclick="closeAdminRegisterPartnerModal()">Cancel</button>
           </div>
@@ -3280,13 +3368,20 @@
       <div class="modal-card" style="max-width: 520px;">
         <button class="modal-close" onclick="closeAdminRecordPaymentModal()">✕</button>
         <h2 style="font-family: Manrope, sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
-          Record Partnership Payment
+          Record Collection / Pledge Payment
         </h2>
-        <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Log monthly contribution received from partner</p>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 18px;">Log contribution received for Welfare, Partnership, or custom collections</p>
 
         <form onsubmit="handleAdminSavePartnerPaymentSubmit(event)">
           <div class="form-group">
-            <label for="adminPayPartnerSelect" class="form-label">Select Partner *</label>
+            <label for="adminPayCollectionType" class="form-label">Collection / Fund Type</label>
+            <select id="adminPayCollectionType" class="form-ctrl" style="font-weight: 700; color: var(--ink);" onchange="filterAdminPayPartnerOptions(this.value)">
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="adminPayPartnerSelect" class="form-label">Select Contributor / Member *</label>
             <select required id="adminPayPartnerSelect" class="form-ctrl" onchange="handleAdminPartnerSelectChange(this.value)">
               <!-- Injected by JS -->
             </select>
@@ -3323,7 +3418,7 @@
 
           <div class="form-group">
             <label for="adminPayNotes" class="form-label">Reference / Notes (Optional)</label>
-            <input type="text" id="adminPayNotes" class="form-ctrl" placeholder="e.g. MoMo Ref # / Check #" />
+            <input type="text" id="adminPayNotes" class="form-ctrl" placeholder="e.g. MoMo Ref # / Receipt #" />
           </div>
 
           <div style="display: flex; gap: 10px; margin-top: 18px;">
@@ -4355,7 +4450,7 @@
       if (tab === 'analytics') { loadAnalyticsDashboard(); syncAnalyticsViewMode(); }
       if (tab === 'visitors') { renderVisitorsSection(); syncVisitorsViewMode(); }
       if (tab === 'members') { renderMembersTable(); syncMembersViewMode(); }
-      if (tab === 'programs') { renderProgramsManager(); syncProgramsViewMode(); }
+      if (tab === 'programs') { renderProgramsManager(); syncProgramsViewMode(); fetchLiveCounts(); }
       if (tab === 'partnership') { loadPartnershipMatrix(); syncPartnershipViewMode(); }
       if (tab === 'subAdmins') { renderSubAdminsList(); syncSubAdminsViewMode(); }
       if (tab === 'reports') { initReportsHub(); syncReportsViewMode(); }
@@ -6299,40 +6394,90 @@
           }
         } catch (hErr) {}
 
-        // Always query service totals from /attendance/services for Services & Programs Setup
+        // Always query service totals and individual service sessions for Services & Programs Setup
         try {
           const sRes = await fetch(`${API_BASE}/attendance/services`, { headers });
           if (sRes.ok) {
             const sList = await sRes.json();
             const programTotalCounts = {};
-            sList.forEach(s => {
-              const cName = canonicalServiceName(s.serviceType?.name || '');
-              const exactName = s.serviceType?.name || '';
-              const attCnt = (s._count && s._count.attendance) || 0;
-              if (cName) {
-                programTotalCounts[cName] = (programTotalCounts[cName] || 0) + attCnt;
+            const programSessionsMap = {};
+            const programLatestCounts = {};
+
+            if (Array.isArray(sList)) {
+              sList.forEach(s => {
+                const cName = canonicalServiceName(s.serviceType?.name || '');
+                const exactName = s.serviceType?.name || '';
+                const attCnt = (s._count && s._count.attendance) || 0;
+
+                const dateRaw = s.serviceDate || s.startsAt || s.createdAt;
+                let dateIso = '';
+                let dateLabel = 'Session';
+                if (dateRaw) {
+                  const d = new Date(dateRaw);
+                  if (!isNaN(d.getTime())) {
+                    dateIso = d.toISOString().split('T')[0];
+                    dateLabel = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                  }
+                }
+
+                const addSessionEntry = (key) => {
+                  if (!key) return;
+                  if (!programSessionsMap[key]) programSessionsMap[key] = [];
+                  const existing = programSessionsMap[key].find(sess => sess.dateIso === dateIso);
+                  if (existing) {
+                    existing.count += attCnt;
+                  } else {
+                    programSessionsMap[key].push({
+                      id: s.id,
+                      dateIso,
+                      dateLabel,
+                      count: attCnt
+                    });
+                  }
+                };
+
+                if (cName) {
+                  programTotalCounts[cName] = (programTotalCounts[cName] || 0) + attCnt;
+                  addSessionEntry(cName);
+                }
+                if (exactName && exactName !== cName) {
+                  programTotalCounts[exactName] = (programTotalCounts[exactName] || 0) + attCnt;
+                  addSessionEntry(exactName);
+                }
+              });
+
+              // Sort each program's sessions by date descending
+              Object.keys(programSessionsMap).forEach(key => {
+                programSessionsMap[key].sort((a, b) => (b.dateIso || '').localeCompare(a.dateIso || ''));
+                if (programSessionsMap[key].length > 0) {
+                  programLatestCounts[key] = programSessionsMap[key][0].count;
+                }
+              });
+            }
+
+            // Custom program attendance fallback
+            const customCountResults = await Promise.all(customPrograms.map(async (program) => {
+              try {
+                const countRes = await fetch(`${API_BASE}/attendance/by-service-name?name=${encodeURIComponent(program.name)}`, { headers });
+                if (!countRes.ok) return null;
+                const countData = await countRes.json();
+                return { name: program.name, count: Number(countData.count) || 0 };
+              } catch (countErr) {
+                return null;
               }
-              if (exactName && exactName !== cName) {
-                programTotalCounts[exactName] = (programTotalCounts[exactName] || 0) + attCnt;
+            }));
+            customCountResults.forEach(result => {
+              if (result) {
+                programTotalCounts[result.name] = result.count;
+                if (programLatestCounts[result.name] === undefined) {
+                  programLatestCounts[result.name] = result.count;
+                }
               }
             });
 
-              // Custom program attendance may still be linked to a legacy weekly service.
-              // Ask the exact service endpoint so the program card reflects recovered live records.
-              const customCountResults = await Promise.all(customPrograms.map(async (program) => {
-                try {
-                  const countRes = await fetch(`${API_BASE}/attendance/by-service-name?name=${encodeURIComponent(program.name)}`, { headers });
-                  if (!countRes.ok) return null;
-                  const countData = await countRes.json();
-                  return { name: program.name, count: Number(countData.count) || 0 };
-                } catch (countErr) {
-                  return null;
-                }
-              }));
-              customCountResults.forEach(result => {
-                if (result) programTotalCounts[result.name] = result.count;
-              });
             window._programTotalCounts = programTotalCounts;
+            window._programSessionsMap = programSessionsMap;
+            window._programLatestCounts = programLatestCounts;
           }
         } catch (sErr) {}
 
@@ -7862,15 +8007,44 @@
       tbody.innerHTML = allList.map((item, i) => {
         const isKioskActive = activeKiosk === item.name || (!activeKiosk && item.isStandard && item.name.includes('Sunday'));
         const canon = canonicalServiceName(item.name);
+        const sessions = (window._programSessionsMap && (window._programSessionsMap[item.name] || window._programSessionsMap[canon])) || [];
         const liveCount = (serviceAttendanceMap[item.name] || serviceAttendanceMap[canon] || []).length;
-        const count = (window._programTotalCounts && (window._programTotalCounts[item.name] !== undefined || window._programTotalCounts[canon] !== undefined))
-          ? (window._programTotalCounts[item.name] !== undefined ? window._programTotalCounts[item.name] : window._programTotalCounts[canon])
-          : liveCount;
+
+        let latestCount = 0;
+        let latestLabel = 'Latest';
+        if (sessions.length > 0) {
+          latestCount = sessions[0].count;
+          latestLabel = sessions[0].dateLabel || 'Latest';
+        } else if (window._programLatestCounts && (window._programLatestCounts[item.name] !== undefined || window._programLatestCounts[canon] !== undefined)) {
+          latestCount = window._programLatestCounts[item.name] !== undefined ? window._programLatestCounts[item.name] : window._programLatestCounts[canon];
+          latestLabel = 'Latest';
+        } else {
+          latestCount = liveCount;
+          latestLabel = 'Live';
+        }
 
         const statusBadge = isKioskActive
           ? `<span class="badge-present" style="background:#e6f4ea;color:#137333;"><i class="fas fa-tower-broadcast"></i> Live on Kiosk</span>`
           : `<span style="color:var(--muted);font-size:12px;">Standby</span>`;
         const safeName = item.name.replace(/'/g, "\\'");
+
+        const sessionsDropdown = sessions.length > 0 ? `
+          <select class="form-ctrl" style="font-size:11.5px; padding:3px 6px; height:auto; border-radius:4px; background:#f8fafc; border:1px solid var(--line); color:var(--ink); cursor:pointer; width:100%; max-width:215px; margin-top:4px;" onchange="handleSelectServiceSessionDate('${safeName}', this.value)" title="Select a past Sunday / service date to view its individual attendance">
+            <option value="">📅 Past Sessions (${sessions.length})</option>
+            ${sessions.map(s => `<option value="${s.dateIso}">${s.dateLabel}: ${s.count} attended</option>`).join('')}
+          </select>
+        ` : `<span style="font-size:11px; color:var(--muted); margin-top:2px;">No past sessions</span>`;
+
+        const attendanceCell = `
+          <div style="display:flex; flex-direction:column; min-width:180px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <strong style="color:var(--emerald); font-size:13.5px;">${latestCount} Attended</strong>
+              <span style="font-size:10px; background:rgba(20,83,45,0.08); color:#14532d; padding:1px 5px; border-radius:4px; font-weight:700; border:1px solid rgba(20,83,45,0.2); white-space:nowrap;">${latestLabel}</span>
+            </div>
+            ${sessionsDropdown}
+          </div>
+        `;
+
         const actionButtons = `<div style="display:flex;gap:6px;flex-wrap:wrap;">
           ${!isKioskActive ? `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#14532d;" onclick="activateProgramOnKiosk('${safeName}')"><i class="fas fa-play"></i> Set Live</button>` : `<button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#0f3d24;" onclick="resetKioskToRegularSchedule()"><i class="fas fa-rotate-left"></i> Reset</button>`}
           <button class="btn-main" style="padding:4px 10px;font-size:11.5px;background:#c5221f;color:white;" onclick="endCheckinAndGenerateReport('${safeName}')" title="End check-in session for this service and compile report"><i class="fas fa-flag-checkered"></i> End Check-In &amp; Report</button>
@@ -7883,7 +8057,7 @@
           <td><span class="badge-check">${item.category}</span></td>
           <td>${item.schedule}</td>
           <td><img src="${item.flyerUrl}" style="width:36px;height:36px;object-fit:contain;border-radius:4px;border:1px solid var(--line);background:#000;" /></td>
-          <td><strong style="color:var(--emerald);">${count} Attended</strong></td>
+          <td>${attendanceCell}</td>
           <td>${statusBadge}</td>
           <td>${actionButtons}</td>
         </tr>`;
@@ -7897,14 +8071,34 @@
           : allList.map((item, i) => {
             const isKioskActive = activeKiosk === item.name || (!activeKiosk && item.isStandard && item.name.includes('Sunday'));
             const canon = canonicalServiceName(item.name);
+            const sessions = (window._programSessionsMap && (window._programSessionsMap[item.name] || window._programSessionsMap[canon])) || [];
             const liveCount = (serviceAttendanceMap[item.name] || serviceAttendanceMap[canon] || []).length;
-            const count = (window._programTotalCounts && (window._programTotalCounts[item.name] !== undefined || window._programTotalCounts[canon] !== undefined))
-              ? (window._programTotalCounts[item.name] !== undefined ? window._programTotalCounts[item.name] : window._programTotalCounts[canon])
-              : liveCount;
+
+            let latestCount = 0;
+            let latestLabel = 'Latest';
+            if (sessions.length > 0) {
+              latestCount = sessions[0].count;
+              latestLabel = sessions[0].dateLabel || 'Latest';
+            } else if (window._programLatestCounts && (window._programLatestCounts[item.name] !== undefined || window._programLatestCounts[canon] !== undefined)) {
+              latestCount = window._programLatestCounts[item.name] !== undefined ? window._programLatestCounts[item.name] : window._programLatestCounts[canon];
+              latestLabel = 'Latest';
+            } else {
+              latestCount = liveCount;
+              latestLabel = 'Live';
+            }
 
             const statusBadge = isKioskActive
               ? `<span class="badge-present" style="background:#e6f4ea;color:#137333;font-size:11px;"><i class="fas fa-tower-broadcast"></i> Live</span>`
               : `<span style="color:var(--muted);font-size:11px;">Standby</span>`;
+            const safeName = item.name.replace(/'/g, "\\'");
+
+            const mobSessionsDropdown = sessions.length > 0 ? `
+              <select class="form-ctrl" style="font-size:11.5px; padding:3px 6px; height:auto; border-radius:4px; background:#f8fafc; border:1px solid var(--line); color:var(--ink); cursor:pointer; width:100%; max-width:190px; margin-top:3px;" onchange="handleSelectServiceSessionDate('${safeName}', this.value)" title="Select a past Sunday date to view its individual attendance">
+                <option value="">📅 Past Sessions (${sessions.length})</option>
+                ${sessions.map(s => `<option value="${s.dateIso}">${s.dateLabel}: ${s.count} attended</option>`).join('')}
+              </select>
+            ` : `<span style="font-size:11px; color:var(--muted);">No past sessions</span>`;
+
             return `
               <div class="mob-card">
                 <div class="mob-card-header">
@@ -7914,14 +8108,20 @@
                 <div class="mob-card-meta">
                   <div class="mob-card-row"><span>Category</span><strong><span class="badge-check">${item.category}</span></strong></div>
                   <div class="mob-card-row"><span>Schedule</span><strong style="font-size:12px;">${item.schedule}</strong></div>
-                  <div class="mob-card-row"><span>Attendance</span><strong style="color:var(--emerald);">${count} Attended</strong></div>
+                  <div class="mob-card-row" style="align-items:flex-start;">
+                    <span>Attendance</span>
+                    <div style="display:flex; flex-direction:column; gap:3px; align-items:flex-end;">
+                      <strong style="color:var(--emerald); font-size:13px;">${latestCount} Attended <span style="font-size:10px; background:rgba(20,83,45,0.08); color:#14532d; padding:1px 5px; border-radius:4px; font-weight:700; border:1px solid rgba(20,83,45,0.2);">${latestLabel}</span></strong>
+                      ${mobSessionsDropdown}
+                    </div>
+                  </div>
                 </div>
                 <div class="mob-card-actions">
                   ${!isKioskActive
-                    ? `<button class="btn-main" style="background:#14532d;" onclick="activateProgramOnKiosk('${item.name}')"><i class="fas fa-play"></i> Set Live</button>`
+                    ? `<button class="btn-main" style="background:#14532d;" onclick="activateProgramOnKiosk('${safeName}')"><i class="fas fa-play"></i> Set Live</button>`
                     : `<button class="btn-main" style="background:#0f3d24;" onclick="resetKioskToRegularSchedule()"><i class="fas fa-rotate-left"></i> Reset</button>`}
                   <button class="btn-main" style="background:#c89b55;color:#111;" onclick="openEditProgramModal('${item.id}')"><i class="fas fa-edit"></i> Edit</button>
-                  <button class="btn-main" style="background:#3b82f6;" onclick="viewProgramAttendance('${item.name}')"><i class="fas fa-users"></i> Attendance</button>
+                  <button class="btn-main" style="background:#3b82f6;" onclick="viewProgramAttendance('${safeName}')"><i class="fas fa-users"></i> Attendance</button>
                   ${!item.isStandard ? `<button class="btn-main" style="background:#c5221f;" onclick="deleteCustomProgram('${item.id}')"><i class="fas fa-trash-alt"></i> Delete</button>` : ''}
                 </div>
               </div>`;
@@ -8211,9 +8411,32 @@
       if (attSelect) {
         attSelect.value = name;
       }
+      const canon = canonicalServiceName(name);
+      const sessions = (window._programSessionsMap && (window._programSessionsMap[name] || window._programSessionsMap[canon])) || [];
+      const dateInput = document.getElementById('attDateSelect');
+      if (dateInput && sessions.length > 0 && sessions[0].dateIso) {
+        dateInput.value = sessions[0].dateIso;
+      }
       switchTab('attendance');
       renderAttendanceAndDemographics();
       fetchLiveCounts();
+    }
+
+    function handleSelectServiceSessionDate(serviceName, dateIso) {
+      if (!dateIso) return;
+      currentSelectedService = serviceName;
+      const attSelect = document.getElementById('attServiceSelect');
+      if (attSelect) {
+        attSelect.value = serviceName;
+      }
+      const dateInput = document.getElementById('attDateSelect');
+      if (dateInput) {
+        dateInput.value = dateIso;
+      }
+      switchTab('attendance');
+      renderAttendanceAndDemographics();
+      fetchLiveCounts();
+      showToast(`Viewing attendance roster for ${serviceName} on ${dateIso}`, 'info', 'Session Selected');
     }
 
     function openCreateProgramModal() {
@@ -8278,7 +8501,7 @@
         localStorage.setItem('sfmi_active_kiosk_service', name);
       }
 
-      closeCreateProgramModal();
+closeCreateProgramModal();
       e.target.reset();
       removeAttachedFlyer();
       populateServiceDropdowns();
@@ -8292,6 +8515,8 @@
     let rawPartnershipMatrix = [];
     let cachedPartnersListAdmin = [];
     let currentMatrixYear = new Date().getFullYear();
+    let activeCollectionType = 'Partnership';
+    let cachedCollectionTypes = [];
 
     async function loadPartnershipMatrix(year) {
       if (year) currentMatrixYear = Number(year);
@@ -8302,14 +8527,23 @@
         const token = await getAdminAuthToken();
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-        const [matrixRes, partnersRes] = await Promise.all([
-          fetch(`${API_BASE}/finance/partnerships/matrix?year=${currentMatrixYear}`, { headers }).catch(() => null),
-          fetch(`${API_BASE}/finance/partners`, { headers }).catch(() => null)
+        const [matrixRes, partnersRes, colTypesRes] = await Promise.all([
+          fetch(`${API_BASE}/finance/partnerships/matrix?year=${currentMatrixYear}&collectionType=${encodeURIComponent(activeCollectionType)}`, { headers }).catch(() => null),
+          fetch(`${API_BASE}/finance/partners?collectionType=${encodeURIComponent(activeCollectionType)}`, { headers }).catch(() => null),
+          fetch(`${API_BASE}/finance/collection-types`, { headers }).catch(() => null)
         ]);
+
+        if (colTypesRes && colTypesRes.ok) {
+          cachedCollectionTypes = await colTypesRes.json();
+          populateCollectionTypeDropdowns();
+        }
 
         if (matrixRes && matrixRes.ok) {
           const data = await matrixRes.json();
           rawPartnershipMatrix = data.matrix || [];
+
+          // Render Collection Cards with live stats
+          renderCollectionTypeCards(data.collectionBreakdown || {});
 
           // Render KPI Summary
           const summary = data.summary || {};
@@ -8334,6 +8568,231 @@
         }
       } catch (err) {
         console.error('Failed to load partnership matrix:', err);
+      }
+    }
+
+    function renderCollectionTypeCards(breakdown = {}) {
+      const grid = document.getElementById('collectionTypesGrid');
+      if (!grid) return;
+
+      const types = (cachedCollectionTypes && cachedCollectionTypes.length > 0)
+        ? cachedCollectionTypes
+        : [
+            { id: 'welfare', name: 'Welfare', category: 'Welfare & Benevolence', description: 'Monthly welfare dues, member emergency support, and benevolence funds', icon: 'fas fa-hand-holding-heart', color: '#0284c7', isStandard: true },
+            { id: 'partnership', name: 'Partnership', category: 'Covenant Partnership', description: 'Monthly ministry partnership pledges, vision builders, and covenant partners', icon: 'fas fa-handshake', color: '#c89b55', isStandard: true }
+          ];
+
+      grid.innerHTML = types.map(type => {
+        const isActive = activeCollectionType.toLowerCase() === type.name.toLowerCase();
+        const typeColor = type.color || '#10b981';
+        const stats = breakdown[type.name.toUpperCase()] || breakdown[type.name] || { totalPartners: 0, totalMonthlyPledged: 0, currentMonthCollected: 0 };
+        const safeName = type.name.replace(/'/g, "\\'");
+
+        return `
+          <div class="col-type-card" onclick="selectCollectionType('${safeName}')" style="cursor:pointer; border-radius:10px; border:${isActive ? '2.5px solid ' + typeColor : '1.5px solid var(--line)'}; padding:16px 18px; box-shadow:${isActive ? '0 6px 16px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.02)'}; transition:all 0.2s ease; position:relative; display:flex; flex-direction:column; justify-content:space-between; background:${isActive ? 'linear-gradient(180deg, #ffffff 0%, ' + typeColor + '0d 100%)' : '#ffffff'};">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:40px; height:40px; border-radius:8px; background:${typeColor}18; color:${typeColor}; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+                    <i class="${type.icon || 'fas fa-layer-group'}"></i>
+                  </div>
+                  <div>
+                    <h4 style="margin:0; font-size:15px; font-weight:800; color:var(--ink);">${escapeHtml(type.name)}</h4>
+                    <span style="font-size:11px; color:var(--muted);">${escapeHtml(type.category || 'Collection Fund')}</span>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  ${isActive ? `<span style="font-size:10px; background:${typeColor}20; color:${typeColor}; font-weight:800; padding:2px 8px; border-radius:12px; border:1px solid ${typeColor}40;">ACTIVE</span>` : ''}
+                  ${!type.isStandard ? `<button type="button" onclick="event.stopPropagation(); deleteCustomCollectionType('${type.id}', '${safeName}')" title="Delete this collection type" style="background:none; border:none; color:#ef4444; font-size:12px; cursor:pointer; padding:4px;"><i class="fas fa-trash-alt"></i></button>` : ''}
+                </div>
+              </div>
+              <p style="font-size:12px; color:var(--muted); margin:0 0 14px 0; line-height:1.45;">${escapeHtml(type.description || 'Collection and contribution fund.')}</p>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f1f5f9; padding-top:10px; font-size:12px;">
+              <div><span style="color:var(--muted);">Members:</span> <strong style="color:var(--ink);">${stats.totalPartners || 0}</strong></div>
+              <div><span style="color:var(--muted);">This Month:</span> <strong style="color:var(--emerald-dark);">GHS ${(stats.currentMonthCollected || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></div>
+            </div>
+          </div>
+        `;
+      }).join('') + `
+        <!-- Quick Add New Card -->
+        <div onclick="openCreateCollectionTypeModal()" style="cursor:pointer; background:#fafafa; border:2px dashed var(--line); border-radius:10px; padding:18px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:140px; transition:all 0.2s ease;" onmouseover="this.style.borderColor='var(--emerald-dark)'; this.style.background='#f0fdf4';" onmouseout="this.style.borderColor='var(--line)'; this.style.background='#fafafa';">
+          <div style="width:36px; height:36px; border-radius:50%; background:#e2e8f0; color:#475569; display:flex; align-items:center; justify-content:center; font-size:16px; margin-bottom:8px;">
+            <i class="fas fa-plus"></i>
+          </div>
+          <strong style="font-size:13.5px; color:var(--ink); margin-bottom:2px;">+ Add New Collection</strong>
+          <span style="font-size:11.5px; color:var(--muted);">e.g. Men Collection, Harvest Fund</span>
+        </div>
+      `;
+    }
+
+    function selectCollectionType(typeName) {
+      activeCollectionType = typeName || 'Partnership';
+      const indicator = document.getElementById('activeCollectionIndicator');
+      if (indicator) {
+        indicator.innerHTML = `Active Fund: <span style="color:var(--emerald-dark);">${escapeHtml(activeCollectionType)}</span>`;
+      }
+
+      const titleEl = document.getElementById('partnershipHeaderTitle');
+      const descEl = document.getElementById('partnershipHeaderDesc');
+      const regBtn = document.getElementById('btnRegisterPartnerMain');
+      const payBtn = document.getElementById('btnRecordPaymentMain');
+
+      if (activeCollectionType.toLowerCase() === 'welfare') {
+        if (titleEl) titleEl.innerHTML = `<i class="fas fa-hand-holding-heart" style="color:#0284c7; margin-right:8px;"></i> Welfare &amp; Benevolence Fund`;
+        if (descEl) descEl.innerText = `Track registered welfare members, monthly dues commitments, benevolence payouts, and defaulters in real-time.`;
+        if (regBtn) regBtn.innerHTML = `<i class="fas fa-user-plus"></i> Register Welfare Member`;
+        if (payBtn) payBtn.innerHTML = `<i class="fas fa-receipt"></i> Record Welfare Dues`;
+      } else if (activeCollectionType.toLowerCase() === 'partnership') {
+        if (titleEl) titleEl.innerHTML = `<i class="fas fa-handshake" style="color:var(--accent); margin-right:8px;"></i> Ministry Partners &amp; Monthly Pledges`;
+        if (descEl) descEl.innerText = `Track registered covenant partners, monthly pledge commitments, fulfillment status, and identify defaulters or missed payments in real-time.`;
+        if (regBtn) regBtn.innerHTML = `<i class="fas fa-user-plus"></i> Register New Partner`;
+        if (payBtn) payBtn.innerHTML = `<i class="fas fa-receipt"></i> Record Payment`;
+      } else {
+        if (titleEl) titleEl.innerHTML = `<i class="fas fa-layer-group" style="color:var(--emerald-dark); margin-right:8px;"></i> ${escapeHtml(activeCollectionType)} &amp; Contributions`;
+        if (descEl) descEl.innerText = `Manage registered members, dues, project pledges, and monthly collections for ${escapeHtml(activeCollectionType)}.`;
+        if (regBtn) regBtn.innerHTML = `<i class="fas fa-user-plus"></i> Register Contributor`;
+        if (payBtn) payBtn.innerHTML = `<i class="fas fa-receipt"></i> Record Collection`;
+      }
+
+      loadPartnershipMatrix();
+    }
+
+    function populateCollectionTypeDropdowns() {
+      const regSelect = document.getElementById('adminRegPartnerCollectionType');
+      const paySelect = document.getElementById('adminPayCollectionType');
+
+      const types = (cachedCollectionTypes && cachedCollectionTypes.length > 0)
+        ? cachedCollectionTypes
+        : [
+            { id: 'welfare', name: 'Welfare' },
+            { id: 'partnership', name: 'Partnership' }
+          ];
+
+      const optionsHtml = types.map(t => `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)}</option>`).join('');
+
+      if (regSelect) {
+        regSelect.innerHTML = optionsHtml;
+        regSelect.value = activeCollectionType;
+      }
+      if (paySelect) {
+        paySelect.innerHTML = optionsHtml;
+        paySelect.value = activeCollectionType;
+      }
+    }
+
+    function filterAdminPayPartnerOptions(colType) {
+      const select = document.getElementById('adminPayPartnerSelect');
+      if (!select) return;
+
+      const list = (cachedPartnersListAdmin && cachedPartnersListAdmin.length > 0)
+        ? cachedPartnersListAdmin
+        : (rawPartnershipMatrix || []).map(m => ({ id: m.partnerId, memberName: m.memberName, phone: m.phone, pledgeAmount: m.pledgeAmount, collectionType: m.collectionType }));
+
+      const filtered = colType
+        ? list.filter(p => (p.collectionType || 'Partnership').toLowerCase() === colType.toLowerCase())
+        : list;
+
+      const displayList = filtered.length > 0 ? filtered : list;
+
+      select.innerHTML = '<option value="">-- Choose Member / Contributor --</option>' +
+        displayList.map(p => `
+          <option value="${p.id}" data-name="${escapeHtml(p.memberName)}" data-pledge="${p.pledgeAmount || 0}">
+            ${escapeHtml(p.memberName)} (${p.phone || 'No phone'}) · GHS ${Number(p.pledgeAmount || 0).toFixed(2)}/mo
+          </option>
+        `).join('');
+    }
+
+    function openCreateCollectionTypeModal() {
+      const modal = document.getElementById('createCollectionTypeModal');
+      if (!modal) return;
+      document.getElementById('newColName').value = '';
+      document.getElementById('newColCategory').value = 'Ministry Department';
+      document.getElementById('newColDesc').value = '';
+      document.getElementById('newColColor').value = '#059669';
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+      setTimeout(() => {
+        const nameInput = document.getElementById('newColName');
+        if (nameInput) nameInput.focus();
+      }, 50);
+    }
+
+    function closeCreateCollectionTypeModal() {
+      const modal = document.getElementById('createCollectionTypeModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+      }
+    }
+
+    async function handleCreateCollectionTypeSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('newColName').value.trim();
+      const category = document.getElementById('newColCategory').value.trim();
+      const frequency = document.getElementById('newColFrequency').value;
+      const description = document.getElementById('newColDesc').value.trim();
+      const color = document.getElementById('newColColor').value;
+
+      if (!name) {
+        showToast('Please enter a collection type name.', 'error', 'Name Required');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitNewColType');
+      if (btn) { btn.disabled = true; btn.innerText = 'Creating fund…'; }
+
+      try {
+        const token = await getAdminAuthToken();
+        const res = await fetch(`${API_BASE}/finance/collection-types`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ name, category, frequency, description, color, icon: 'fas fa-layer-group' })
+        });
+
+        if (res.ok) {
+          closeCreateCollectionTypeModal();
+          showToast(`Collection fund <strong>${escapeHtml(name)}</strong> created successfully!`, 'success', 'Fund Created');
+          activeCollectionType = name;
+          await loadPartnershipMatrix();
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Failed to create collection fund.', 'error', 'Creation Failed');
+        }
+      } catch (err) {
+        showToast('Network error creating collection fund.', 'error', 'Network Error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus-circle"></i> Create Collection Fund'; }
+      }
+    }
+
+    async function deleteCustomCollectionType(typeId, typeName) {
+      if (!confirm(`Are you sure you want to delete the "${typeName}" collection type?\n\nExisting contribution logs will remain safely stored.`)) {
+        return;
+      }
+
+      try {
+        const token = await getAdminAuthToken();
+        const res = await fetch(`${API_BASE}/finance/collection-types/${typeId}`, {
+          method: 'DELETE',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+
+        if (res.ok) {
+          showToast(`Collection type "${typeName}" removed.`, 'info', 'Fund Removed');
+          if (activeCollectionType.toLowerCase() === typeName.toLowerCase()) {
+            activeCollectionType = 'Partnership';
+          }
+          await loadPartnershipMatrix();
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Failed to delete collection type.', 'error', 'Delete Failed');
+        }
+      } catch (err) {
+        showToast('Network error removing collection type.', 'error', 'Network Error');
       }
     }
 
@@ -8367,8 +8826,8 @@
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="18" style="padding: 36px; text-align: center; color: var(--muted);">No partner records matching your filter.</td></tr>`;
-        if (mobileWrap) mobileWrap.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--muted); background:white; border-radius:8px;">No partner records matching your filter.</div>`;
+        tbody.innerHTML = `<tr><td colspan="18" style="padding: 36px; text-align: center; color: var(--muted);">No records found in <strong>${escapeHtml(activeCollectionType)}</strong> matching your filter.</td></tr>`;
+        if (mobileWrap) mobileWrap.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--muted); background:white; border-radius:8px;">No records found in ${escapeHtml(activeCollectionType)}.</div>`;
         return;
       }
 
@@ -8409,7 +8868,7 @@
                 <button type="button" class="btn-main" style="padding: 4px 8px; font-size: 11px; background: var(--emerald-dark);" onclick="openAdminRecordPaymentModal('${item.partnerId}')" title="Record Payment">
                   <i class="fas fa-plus"></i> Pay
                 </button>
-                <button type="button" class="btn-main" style="padding: 4px 8px; font-size: 11px; background: #c5221f;" onclick="deletePartnerFromAdmin('${item.partnerId}')" title="Remove Partner">
+                <button type="button" class="btn-main" style="padding: 4px 8px; font-size: 11px; background: #c5221f;" onclick="deletePartnerFromAdmin('${item.partnerId}')" title="Remove Record">
                   <i class="fas fa-trash-alt"></i>
                 </button>
               </div>
@@ -8421,29 +8880,35 @@
       // Render Mobile Cards
       if (mobileWrap) {
         mobileWrap.innerHTML = filtered.map((item, idx) => {
-          const curInfo = (item.monthlyStatus && item.monthlyStatus[curMonthKey]) || { status: 'PENDING', paid: 0 };
-          let statusBadge = `<span style="background:#e2e8f0; color:#475569; font-weight:700; padding:2px 8px; border-radius:4px; font-size:11px;">Upcoming</span>`;
-          if (curInfo.status === 'PAID') statusBadge = `<span style="background:#d1fae5; color:#065f46; font-weight:800; padding:2px 8px; border-radius:4px; font-size:11px;">🟢 Paid</span>`;
-          else if (curInfo.status === 'PARTIAL') statusBadge = `<span style="background:#fef3c7; color:#92400e; font-weight:800; padding:2px 8px; border-radius:4px; font-size:11px;">🟡 Partial</span>`;
-          else if (curInfo.status === 'MISSED' || curInfo.status === 'DUE') statusBadge = `<span style="background:#fee2e2; color:#991b1b; font-weight:800; padding:2px 8px; border-radius:4px; font-size:11px;">🔴 Defaulter</span>`;
+          const curStatusInfo = (item.monthlyStatus && item.monthlyStatus[curMonthKey]) || { status: 'PENDING', paid: 0 };
+          let statusBadge = `<span style="background:#f1f5f9; color:#475569; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px;">Pending</span>`;
+          if (curStatusInfo.status === 'PAID') statusBadge = `<span style="background:#d1fae5; color:#065f46; font-size:11px; font-weight:800; padding:3px 8px; border-radius:4px;">Paid in Full</span>`;
+          if (curStatusInfo.status === 'PARTIAL') statusBadge = `<span style="background:#fef3c7; color:#92400e; font-size:11px; font-weight:800; padding:3px 8px; border-radius:4px;">Partial (GHS ${curStatusInfo.paid.toFixed(2)})</span>`;
+          if (curStatusInfo.status === 'MISSED') statusBadge = `<span style="background:#fee2e2; color:#991b1b; font-size:11px; font-weight:800; padding:3px 8px; border-radius:4px;">Missed Payment</span>`;
+          if (curStatusInfo.status === 'DUE') statusBadge = `<span style="background:#dbeafe; color:#1e40af; font-size:11px; font-weight:800; padding:3px 8px; border-radius:4px;">Payment Due</span>`;
 
           return `
-            <div class="mob-card" style="background:white; border:1px solid var(--line); border-radius:8px; padding:14px;">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <div class="admin-card" style="margin-bottom: 0; padding: 14px 16px; border: 1px solid var(--line);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                 <div>
-                  <div style="font-weight:800; font-size:15px; color:var(--ink);">${escapeHtml(item.memberName)}</div>
-                  <div style="font-size:12px; color:var(--muted);"><i class="fas fa-phone"></i> ${escapeHtml(item.phone || 'No phone')}</div>
+                  <strong style="font-size: 14px; color: var(--ink);">${escapeHtml(item.memberName)}</strong>
+                  <div style="font-size: 12px; color: var(--muted);">${escapeHtml(item.phone || 'No phone recorded')}</div>
                 </div>
                 ${statusBadge}
               </div>
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#fafbfa; padding:10px; border-radius:6px; margin:8px 0; font-size:12px;">
+
+              <div style="display: flex; justify-content: space-between; background: #f8fafc; padding: 8px 12px; border-radius: 6px; font-size: 12.5px; margin-bottom: 12px;">
                 <div>Monthly Pledge: <strong style="color:var(--gold);">GHS ${(item.pledgeAmount || 0).toFixed(2)}</strong></div>
-                <div>Year Total Paid: <strong style="color:var(--emerald);">GHS ${(item.yearTotalPaid || 0).toFixed(2)}</strong></div>
+                <div>Year Total: <strong style="color:var(--emerald);">GHS ${(item.yearTotalPaid || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></div>
               </div>
-              <div style="display:flex; gap:6px; margin-top:8px;">
-                <button type="button" class="btn-main" style="flex:1; justify-content:center; padding:8px; font-size:12px; background:var(--ink);" onclick="viewPartnerHistory('${item.partnerId}')"><i class="fas fa-list-check"></i> History</button>
-                <button type="button" class="btn-main" style="flex:1; justify-content:center; padding:8px; font-size:12px; background:var(--emerald-dark);" onclick="openAdminRecordPaymentModal('${item.partnerId}')"><i class="fas fa-plus"></i> Pay</button>
-                <button type="button" class="btn-main" style="padding:8px 12px; font-size:12px; background:#c5221f;" onclick="deletePartnerFromAdmin('${item.partnerId}')"><i class="fas fa-trash-alt"></i></button>
+
+              <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn-main" style="flex: 1; justify-content: center; padding: 6px; font-size: 12px; background: var(--emerald-dark);" onclick="openAdminRecordPaymentModal('${item.partnerId}')">
+                  <i class="fas fa-receipt"></i> Pay
+                </button>
+                <button type="button" class="btn-main" style="padding: 6px 12px; font-size: 12px; background: var(--ink);" onclick="viewPartnerHistory('${item.partnerId}')">
+                  History
+                </button>
               </div>
             </div>
           `;
@@ -8456,19 +8921,7 @@
     }
 
     function populateAdminPartnerSelectOptions() {
-      const select = document.getElementById('adminPayPartnerSelect');
-      if (!select) return;
-
-      const list = (cachedPartnersListAdmin && cachedPartnersListAdmin.length > 0)
-        ? cachedPartnersListAdmin
-        : (rawPartnershipMatrix || []).map(m => ({ id: m.partnerId, memberName: m.memberName, phone: m.phone, pledgeAmount: m.pledgeAmount }));
-
-      select.innerHTML = '<option value="">-- Choose Covenant Partner --</option>' +
-        list.map(p => `
-          <option value="${p.id}" data-name="${escapeHtml(p.memberName)}" data-pledge="${p.pledgeAmount || 0}">
-            ${escapeHtml(p.memberName)} (${p.phone || 'No phone'}) · GHS ${Number(p.pledgeAmount || 0).toFixed(2)}/mo
-          </option>
-        `).join('');
+      filterAdminPayPartnerOptions(document.getElementById('adminPayCollectionType')?.value || activeCollectionType);
     }
 
     function handleAdminPartnerSelectChange(partnerId) {
@@ -8486,6 +8939,10 @@
     function openAdminRegisterPartnerModal() {
       const modal = document.getElementById('adminRegisterPartnerModal');
       if (!modal) return;
+      populateCollectionTypeDropdowns();
+      const colSelect = document.getElementById('adminRegPartnerCollectionType');
+      if (colSelect) colSelect.value = activeCollectionType;
+
       document.getElementById('adminRegPartnerName').value = '';
       document.getElementById('adminRegPartnerPhone').value = '';
       document.getElementById('adminRegPartnerPledge').value = '';
@@ -8509,6 +8966,7 @@
 
     async function handleAdminSavePartnerSubmit(e) {
       e.preventDefault();
+      const collectionType = document.getElementById('adminRegPartnerCollectionType')?.value || activeCollectionType;
       const memberName = document.getElementById('adminRegPartnerName').value.trim();
       const phone = document.getElementById('adminRegPartnerPhone').value.trim();
       const pledgeAmount = parseFloat(document.getElementById('adminRegPartnerPledge').value) || 0;
@@ -8516,12 +8974,12 @@
       const notes = document.getElementById('adminRegPartnerNotes').value.trim();
 
       if (!memberName || pledgeAmount <= 0) {
-        showToast('Please enter partner name and a valid pledge amount.', 'error', 'Invalid Input');
+        showToast('Please enter name and a valid monthly amount.', 'error', 'Invalid Input');
         return;
       }
 
       const btn = document.getElementById('btnAdminSubmitPartner');
-      if (btn) { btn.disabled = true; btn.innerText = 'Saving partner…'; }
+      if (btn) { btn.disabled = true; btn.innerText = 'Saving record…'; }
 
       try {
         const token = await getAdminAuthToken();
@@ -8531,27 +8989,31 @@
             'Content-Type': 'application/json',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           },
-          body: JSON.stringify({ memberName, phone, pledgeAmount, startDate, notes })
+          body: JSON.stringify({ collectionType, memberName, phone, pledgeAmount, startDate, notes })
         });
 
         if (res.ok) {
           closeAdminRegisterPartnerModal();
-          showToast(`Covenant partner <strong>${escapeHtml(memberName)}</strong> registered successfully in Supabase!`, 'success', 'Partner Registered');
+          showToast(`Record for <strong>${escapeHtml(memberName)}</strong> saved to <strong>${escapeHtml(collectionType)}</strong>!`, 'success', 'Saved Successfully');
           loadPartnershipMatrix();
         } else {
           const err = await res.json();
-          showToast(err.error || 'Failed to register partner.', 'error', 'Registration Failed');
+          showToast(err.error || 'Failed to save record.', 'error', 'Save Failed');
         }
       } catch (err) {
-        showToast('Network error saving partner to Supabase.', 'error', 'Network Error');
+        showToast('Network error saving record.', 'error', 'Network Error');
       } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-handshake"></i> Save Partner Record'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-handshake"></i> Save Contributor Record'; }
       }
     }
 
     function openAdminRecordPaymentModal(partnerId) {
       const modal = document.getElementById('adminRecordPartnerPaymentModal');
       if (!modal) return;
+      populateCollectionTypeDropdowns();
+      const colSelect = document.getElementById('adminPayCollectionType');
+      if (colSelect) colSelect.value = activeCollectionType;
+
       populateAdminPartnerSelectOptions();
 
       const now = new Date();
@@ -8590,6 +9052,7 @@
 
     async function handleAdminSavePartnerPaymentSubmit(e) {
       e.preventDefault();
+      const collectionType = document.getElementById('adminPayCollectionType')?.value || activeCollectionType;
       const partnerId = document.getElementById('adminPayPartnerSelect').value;
       const targetMonth = document.getElementById('adminPayTargetMonth').value;
       const amount = parseFloat(document.getElementById('adminPayAmount').value) || 0;
@@ -8602,7 +9065,7 @@
         : (rawPartnershipMatrix || []).map(m => ({ id: m.partnerId, memberName: m.memberName, phone: m.phone, pledgeAmount: m.pledgeAmount }));
 
       const partner = list.find(p => p.id === partnerId);
-      const memberName = partner ? partner.memberName : 'Partner';
+      const memberName = partner ? partner.memberName : 'Member';
 
       if (!partnerId || amount <= 0 || !targetMonth) {
         showToast('Please fill all required payment fields.', 'error', 'Fields Required');
@@ -8621,13 +9084,13 @@
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           },
           body: JSON.stringify({
-            partnerId, memberName, amount, targetMonth, paymentDate, paymentMethod, recordedBy: 'Super Admin', notes
+            partnerId, memberName, amount, targetMonth, paymentDate, paymentMethod, collectionType, recordedBy: 'Super Admin', notes
           })
         });
 
         if (res.ok) {
           closeAdminRecordPaymentModal();
-          showToast(`Partnership payment of <strong>GHS ${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong> for <strong>${escapeHtml(memberName)}</strong> saved to Supabase!`, 'success', 'Payment Recorded');
+          showToast(`Contribution of <strong>GHS ${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong> for <strong>${escapeHtml(memberName)}</strong> saved to <strong>${escapeHtml(collectionType)}</strong>!`, 'success', 'Payment Recorded');
           loadPartnershipMatrix();
         } else {
           const err = await res.json();
@@ -8714,11 +9177,11 @@
 
     function downloadPartnershipExcelReport() {
       if (!rawPartnershipMatrix || rawPartnershipMatrix.length === 0) {
-        showToast('No partnership records available to export.', 'warning', 'No Data');
+        showToast(`No ${activeCollectionType} records available to export.`, 'warning', 'No Data');
         return;
       }
 
-      const headers = ['#', 'Partner Name', 'Phone Number', 'Monthly Pledge (GHS)', 'Year Total Paid (GHS)', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const headers = ['#', 'Contributor Name', 'Phone Number', 'Monthly Pledge / Dues (GHS)', 'Year Total Paid (GHS)', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const monthKeys = ['01','02','03','04','05','06','07','08','09','10','11','12'];
 
       const rows = rawPartnershipMatrix.map((p, i) => {
@@ -8741,13 +9204,14 @@
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
+      const safeColName = (activeCollectionType || 'Partnership').replace(/[^A-Za-z0-9]/g, '_');
       a.href = url;
-      a.download = `SFMI_Partnership_Pledges_Ledger_${currentMatrixYear}_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `SFMI_${safeColName}_Ledger_${currentMatrixYear}_${new Date().toISOString().slice(0, 10)}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast('Partnership ledger spreadsheet exported successfully!', 'success', 'Excel Exported');
+      showToast(`${activeCollectionType} ledger spreadsheet exported successfully!`, 'success', 'Excel Exported');
     }
 
     /* ── CUSTOM CONFIRMATION MODAL SYSTEM ── */

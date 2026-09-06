@@ -913,7 +913,15 @@ router.get('/services', async (req, res, next) => {
       where,
       include: {
         serviceType: true,
-        _count: { select: { attendance: true } }
+        _count: {
+          select: {
+            attendance: {
+              where: {
+                member: { active: true, deletedAt: null }
+              }
+            }
+          }
+        }
       },
       orderBy: [
         { serviceDate: 'desc' },

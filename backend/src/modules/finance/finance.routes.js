@@ -222,19 +222,112 @@ router.get('/transactions', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'),
 
 // ── PARTNERSHIP & MONTHLY PLEDGES SYSTEM ──
 
-// List all registered partners
+// Collection & Fund Types (Welfare, Partnership, Custom Collections like Men Collection)
+router.get('/collection-types', async (req, res, next) => {
+  try {
+    const logs = await prisma.auditLog.findMany({
+      where: { entity: 'COLLECTION_TYPE' },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    const standardTypes = [
+      {
+        id: 'welfare',
+        name: 'Welfare',
+        category: 'Welfare & Benevolence',
+        description: 'Monthly welfare dues, member emergency support, and benevolence funds',
+        icon: 'fas fa-hand-holding-heart',
+        color: '#0284c7',
+        isStandard: true
+      },
+      {
+        id: 'partnership',
+        name: 'Partnership',
+        category: 'Covenant Partnership',
+        description: 'Monthly ministry partnership pledges, vision builders, and covenant partners',
+        icon: 'fas fa-handshake',
+        color: '#c89b55',
+        isStandard: true
+      }
+    ];
+
+    const customTypes = logs.map(l => ({
+      id: l.entityId || l.id,
+      ...(l.metadata || {}),
+      isStandard: false,
+      createdAt: l.createdAt
+    })).filter(t => t.active !== false);
+
+    res.json([...standardTypes, ...customTypes]);
+  } catch (e) { next(e); }
+});
+
+router.post('/collection-types', async (req, res, next) => {
+  try {
+    const { name, category = 'Ministry Collection', description = '', frequency = 'MONTHLY', targetAmount = 0, icon = 'fas fa-layer-group', color = '#10b981' } = req.body || {};
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Collection type name is required' });
+    }
+
+    const cleanName = name.trim();
+    const typeId = `col_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const metadata = {
+      name: cleanName,
+      category: category.trim(),
+      description: description.trim(),
+      frequency,
+      targetAmount: Number(targetAmount) || 0,
+      icon,
+      color,
+      active: true
+    };
+
+    await prisma.auditLog.create({
+      data: {
+        actorId: req.user?.userId || null,
+        action: 'CREATE_COLLECTION_TYPE',
+        entity: 'COLLECTION_TYPE',
+        entityId: typeId,
+        metadata
+      }
+    });
+
+    res.status(201).json({ id: typeId, ...metadata, isStandard: false });
+  } catch (e) { next(e); }
+});
+
+router.delete('/collection-types/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (id === 'welfare' || id === 'partnership') {
+      return res.status(400).json({ error: 'Standard collection types cannot be deleted' });
+    }
+    await prisma.auditLog.deleteMany({
+      where: { entity: 'COLLECTION_TYPE', entityId: id }
+    });
+    res.json({ success: true, message: 'Collection type removed' });
+  } catch (e) { next(e); }
+});
+
+// List all registered partners (optionally filtered by collectionType)
 router.get('/partners', async (req, res, next) => {
   try {
+    const { collectionType } = req.query;
     const logs = await prisma.auditLog.findMany({
       where: { entity: 'PARTNER' },
       orderBy: { createdAt: 'desc' }
     });
 
-    const partners = logs.map(l => ({
+    let partners = logs.map(l => ({
       id: l.entityId || l.id,
+      collectionType: (l.metadata && l.metadata.collectionType) || 'PARTNERSHIP',
       ...(l.metadata || {}),
       createdAt: l.createdAt
     })).filter(p => p.active !== false);
+
+    if (collectionType && collectionType.toUpperCase() !== 'ALL') {
+      partners = partners.filter(p => (p.collectionType || 'PARTNERSHIP').toLowerCase() === collectionType.toLowerCase());
+    }
 
     // Fetch all partnership payments to calculate lifetime contributions
     const paymentLogs = await prisma.auditLog.findMany({
@@ -261,7 +354,7 @@ router.get('/partners', async (req, res, next) => {
 // Register or Update a Partner
 router.post('/partners', async (req, res, next) => {
   try {
-    const { id, memberId, memberName, phone, email, pledgeAmount, currency = 'GHS', frequency = 'MONTHLY', startDate, notes } = req.body || {};
+    const { id, memberId, memberName, phone, email, pledgeAmount, currency = 'GHS', frequency = 'MONTHLY', collectionType = 'PARTNERSHIP', startDate, notes } = req.body || {};
     if (!memberName || !pledgeAmount) {
       return res.status(400).json({ error: 'Partner member name and pledge amount are required' });
     }
@@ -280,6 +373,7 @@ router.post('/partners', async (req, res, next) => {
       pledgeAmount: Number(pledgeAmount),
       currency,
       frequency,
+      collectionType: collectionType ? collectionType.trim() : 'PARTNERSHIP',
       startDate: startDate || new Date().toISOString().slice(0, 10),
       notes: notes || '',
       active: true
@@ -313,9 +407,18 @@ router.delete('/partners/:id', async (req, res, next) => {
 // Record a Partnership Payment
 router.post('/partnerships/payments', async (req, res, next) => {
   try {
-    const { partnerId, memberName, amount, targetMonth, paymentDate, paymentMethod = 'CASH', recordedBy = 'Treasury Officer', notes } = req.body || {};
+    const { partnerId, memberName, amount, targetMonth, paymentDate, paymentMethod = 'CASH', collectionType, recordedBy = 'Treasury Officer', notes } = req.body || {};
     if (!partnerId || !amount || !targetMonth) {
       return res.status(400).json({ error: 'Partner, amount, and target month are required' });
+    }
+
+    // Lookup partner to resolve default collectionType if not explicitly passed
+    let resolvedCollectionType = collectionType;
+    if (!resolvedCollectionType) {
+      const pLog = await prisma.auditLog.findFirst({
+        where: { entity: 'PARTNER', entityId: partnerId }
+      });
+      resolvedCollectionType = pLog?.metadata?.collectionType || 'PARTNERSHIP';
     }
 
     const paymentId = `pay_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
@@ -330,6 +433,7 @@ router.post('/partnerships/payments', async (req, res, next) => {
       targetMonth, // format YYYY-MM e.g. "2026-08"
       paymentDate: dateStr,
       paymentMethod,
+      collectionType: resolvedCollectionType,
       recordedBy,
       notes: notes || ''
     };
@@ -347,10 +451,13 @@ router.post('/partnerships/payments', async (req, res, next) => {
 
     // Create entry in double-entry ledger account
     try {
-      let partnerAccount = await prisma.financialAccount.findUnique({ where: { code: 'PARTNERSHIP_COLLECTIONS' } });
+      const accountCode = resolvedCollectionType === 'WELFARE' ? 'WELFARE_COLLECTIONS' : (resolvedCollectionType === 'PARTNERSHIP' ? 'PARTNERSHIP_COLLECTIONS' : `COL_${resolvedCollectionType.replace(/[^A-Za-z0-9]/g, '_').toUpperCase()}`);
+      const accountName = resolvedCollectionType === 'WELFARE' ? 'Welfare & Benevolence Collections' : (resolvedCollectionType === 'PARTNERSHIP' ? 'Partnership & Monthly Pledges Collections' : `${resolvedCollectionType} Collections`);
+      
+      let partnerAccount = await prisma.financialAccount.findUnique({ where: { code: accountCode } });
       if (!partnerAccount) {
         partnerAccount = await prisma.financialAccount.create({
-          data: { name: 'Partnership & Monthly Pledges Collections', code: 'PARTNERSHIP_COLLECTIONS', active: true }
+          data: { name: accountName, code: accountCode, active: true }
         });
       }
 
@@ -359,8 +466,8 @@ router.post('/partnerships/payments', async (req, res, next) => {
           accountId: partnerAccount.id,
           type: 'INCOME',
           amount: parsedAmount,
-          reference: `PARTNER-${paymentId.slice(-6).toUpperCase()}`,
-          description: `Partnership Payment: ${memberName} for ${targetMonth} via ${paymentMethod}`
+          reference: `${resolvedCollectionType.slice(0, 4).toUpperCase()}-${paymentId.slice(-6).toUpperCase()}`,
+          description: `${resolvedCollectionType} Contribution: ${memberName} for ${targetMonth} via ${paymentMethod}`
         }
       });
     } catch (err) {}
@@ -369,10 +476,10 @@ router.post('/partnerships/payments', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// List all partnership payments
+// List all partnership payments (optionally filtered by collectionType)
 router.get('/partnerships/payments', async (req, res, next) => {
   try {
-    const { partnerId, targetMonth, year } = req.query;
+    const { partnerId, targetMonth, year, collectionType } = req.query;
     const logs = await prisma.auditLog.findMany({
       where: { entity: 'PARTNERSHIP_PAYMENT' },
       orderBy: { createdAt: 'desc' }
@@ -389,15 +496,19 @@ router.get('/partnerships/payments', async (req, res, next) => {
     if (year) {
       payments = payments.filter(p => p.targetMonth && p.targetMonth.startsWith(String(year)));
     }
+    if (collectionType && collectionType.toUpperCase() !== 'ALL') {
+      payments = payments.filter(p => (p.collectionType || 'PARTNERSHIP').toLowerCase() === collectionType.toLowerCase());
+    }
 
     res.json(payments);
   } catch (e) { next(e); }
 });
 
-// 12-Month Tracking Matrix & Analytics
+// 12-Month Tracking Matrix & Analytics (with collectionType support)
 router.get('/partnerships/matrix', async (req, res, next) => {
   try {
     const year = Number(req.query.year) || new Date().getFullYear();
+    const { collectionType } = req.query;
     const currentMonthNum = new Date().getMonth() + 1; // 1 to 12
     const currentYear = new Date().getFullYear();
 
@@ -406,8 +517,9 @@ router.get('/partnerships/matrix', async (req, res, next) => {
       where: { entity: 'PARTNER' },
       orderBy: { createdAt: 'desc' }
     });
-    const partners = partnerLogs.map(l => ({
+    let partners = partnerLogs.map(l => ({
       id: l.entityId || l.id,
+      collectionType: (l.metadata && l.metadata.collectionType) || 'PARTNERSHIP',
       ...(l.metadata || {})
     })).filter(p => p.active !== false);
 
@@ -418,8 +530,35 @@ router.get('/partnerships/matrix', async (req, res, next) => {
     });
     const allPayments = paymentLogs.map(l => l.metadata).filter(Boolean);
 
+    // Calculate collection breakdown for cards across all types
+    const collectionBreakdown = {};
+    partners.forEach(p => {
+      const cType = (p.collectionType || 'PARTNERSHIP').toUpperCase();
+      if (!collectionBreakdown[cType]) {
+        collectionBreakdown[cType] = { totalPartners: 0, totalMonthlyPledged: 0, currentMonthCollected: 0 };
+      }
+      collectionBreakdown[cType].totalPartners++;
+      collectionBreakdown[cType].totalMonthlyPledged += (Number(p.pledgeAmount) || 0);
+    });
+
+    const currMonthPad = String(currentMonthNum).padStart(2, '0');
+    const targetCurrMonth = `${year}-${currMonthPad}`;
+    allPayments.forEach(pay => {
+      if (pay.targetMonth === targetCurrMonth) {
+        const cType = (pay.collectionType || 'PARTNERSHIP').toUpperCase();
+        if (!collectionBreakdown[cType]) {
+          collectionBreakdown[cType] = { totalPartners: 0, totalMonthlyPledged: 0, currentMonthCollected: 0 };
+        }
+        collectionBreakdown[cType].currentMonthCollected += (Number(pay.amount) || 0);
+      }
+    });
+
+    // If a specific collectionType is requested (and not 'ALL'), filter partners
+    if (collectionType && collectionType.toUpperCase() !== 'ALL') {
+      partners = partners.filter(p => (p.collectionType || 'PARTNERSHIP').toLowerCase() === collectionType.toLowerCase());
+    }
+
     // Map payments by partnerId and month (01 to 12)
-    // Structure: { [partnerId]: { '01': sumAmount, '02': sumAmount, ... } }
     const partnerMonthMap = {};
     for (const p of allPayments) {
       if (p.targetMonth && p.targetMonth.startsWith(String(year))) {
@@ -436,8 +575,6 @@ router.get('/partnerships/matrix', async (req, res, next) => {
     let currentMonthCollected = 0;
     let currentMonthMissedCount = 0;
     let currentMonthPaidCount = 0;
-
-    const currMonthPad = String(currentMonthNum).padStart(2, '0');
 
     const matrix = partners.map(p => {
       const pledge = Number(p.pledgeAmount) || 0;
@@ -486,6 +623,7 @@ router.get('/partnerships/matrix', async (req, res, next) => {
         partnerId: p.id,
         memberName: p.memberName,
         phone: p.phone || '—',
+        collectionType: p.collectionType || 'PARTNERSHIP',
         pledgeAmount: pledge,
         currency: p.currency || 'GHS',
         yearTotalPaid: partnerYearPaid,
@@ -495,6 +633,8 @@ router.get('/partnerships/matrix', async (req, res, next) => {
 
     res.json({
       year,
+      collectionType: collectionType || 'ALL',
+      collectionBreakdown,
       summary: {
         totalPartners: partners.length,
         totalMonthlyPledged,
