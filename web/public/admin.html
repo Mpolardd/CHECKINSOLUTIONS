@@ -3900,7 +3900,37 @@
       return digits;
     }
 
+    function getCalendarIsoDate(dateRaw) {
+      if (!dateRaw) return '';
+      if (typeof dateRaw === 'string') {
+        const m = dateRaw.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (m) return m[1];
+      }
+      const d = new Date(dateRaw);
+      if (isNaN(d.getTime())) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function formatCalendarDateLabel(dateRaw, options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) {
+      if (!dateRaw) return 'Session';
+      const iso = getCalendarIsoDate(dateRaw);
+      if (iso) {
+        const [y, m, d] = iso.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        return dt.toLocaleDateString(undefined, options);
+      }
+      const dt = new Date(dateRaw);
+      return !isNaN(dt.getTime()) ? dt.toLocaleDateString(undefined, options) : 'Session';
+    }
+
     function formatLocalDate(d = new Date()) {
+      if (typeof d === 'string') {
+        const m = d.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (m) return m[1];
+      }
       const dateObj = typeof d === 'string' ? new Date(d) : d;
       if (!dateObj || isNaN(dateObj.getTime())) return '';
       const y = dateObj.getFullYear();
@@ -5368,7 +5398,7 @@
 
       if (tbody) {
         tbody.innerHTML = list.map((e, idx) => {
-          const dateStr = new Date(e.serviceDate).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+          const dateStr = formatCalendarDateLabel(e.serviceDate, { year: 'numeric', month: 'short', day: 'numeric' });
           const name = e.serviceName || 'Sunday Service';
           const tithes = Number(e.tithes || 0).toFixed(2);
           const offering = Number(e.offering || 0).toFixed(2);
@@ -5404,7 +5434,7 @@
 
       if (finCardsContainer) {
         finCardsContainer.innerHTML = list.map(e => {
-          const dateStr = new Date(e.serviceDate).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+          const dateStr = formatCalendarDateLabel(e.serviceDate, { year: 'numeric', month: 'short', day: 'numeric' });
           const name = e.serviceName || 'Sunday Service';
           const tithes = Number(e.tithes || 0).toFixed(2);
           const offering = Number(e.offering || 0).toFixed(2);
@@ -5464,7 +5494,7 @@
         return;
       }
 
-      const dateStr = new Date(entry.serviceDate).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+      const dateStr = formatCalendarDateLabel(entry.serviceDate, { year: 'numeric', month: 'short', day: 'numeric' });
       document.getElementById('compFinTitle').innerText = `Compiled Financial Report — ${entry.serviceName || 'Sunday Service'}`;
       document.getElementById('compFinSub').innerText = `Service Date: ${dateStr} · Recorded by ${entry.recordedBy || 'Treasury Officer'}`;
 
@@ -6087,7 +6117,7 @@
       // Desktop table rows
       if (tbody) {
         tbody.innerHTML = list.map(item => {
-          const dt = new Date(item.serviceDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+          const dt = formatCalendarDateLabel(item.serviceDate, { day: '2-digit', month: 'short', year: 'numeric' });
           const tot = Number(item.totalAmount);
           return `
             <tr>
@@ -6113,7 +6143,7 @@
       // Mobile card rows
       if (mobileCards) {
         mobileCards.innerHTML = list.map((item, idx) => {
-          const dt = new Date(item.serviceDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+          const dt = formatCalendarDateLabel(item.serviceDate, { day: '2-digit', month: 'short', year: 'numeric' });
           const tot = Number(item.totalAmount);
           return `
             <div class="fin-mobile-card">
@@ -6164,7 +6194,7 @@
       _finViewList = filteredFinanceEntries;
       const item = _finViewList[idx];
       if (!item) return;
-      const dt = new Date(item.serviceDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const dt = formatCalendarDateLabel(item.serviceDate, { day: '2-digit', month: 'short', year: 'numeric' });
       const tot = Number(item.totalAmount);
       const rows = [
         ['Date', dt],
@@ -6825,16 +6855,17 @@
                 const exactName = s.serviceType?.name || '';
                 const attCnt = (s._count && s._count.attendance) || 0;
 
-                const dateRaw = s.serviceDate || s.startsAt || s.createdAt;
-                let dateIso = '';
-                let dateLabel = 'Session';
-                if (dateRaw) {
-                  const d = new Date(dateRaw);
-                  if (!isNaN(d.getTime())) {
-                    dateIso = d.toISOString().split('T')[0];
-                    dateLabel = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                // Ignore 0-attendance test records created on non-scheduled weekdays for standard recurring services
+                if (s.serviceType && s.serviceType.dayOfWeek !== null && s.serviceType.dayOfWeek !== undefined) {
+                  const sUtcDay = s.serviceDate ? new Date(s.serviceDate).getUTCDay() : null;
+                  if (attCnt === 0 && sUtcDay !== null && sUtcDay !== s.serviceType.dayOfWeek) {
+                    return;
                   }
                 }
+
+                const dateRaw = s.dateIso || s.serviceDate || s.startsAt || s.createdAt;
+                const dateIso = s.dateIso || getCalendarIsoDate(dateRaw);
+                const dateLabel = s.dateLabel || formatCalendarDateLabel(dateRaw);
 
                 const addSessionEntry = (key) => {
                   if (!key) return;
@@ -8430,8 +8461,9 @@
         let latestCount = 0;
         let latestLabel = 'Latest';
         if (sessions.length > 0) {
-          latestCount = sessions[0].count;
-          latestLabel = sessions[0].dateLabel || 'Latest';
+          const attendedSession = sessions.find(s => s.count > 0) || sessions[0];
+          latestCount = attendedSession.count;
+          latestLabel = attendedSession.dateLabel || 'Latest';
         } else if (window._programLatestCounts && (window._programLatestCounts[item.name] !== undefined || window._programLatestCounts[canon] !== undefined)) {
           latestCount = window._programLatestCounts[item.name] !== undefined ? window._programLatestCounts[item.name] : window._programLatestCounts[canon];
           latestLabel = 'Latest';
@@ -8494,8 +8526,9 @@
             let latestCount = 0;
             let latestLabel = 'Latest';
             if (sessions.length > 0) {
-              latestCount = sessions[0].count;
-              latestLabel = sessions[0].dateLabel || 'Latest';
+              const attendedSession = sessions.find(s => s.count > 0) || sessions[0];
+              latestCount = attendedSession.count;
+              latestLabel = attendedSession.dateLabel || 'Latest';
             } else if (window._programLatestCounts && (window._programLatestCounts[item.name] !== undefined || window._programLatestCounts[canon] !== undefined)) {
               latestCount = window._programLatestCounts[item.name] !== undefined ? window._programLatestCounts[item.name] : window._programLatestCounts[canon];
               latestLabel = 'Latest';

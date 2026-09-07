@@ -205,6 +205,22 @@ async function resolveTargetService(tx, { serviceId, serviceName, serviceDate })
     orderBy: { startsAt: 'desc' }
   });
 
+  if (!matched && !serviceDate) {
+    // If no service was created for today yet, check if there is an active ongoing service
+    // for this service type that started within the last 16 hours (e.g. evening programs,
+    // all-night vigils, or conventions crossing midnight)
+    matched = await tx.service.findFirst({
+      where: {
+        serviceTypeId: svcType.id,
+        active: true,
+        endsAt: null,
+        startsAt: { gte: new Date(Date.now() - 16 * 60 * 60 * 1000) }
+      },
+      include: { serviceType: true },
+      orderBy: { startsAt: 'desc' }
+    });
+  }
+
   if (!matched) {
     try {
       matched = await tx.service.create({
@@ -878,7 +894,22 @@ router.get('/services', async (req, res, next) => {
       ]
     });
 
-    res.json(services);
+    const enrichedServices = services.map(s => {
+      const dateRaw = s.serviceDate ? s.serviceDate.toISOString().split('T')[0] : '';
+      let dateLabel = '';
+      if (dateRaw) {
+        const [y, m, d] = dateRaw.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        dateLabel = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      }
+      return {
+        ...s,
+        dateIso: dateRaw,
+        dateLabel: dateLabel || 'Session'
+      };
+    });
+
+    res.json(enrichedServices);
   } catch (e) { next(e); }
 });
 
@@ -887,15 +918,40 @@ router.get('/services/current', async (req, res, next) => {
     const now = new Date();
     const { start, end } = getDayRange();
 
-    let service = await prisma.service.findFirst({
-      where: {
-        active: true,
-        startsAt: { lte: now },
-        OR: [{ endsAt: null }, { endsAt: { gte: now } }]
-      },
-      include: { serviceType: true },
-      orderBy: { startsAt: 'desc' }
+    // Check if an active kiosk program is currently running
+    const activeKioskLog = await prisma.auditLog.findFirst({
+      where: { entity: 'ACTIVE_KIOSK_PROGRAM' },
+      orderBy: { createdAt: 'desc' }
     });
+    const progName = activeKioskLog?.metadata?.programName;
+
+    let service = null;
+    if (progName && typeof progName === 'string' && progName.trim()) {
+      service = await prisma.service.findFirst({
+        where: {
+          serviceType: { name: { equals: progName.trim(), mode: 'insensitive' } },
+          active: true,
+          OR: [
+            { serviceDate: { gte: start, lte: end } },
+            { startsAt: { gte: new Date(now.getTime() - 16 * 60 * 60 * 1000) } }
+          ]
+        },
+        include: { serviceType: true },
+        orderBy: { startsAt: 'desc' }
+      });
+    }
+
+    if (!service) {
+      service = await prisma.service.findFirst({
+        where: {
+          active: true,
+          startsAt: { lte: now, gte: new Date(now.getTime() - 16 * 60 * 60 * 1000) },
+          OR: [{ endsAt: null }, { endsAt: { gte: now } }]
+        },
+        include: { serviceType: true },
+        orderBy: { startsAt: 'desc' }
+      });
+    }
 
     if (!service) {
       service = await prisma.service.findFirst({
