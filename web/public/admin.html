@@ -3969,6 +3969,11 @@
       return token || '';
     }
 
+    async function getAuthHeaders() {
+      const token = await getAdminAuthToken();
+      return token ? { 'Authorization': `Bearer ${token}` } : {};
+    }
+
     async function loadSubAdmins() {
       let currentUser = null;
       try {
@@ -8277,16 +8282,15 @@
     async function resetKioskToRegularSchedule(programName) {
       if (confirm('End active program/service and reset kiosk to regular schedule?')) {
         try {
-          const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+          const aHeaders = await getAuthHeaders();
           await fetch(`${API_BASE}/attendance/clear`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': token ? `Bearer ${token}` : ''
+              ...aHeaders
             },
             body: JSON.stringify({ serviceName: programName || currentSelectedService })
           });
-          const aHeaders = await getAuthHeaders();
           await fetch(`${API_BASE}/attendance/active-kiosk`, {
             method: 'POST',
             headers: { ...aHeaders, 'Content-Type': 'application/json' },
@@ -8305,12 +8309,12 @@
     async function clearAttendanceData() {
       if (!confirm(`Are you sure you want to clear all attendance records for "${currentSelectedService}"? This will reset all attendance counts to 0.`)) return;
       try {
-        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const aHeaders = await getAuthHeaders();
         const res = await fetch(`${API_BASE}/attendance/clear`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : ''
+            ...aHeaders
           },
           body: JSON.stringify({ serviceName: currentSelectedService })
         });
@@ -8333,12 +8337,12 @@
         'Are you sure you want to clear all Financial Overview & Analytics collection records? This will purge all compiled service collection figures and cross-posted ledger entries to start fresh with new production data. This action cannot be undone.',
         async () => {
           try {
-            const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+            const aHeaders = await getAuthHeaders();
             const res = await fetch(`${API_BASE}/finance/clear`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                ...aHeaders
               }
             });
             if (res.ok) {

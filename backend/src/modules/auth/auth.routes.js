@@ -322,6 +322,7 @@ router.delete('/subadmins/:id', requireAuth, requireRoles('SUPER_ADMIN'), async 
     }
 
     await prisma.refreshToken.deleteMany({ where: { userId: id } });
+    await prisma.auditLog.updateMany({ where: { actorId: id }, data: { actorId: null } });
     await prisma.auditLog.deleteMany({ where: { entityId: id } });
     await prisma.user.delete({ where: { id } });
 
