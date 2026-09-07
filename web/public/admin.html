@@ -1403,6 +1403,19 @@
       }
     }
 
+    .msg-top-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: 20px;
+      margin-bottom: 22px;
+      align-items: stretch;
+    }
+    @media (max-width: 1024px) {
+      .msg-top-split {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .msg-compact-bar {
       background: radial-gradient(120% 120% at 8% 10%, #064e3b 0%, #022c22 50%, #0b1320 100%);
       border: 1px solid rgba(200, 155, 85, 0.38);
@@ -3012,35 +3025,33 @@
         </div>
       </div>
 
-      <!-- Main Two-Column Layout -->
-      <div class="messaging-two-col">
+      <!-- Top Split Layout: Gathering & Audience (Left) + WhatsApp Live Preview (Right) -->
+      <div class="msg-top-split">
         
-        <!-- Column 1: Audience & Message Composer -->
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-          
-          <!-- Card A: Step 1 - Gathering & Audience Selector -->
-          <div class="admin-card" style="margin-bottom: 0; border-top: 4px solid var(--emerald); border-radius: 14px;">
-            <div class="card-head-row" style="margin-bottom: 14px;">
+        <!-- Left: Step 1 - Gathering & Audience Selector + Quick Template Pills -->
+        <div class="admin-card" style="margin-bottom: 0; border-top: 4px solid var(--emerald); border-radius: 14px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div class="card-head-row" style="margin-bottom: 12px;">
               <div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                  <span style="background: #e8f5e9; color: #15803d; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.06em;">Step 1</span>
-                  <h2 class="card-title" style="font-size: 16px; margin: 0;"><i class="fas fa-filter" style="color: var(--accent); margin-right: 4px;"></i> Gathering &amp; Target Audience</h2>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+                  <span style="background: #e8f5e9; color: #15803d; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.06em;">Step 1</span>
+                  <h2 class="card-title" style="font-size: 15.5px; margin: 0;"><i class="fas fa-filter" style="color: var(--accent); margin-right: 4px;"></i> Gathering &amp; Target Audience</h2>
                 </div>
-                <p class="card-sub" style="margin: 0;">Choose the church service, session date, and who you wish to contact.</p>
+                <p class="card-sub" style="margin: 0; font-size: 12px;">Choose the church service, session date, audience segment, and note template.</p>
               </div>
             </div>
 
             <!-- Gathering Controls Grid -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
               <div>
-                <label class="form-label" style="font-weight: 700; font-size: 12px;"><i class="fas fa-church" style="color: var(--emerald); margin-right: 4px;"></i> Program / Service</label>
-                <select id="msgServiceSelect" class="form-ctrl" style="font-size: 12.5px; font-weight: 600;" onchange="handleMsgServiceChange()">
+                <label class="form-label" style="font-weight: 700; font-size: 11.5px; margin-bottom: 4px;"><i class="fas fa-church" style="color: var(--emerald); margin-right: 4px;"></i> Program / Service</label>
+                <select id="msgServiceSelect" class="form-ctrl" style="font-size: 12px; font-weight: 600;" onchange="handleMsgServiceChange()">
                   <!-- Populated dynamically -->
                 </select>
               </div>
               <div>
-                <label class="form-label" style="font-weight: 700; font-size: 12px;"><i class="fas fa-calendar-day" style="color: var(--emerald); margin-right: 4px;"></i> Session Date</label>
-                <select id="msgSessionDateSelect" class="form-ctrl" style="font-size: 12.5px; font-weight: 600;" onchange="handleMsgSessionDateChange()">
+                <label class="form-label" style="font-weight: 700; font-size: 11.5px; margin-bottom: 4px;"><i class="fas fa-calendar-day" style="color: var(--emerald); margin-right: 4px;"></i> Session Date</label>
+                <select id="msgSessionDateSelect" class="form-ctrl" style="font-size: 12px; font-weight: 600;" onchange="handleMsgSessionDateChange()">
                   <!-- Populated dynamically with dates from _programSessionsMap -->
                 </select>
                 <input type="date" id="msgCustomDateInput" class="form-ctrl" style="display: none; margin-top: 6px; font-size: 12px; padding: 6px 10px;" oninput="handleMsgCustomDateChange()" onchange="handleMsgCustomDateChange()">
@@ -3048,8 +3059,8 @@
             </div>
 
             <!-- Audience Segment Filter Bar -->
-            <div>
-              <label class="form-label" style="font-weight: 700; font-size: 12px; margin-bottom: 6px;">
+            <div style="margin-bottom: 14px;">
+              <label class="form-label" style="font-weight: 700; font-size: 11.5px; margin-bottom: 6px;">
                 <i class="fas fa-users" style="color: var(--accent); margin-right: 4px;"></i> Target Recipient Group:
               </label>
 
@@ -3065,7 +3076,7 @@
               </select>
 
               <!-- Tactile Segmented Buttons -->
-              <div class="msg-segment-bar">
+              <div class="msg-segment-bar" style="margin-bottom: 0;">
                 <button type="button" class="msg-segment-btn active" data-group="ATTENDEES" onclick="setMsgTargetGroup('ATTENDEES')">
                   <i class="fas fa-check-circle" style="color: #107c41;"></i> Present Attendees
                 </button>
@@ -3090,25 +3101,15 @@
               </div>
             </div>
 
-          </div>
-
-          <!-- Card B: Step 2 - Message Composer & Templates -->
-          <div class="admin-card" style="margin-bottom: 0; border-top: 4px solid var(--accent); border-radius: 14px;">
-            <div class="card-head-row" style="margin-bottom: 12px;">
-              <div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                  <span style="background: #fef3c7; color: #b45309; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.06em;">Step 2</span>
-                  <h2 class="card-title" style="font-size: 16px; margin: 0;"><i class="fas fa-feather-pointed" style="color: var(--accent); margin-right: 4px;"></i> Compose &amp; Personalize Note</h2>
-                </div>
-                <p class="card-sub" style="margin: 0;">Choose a pre-written pastoral note or write your own custom message.</p>
-              </div>
-            </div>
-
-            <!-- Quick Template Selector Pills -->
-            <div style="margin-bottom: 14px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <label class="form-label" style="font-weight: 700; font-size: 12px; margin-bottom: 0;">Pre-Built Templates:</label>
-                <span style="font-size: 11px; color: var(--muted);"><i class="fas fa-wand-magic-sparkles" style="color: var(--accent);"></i> Click to apply</span>
+            <!-- Active Message Template Selector Pills -->
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;">
+                <label class="form-label" style="font-weight: 700; font-size: 11.5px; margin-bottom: 0;">
+                  <i class="fas fa-comment-dots" style="color: #128C7E; margin-right: 4px;"></i> Select Message Template:
+                </label>
+                <a href="javascript:void(0)" onclick="switchTab('settings')" style="font-size: 11px; color: var(--emerald); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                  <i class="fas fa-sliders"></i> Edit Default Templates in Settings &rarr;
+                </a>
               </div>
 
               <!-- Hidden select kept in sync -->
@@ -3141,140 +3142,107 @@
                   ✏️ Custom Note
                 </button>
               </div>
-            </div>
 
-            <!-- Personalization Token Chips -->
-            <div style="margin-bottom: 12px; background: #f8fafc; padding: 10px 12px; border-radius: 10px; border: 1px dashed var(--line);">
-              <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-                <span><i class="fas fa-tags" style="color: var(--accent);"></i> Insert Personalization Tokens (Cursor Position):</span>
-                <span style="font-size: 10.5px; text-transform: none; font-weight: 600; color: #15803d;"><i class="fas fa-info-circle"></i> {serviceName} &amp; {date} sync with Step 1 above (or type custom text)</span>
+              <!-- Hidden backing textarea for active message body -->
+              <textarea id="msgBodyTextarea" style="display: none;" oninput="updateLiveMsgPreview()"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live Preview Smartphone Card -->
+        <div class="msg-phone-frame" style="margin-bottom: 0; display: flex; flex-direction: column;">
+          <div class="msg-phone-top">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 36px; height: 36px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1.5px solid rgba(255,255,255,0.8);">
+                <img src="/church-logo.jpg" alt="SFMI" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/Sunday.JPG'" />
               </div>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button type="button" class="msg-token-chip" style="background: #e8f5e9; border-color: #107c41; color: #064e3b;" onclick="insertMsgToken('{fullName}')" title="Recipient's Full Name (e.g. Emmanuel Mensah)"><strong>+{fullName}</strong></button>
-                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{serviceName}')" title="Auto-fills from Step 1 Program dropdown (or you can type custom name)">+{serviceName}</button>
-                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{date}')" title="Auto-fills from Step 1 Date dropdown (or you can type custom date)">+{date}</button>
-                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{churchName}')" title="Solutions Faith Ministry International">+{churchName}</button>
+              <div>
+                <div style="font-weight: 800; font-size: 13px; color: white; display: flex; align-items: center; gap: 6px;">
+                  <span id="msgPreviewRecipientName">Sample Recipient (Preview)</span>
+                  <i class="fa-solid fa-circle-check" style="font-size: 12px; color: #25d366;" title="Verified Church Contact"></i>
+                </div>
+                <div style="font-size: 11px; opacity: 0.9; color: #d1fae5;" id="msgPreviewRecipientPhone">+233 XX XXX XXXX</div>
               </div>
             </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; opacity: 0.9;">
+              <span style="font-size: 11px; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 12px; font-weight: 700;">WhatsApp Live Preview</span>
+            </div>
+          </div>
 
-            <!-- Message Textarea -->
+          <div class="msg-phone-chat-bg" style="flex: 1; min-height: 180px;">
+            <div class="msg-bubble-card">
+              <div id="msgPreviewBubbleContent" style="font-size: 12.5px; color: #111b21; white-space: pre-wrap; line-height: 1.55; word-break: break-word;">
+                <!-- Injected live -->
+              </div>
+              <div style="text-align: right; font-size: 10.5px; color: #667781; margin-top: 6px; display: flex; justify-content: flex-end; align-items: center; gap: 4px;">
+                <span id="msgPreviewTime">Just now</span>
+                <i class="fa-solid fa-check-double" style="color: #53bdeb; font-size: 12px;"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom: EXPANDED FULL-WIDTH Recipient Roster Card -->
+      <div class="msg-roster-card" style="width: 100%;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--line); background: #ffffff;">
+          <div class="card-head-row" style="margin-bottom: 12px; flex-wrap: wrap; gap: 12px;">
             <div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <label class="form-label" style="font-weight: 700; font-size: 12px; margin-bottom: 0;">Message Content</label>
-                <span style="font-size: 11px; color: var(--muted);">Supports *<strong>bold</strong>* &amp; _<em>italics</em>_</span>
-              </div>
-              <textarea id="msgBodyTextarea" class="form-ctrl" rows="7" style="resize: vertical; font-size: 13px; line-height: 1.55; font-family: inherit; border-radius: 10px; padding: 12px;" oninput="updateLiveMsgPreview()" placeholder="Type your WhatsApp message here..."></textarea>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 11.5px; color: var(--muted);">
-                <span><i class="fa-brands fa-whatsapp" style="color: #25d366;"></i> Direct formatting enabled</span>
-                <span id="msgCharCount" style="font-weight: 700; color: var(--ink);">0 characters</span>
-              </div>
+              <h3 style="font-size: 16px; font-weight: 800; color: var(--ink); margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-address-book" style="color: var(--emerald);"></i>
+                Recipient Roster 
+                <span style="background: rgba(6, 78, 59, 0.1); color: #064e3b; font-size: 12px; padding: 2px 8px; border-radius: 12px; font-weight: 800;" id="msgRecipientCountLabel">0</span>
+              </h3>
+              <p class="card-sub" id="msgRecipientFilterSubtitle" style="margin-top: 3px; font-size: 12px;">
+                All eligible contacts with verified phone numbers
+              </p>
             </div>
-
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn-main" style="background: linear-gradient(135deg, #25d366 0%, #128C7E 100%); color: white; padding: 8px 14px; font-size: 12.5px; font-weight: 800; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.3);" onclick="launchWhatsAppDispatcherQueue()">
+                <i class="fa-brands fa-whatsapp" style="font-size: 15px;"></i> Start Queue
+              </button>
+              <button type="button" class="btn-main" style="background: #ffffff; color: var(--ink); border: 1px solid var(--line); padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 8px;" onclick="copyAllRecipientPhones()" title="Copy comma-separated phone numbers for WhatsApp Broadcast list">
+                <i class="fas fa-copy" style="color: var(--accent);"></i> Copy Numbers
+              </button>
+              <button type="button" class="btn-main" style="background: #107c41; color: white; border: none; padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 8px;" onclick="exportMessagingRosterCsv()" title="Download CSV roster">
+                <i class="fas fa-file-excel"></i> Export CSV
+              </button>
+            </div>
           </div>
 
+          <!-- Search & Select All Bar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line);">
+            <div style="position: relative; flex: 1; min-width: 200px;">
+              <i class="fas fa-search" style="position: absolute; left: 10px; top: 9px; font-size: 12px; color: var(--muted);"></i>
+              <input type="text" id="msgSearchInput" class="form-ctrl" placeholder="Search by name, phone, or status..." style="padding-left: 30px; font-size: 12px; padding-top: 6px; padding-bottom: 6px;" oninput="filterMsgRecipientsList()" />
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px;">
+              <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; user-select: none;">
+                <input type="checkbox" id="msgSelectAllCheckbox" checked onchange="toggleSelectAllMsgRecipients(this.checked)" style="accent-color: #107c41; width: 15px; height: 15px;" />
+                <strong>Select All Reachable</strong>
+              </label>
+            </div>
+          </div>
         </div>
 
-        <!-- Column 2: Live WhatsApp Preview & Interactive Recipient Roster -->
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-          
-          <!-- Live Preview Smartphone Card -->
-          <div class="msg-phone-frame">
-            <div class="msg-phone-top">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 36px; height: 36px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1.5px solid rgba(255,255,255,0.8);">
-                  <img src="/church-logo.jpg" alt="SFMI" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/Sunday.JPG'" />
-                </div>
-                <div>
-                  <div style="font-weight: 800; font-size: 13.5px; color: white; display: flex; align-items: center; gap: 6px;">
-                    <span id="msgPreviewRecipientName">Sample Recipient (Preview)</span>
-                    <i class="fa-solid fa-circle-check" style="font-size: 12px; color: #25d366;" title="Verified Church Contact"></i>
-                  </div>
-                  <div style="font-size: 11px; opacity: 0.9; color: #d1fae5;" id="msgPreviewRecipientPhone">+233 XX XXX XXXX</div>
-                </div>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px; font-size: 15px; opacity: 0.9;">
-                <i class="fas fa-video"></i>
-                <i class="fas fa-phone"></i>
-                <span style="font-size: 11px; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 12px; font-weight: 700;">Live Preview</span>
-              </div>
-            </div>
-
-            <div class="msg-phone-chat-bg">
-              <div class="msg-bubble-card">
-                <div id="msgPreviewBubbleContent" style="font-size: 13px; color: #111b21; white-space: pre-wrap; line-height: 1.55; word-break: break-word;">
-                  <!-- Injected live -->
-                </div>
-                <div style="text-align: right; font-size: 10.5px; color: #667781; margin-top: 6px; display: flex; justify-content: flex-end; align-items: center; gap: 4px;">
-                  <span id="msgPreviewTime">Just now</span>
-                  <i class="fa-solid fa-check-double" style="color: #53bdeb; font-size: 12px;"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Recipient Roster Card -->
-          <div class="msg-roster-card">
-            <div style="padding: 16px 20px; border-bottom: 1px solid var(--line); background: #ffffff;">
-              <div class="card-head-row" style="margin-bottom: 12px; flex-wrap: wrap; gap: 12px;">
-                <div>
-                  <h3 style="font-size: 16px; font-weight: 800; color: var(--ink); margin: 0; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-address-book" style="color: var(--emerald);"></i>
-                    Recipient Roster 
-                    <span style="background: rgba(6, 78, 59, 0.1); color: #064e3b; font-size: 12px; padding: 2px 8px; border-radius: 12px; font-weight: 800;" id="msgRecipientCountLabel">0</span>
-                  </h3>
-                  <p class="card-sub" id="msgRecipientFilterSubtitle" style="margin-top: 3px; font-size: 12px;">
-                    All eligible contacts with verified phone numbers
-                  </p>
-                </div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <button type="button" class="btn-main" style="background: linear-gradient(135deg, #25d366 0%, #128C7E 100%); color: white; padding: 8px 14px; font-size: 12.5px; font-weight: 800; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.3);" onclick="launchWhatsAppDispatcherQueue()">
-                    <i class="fa-brands fa-whatsapp" style="font-size: 15px;"></i> Start Queue
-                  </button>
-                  <button type="button" class="btn-main" style="background: #ffffff; color: var(--ink); border: 1px solid var(--line); padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 8px;" onclick="copyAllRecipientPhones()" title="Copy comma-separated phone numbers for WhatsApp Broadcast list">
-                    <i class="fas fa-copy" style="color: var(--accent);"></i> Copy Numbers
-                  </button>
-                  <button type="button" class="btn-main" style="background: #107c41; color: white; border: none; padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 8px;" onclick="exportMessagingRosterCsv()" title="Download CSV roster">
-                    <i class="fas fa-file-excel"></i> Export CSV
-                  </button>
-                </div>
-              </div>
-
-              <!-- Search & Select All Bar -->
-              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line);">
-                <div style="position: relative; flex: 1; min-width: 200px;">
-                  <i class="fas fa-search" style="position: absolute; left: 10px; top: 9px; font-size: 12px; color: var(--muted);"></i>
-                  <input type="text" id="msgSearchInput" class="form-ctrl" placeholder="Search by name, phone, or status..." style="padding-left: 30px; font-size: 12px; padding-top: 6px; padding-bottom: 6px;" oninput="filterMsgRecipientsList()" />
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px;">
-                  <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; user-select: none;">
-                    <input type="checkbox" id="msgSelectAllCheckbox" checked onchange="toggleSelectAllMsgRecipients(this.checked)" style="accent-color: #107c41; width: 15px; height: 15px;" />
-                    <strong>Select All Reachable</strong>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <!-- Recipient Table Container -->
-            <div style="max-height: 420px; overflow-y: auto;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
-                <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 2; border-bottom: 1px solid var(--line);">
-                  <tr>
-                    <th style="width: 36px; text-align: center; padding: 9px 8px;"></th>
-                    <th style="padding: 9px 12px; text-align: left; font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em;">Recipient Member</th>
-                    <th style="padding: 9px 12px; text-align: left; font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em;">Status / Group</th>
-                    <th style="padding: 9px 12px; text-align: left; font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em;">Phone / WhatsApp</th>
-                    <th style="padding: 9px 12px; text-align: center; font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; width: 90px;">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="msgRecipientsTableBody">
-                  <!-- Injected by JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-
+        <!-- Recipient Table Container -->
+        <div style="max-height: 520px; overflow-y: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+            <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 2; border-bottom: 1px solid var(--line);">
+              <tr>
+                <th style="width: 36px; text-align: center; padding: 9px 8px;"></th>
+                <th style="padding: 9px 12px; text-align: left; font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em;">Recipient Member</th>
+                <th style="padding: 9px 12px; text-align: left; font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em;">Status / Group</th>
+                <th style="padding: 9px 12px; text-align: left; font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em;">Phone / WhatsApp</th>
+                <th style="padding: 9px 12px; text-align: center; font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; width: 90px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="msgRecipientsTableBody">
+              <!-- Injected by JS -->
+            </tbody>
+          </table>
         </div>
-
       </div>
 
     </div>
@@ -3754,11 +3722,74 @@
           </form>
         </div>
       </div>
+
+      <!-- Settings Card 3: WhatsApp Message Templates & Personalization Tokens -->
+      <div class="admin-card" style="margin-top: 24px; padding: 24px; border: 1px solid var(--line); border-top: 4px solid #107c41; border-radius: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(37, 211, 102, 0.12); color: #128C7E; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+              <i class="fa-brands fa-whatsapp"></i>
+            </div>
+            <div>
+              <h3 style="font-family: Manrope, sans-serif; font-size: 17px; font-weight: 800; color: var(--ink); margin: 0;">WhatsApp Message Templates &amp; Personalization Tokens</h3>
+              <p style="font-size: 12.5px; color: var(--muted); margin: 2px 0 0 0;">Customize the default pastoral notes and dynamic personalization tokens sent through the WhatsApp Gateway.</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="btn-main" style="background: #ffffff; color: var(--ink); border: 1px solid var(--line); padding: 8px 14px; font-size: 12.5px; font-weight: 700; border-radius: 8px;" onclick="resetSettingsMsgTemplate()">
+              <i class="fas fa-rotate-left" style="color: var(--accent);"></i> Reset to Default
+            </button>
+            <button type="button" class="btn-main" style="background: linear-gradient(135deg, #107c41 0%, #064e3b 100%); color: white; padding: 8px 18px; font-size: 12.5px; font-weight: 800; border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(16,124,65,0.25);" onclick="saveSettingsMsgTemplate()">
+              <i class="fas fa-floppy-disk"></i> Save Template
+            </button>
+          </div>
+        </div>
+
+        <!-- Template Selector -->
+        <div style="margin-bottom: 16px;">
+          <label class="form-label" style="font-weight: 700; font-size: 12.5px;"><i class="fas fa-list-check" style="color: var(--emerald); margin-right: 4px;"></i> Select Template to Edit:</label>
+          <select id="settingsMsgTemplateSelect" class="form-ctrl" style="font-size: 13px; font-weight: 700; max-width: 380px;" onchange="handleSettingsMsgTemplateChange()">
+            <option value="THANK_YOU" selected>🙏 Thank You Note</option>
+            <option value="WE_MISSED_YOU">❤️ We Missed You</option>
+            <option value="VISITOR_WELCOME">🌟 Visitor Welcome</option>
+            <option value="UPCOMING_REMINDER">📢 Service Reminder</option>
+            <option value="PRAYER_CHECKIN">🕊️ Pastoral Prayer</option>
+            <option value="CUSTOM">✏️ Custom Note</option>
+          </select>
+        </div>
+
+        <!-- Personalization Tokens Chips in Settings -->
+        <div style="margin-bottom: 14px; background: #f8fafc; padding: 12px 14px; border-radius: 10px; border: 1px dashed var(--line);">
+          <div style="font-size: 11.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
+            <span><i class="fas fa-tags" style="color: var(--accent); margin-right: 4px;"></i> Insert Personalization Tokens (At Cursor Position):</span>
+            <span style="font-size: 11px; text-transform: none; font-weight: 600; color: #15803d;"><i class="fas fa-info-circle"></i> Tokens automatically replace recipient details upon dispatch</span>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="msg-token-chip" style="background: #e8f5e9; border-color: #107c41; color: #064e3b; padding: 6px 12px; font-size: 12px;" onclick="insertSettingsMsgToken('{fullName}')" title="Recipient's Full Name (e.g. Emmanuel Mensah)"><strong>+{fullName}</strong></button>
+            <button type="button" class="msg-token-chip" style="padding: 6px 12px; font-size: 12px;" onclick="insertSettingsMsgToken('{serviceName}')" title="Active Service Gathering Name">+{serviceName}</button>
+            <button type="button" class="msg-token-chip" style="padding: 6px 12px; font-size: 12px;" onclick="insertSettingsMsgToken('{date}')" title="Service Session Date">+{date}</button>
+            <button type="button" class="msg-token-chip" style="padding: 6px 12px; font-size: 12px;" onclick="insertSettingsMsgToken('{churchName}')" title="Solutions Faith Ministry International">+{churchName}</button>
+          </div>
+        </div>
+
+        <!-- Textarea in Settings -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" style="font-weight: 700; font-size: 12.5px; margin-bottom: 0;">Template Message Body</label>
+            <span style="font-size: 11.5px; color: var(--muted);">Supports WhatsApp *<strong>bold</strong>* &amp; _<em>italics</em>_</span>
+          </div>
+          <textarea id="settingsMsgBodyTextarea" class="form-ctrl" rows="8" style="resize: vertical; font-size: 13.5px; line-height: 1.6; font-family: inherit; border-radius: 10px; padding: 14px;" oninput="document.getElementById('settingsMsgCharCount').innerText = `${this.value.length} characters`" placeholder="Type your WhatsApp template message here..."></textarea>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; color: var(--muted);">
+            <span><i class="fa-brands fa-whatsapp" style="color: #25d366;"></i> Direct formatting enabled</span>
+            <span id="settingsMsgCharCount" style="font-weight: 700; color: var(--ink);">0 characters</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- SFMI Clean Footer -->
     <footer class="app-footer" style="text-align: center; padding: 24px 0 28px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; margin-top: 40px;">
-      &copy; 2026 Solutions Faith Ministries International. All rights reserved.
+      &copy; 2026 Solutions Faith Ministry International. All rights reserved.
     </footer>
 
   </main>
@@ -5648,8 +5679,10 @@
       if (tab === 'partnership') { loadPartnershipMatrix(); syncPartnershipViewMode(); }
       if (tab === 'subAdmins') { renderSubAdminsList(); syncSubAdminsViewMode(); }
       if (tab === 'reports') { loadHistoricalAttendanceReport(); syncReportsViewMode(); }
-      if (tab === 'finReports') { loadHistoricalFinanceReport(); syncReportsViewMode(); }
-      if (tab === 'settings') { renderSettingsProfile(); }
+      if (tab === 'settings') { 
+        renderSettingsProfile(); 
+        if (typeof handleSettingsMsgTemplateChange === 'function') handleSettingsMsgTemplateChange();
+      }
     }
 
     function renderSettingsProfile() {
@@ -12618,7 +12651,7 @@ closeCreateProgramModal();
        CONTACT & WHATSAPP MESSAGING CENTER LOGIC
        ══════════════════════════════════════════════════════════════════════ */
 
-    const MSG_TEMPLATES = {
+    const DEFAULT_MSG_TEMPLATES = {
       THANK_YOU: `Hello *{fullName}*,
 
 Thank you for worshipping with us at *{churchName}* for our *{serviceName}* on *{date}*.
@@ -12689,6 +12722,88 @@ _Warm Regards,_
 *Solutions Team*
 *{churchName}*`
     };
+
+    let MSG_TEMPLATES = { ...DEFAULT_MSG_TEMPLATES };
+    try {
+      const savedTpls = localStorage.getItem('sfmi_custom_msg_templates');
+      if (savedTpls) {
+        const parsed = JSON.parse(savedTpls);
+        if (parsed && typeof parsed === 'object') {
+          MSG_TEMPLATES = { ...DEFAULT_MSG_TEMPLATES, ...parsed };
+        }
+      }
+    } catch (e) {}
+
+    function handleSettingsMsgTemplateChange() {
+      const select = document.getElementById('settingsMsgTemplateSelect');
+      const textarea = document.getElementById('settingsMsgBodyTextarea');
+      const count = document.getElementById('settingsMsgCharCount');
+      if (!select || !textarea) return;
+      const tplKey = select.value;
+      textarea.value = MSG_TEMPLATES[tplKey] || DEFAULT_MSG_TEMPLATES[tplKey] || '';
+      if (count) count.innerText = `${textarea.value.length} characters`;
+    }
+
+    function saveSettingsMsgTemplate() {
+      const select = document.getElementById('settingsMsgTemplateSelect');
+      const textarea = document.getElementById('settingsMsgBodyTextarea');
+      if (!select || !textarea) return;
+      const tplKey = select.value;
+      MSG_TEMPLATES[tplKey] = textarea.value;
+      try {
+        localStorage.setItem('sfmi_custom_msg_templates', JSON.stringify(MSG_TEMPLATES));
+        showToast('Template successfully saved and active!', 'success', 'Saved');
+      } catch (e) {}
+
+      // Keep active template backing textarea in sync
+      const activeSelect = document.getElementById('msgTemplateSelect');
+      if (activeSelect && activeSelect.value === tplKey) {
+        const mainTextarea = document.getElementById('msgBodyTextarea');
+        if (mainTextarea) mainTextarea.value = textarea.value;
+        updateLiveMsgPreview();
+      }
+    }
+
+    function resetSettingsMsgTemplate() {
+      const select = document.getElementById('settingsMsgTemplateSelect');
+      const textarea = document.getElementById('settingsMsgBodyTextarea');
+      if (!select || !textarea) return;
+      const tplKey = select.value;
+      if (DEFAULT_MSG_TEMPLATES[tplKey]) {
+        textarea.value = DEFAULT_MSG_TEMPLATES[tplKey];
+        MSG_TEMPLATES[tplKey] = DEFAULT_MSG_TEMPLATES[tplKey];
+        try {
+          localStorage.setItem('sfmi_custom_msg_templates', JSON.stringify(MSG_TEMPLATES));
+          showToast('Template reset to default note.', 'info', 'Reset');
+        } catch (e) {}
+        const count = document.getElementById('settingsMsgCharCount');
+        if (count) count.innerText = `${textarea.value.length} characters`;
+
+        const activeSelect = document.getElementById('msgTemplateSelect');
+        if (activeSelect && activeSelect.value === tplKey) {
+          const mainTextarea = document.getElementById('msgBodyTextarea');
+          if (mainTextarea) mainTextarea.value = textarea.value;
+          updateLiveMsgPreview();
+        }
+      }
+    }
+
+    function insertSettingsMsgToken(token) {
+      const textarea = document.getElementById('settingsMsgBodyTextarea');
+      if (!textarea) return;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const currentVal = textarea.value;
+      if (start !== undefined && end !== undefined) {
+        textarea.value = currentVal.substring(0, start) + token + currentVal.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + token.length;
+      } else {
+        textarea.value += ' ' + token;
+      }
+      textarea.focus();
+      const count = document.getElementById('settingsMsgCharCount');
+      if (count) count.innerText = `${textarea.value.length} characters`;
+    }
 
     let messagingRecipients = [];
     let filteredMessagingRecipients = [];
