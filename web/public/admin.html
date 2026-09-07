@@ -5673,6 +5673,12 @@
       let archived = [];
       try {
         archived = JSON.parse(localStorage.getItem('sfmi_archived_service_reports') || '[]');
+        // Auto-clean any accidental 0-attendance Wednesday report ended on Sep 7
+        const beforeLen = archived.length;
+        archived = archived.filter(r => !(r.serviceName && r.serviceName.includes('Wednesday') && r.presentCount === 0 && r.completedAt && r.completedAt.startsWith('2026-09-07')));
+        if (archived.length !== beforeLen) {
+          localStorage.setItem('sfmi_archived_service_reports', JSON.stringify(archived));
+        }
       } catch (e) {}
 
       const countEl = document.getElementById('archivedReportsCount');
@@ -5720,6 +5726,9 @@
               </button>
               <button class="btn-main" style="padding: 6px 10px; font-size: 12px; background: var(--light); color: var(--ink); border: 1px solid var(--line); justify-content: center;" onclick="viewArchivedServiceReportRoster(${idx})">
                 <i class="fas fa-users"></i> View Roster
+              </button>
+              <button class="btn-main" style="padding: 6px 10px; font-size: 12px; background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; justify-content: center;" onclick="deleteArchivedServiceReport(${idx})" title="Delete or Revert this mistakenly ended report">
+                <i class="fas fa-trash-alt"></i> Revert
               </button>
             </div>
           </div>
@@ -5958,6 +5967,28 @@
       compiledAttSessionsList.unshift(sessionObj);
 
       openViewCompiledAttendanceModal(rep.id);
+    }
+
+    function deleteArchivedServiceReport(reportIdOrIdx) {
+      let archived = [];
+      try { archived = JSON.parse(localStorage.getItem('sfmi_archived_service_reports') || '[]'); } catch(e) {}
+      let targetIdx = -1;
+      if (typeof reportIdOrIdx === 'number') {
+        targetIdx = reportIdOrIdx;
+      } else {
+        targetIdx = archived.findIndex(r => r.id === reportIdOrIdx);
+      }
+      if (targetIdx < 0 || !archived[targetIdx]) return;
+
+      const reportName = archived[targetIdx].serviceName || 'Service Report';
+      if (!confirm(`Are you sure you want to revert/remove the archived report for "${reportName}"?\n\nThis will remove it from the Completed Reports list.`)) {
+        return;
+      }
+
+      archived.splice(targetIdx, 1);
+      localStorage.setItem('sfmi_archived_service_reports', JSON.stringify(archived));
+      renderArchivedCompletedServiceReports();
+      showToast(`Archived report for "${reportName}" removed successfully.`, 'info', 'Report Reverted');
     }
 
     /* Financial Analytics, Date Filtering & Export */
