@@ -3040,9 +3040,10 @@
               </div>
               <div>
                 <label class="form-label" style="font-weight: 700; font-size: 12px;"><i class="fas fa-calendar-day" style="color: var(--emerald); margin-right: 4px;"></i> Session Date</label>
-                <select id="msgSessionDateSelect" class="form-ctrl" style="font-size: 12.5px; font-weight: 600;" onchange="handleMsgFilterChange()">
+                <select id="msgSessionDateSelect" class="form-ctrl" style="font-size: 12.5px; font-weight: 600;" onchange="handleMsgSessionDateChange()">
                   <!-- Populated dynamically with dates from _programSessionsMap -->
                 </select>
+                <input type="date" id="msgCustomDateInput" class="form-ctrl" style="display: none; margin-top: 6px; font-size: 12px; padding: 6px 10px;" onchange="handleMsgCustomDateChange()">
               </div>
             </div>
 
@@ -3144,13 +3145,14 @@
 
             <!-- Personalization Token Chips -->
             <div style="margin-bottom: 12px; background: #f8fafc; padding: 10px 12px; border-radius: 10px; border: 1px dashed var(--line);">
-              <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
-                <i class="fas fa-tags" style="color: var(--accent);"></i> Insert Personalization Tokens (Cursor Position):
+              <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
+                <span><i class="fas fa-tags" style="color: var(--accent);"></i> Insert Personalization Tokens (Cursor Position):</span>
+                <span style="font-size: 10.5px; text-transform: none; font-weight: 600; color: #15803d;"><i class="fas fa-info-circle"></i> {serviceName} &amp; {date} sync with Step 1 above (or type custom text)</span>
               </div>
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                 <button type="button" class="msg-token-chip" style="background: #e8f5e9; border-color: #107c41; color: #064e3b;" onclick="insertMsgToken('{fullName}')" title="Recipient's Full Name (e.g. Emmanuel Mensah)"><strong>+{fullName}</strong></button>
-                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{serviceName}')" title="Active Service Gathering Name">+{serviceName}</button>
-                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{date}')" title="Service Session Date">+{date}</button>
+                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{serviceName}')" title="Auto-fills from Step 1 Program dropdown (or you can type custom name)">+{serviceName}</button>
+                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{date}')" title="Auto-fills from Step 1 Date dropdown (or you can type custom date)">+{date}</button>
                 <button type="button" class="msg-token-chip" onclick="insertMsgToken('{churchName}')" title="Solutions Faith Ministries International">+{churchName}</button>
               </div>
             </div>
@@ -12778,7 +12780,14 @@ _Warm Regards,_
       const svcName = svcSelect ? svcSelect.value : '';
       const dateVal = dateSelect ? dateSelect.value : '';
 
-      if (dateVal && dateVal !== 'LATEST' && dateVal !== 'TODAY') {
+      if (dateVal === 'CUSTOM') {
+        const customInput = document.getElementById('msgCustomDateInput');
+        if (customInput && customInput.value) {
+          return formatLocalDateDisplay(customInput.value);
+        }
+      }
+
+      if (dateVal && dateVal !== 'LATEST' && dateVal !== 'TODAY' && dateVal !== 'CUSTOM') {
         return formatLocalDateDisplay(dateVal);
       }
 
@@ -12873,7 +12882,31 @@ _Warm Regards,_
         const fallbackLabel = formatLocalDateDisplay(fallbackIso);
         optsHtml += `<option value="${fallbackIso}" selected>📅 Latest: ${fallbackLabel}</option>`;
       }
+      optsHtml += `<option value="CUSTOM">📅 Pick Custom / Upcoming Date...</option>`;
       dateSelect.innerHTML = optsHtml;
+
+      const customInput = document.getElementById('msgCustomDateInput');
+      if (customInput) customInput.style.display = 'none';
+    }
+
+    function handleMsgSessionDateChange() {
+      const dateSelect = document.getElementById('msgSessionDateSelect');
+      const customInput = document.getElementById('msgCustomDateInput');
+      if (dateSelect && customInput) {
+        if (dateSelect.value === 'CUSTOM') {
+          customInput.style.display = 'block';
+          if (!customInput.value) {
+            customInput.value = formatLocalDate(new Date());
+          }
+        } else {
+          customInput.style.display = 'none';
+        }
+      }
+      handleMsgFilterChange();
+    }
+
+    function handleMsgCustomDateChange() {
+      updateLiveMsgPreview();
     }
 
     function setMsgTargetGroup(groupKey) {
