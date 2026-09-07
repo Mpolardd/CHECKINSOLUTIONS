@@ -20,7 +20,7 @@ function accessToken(user) {
   const rawMin = parseInt(process.env.ACCESS_TOKEN_MINUTES, 10);
   const minutes = (!isNaN(rawMin) && rawMin >= 45) ? rawMin : 1440;
   return jwt.sign(
-    { sub: user.id, role: user.role, memberId: user.memberId || null },
+    { sub: user.id, userId: user.id, email: user.email, role: user.role, memberId: user.memberId || null },
     secret,
     { expiresIn: `${minutes}m` }
   );

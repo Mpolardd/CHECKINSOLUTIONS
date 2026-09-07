@@ -252,7 +252,7 @@ router.get('/transactions', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'),
 // ── PARTNERSHIP & MONTHLY PLEDGES SYSTEM ──
 
 // Collection & Fund Types (Welfare, Partnership, Custom Collections like Men Collection)
-router.get('/collection-types', async (req, res, next) => {
+router.get('/collection-types', requireAuth, async (req, res, next) => {
   try {
     const logs = await prisma.auditLog.findMany({
       where: { entity: 'COLLECTION_TYPE' },
@@ -291,7 +291,7 @@ router.get('/collection-types', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/collection-types', async (req, res, next) => {
+router.post('/collection-types', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const { name, category = 'Ministry Collection', description = '', frequency = 'MONTHLY', targetAmount = 0, icon = 'fas fa-layer-group', color = '#10b981' } = req.body || {};
     if (!name || !name.trim()) {
@@ -325,7 +325,7 @@ router.post('/collection-types', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.delete('/collection-types/:id', async (req, res, next) => {
+router.delete('/collection-types/:id', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const { id } = req.params;
     if (id === 'welfare' || id === 'partnership') {
@@ -339,7 +339,7 @@ router.delete('/collection-types/:id', async (req, res, next) => {
 });
 
 // List all registered partners (optionally filtered by collectionType)
-router.get('/partners', async (req, res, next) => {
+router.get('/partners', requireAuth, async (req, res, next) => {
   try {
     const { collectionType } = req.query;
     const logs = await prisma.auditLog.findMany({
@@ -381,7 +381,7 @@ router.get('/partners', async (req, res, next) => {
 });
 
 // Register or Update a Partner
-router.post('/partners', async (req, res, next) => {
+router.post('/partners', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const { id, memberId, memberName, phone, email, pledgeAmount, currency = 'GHS', frequency = 'MONTHLY', collectionType = 'PARTNERSHIP', startDate, notes } = req.body || {};
     if (!memberName || !pledgeAmount) {
@@ -423,7 +423,7 @@ router.post('/partners', async (req, res, next) => {
 });
 
 // Deactivate / Delete Partner
-router.delete('/partners/:id', async (req, res, next) => {
+router.delete('/partners/:id', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const { id } = req.params;
     await prisma.auditLog.deleteMany({
@@ -434,7 +434,7 @@ router.delete('/partners/:id', async (req, res, next) => {
 });
 
 // Record a Partnership Payment
-router.post('/partnerships/payments', async (req, res, next) => {
+router.post('/partnerships/payments', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const { partnerId, memberName, amount, targetMonth, paymentDate, paymentMethod = 'CASH', collectionType, recordedBy = 'Treasury Officer', notes } = req.body || {};
     if (!partnerId || !amount || !targetMonth) {
@@ -506,7 +506,7 @@ router.post('/partnerships/payments', async (req, res, next) => {
 });
 
 // List all partnership payments (optionally filtered by collectionType)
-router.get('/partnerships/payments', async (req, res, next) => {
+router.get('/partnerships/payments', requireAuth, async (req, res, next) => {
   try {
     const { partnerId, targetMonth, year, collectionType } = req.query;
     const logs = await prisma.auditLog.findMany({
@@ -534,7 +534,7 @@ router.get('/partnerships/payments', async (req, res, next) => {
 });
 
 // 12-Month Tracking Matrix & Analytics (with collectionType support)
-router.get('/partnerships/matrix', async (req, res, next) => {
+router.get('/partnerships/matrix', requireAuth, async (req, res, next) => {
   try {
     const year = Number(req.query.year) || new Date().getFullYear();
     const { collectionType } = req.query;

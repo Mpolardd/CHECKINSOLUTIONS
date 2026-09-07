@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { z } = require('zod');
 const { requireAuth, requireRoles } = require('../../middleware/auth');
 const { normalizePhone } = require('../../utils/phone');
+const analyticsService = require('./attendanceAnalytics.service');
 
 function getDayRange(dateInput) {
   let y, m, d;
@@ -205,15 +206,28 @@ async function resolveTargetService(tx, { serviceId, serviceName, serviceDate })
   });
 
   if (!matched) {
-    matched = await tx.service.create({
-      data: {
-        serviceTypeId: svcType.id,
-        serviceDate: startOfDay,
-        startsAt: new Date(),
-        active: true
-      },
-      include: { serviceType: true }
-    });
+    try {
+      matched = await tx.service.create({
+        data: {
+          serviceTypeId: svcType.id,
+          serviceDate: startOfDay,
+          startsAt: new Date(),
+          active: true
+        },
+        include: { serviceType: true }
+      });
+    } catch (createErr) {
+      matched = await tx.service.findFirst({
+        where: {
+          serviceTypeId: svcType.id,
+          serviceDate: { gte: startOfDay, lte: endOfDay },
+          active: true
+        },
+        include: { serviceType: true },
+        orderBy: { startsAt: 'desc' }
+      });
+      if (!matched) throw createErr;
+    }
   }
 
   return matched;
@@ -555,71 +569,6 @@ router.get('/by-service-name', async (req, res, next) => {
       take: 1000
     });
 
-    // Recover any check-ins made today that were mistakenly attached to Wednesday
-    if (rawName && !rawName.toLowerCase().includes('wednesday') && svcIds.length > 0) {
-      try {
-        const { start: todayStart } = getDayRange();
-        const wedSvc = await prisma.service.findFirst({
-          where: { serviceType: { name: { contains: 'Wednesday', mode: 'insensitive' } } },
-          orderBy: { startsAt: 'desc' }
-        });
-        if (wedSvc) {
-          const targetSvcId = svcIds[0];
-          // Move only records checked in today (in the last few hours during testing)
-          const todayCheckins = await prisma.attendance.findMany({
-            where: {
-              serviceId: wedSvc.id,
-              checkedInAt: { gte: todayStart }
-            }
-          });
-          if (todayCheckins.length > 0) {
-            for (const att of todayCheckins) {
-              const already = await prisma.attendance.findUnique({
-                where: { memberId_serviceId: { memberId: att.memberId, serviceId: targetSvcId } }
-              });
-              if (!already) {
-                await prisma.attendance.update({
-                  where: { id: att.id },
-                  data: { serviceId: targetSvcId }
-                });
-              } else {
-                await prisma.attendance.delete({ where: { id: att.id } });
-              }
-            }
-            // Re-fetch attendees so all today check-ins show up immediately
-            attendees = await prisma.attendance.findMany({
-              where: attendanceWhere,
-              include: {
-                member: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    phone: true,
-                    gender: true,
-                    address: true,
-                    category: true,
-                    role: true,
-                    guardian: true,
-                    createdAt: true
-                  }
-                },
-                service: {
-                  select: {
-                    id: true,
-                    serviceDate: true,
-                    serviceType: { select: { name: true } }
-                  }
-                }
-              },
-              orderBy: { checkedInAt: 'desc' },
-              take: 1000
-            });
-          }
-        }
-      } catch (err) {}
-    }
-
     const count = attendees.length;
     let maleCount = 0;
     let femaleCount = 0;
@@ -756,7 +705,7 @@ router.get('/programs', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/programs', async (req, res, next) => {
+router.post('/programs', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
   try {
     const program = req.body;
     if (!program || !program.id || !program.name) {
@@ -825,7 +774,7 @@ router.post('/programs', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.delete('/programs/:id', async (req, res, next) => {
+router.delete('/programs/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
   try {
     const { id } = req.params;
     const raw = decodeURIComponent(id).trim().toLowerCase();
@@ -878,7 +827,7 @@ router.get('/active-kiosk', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/active-kiosk', async (req, res, next) => {
+router.post('/active-kiosk', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
   try {
     const { programName } = req.body || {};
     await prisma.auditLog.deleteMany({
@@ -1029,7 +978,9 @@ router.post('/quick-register-checkin', async (req, res, next) => {
         ? (body.category.toLowerCase().includes('visitor') ? body.category : `Visitor (${body.category})`)
         : 'Visitor / Guest';
 
+      let isNewMember = false;
       if (!member) {
+        isNewMember = true;
         member = await tx.member.create({
           data: {
             firstName: body.firstName.trim(),
@@ -1052,9 +1003,7 @@ router.post('/quick-register-checkin', async (req, res, next) => {
             gender: body.gender?.trim() || member.gender,
             address: body.address?.trim() || member.address,
             email: body.email?.trim() || member.email,
-            guardian: body.guardian?.trim() || member.guardian,
-            category: member.category || visitorCategory,
-            role: member.role || 'Visitor / First Timer'
+            guardian: body.guardian?.trim() || member.guardian
           }
         });
       }
@@ -1086,19 +1035,21 @@ router.post('/quick-register-checkin', async (req, res, next) => {
           });
           alreadyCheckedIn = false;
 
-          await tx.auditLog.create({
-            data: {
-              action: 'VISITOR_REGISTRATION',
-              entity: 'MEMBER',
-              entityId: member.id,
-              metadata: {
-                category: body.category || 'Visitor',
-                guardian: body.guardian || null,
-                isGuest: true,
-                serviceName: body.serviceName || null
+          if (isNewMember) {
+            await tx.auditLog.create({
+              data: {
+                action: 'VISITOR_REGISTRATION',
+                entity: 'MEMBER',
+                entityId: member.id,
+                metadata: {
+                  category: body.category || 'Visitor',
+                  guardian: body.guardian || null,
+                  isGuest: true,
+                  serviceName: body.serviceName || null
+                }
               }
-            }
-          });
+            });
+          }
         }
       }
 
@@ -1109,7 +1060,7 @@ router.post('/quick-register-checkin', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/clear', async (req, res, next) => {
+router.post('/clear', requireAuth, requireRoles('SUPER_ADMIN'), async (req, res, next) => {
   try {
     const { serviceId, serviceName, memberId, clearAll, confirmAll } = req.body || {};
     if (clearAll === true && confirmAll === 'CONFIRM_PURGE_ALL_RECORDS') {
@@ -1145,7 +1096,7 @@ router.post('/clear', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.get('/history', async (req, res, next) => {
+router.get('/history', requireAuth, async (req, res, next) => {
   try {
     const { startDate, endDate, serviceName, limit } = req.query;
 
@@ -1255,7 +1206,7 @@ router.get('/history', async (req, res, next) => {
 });
 
 // Dedicated All-Services Visitors & First-Timers Directory Endpoint
-router.get('/visitors', async (req, res, next) => {
+router.get('/visitors', requireAuth, async (req, res, next) => {
   try {
     const { startDate, endDate, limit } = req.query;
 
@@ -1402,7 +1353,6 @@ router.get('/visitors', async (req, res, next) => {
 /* ═════════════════════════════════════════════════════════════════════════
    ATTENDANCE & ENGAGEMENT ANALYTICS (PASTOR & ADMIN SUITE)
 ═════════════════════════════════════════════════════════════════════════ */
-const analyticsService = require('./attendanceAnalytics.service');
 
 // Monthly Attendance Analytics Dashboard
 router.get('/analytics/monthly', requireAuth, async (req, res, next) => {

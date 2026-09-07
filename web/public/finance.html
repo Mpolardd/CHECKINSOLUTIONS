@@ -1304,31 +1304,7 @@
         } catch(e) {}
       }
 
-      if (isInvalidOrOffline || isExpired) {
-        try {
-          const lRes = await fetch(`${API_BASE}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: 'finance@solutionsfaith.com', password: 'Money12@26' })
-          });
-          if (lRes.ok) {
-            const lData = await lRes.json();
-            if (lData.accessToken) {
-              token = lData.accessToken;
-              sessionStorage.setItem('sfmi_fin_token', token);
-              localStorage.setItem('sfmi_fin_token', token);
-              if (lData.user) {
-                sessionStorage.setItem('sfmi_fin_user', JSON.stringify(lData.user));
-              }
-              return token;
-            }
-          }
-        } catch(err) {
-          console.warn('Auto-login refresh failed:', err);
-        }
-      }
-
-      return token;
+      return token || '';
     }
 
     async function checkFinAuth() {
@@ -1457,24 +1433,18 @@
           showFinDashboard();
           if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Treasury Portal'; }
           return;
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          purgeFinAuthSession();
+          errorMsg.style.display = 'block';
+          errorMsg.innerText = errData.message || 'Invalid credentials. Please check your email and password and try again.';
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Treasury Portal'; }
+          return;
         }
-      } catch (err) {}
-
-      // Offline fallback: strictly finance only
-      const isFinanceEmail = email.toLowerCase() === 'finance@solutionsfaith.com';
-      const isFinancePassword = password === 'Money12@26';
-
-      if (isFinanceEmail && isFinancePassword) {
-        const offlineToken = 'sfmi_fin_offline_session_' + Date.now();
-        sessionStorage.setItem('sfmi_fin_token', offlineToken);
-        localStorage.setItem('sfmi_fin_token', offlineToken);
-        sessionStorage.setItem('sfmi_fin_user', JSON.stringify({ email: 'finance@solutionsfaith.com', role: 'FINANCE' }));
-        resetInactivityTimer();
-        showFinDashboard();
-      } else {
+      } catch (err) {
         purgeFinAuthSession();
         errorMsg.style.display = 'block';
-        errorMsg.innerText = 'Invalid credentials. Please check your email and password and try again.';
+        errorMsg.innerText = 'Unable to connect to authentication server. Please check your connection and try again.';
       }
 
       if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Treasury Portal'; }
@@ -1734,31 +1704,12 @@
           body: JSON.stringify(payload)
         });
 
-        // If rejected due to auth error / expired token, re-login transparently and retry once
+        // If rejected due to auth error / expired token
         if (res.status === 401 || res.status === 403) {
-          try {
-            const lRes = await fetch(`${API_BASE}/auth/login`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: 'finance@solutionsfaith.com', password: 'Money12@26' })
-            });
-            if (lRes.ok) {
-              const lData = await lRes.json();
-              if (lData.accessToken) {
-                token = lData.accessToken;
-                sessionStorage.setItem('sfmi_fin_token', token);
-                localStorage.setItem('sfmi_fin_token', token);
-                res = await fetch(`${API_BASE}/finance/service-entry`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                  },
-                  body: JSON.stringify(payload)
-                });
-              }
-            }
-          } catch(reErr) {}
+          purgeFinAuthSession();
+          showFinLogin();
+          showToast('Your session has expired. Please sign in again to save this financial entry.', 'warning', 'Session Expired');
+          return;
         }
 
         if (res.ok) {

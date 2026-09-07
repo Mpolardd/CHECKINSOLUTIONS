@@ -3966,28 +3966,6 @@
         } catch (rErr) {}
       }
 
-      // Refresh / establish Super Admin credentials fallback
-      try {
-        const loginRes = await fetch(`${API_BASE}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'admin@solutionsfaith.com', password: 'Solutions12@26' })
-        });
-        if (loginRes.ok) {
-          const loginData = await loginRes.json();
-          if (loginData.accessToken) {
-            token = loginData.accessToken;
-            localStorage.setItem('sfmi_token', token);
-            sessionStorage.setItem('sfmi_token', token);
-            if (loginData.refreshToken) {
-              sessionStorage.setItem('sfmi_refresh_token', loginData.refreshToken);
-              localStorage.setItem('sfmi_refresh_token', loginData.refreshToken);
-            }
-            return token;
-          }
-        }
-      } catch (err) {}
-
       return token || '';
     }
 
@@ -8232,10 +8210,11 @@
     async function saveCustomPrograms() {
       localStorage.setItem('sfmi_custom_programs', JSON.stringify(customPrograms));
       try {
+        const headers = await getAuthHeaders();
         for (const prog of customPrograms) {
           await fetch(`${API_BASE}/attendance/programs`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify(prog)
           });
         }
@@ -8307,9 +8286,10 @@
             },
             body: JSON.stringify({ serviceName: programName || currentSelectedService })
           });
+          const aHeaders = await getAuthHeaders();
           await fetch(`${API_BASE}/attendance/active-kiosk`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { ...aHeaders, 'Content-Type': 'application/json' },
             body: JSON.stringify({ programName: null })
           });
         } catch(e) {}
@@ -8764,9 +8744,10 @@
     async function activateProgramOnKiosk(name) {
       localStorage.setItem('sfmi_active_kiosk_service', name);
       try {
+        const headers = await getAuthHeaders();
         await fetch(`${API_BASE}/attendance/active-kiosk`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...headers, 'Content-Type': 'application/json' },
           body: JSON.stringify({ programName: name })
         });
       } catch (err) {}
@@ -8792,9 +8773,10 @@
           if (activeKiosk === progName || activeKiosk === id) {
             localStorage.removeItem('sfmi_active_kiosk_service');
             try {
+              const aHeaders = await getAuthHeaders();
               await fetch(`${API_BASE}/attendance/active-kiosk`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { ...aHeaders, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ programName: '' })
               });
             } catch (e) {}
@@ -8802,9 +8784,10 @@
 
           // Delete from cloud backend
           try {
-            await fetch(`${API_BASE}/attendance/programs/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            const dHeaders = await getAuthHeaders();
+            await fetch(`${API_BASE}/attendance/programs/${encodeURIComponent(id)}`, { method: 'DELETE', headers: dHeaders });
             if (prog && prog.name && prog.name !== id) {
-              await fetch(`${API_BASE}/attendance/programs/${encodeURIComponent(prog.name)}`, { method: 'DELETE' }).catch(() => {});
+              await fetch(`${API_BASE}/attendance/programs/${encodeURIComponent(prog.name)}`, { method: 'DELETE', headers: dHeaders }).catch(() => {});
             }
           } catch (err) {
             console.error('Failed to delete program from server:', err);
@@ -8826,9 +8809,10 @@
       } else {
         localStorage.setItem('sfmi_active_kiosk_service', serviceKey);
         try {
+          const headers = await getAuthHeaders();
           await fetch(`${API_BASE}/attendance/active-kiosk`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify({ programName: serviceKey })
           });
         } catch (err) {}
@@ -9908,7 +9892,8 @@ closeCreateProgramModal();
 
     async function loadVisitorsData() {
       try {
-        const res = await fetch(`${API_BASE}/attendance/visitors`);
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${API_BASE}/attendance/visitors`, { headers });
         if (res.ok) {
           const json = await res.json();
           if (json) {

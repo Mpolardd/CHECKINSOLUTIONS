@@ -1019,10 +1019,10 @@
         return;
       }
 
-      // Offline session bypass
+      // Invalid or offline session tokens must be purged
       if (token.startsWith('sfmi_fin_offline_session_')) {
-        resetInactivityTimer();
-        showPartnerDashboard();
+        purgePartnerAuthSession();
+        showPartnerLogin();
         return;
       }
 
@@ -1111,27 +1111,18 @@
           showPartnerDashboard();
           if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Partnership Portal'; }
           return;
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          purgePartnerAuthSession();
+          errorMsg.style.display = 'block';
+          errorMsg.innerText = errData.message || 'Invalid credentials. Please check your email and password and try again.';
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Partnership Portal'; }
+          return;
         }
-      } catch (err) {}
-
-      // Offline fallback: treasury & super admin
-      if (email.toLowerCase() === 'finance@solutionsfaith.com' && password === 'Money12@26') {
-        const offlineToken = 'sfmi_fin_offline_session_' + Date.now();
-        sessionStorage.setItem('sfmi_fin_token', offlineToken);
-        localStorage.setItem('sfmi_fin_token', offlineToken);
-        sessionStorage.setItem('sfmi_fin_user', JSON.stringify({ email: 'finance@solutionsfaith.com', role: 'FINANCE', name: 'Treasury Officer' }));
-        resetInactivityTimer();
-        showPartnerDashboard();
-      } else if (email.toLowerCase() === 'admin@solutionsfaith.com' && (password === 'Solutions12@26' || password === 'Password12@26')) {
-        const offlineToken = 'sfmi_fin_offline_session_' + Date.now();
-        sessionStorage.setItem('sfmi_fin_token', offlineToken);
-        localStorage.setItem('sfmi_fin_token', offlineToken);
-        sessionStorage.setItem('sfmi_fin_user', JSON.stringify({ email: 'admin@solutionsfaith.com', role: 'SUPER_ADMIN', name: 'Super Admin' }));
-        resetInactivityTimer();
-        showPartnerDashboard();
-      } else {
+      } catch (err) {
+        purgePartnerAuthSession();
         errorMsg.style.display = 'block';
-        errorMsg.innerText = 'Invalid credentials. Please check your email and password and try again.';
+        errorMsg.innerText = 'Unable to connect to authentication server. Please check your connection and try again.';
       }
 
       if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Partnership Portal'; }
