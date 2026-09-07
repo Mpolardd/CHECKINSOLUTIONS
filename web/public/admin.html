@@ -3153,7 +3153,7 @@
                 <button type="button" class="msg-token-chip" style="background: #e8f5e9; border-color: #107c41; color: #064e3b;" onclick="insertMsgToken('{fullName}')" title="Recipient's Full Name (e.g. Emmanuel Mensah)"><strong>+{fullName}</strong></button>
                 <button type="button" class="msg-token-chip" onclick="insertMsgToken('{serviceName}')" title="Auto-fills from Step 1 Program dropdown (or you can type custom name)">+{serviceName}</button>
                 <button type="button" class="msg-token-chip" onclick="insertMsgToken('{date}')" title="Auto-fills from Step 1 Date dropdown (or you can type custom date)">+{date}</button>
-                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{churchName}')" title="Solutions Faith Ministries International">+{churchName}</button>
+                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{churchName}')" title="Solutions Faith Ministry International">+{churchName}</button>
               </div>
             </div>
 
@@ -12695,7 +12695,7 @@ _Warm Regards,_
     let selectedRecipientIds = new Set();
     let messagingQueue = [];
     let messagingQueueIndex = 0;
-    const MSG_CHURCH_NAME = 'Solutions Faith Ministries International';
+    const MSG_CHURCH_NAME = 'Solutions Faith Ministry International';
 
     function formatPhoneForWhatsApp(raw) {
       if (!raw) return '';
@@ -13432,6 +13432,8 @@ _Warm Regards,_
 
       return templateText
         .replace(/\uFFFD/g, '')
+        .replace(/Solutions Faith Ministries International/gi, 'Solutions Faith Ministry International')
+        .replace(/Solutions Faith Ministries/gi, 'Solutions Faith Ministry')
         .replace(/\{fullName\}/g, fullName)
         .replace(/\{firstName\}/g, fName)
         .replace(/\{serviceName\}/g, svc)
