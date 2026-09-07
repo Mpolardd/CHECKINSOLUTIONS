@@ -1471,6 +1471,9 @@
       <button class="tab-btn" id="tabBtnPrograms" onclick="switchTab('programs')">
         <i class="fas fa-calendar-star"></i> Services & Programs Setup
       </button>
+      <button class="tab-btn" id="tabBtnMessaging" onclick="switchTab('messaging')">
+        <i class="fa-brands fa-whatsapp"></i> Contact &amp; Messaging
+      </button>
       <button class="tab-btn" id="tabBtnPartnership" onclick="switchTab('partnership')">
         <i class="fas fa-handshake"></i> Pledges
       </button>
@@ -1512,6 +1515,9 @@
         </button>
         <button class="mobile-menu-item" id="mobBtnPrograms" onclick="mobileSwitchTab('programs')">
           <i class="fas fa-calendar-star menu-icon"></i> Services & Programs Setup
+        </button>
+        <button class="mobile-menu-item" id="mobBtnMessaging" onclick="mobileSwitchTab('messaging')">
+          <i class="fa-brands fa-whatsapp menu-icon"></i> Contact &amp; Messaging
         </button>
         <button class="mobile-menu-item" id="mobBtnPartnership" onclick="mobileSwitchTab('partnership')">
           <i class="fas fa-handshake menu-icon"></i> Pledges
@@ -2505,6 +2511,258 @@
           <div class="mob-cards-programs" id="programsMobileCards"></div>
         </div>
       </div>
+    <!-- TAB: CONTACT & WHATSAPP MESSAGING CENTER -->
+    <div id="secMessaging" style="display: none;">
+
+      <!-- Header Banner Card -->
+      <div class="admin-card" style="margin-bottom: 20px; background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color: white; border: none; padding: 22px 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+              <span style="background: rgba(37,211,102,0.25); color: #25d366; padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa-brands fa-whatsapp" style="font-size: 14px;"></i> WhatsApp Communication Hub
+              </span>
+              <span style="background: rgba(255,255,255,0.15); color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">Direct &amp; Bulk Dispatch</span>
+            </div>
+            <h1 style="font-size: 22px; font-weight: 800; font-family: Manrope, sans-serif; margin: 0; color: white;">
+              Contact &amp; WhatsApp Messaging Center
+            </h1>
+            <p style="font-size: 13.5px; color: rgba(255,255,255,0.85); margin: 6px 0 0 0; max-width: 680px; line-height: 1.45;">
+              Send personalized post-service thank-you notes, pastoral check-ins for absent members, first-timer welcome messages, and program reminders directly via WhatsApp.
+            </p>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn-main" style="background: #25d366; color: #064e3b; font-weight: 800; border: none; padding: 10px 18px; font-size: 13.5px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);" onclick="launchWhatsAppDispatcherQueue()">
+              <i class="fa-brands fa-whatsapp" style="font-size: 16px; margin-right: 6px;"></i> Start WhatsApp Dispatcher
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Overview Metrics Bar -->
+      <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 20px;">
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(37, 211, 102, 0.12); color: #128C7E;">
+            <i class="fa-brands fa-whatsapp"></i>
+          </div>
+          <div class="metric-content">
+            <div class="metric-label">Contactable Members</div>
+            <div class="metric-val" id="msgStatContactableCount">0</div>
+            <div class="metric-sub" id="msgStatContactableSub">Valid phone records in directory</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(20, 83, 45, 0.1); color: var(--emerald);">
+            <i class="fas fa-users-check"></i>
+          </div>
+          <div class="metric-content">
+            <div class="metric-label">Target Recipients</div>
+            <div class="metric-val" id="msgStatSelectedCount">0</div>
+            <div class="metric-sub" id="msgStatSelectedSub">Selected for current broadcast</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(200, 155, 85, 0.15); color: var(--accent);">
+            <i class="fas fa-comment-dots"></i>
+          </div>
+          <div class="metric-content">
+            <div class="metric-label">Active Template</div>
+            <div class="metric-val" style="font-size: 15px; font-weight: 800;" id="msgStatTemplateName">Thank You Note</div>
+            <div class="metric-sub">Personalized dynamic tokens</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(59, 130, 246, 0.1); color: #2563eb;">
+            <i class="fas fa-paper-plane"></i>
+          </div>
+          <div class="metric-content">
+            <div class="metric-label">Dispatch Mode</div>
+            <div class="metric-val" style="font-size: 15px; font-weight: 800; color: #2563eb;" id="msgStatDispatchMode">Queue Dispatcher</div>
+            <div class="metric-sub">One-click WhatsApp flow</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Two-Column Layout -->
+      <div class="messaging-two-col">
+        
+        <!-- Column 1: Audience Selection & Message Composer -->
+        <div class="admin-card" style="margin-bottom: 0;">
+          <div class="card-head-row" style="margin-bottom: 16px;">
+            <div>
+              <h2 class="card-title" style="font-size: 16px;"><i class="fas fa-sliders" style="color: var(--accent); margin-right: 6px;"></i> 1. Audience &amp; Template Setup</h2>
+              <p class="card-sub">Select your target audience, filter by service attendance or absence, and compose your message.</p>
+            </div>
+          </div>
+
+          <!-- Audience Controls Form -->
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            
+            <!-- Service / Program Selection -->
+            <div>
+              <label class="form-label" style="font-weight: 700;">Program / Service Gathering</label>
+              <select id="msgServiceSelect" class="form-ctrl" onchange="handleMsgServiceChange()">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <!-- Session Date & Target Group Selectors -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <label class="form-label" style="font-weight: 700;">Service Session Date</label>
+                <select id="msgSessionDateSelect" class="form-ctrl" onchange="handleMsgFilterChange()">
+                  <!-- Populated dynamically with dates from _programSessionsMap -->
+                </select>
+              </div>
+              <div>
+                <label class="form-label" style="font-weight: 700;">Target Group</label>
+                <select id="msgTargetGroupSelect" class="form-ctrl" onchange="handleMsgFilterChange()">
+                  <option value="ATTENDEES" selected>✅ Attendees (Checked in / Present)</option>
+                  <option value="ABSENTEES">❌ Absent Members (Missed this session)</option>
+                  <option value="VISITORS">🌟 Visitors &amp; First-Timers Only</option>
+                  <option value="ALL_MEMBERS">👥 All Church Members (Full Directory)</option>
+                  <option value="YOUTH">🧒 Youth &amp; Young Adults</option>
+                  <option value="MEN">👨 Men's Fellowship</option>
+                  <option value="WOMEN">👩 Women's Fellowship</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Pre-Built Template Selector -->
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="form-label" style="font-weight: 700; margin-bottom: 0;">Quick Message Template</label>
+                <span style="font-size: 11px; color: var(--muted);">Pre-written tailored notes</span>
+              </div>
+              <select id="msgTemplateSelect" class="form-ctrl" onchange="handleMsgTemplateChange()">
+                <option value="THANK_YOU" selected>🙏 Thank You for Worshipping With Us (Post-Service)</option>
+                <option value="WE_MISSED_YOU">❤️ We Missed You / Pastoral Check-In (Absentees)</option>
+                <option value="UPCOMING_REMINDER">📢 Upcoming Service / Program Reminder</option>
+                <option value="VISITOR_WELCOME">🌟 First-Timer Welcome &amp; Fellowship Invitation</option>
+                <option value="PRAYER_CHECKIN">🕊️ Pastoral Prayer &amp; Encouragement</option>
+                <option value="CUSTOM">✏️ Custom Free-Form Message</option>
+              </select>
+            </div>
+
+            <!-- Dynamic Placeholders Pill Bar -->
+            <div>
+              <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">
+                Personalization Tokens (Click to insert):
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn-preset" style="padding: 3px 8px; font-size: 11.5px;" onclick="insertMsgToken('{firstName}')">+{firstName}</button>
+                <button type="button" class="btn-preset" style="padding: 3px 8px; font-size: 11.5px;" onclick="insertMsgToken('{fullName}')">+{fullName}</button>
+                <button type="button" class="btn-preset" style="padding: 3px 8px; font-size: 11.5px;" onclick="insertMsgToken('{serviceName}')">+{serviceName}</button>
+                <button type="button" class="btn-preset" style="padding: 3px 8px; font-size: 11.5px;" onclick="insertMsgToken('{date}')">+{date}</button>
+                <button type="button" class="btn-preset" style="padding: 3px 8px; font-size: 11.5px;" onclick="insertMsgToken('{churchName}')">+{churchName}</button>
+              </div>
+            </div>
+
+            <!-- Message Content Textarea -->
+            <div>
+              <label class="form-label" style="font-weight: 700;">Message Content</label>
+              <textarea id="msgBodyTextarea" class="form-ctrl" rows="7" style="resize: vertical; font-size: 13px; line-height: 1.5; font-family: inherit;" oninput="updateLiveMsgPreview()" placeholder="Type your WhatsApp message here..."></textarea>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 11px; color: var(--muted);">
+                <span>Use *bold*, _italics_ for WhatsApp text formatting</span>
+                <span id="msgCharCount">0 characters</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Column 2: Live Message Preview & Recipient Roster -->
+        <div style="display: flex; flex-direction: column; gap: 18px;">
+          
+          <!-- Live Preview Card (WhatsApp Bubble) -->
+          <div class="admin-card" style="margin-bottom: 0; background: #e5ddd5; border: 1px solid #d1d7db; position: relative; border-radius: 10px; overflow: hidden; padding: 0;">
+            <div style="background: #075e54; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 34px; height: 34px; border-radius: 50%; background: #25d366; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 14px;" id="msgPreviewAvatar">
+                  SF
+                </div>
+                <div>
+                  <div style="font-weight: 700; font-size: 13.5px;" id="msgPreviewRecipientName">Sample Recipient (Preview)</div>
+                  <div style="font-size: 11px; opacity: 0.85;" id="msgPreviewRecipientPhone">+233 XX XXX XXXX</div>
+                </div>
+              </div>
+              <span style="font-size: 11px; background: rgba(255,255,255,0.18); padding: 2px 8px; border-radius: 4px;">Live Preview</span>
+            </div>
+
+            <!-- WhatsApp Message Bubble -->
+            <div style="padding: 16px;">
+              <div style="background: #ffffff; border-radius: 8px 0px 8px 8px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.15); max-width: 92%; margin-left: auto; position: relative;">
+                <div id="msgPreviewBubbleContent" style="font-size: 13px; color: #111b21; white-space: pre-wrap; line-height: 1.5; word-break: break-word;">
+                  <!-- Injected live -->
+                </div>
+                <div style="text-align: right; font-size: 10px; color: #667781; margin-top: 5px;">
+                  <span id="msgPreviewTime">Just now</span> · <i class="fas fa-check-double" style="color: #53bdeb;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recipient List & Action Card -->
+          <div class="admin-card" style="margin-bottom: 0;">
+            <div class="card-head-row" style="margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 style="font-size: 15px; font-weight: 800; color: var(--ink); margin: 0;">
+                  Recipient Roster (<span id="msgRecipientCountLabel">0</span>)
+                </h3>
+                <p class="card-sub" id="msgRecipientFilterSubtitle" style="margin-top: 2px;">
+                  All eligible contacts with verified phone numbers
+                </p>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn-main" style="background: #128C7E; color: white; padding: 6px 12px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" onclick="launchWhatsAppDispatcherQueue()">
+                  <i class="fa-brands fa-whatsapp" style="font-size: 14px;"></i> Start Queue
+                </button>
+                <button type="button" class="btn-main" style="background: var(--light); color: var(--ink); border: 1px solid var(--line); padding: 6px 10px; font-size: 12px;" onclick="copyAllRecipientPhones()" title="Copy comma-separated phone numbers for WhatsApp Broadcast list">
+                  <i class="fas fa-copy"></i> Copy Numbers
+                </button>
+                <button type="button" class="btn-main" style="background: #107c41; color: white; padding: 6px 10px; font-size: 12px;" onclick="exportMessagingRosterCsv()" title="Download CSV roster">
+                  <i class="fas fa-file-excel"></i> Export CSV
+                </button>
+              </div>
+            </div>
+
+            <!-- Search inside roster -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap;">
+              <input type="text" id="msgSearchInput" class="form-ctrl" placeholder="Search recipient name or phone..." style="max-width: 240px; font-size: 12px; padding: 5px 8px;" oninput="filterMsgRecipientsList()" />
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                  <input type="checkbox" id="msgSelectAllCheckbox" checked onchange="toggleSelectAllMsgRecipients(this.checked)" />
+                  <strong>Select All</strong>
+                </label>
+              </div>
+            </div>
+
+            <!-- Recipient Table Container -->
+            <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--line); border-radius: 6px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 2; border-bottom: 1px solid var(--line);">
+                  <tr>
+                    <th style="width: 32px; text-align: center; padding: 6px 8px;"></th>
+                    <th style="padding: 6px 10px; text-align: left;">Recipient</th>
+                    <th style="padding: 6px 10px; text-align: left;">Category / Status</th>
+                    <th style="padding: 6px 10px; text-align: left;">Phone Number</th>
+                    <th style="padding: 6px 10px; text-align: center; width: 85px;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="msgRecipientsTableBody">
+                  <!-- Injected by JS -->
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
     <!-- TAB 5: STAFF & SUB-ADMIN ACCOUNTS MANAGEMENT -->
     <div id="secSubAdmins" style="display: none;">
       <div class="admin-card">
@@ -3870,6 +4128,77 @@
     </div>
   </div>
 
+  <!-- Modal: WhatsApp Queue Dispatcher -->
+  <div class="modal-backdrop" id="whatsappDispatchModal" style="display: none;" onclick="if(event.target===this)closeWhatsAppDispatchModal()">
+    <div class="modal-card" style="max-width: 520px; width: 95%; padding: 0; overflow: hidden; border-radius: 12px;">
+      
+      <!-- Header -->
+      <div style="background: #075e54; color: white; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-brands fa-whatsapp" style="font-size: 22px; color: #25d366;"></i>
+          <div>
+            <strong style="font-size: 15px; display: block;">WhatsApp Queue Dispatcher</strong>
+            <span style="font-size: 11px; opacity: 0.85;">One-click personalized WhatsApp messaging</span>
+          </div>
+        </div>
+        <button class="modal-close" style="color: white; font-size: 18px; top: 12px; right: 16px;" onclick="closeWhatsAppDispatchModal()">✕</button>
+      </div>
+
+      <!-- Progress Tracker Bar -->
+      <div style="background: #f0f2f5; padding: 10px 20px; border-bottom: 1px solid var(--line);">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 6px;">
+          <span id="queueProgressText">Recipient 1 of 54</span>
+          <span id="queueProgressPercent" style="color: #128C7E;">2% Completed</span>
+        </div>
+        <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+          <div id="queueProgressBar" style="width: 2%; height: 100%; background: #25d366; transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div style="padding: 20px;">
+        <!-- Current Recipient Card -->
+        <div style="display: flex; align-items: center; gap: 12px; background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+          <div id="queueRecipientAvatar" style="width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: #111; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px;">
+            A
+          </div>
+          <div style="flex: 1;">
+            <div style="font-size: 15px; font-weight: 800; color: var(--ink);" id="queueRecipientName">Recipient Name</div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-top: 2px;">
+              <span style="font-size: 12.5px; color: #128C7E; font-weight: 700;" id="queueRecipientPhone">+233 XX XXX XXXX</span>
+              <span class="badge badge-emerald" id="queueRecipientCategory" style="font-size: 10.5px;">Attendee</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Final Rendered Message Bubble -->
+        <div style="margin-bottom: 16px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 6px;">Personalized Message Preview:</div>
+          <div id="queueMessageContent" style="background: #e7ffdb; border: 1px solid #c1e7a5; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #111b21; line-height: 1.45; white-space: pre-wrap; max-height: 180px; overflow-y: auto;">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button type="button" class="btn-main" id="btnQueueSendWhatsApp" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 800; background: #25d366; color: white; justify-content: center; box-shadow: 0 3px 8px rgba(37,211,102,0.35);" onclick="executeQueueSendAndAdvance()">
+            <i class="fa-brands fa-whatsapp" style="font-size: 18px; margin-right: 6px;"></i> Send on WhatsApp &amp; Next
+          </button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-main" style="flex: 1; padding: 8px; font-size: 12px; background: var(--light); color: var(--ink); border: 1px solid var(--line); justify-content: center;" onclick="queuePreviousRecipient()">
+              <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            <button type="button" class="btn-main" style="flex: 1; padding: 8px; font-size: 12px; background: var(--light); color: var(--ink); border: 1px solid var(--line); justify-content: center;" onclick="queueSkipRecipient()">
+              Skip <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
   <script>
     // Purge any legacy browser mock caches on startup to ensure 100% live Supabase data
     ['sfmi_members_registry', 'sfmi_sub_admins_registry', 'sfmi_service_attendance_map', 'sfmi_fin_reconciliation_entries', 'sfmi_service_finances', 'sfmi_custom_programs'].forEach(k => {
@@ -4747,6 +5076,7 @@
       analytics: '<i class="fas fa-chart-line"></i> Attendance &amp; Engagement Analytics',
       visitors: '<i class="fas fa-user-plus"></i> Visitors & First-Timers',
       members: '<i class="fas fa-users"></i> Member Directory',
+      messaging: '<i class="fa-brands fa-whatsapp"></i> Contact &amp; WhatsApp Messaging Center',
       programs: '<i class="fas fa-calendar-star"></i> Services & Programs Setup',
       partnership: '<i class="fas fa-handshake"></i> Pledges',
       subAdmins: '<i class="fas fa-user-shield"></i> Staff & Sub-Admins',
@@ -4771,6 +5101,7 @@
         if (allowed.includes('attendance') || allowed.includes('members')) {
           if (!allowed.includes('analytics')) allowed.push('analytics');
           if (!allowed.includes('visitors')) allowed.push('visitors');
+          if (!allowed.includes('messaging')) allowed.push('messaging');
         }
         if (!allowed.includes('settings')) allowed.push('settings');
         if (tab === 'finance' || tab === 'subAdmins' || !allowed.includes(tab)) {
@@ -4778,7 +5109,7 @@
         }
       }
 
-      const tabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'subAdmins', 'reports', 'finReports', 'settings'];
+      const tabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'messaging', 'programs', 'partnership', 'subAdmins', 'reports', 'finReports', 'settings'];
       tabs.forEach(t => {
         const sec = document.getElementById(`sec${t.charAt(0).toUpperCase() + t.slice(1)}`);
         const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -4796,6 +5127,7 @@
       if (tab === 'analytics') { loadAnalyticsDashboard(); syncAnalyticsViewMode(); }
       if (tab === 'visitors') { renderVisitorsSection(); syncVisitorsViewMode(); }
       if (tab === 'members') { renderMembersTable(); syncMembersViewMode(); }
+      if (tab === 'messaging') { loadMessagingCenter(); syncMessagingViewMode(); }
       if (tab === 'programs') { renderProgramsManager(); syncProgramsViewMode(); fetchLiveCounts(); }
       if (tab === 'partnership') { loadPartnershipMatrix(); syncPartnershipViewMode(); }
       if (tab === 'subAdmins') { renderSubAdminsList(); syncSubAdminsViewMode(); }
@@ -11766,7 +12098,920 @@ closeCreateProgramModal();
       }
     }
 
-  </script>
+    /* ══════════════════════════════════════════════════════════════════════
+       CONTACT & WHATSAPP MESSAGING CENTER LOGIC
+       ══════════════════════════════════════════════════════════════════════ */
+
+    const MSG_TEMPLATES = {
+      THANK_YOU: `Hello *{firstName}*! 🙏
+
+Thank you for worshipping with us at *{churchName}* for our *{serviceName}* on *{date}*.
+
+We were truly blessed by your fellowship and presence. May the Lord multiply His grace, peace, and abundance in your life and household throughout this week!
+
+We eagerly look forward to seeing you again in our next service.
+
+_Blessings & Warm Regards,_
+*Pastoral Care Team*
+*{churchName}*`,
+
+      WE_MISSED_YOU: `Dear *{firstName}*, warm greetings from *{churchName}*! ❤️
+
+We missed your warm fellowship during our *{serviceName}* on *{date}*.
+
+We are reaching out to ensure all is well with you and your family. Please know that you are always in our hearts and prayers. If you have any prayer requests or need any pastoral support, please feel free to reply to this message.
+
+We look forward to worshipping together with you at our next gathering!
+
+_With love in Christ,_
+*Pastoral Care Team*
+*{churchName}*`,
+
+      UPCOMING_REMINDER: `Beloved *{firstName}*, grace and peace to you! 📢
+
+This is a gentle reminder that our upcoming *{serviceName}* will be holding on *{date}* at *{churchName}*.
+
+Come with great expectation, invite your family and friends, and prepare your heart for an encounter with God's Word, power, and presence.
+
+We cannot wait to worship together with you!
+
+_In His Service,_
+*{churchName}*`,
+
+      VISITOR_WELCOME: `Hello *{firstName}*, a very special and warm welcome from *{churchName}*! 🌟
+
+It was our absolute joy and privilege having you as our guest during our *{serviceName}* on *{date}*.
+
+We pray that you experienced the tangible presence of God and felt warmly embraced by our church family. SFMI is a home of faith, love, and purpose, and we warmly invite you to make this your spiritual home.
+
+If there is any way our pastoral team can pray for you or assist you, please do not hesitate to reply directly to this message.
+
+_Warmest Regards,_
+*Resident Pastor & Pastoral Team*
+*{churchName}*`,
+
+      PRAYER_CHECKIN: `Grace, mercy, and peace be multiplied unto you, *{firstName}*! 🕊️
+
+The pastoral team at *{churchName}* is praying for you this week. We trust God is upholding you in divine strength, health, and favor.
+
+_"The Lord bless you and keep you; the Lord make His face shine upon you and be gracious to you."_ — Numbers 6:24-25
+
+Have a victorious and blessed week, and see you soon in church!
+
+_Blessings & Love,_
+*{churchName}*`,
+
+      CUSTOM: `Hello *{firstName}*,
+
+Grace and peace to you from *{churchName}*.
+
+[Type your personalized message here...]
+
+_Warm Regards,_
+*{churchName}*`
+    };
+
+    let messagingRecipients = [];
+    let filteredMessagingRecipients = [];
+    let selectedRecipientIds = new Set();
+    let messagingQueue = [];
+    let messagingQueueIndex = 0;
+    const MSG_CHURCH_NAME = 'Solutions Faith Ministries International';
+
+    function formatPhoneForWhatsApp(raw) {
+      if (!raw) return '';
+      let digits = String(raw).replace(/[^\d]/g, '');
+      if (!digits) return '';
+      if (digits.startsWith('0') && digits.length === 10) {
+        return '233' + digits.slice(1);
+      }
+      if (digits.startsWith('233')) {
+        return digits;
+      }
+      if (digits.length === 9) {
+        return '233' + digits;
+      }
+      return digits;
+    }
+
+    function formatPhoneDisplay(raw) {
+      if (!raw) return '<span style="color: var(--muted); font-style: italic;">No Phone</span>';
+      const norm = normalizePhoneClient(raw);
+      if (norm.length === 10) {
+        return `${norm.slice(0, 3)} ${norm.slice(3, 6)} ${norm.slice(6)}`;
+      }
+      return escapeHtml(raw);
+    }
+
+    function formatLocalDateDisplay(dateIso) {
+      if (!dateIso || dateIso === 'LATEST' || dateIso === 'TODAY') {
+        const d = new Date();
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+      }
+      try {
+        const parts = String(dateIso).split('-');
+        if (parts.length === 3) {
+          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+        }
+      } catch (e) {}
+      return dateIso;
+    }
+
+    async function loadMessagingCenter() {
+      // Ensure all members are loaded if not yet fetched
+      if (!allMembers || allMembers.length === 0) {
+        try {
+          const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+          const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+          const res = await fetch(`${API_BASE}/members`, { headers });
+          if (res.ok) {
+            const rawMembers = await res.json();
+            allMembers = Array.isArray(rawMembers) ? rawMembers.map(m => ({
+              id: m.id,
+              firstName: m.firstName || '',
+              lastName: m.lastName || '',
+              phone: m.phone || '',
+              category: m.category || 'Adult',
+              gender: m.gender || '',
+              role: m.role || 'Member',
+              isGuest: Boolean(m.isGuest)
+            })) : [];
+          }
+        } catch (e) {}
+      }
+
+      // Populate Service Select
+      const svcSelect = document.getElementById('msgServiceSelect');
+      if (svcSelect) {
+        const stdServices = getStandardServicesList();
+        const cPrograms = (typeof customPrograms !== 'undefined' && Array.isArray(customPrograms)) ? customPrograms : [];
+        const allServices = [...stdServices, ...cPrograms];
+
+        const prevSvc = svcSelect.value;
+        let optsHtml = '';
+        allServices.forEach(s => {
+          optsHtml += `<option value="${escapeHtml(s.name)}">${s.isStandard ? '⛪ ' : '🌟 [Special Program] '}${escapeHtml(s.name)}</option>`;
+        });
+        svcSelect.innerHTML = optsHtml;
+
+        if (prevSvc && allServices.some(s => s.name === prevSvc)) {
+          svcSelect.value = prevSvc;
+        } else if (typeof currentSelectedService !== 'undefined' && currentSelectedService && currentSelectedService !== 'ALL' && allServices.some(s => s.name === currentSelectedService)) {
+          svcSelect.value = currentSelectedService;
+        }
+      }
+
+      // Populate Session Dates for current service
+      populateMsgSessionDates();
+
+      // Initialize default template if textarea is blank
+      const textarea = document.getElementById('msgBodyTextarea');
+      if (textarea && !textarea.value.trim()) {
+        textarea.value = MSG_TEMPLATES.THANK_YOU;
+        const tplSelect = document.getElementById('msgTemplateSelect');
+        if (tplSelect) tplSelect.value = 'THANK_YOU';
+        const statTpl = document.getElementById('msgStatTemplateName');
+        if (statTpl) statTpl.innerText = 'Thank You Note';
+      }
+
+      // Compile and render recipients
+      await compileMessagingRecipients();
+    }
+
+    function populateMsgSessionDates() {
+      const svcSelect = document.getElementById('msgServiceSelect');
+      const dateSelect = document.getElementById('msgSessionDateSelect');
+      if (!svcSelect || !dateSelect) return;
+
+      const svcName = svcSelect.value;
+      const canon = svcName.trim().toLowerCase();
+      const sessions = (window._programSessionsMap && (window._programSessionsMap[svcName] || window._programSessionsMap[canon])) || [];
+
+      let optsHtml = '';
+      if (sessions.length > 0) {
+        optsHtml += `<option value="LATEST">📅 Latest Session (${sessions[0].dateLabel || sessions[0].dateIso})</option>`;
+        sessions.forEach(s => {
+          optsHtml += `<option value="${s.dateIso}">${s.dateLabel} (${s.count || 0} Attended)</option>`;
+        });
+      } else {
+        const todayIso = formatLocalDate(new Date());
+        optsHtml += `<option value="LATEST">📅 Recent / Today (${todayIso})</option>`;
+      }
+      dateSelect.innerHTML = optsHtml;
+    }
+
+    async function handleMsgServiceChange() {
+      populateMsgSessionDates();
+      await compileMessagingRecipients();
+    }
+
+    async function handleMsgFilterChange() {
+      const targetGroup = document.getElementById('msgTargetGroupSelect')?.value || 'ATTENDEES';
+      const tplSelect = document.getElementById('msgTemplateSelect');
+      const textarea = document.getElementById('msgBodyTextarea');
+
+      // Smart template recommendation based on target group
+      if (tplSelect && textarea) {
+        if (targetGroup === 'ABSENTEES' && tplSelect.value === 'THANK_YOU') {
+          tplSelect.value = 'WE_MISSED_YOU';
+          textarea.value = MSG_TEMPLATES.WE_MISSED_YOU;
+          document.getElementById('msgStatTemplateName').innerText = 'We Missed You';
+        } else if (targetGroup === 'ATTENDEES' && tplSelect.value === 'WE_MISSED_YOU') {
+          tplSelect.value = 'THANK_YOU';
+          textarea.value = MSG_TEMPLATES.THANK_YOU;
+          document.getElementById('msgStatTemplateName').innerText = 'Thank You Note';
+        } else if (targetGroup === 'VISITORS' && (tplSelect.value === 'THANK_YOU' || tplSelect.value === 'WE_MISSED_YOU')) {
+          tplSelect.value = 'VISITOR_WELCOME';
+          textarea.value = MSG_TEMPLATES.VISITOR_WELCOME;
+          document.getElementById('msgStatTemplateName').innerText = 'Visitor Welcome';
+        }
+      }
+
+      await compileMessagingRecipients();
+    }
+
+    function handleMsgTemplateChange() {
+      const tplSelect = document.getElementById('msgTemplateSelect');
+      const textarea = document.getElementById('msgBodyTextarea');
+      const statTpl = document.getElementById('msgStatTemplateName');
+      if (!tplSelect || !textarea) return;
+
+      const tplKey = tplSelect.value;
+      if (MSG_TEMPLATES[tplKey] !== undefined) {
+        textarea.value = MSG_TEMPLATES[tplKey];
+      }
+
+      const labels = {
+        THANK_YOU: 'Thank You Note',
+        WE_MISSED_YOU: 'We Missed You',
+        UPCOMING_REMINDER: 'Program Reminder',
+        VISITOR_WELCOME: 'Visitor Welcome',
+        PRAYER_CHECKIN: 'Prayer Check-In',
+        CUSTOM: 'Custom Message'
+      };
+      if (statTpl) statTpl.innerText = labels[tplKey] || 'Template';
+
+      updateLiveMsgPreview();
+    }
+
+    function insertMsgToken(token) {
+      const textarea = document.getElementById('msgBodyTextarea');
+      if (!textarea) return;
+
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const currentVal = textarea.value;
+
+      if (start !== undefined && end !== undefined) {
+        textarea.value = currentVal.substring(0, start) + token + currentVal.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + token.length;
+      } else {
+        textarea.value += ' ' + token;
+      }
+      textarea.focus();
+      updateLiveMsgPreview();
+    }
+
+    async function fetchServiceAttendeesForMessaging(serviceName, dateIso) {
+      const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      let url = `${API_BASE}/attendance/by-service-name?name=${encodeURIComponent(serviceName)}`;
+      if (dateIso && dateIso !== 'LATEST') {
+        url += `&date=${encodeURIComponent(dateIso)}`;
+      }
+
+      try {
+        const res = await fetch(url, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.recent) && data.recent.length > 0) {
+            return data.recent;
+          }
+        }
+      } catch (e) {
+        console.warn('API fetch attendees failed, checking in-memory cache:', e);
+      }
+
+      // Check in-memory serviceAttendanceMap
+      const key = `${serviceName}_${dateIso || 'all'}`;
+      if (serviceAttendanceMap[key] && Array.isArray(serviceAttendanceMap[key])) {
+        return serviceAttendanceMap[key];
+      }
+      if (serviceAttendanceMap[serviceName] && Array.isArray(serviceAttendanceMap[serviceName])) {
+        return serviceAttendanceMap[serviceName];
+      }
+      return [];
+    }
+
+    async function compileMessagingRecipients() {
+      const svcSelect = document.getElementById('msgServiceSelect');
+      const dateSelect = document.getElementById('msgSessionDateSelect');
+      const groupSelect = document.getElementById('msgTargetGroupSelect');
+
+      const svcName = svcSelect ? svcSelect.value : '';
+      const dateIso = dateSelect ? dateSelect.value : 'LATEST';
+      const targetGroup = groupSelect ? groupSelect.value : 'ATTENDEES';
+
+      const tbody = document.getElementById('msgRecipientsTableBody');
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 26px; color: var(--muted);"><i class="fas fa-spinner fa-spin fa-2x" style="color: #128C7E; margin-bottom: 8px;"></i><br/>Compiling audience recipient records...</td></tr>`;
+      }
+
+      // Fetch attendees for this service & date
+      const rawAttendees = await fetchServiceAttendeesForMessaging(svcName, dateIso);
+      
+      // Clean attendees list
+      const attendeeList = rawAttendees.map((item, idx) => {
+        const fName = item.member?.firstName || item.firstName || '';
+        const lName = item.member?.lastName || item.lastName || '';
+        const rawPhone = item.member?.phone || item.phone || '';
+        const mRole = (item.member?.role || item.role || '').toLowerCase();
+        const mCat = (item.member?.category || item.category || '').toLowerCase();
+        const isGuest = Boolean(
+          item.isGuest ||
+          item.member?.isGuest ||
+          mRole.includes('visitor') || mRole.includes('first timer') || mRole.includes('first-timer') ||
+          mCat.includes('visitor') || mCat.includes('guest') || mCat.includes('first timer') || mCat.includes('first-timer')
+        );
+        return {
+          id: item.memberId || item.member?.id || item.id || `att_${idx}`,
+          firstName: fName,
+          lastName: lName,
+          fullName: `${fName} ${lName}`.trim() || 'Church Member',
+          phone: rawPhone,
+          normPhone: normalizePhoneClient(rawPhone),
+          waPhone: formatPhoneForWhatsApp(rawPhone),
+          gender: item.member?.gender || item.gender || '',
+          category: isGuest ? 'Visitor / Guest' : (item.member?.category || 'Member'),
+          isGuest: isGuest,
+          isAttendee: true
+        };
+      });
+
+      // Build Attendee Lookup Set (normalized phone and ID)
+      const attendeePhones = new Set();
+      const attendeeIds = new Set();
+      const attendeeNames = new Set();
+      attendeeList.forEach(a => {
+        if (a.normPhone) attendeePhones.add(a.normPhone);
+        if (a.id) attendeeIds.add(String(a.id));
+        if (a.fullName) attendeeNames.add(a.fullName.toLowerCase());
+      });
+
+      let compiled = [];
+
+      if (targetGroup === 'ATTENDEES') {
+        compiled = attendeeList;
+      } else if (targetGroup === 'ABSENTEES') {
+        // Members who did NOT attend
+        const regMembers = allMembers.filter(m => !isGuestMember(m));
+        compiled = regMembers.filter(m => {
+          const mNorm = normalizePhoneClient(m.phone);
+          const mName = `${m.firstName} ${m.lastName}`.trim().toLowerCase();
+          const isPresent = (mNorm && attendeePhones.has(mNorm)) || 
+                            (m.id && attendeeIds.has(String(m.id))) || 
+                            attendeeNames.has(mName);
+          return !isPresent;
+        }).map((m, idx) => ({
+          id: m.id || `abs_${idx}`,
+          firstName: m.firstName || '',
+          lastName: m.lastName || '',
+          fullName: `${m.firstName} ${m.lastName}`.trim() || 'Church Member',
+          phone: m.phone || '',
+          normPhone: normalizePhoneClient(m.phone),
+          waPhone: formatPhoneForWhatsApp(m.phone),
+          gender: m.gender || '',
+          category: 'Absent Member',
+          isGuest: false,
+          isAttendee: false
+        }));
+      } else if (targetGroup === 'VISITORS') {
+        // Visitors from attendance session + directory visitors
+        const guestAttendees = attendeeList.filter(a => a.isGuest);
+        const guestDirectory = allMembers.filter(isGuestMember).map((m, idx) => ({
+          id: m.id || `gst_${idx}`,
+          firstName: m.firstName || '',
+          lastName: m.lastName || '',
+          fullName: `${m.firstName} ${m.lastName}`.trim() || 'Visitor',
+          phone: m.phone || '',
+          normPhone: normalizePhoneClient(m.phone),
+          waPhone: formatPhoneForWhatsApp(m.phone),
+          gender: m.gender || '',
+          category: 'Visitor / First-Timer',
+          isGuest: true,
+          isAttendee: false
+        }));
+
+        const combinedGuests = [...guestAttendees, ...guestDirectory];
+        const seenGuestPhones = new Set();
+        compiled = combinedGuests.filter(g => {
+          const key = g.normPhone || g.fullName.toLowerCase();
+          if (seenGuestPhones.has(key)) return false;
+          seenGuestPhones.add(key);
+          return true;
+        });
+      } else if (targetGroup === 'ALL_MEMBERS') {
+        // Full member directory
+        compiled = allMembers.filter(m => !isGuestMember(m)).map((m, idx) => ({
+          id: m.id || `mem_${idx}`,
+          firstName: m.firstName || '',
+          lastName: m.lastName || '',
+          fullName: `${m.firstName} ${m.lastName}`.trim() || 'Church Member',
+          phone: m.phone || '',
+          normPhone: normalizePhoneClient(m.phone),
+          waPhone: formatPhoneForWhatsApp(m.phone),
+          gender: m.gender || '',
+          category: m.category || 'Member',
+          isGuest: false,
+          isAttendee: attendeePhones.has(normalizePhoneClient(m.phone))
+        }));
+      } else if (targetGroup === 'YOUTH') {
+        compiled = allMembers.filter(m => {
+          const c = (m.category || '').toLowerCase();
+          return c.includes('youth') || c.includes('young') || c.includes('teen');
+        }).map((m, idx) => ({
+          id: m.id || `yth_${idx}`,
+          firstName: m.firstName || '',
+          lastName: m.lastName || '',
+          fullName: `${m.firstName} ${m.lastName}`.trim(),
+          phone: m.phone || '',
+          normPhone: normalizePhoneClient(m.phone),
+          waPhone: formatPhoneForWhatsApp(m.phone),
+          gender: m.gender || '',
+          category: 'Youth',
+          isGuest: isGuestMember(m),
+          isAttendee: attendeePhones.has(normalizePhoneClient(m.phone))
+        }));
+      } else if (targetGroup === 'MEN') {
+        compiled = allMembers.filter(m => {
+          const g = (m.gender || '').toLowerCase();
+          return g === 'male' || g === 'man';
+        }).map((m, idx) => ({
+          id: m.id || `men_${idx}`,
+          firstName: m.firstName || '',
+          lastName: m.lastName || '',
+          fullName: `${m.firstName} ${m.lastName}`.trim(),
+          phone: m.phone || '',
+          normPhone: normalizePhoneClient(m.phone),
+          waPhone: formatPhoneForWhatsApp(m.phone),
+          gender: 'Male',
+          category: "Men's Fellowship",
+          isGuest: isGuestMember(m),
+          isAttendee: attendeePhones.has(normalizePhoneClient(m.phone))
+        }));
+      } else if (targetGroup === 'WOMEN') {
+        compiled = allMembers.filter(m => {
+          const g = (m.gender || '').toLowerCase();
+          return g === 'female' || g === 'woman';
+        }).map((m, idx) => ({
+          id: m.id || `wmn_${idx}`,
+          firstName: m.firstName || '',
+          lastName: m.lastName || '',
+          fullName: `${m.firstName} ${m.lastName}`.trim(),
+          phone: m.phone || '',
+          normPhone: normalizePhoneClient(m.phone),
+          waPhone: formatPhoneForWhatsApp(m.phone),
+          gender: 'Female',
+          category: "Women's Fellowship",
+          isGuest: isGuestMember(m),
+          isAttendee: attendeePhones.has(normalizePhoneClient(m.phone))
+        }));
+      }
+
+      // Deduplicate by phone or full name
+      const deduped = [];
+      const seenKeys = new Set();
+      compiled.forEach(r => {
+        const key = r.normPhone || `${r.firstName}_${r.lastName}`.toLowerCase();
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          deduped.push(r);
+        }
+      });
+
+      // Sort alphabetically by firstName
+      deduped.sort((a, b) => a.fullName.localeCompare(b.fullName));
+
+      messagingRecipients = deduped;
+      filteredMessagingRecipients = [...deduped];
+
+      // Auto-select all recipients who have a valid WhatsApp phone number
+      selectedRecipientIds = new Set(deduped.filter(r => Boolean(r.waPhone)).map(r => String(r.id)));
+
+      // Update Overview Statistics
+      const totalContactableInDir = allMembers.filter(m => normalizePhoneClient(m.phone).length >= 9).length;
+      const validPhoneRecipients = deduped.filter(r => Boolean(r.waPhone)).length;
+
+      const statContactable = document.getElementById('msgStatContactableCount');
+      if (statContactable) statContactable.innerText = totalContactableInDir;
+
+      const statSelected = document.getElementById('msgStatSelectedCount');
+      if (statSelected) statSelected.innerText = selectedRecipientIds.size;
+
+      const subContactable = document.getElementById('msgStatContactableSub');
+      if (subContactable) subContactable.innerText = `${validPhoneRecipients} reachable in current audience`;
+
+      const subSelected = document.getElementById('msgStatSelectedSub');
+      if (subSelected) subSelected.innerText = `${selectedRecipientIds.size} queued for broadcast`;
+
+      const subFilter = document.getElementById('msgRecipientFilterSubtitle');
+      if (subFilter) {
+        subFilter.innerText = `${validPhoneRecipients} with verified WhatsApp numbers (${deduped.length - validPhoneRecipients} without phone)`;
+      }
+
+      renderMessagingRecipientsTable();
+      updateLiveMsgPreview();
+    }
+
+    function renderMessagingRecipientsTable() {
+      const tbody = document.getElementById('msgRecipientsTableBody');
+      const countLbl = document.getElementById('msgRecipientCountLabel');
+      const selectAll = document.getElementById('msgSelectAllCheckbox');
+      if (!tbody) return;
+
+      if (countLbl) countLbl.innerText = filteredMessagingRecipients.length;
+
+      if (filteredMessagingRecipients.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 32px 16px; color: var(--muted);">
+              <i class="fa-brands fa-whatsapp" style="font-size: 32px; color: #cbd5e1; margin-bottom: 10px; display: block;"></i>
+              <strong style="color: var(--ink); display: block; margin-bottom: 4px;">No recipients match the current criteria</strong>
+              <span style="font-size: 11.5px;">Try selecting a different service date, target group, or clearing your search filter.</span>
+            </td>
+          </tr>
+        `;
+        if (selectAll) selectAll.checked = false;
+        return;
+      }
+
+      let allChecked = true;
+      let html = '';
+
+      filteredMessagingRecipients.forEach(rec => {
+        const isChecked = selectedRecipientIds.has(String(rec.id));
+        if (!isChecked) allChecked = false;
+
+        const hasPhone = Boolean(rec.waPhone);
+        const initial = (rec.firstName.trim().charAt(0) || rec.fullName.trim().charAt(0) || 'M').toUpperCase();
+        
+        let badgeColor = 'background: rgba(16, 124, 65, 0.12); color: #107c41;';
+        if (rec.isGuest) {
+          badgeColor = 'background: rgba(200, 155, 85, 0.15); color: var(--accent);';
+        } else if (rec.category === 'Absent Member') {
+          badgeColor = 'background: rgba(239, 68, 68, 0.1); color: #dc2626;';
+        }
+
+        html += `
+          <tr style="border-bottom: 1px solid var(--line); transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+            <td style="text-align: center; padding: 8px 6px;">
+              <input type="checkbox" ${isChecked ? 'checked' : ''} ${!hasPhone ? 'disabled title="No valid phone number"' : ''} onchange="toggleRecipientSelect('${escapeHtml(rec.id)}', this.checked)" />
+            </td>
+            <td style="padding: 8px 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: ${rec.isGuest ? 'var(--accent)' : 'var(--emerald)'}; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0;">
+                  ${escapeHtml(initial)}
+                </div>
+                <div>
+                  <strong style="color: var(--ink); font-size: 12.5px; display: block;">${escapeHtml(rec.fullName)}</strong>
+                  ${rec.gender ? `<span style="font-size: 10.5px; color: var(--muted);">${escapeHtml(rec.gender)}</span>` : ''}
+                </div>
+              </div>
+            </td>
+            <td style="padding: 8px 10px;">
+              <span style="display: inline-block; padding: 2px 7px; border-radius: 12px; font-size: 10.5px; font-weight: 700; ${badgeColor}">
+                ${escapeHtml(rec.category)}
+              </span>
+            </td>
+            <td style="padding: 8px 10px; font-family: monospace; font-size: 11.5px; color: ${hasPhone ? '#128C7E' : 'var(--muted)'};">
+              ${formatPhoneDisplay(rec.phone)}
+            </td>
+            <td style="padding: 8px 10px; text-align: center;">
+              ${hasPhone ? `
+                <button type="button" class="btn-main" style="background: #25d366; color: white; border: none; padding: 4px 8px; font-size: 11px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="sendDirectWhatsAppToRecipient('${escapeHtml(rec.id)}')" title="Open WhatsApp Web chat directly">
+                  <i class="fa-brands fa-whatsapp"></i> Send
+                </button>
+              ` : `
+                <span style="font-size: 10.5px; color: var(--muted);">No Phone</span>
+              `}
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+      if (selectAll) selectAll.checked = allChecked && filteredMessagingRecipients.length > 0;
+    }
+
+    function toggleRecipientSelect(id, checked) {
+      if (checked) {
+        selectedRecipientIds.add(String(id));
+      } else {
+        selectedRecipientIds.delete(String(id));
+      }
+      const statSelected = document.getElementById('msgStatSelectedCount');
+      if (statSelected) statSelected.innerText = selectedRecipientIds.size;
+    }
+
+    function toggleSelectAllMsgRecipients(isChecked) {
+      filteredMessagingRecipients.forEach(r => {
+        if (r.waPhone) {
+          if (isChecked) selectedRecipientIds.add(String(r.id));
+          else selectedRecipientIds.delete(String(r.id));
+        }
+      });
+      renderMessagingRecipientsTable();
+      const statSelected = document.getElementById('msgStatSelectedCount');
+      if (statSelected) statSelected.innerText = selectedRecipientIds.size;
+    }
+
+    function filterMsgRecipientsList() {
+      const q = (document.getElementById('msgSearchInput')?.value || '').toLowerCase().trim();
+      if (!q) {
+        filteredMessagingRecipients = [...messagingRecipients];
+      } else {
+        filteredMessagingRecipients = messagingRecipients.filter(r => 
+          r.fullName.toLowerCase().includes(q) ||
+          (r.phone && r.phone.toLowerCase().includes(q)) ||
+          r.category.toLowerCase().includes(q)
+        );
+      }
+      renderMessagingRecipientsTable();
+    }
+
+    function formatWhatsAppMessageForRecipient(templateText, recipient, serviceName, sessionDateStr) {
+      if (!templateText) return '';
+      const fName = recipient?.firstName || (recipient?.fullName ? recipient.fullName.split(' ')[0] : 'Beloved');
+      const fullName = recipient?.fullName || fName;
+      const svc = serviceName || 'Service';
+      const dateStr = formatLocalDateDisplay(sessionDateStr);
+
+      return templateText
+        .replace(/\{firstName\}/g, fName)
+        .replace(/\{fullName\}/g, fullName)
+        .replace(/\{serviceName\}/g, svc)
+        .replace(/\{date\}/g, dateStr)
+        .replace(/\{churchName\}/g, MSG_CHURCH_NAME);
+    }
+
+    function updateLiveMsgPreview() {
+      const textarea = document.getElementById('msgBodyTextarea');
+      const charCount = document.getElementById('msgCharCount');
+      const bubble = document.getElementById('msgPreviewBubbleContent');
+      const nameEl = document.getElementById('msgPreviewRecipientName');
+      const phoneEl = document.getElementById('msgPreviewRecipientPhone');
+      const avatarEl = document.getElementById('msgPreviewAvatar');
+      const timeEl = document.getElementById('msgPreviewTime');
+
+      if (!textarea) return;
+      const val = textarea.value;
+
+      if (charCount) charCount.innerText = `${val.length} characters`;
+
+      // Pick preview recipient
+      const sample = (filteredMessagingRecipients && filteredMessagingRecipients.length > 0)
+        ? filteredMessagingRecipients[0]
+        : (messagingRecipients && messagingRecipients.length > 0 ? messagingRecipients[0] : {
+            firstName: 'Emmanuel',
+            lastName: 'Mensah',
+            fullName: 'Emmanuel Mensah',
+            phone: '0241234567',
+            waPhone: '233241234567'
+          });
+
+      const svcSelect = document.getElementById('msgServiceSelect');
+      const dateSelect = document.getElementById('msgSessionDateSelect');
+      const svcName = svcSelect ? svcSelect.value : 'Sunday Service';
+      const dateIso = dateSelect ? dateSelect.value : 'LATEST';
+
+      const personalized = formatWhatsAppMessageForRecipient(val, sample, svcName, dateIso);
+
+      // Render formatting: *bold* -> <strong>, _italics_ -> <em>
+      let formattedHtml = escapeHtml(personalized)
+        .replace(/\*([^*]+)\*/g, '<strong>$1</strong>')
+        .replace(/_([^_]+)_/g, '<em>$1</em>');
+
+      if (bubble) bubble.innerHTML = formattedHtml;
+      if (nameEl) nameEl.innerText = `${sample.fullName} (Sample Preview)`;
+      if (phoneEl) phoneEl.innerText = sample.phone ? normalizePhoneClient(sample.phone) : '+233 24 123 4567';
+      if (avatarEl) avatarEl.innerText = (sample.firstName.trim().charAt(0) || 'S').toUpperCase();
+
+      if (timeEl) {
+        const d = new Date();
+        timeEl.innerText = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+
+    function sendDirectWhatsAppToRecipient(recId) {
+      const rec = messagingRecipients.find(r => String(r.id) === String(recId));
+      if (!rec || !rec.waPhone) {
+        showToast('This recipient does not have a valid WhatsApp phone number.', 'warning', 'No Phone');
+        return;
+      }
+
+      const textarea = document.getElementById('msgBodyTextarea');
+      const template = textarea ? textarea.value : MSG_TEMPLATES.THANK_YOU;
+      const svcName = document.getElementById('msgServiceSelect')?.value || 'Service';
+      const dateIso = document.getElementById('msgSessionDateSelect')?.value || 'LATEST';
+
+      const text = formatWhatsAppMessageForRecipient(template, rec, svcName, dateIso);
+      const url = `https://wa.me/${rec.waPhone}?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+      showToast(`Opening WhatsApp chat with <strong>${escapeHtml(rec.fullName)}</strong>...`, 'success', 'WhatsApp Direct');
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       WHATSAPP DISPATCHER QUEUE MODAL
+       ══════════════════════════════════════════════════════════════════════ */
+
+    function launchWhatsAppDispatcherQueue() {
+      // Gather all selected recipients who have valid WhatsApp phone
+      const selected = messagingRecipients.filter(r => selectedRecipientIds.has(String(r.id)) && Boolean(r.waPhone));
+
+      if (selected.length === 0) {
+        showToast('Please select at least one recipient with a valid phone number from the roster.', 'warning', 'No Recipients Selected');
+        return;
+      }
+
+      messagingQueue = selected;
+      messagingQueueIndex = 0;
+
+      const modal = document.getElementById('whatsappDispatchModal');
+      if (modal) modal.style.display = 'flex';
+
+      renderCurrentQueueItem();
+    }
+
+    function renderCurrentQueueItem() {
+      const progressText = document.getElementById('queueProgressText');
+      const progressPercent = document.getElementById('queueProgressPercent');
+      const progressBar = document.getElementById('queueProgressBar');
+      const nameEl = document.getElementById('queueRecipientName');
+      const phoneEl = document.getElementById('queueRecipientPhone');
+      const catEl = document.getElementById('queueRecipientCategory');
+      const avatarEl = document.getElementById('queueRecipientAvatar');
+      const msgBox = document.getElementById('queueMessageContent');
+      const sendBtn = document.getElementById('btnQueueSendWhatsApp');
+
+      const total = messagingQueue.length;
+
+      // Completion check
+      if (messagingQueueIndex >= total) {
+        if (progressText) progressText.innerText = `All ${total} recipients processed! 🎉`;
+        if (progressPercent) progressPercent.innerText = '100% Completed';
+        if (progressBar) progressBar.style.width = '100%';
+
+        if (nameEl) nameEl.innerText = 'Queue Completed';
+        if (phoneEl) phoneEl.innerText = 'All selected messages dispatched';
+        if (catEl) catEl.innerText = 'Done';
+        if (avatarEl) avatarEl.innerHTML = '<i class="fas fa-check"></i>';
+        if (msgBox) {
+          msgBox.innerHTML = `<div style="text-align: center; padding: 18px 10px; color: #107c41;">
+            <i class="fas fa-circle-check" style="font-size: 38px; margin-bottom: 8px;"></i>
+            <h4 style="margin: 0 0 6px 0; font-size: 16px;">Queue Successfully Finished!</h4>
+            <p style="margin: 0; font-size: 12.5px; color: var(--ink);">You have cycled through all ${total} selected recipients. You can safely close this dispatcher.</p>
+          </div>`;
+        }
+        if (sendBtn) {
+          sendBtn.innerHTML = '<i class="fas fa-check"></i> Finish &amp; Close Dispatcher';
+          sendBtn.onclick = closeWhatsAppDispatchModal;
+          sendBtn.style.background = '#107c41';
+        }
+        return;
+      }
+
+      const rec = messagingQueue[messagingQueueIndex];
+      const pct = Math.round(((messagingQueueIndex + 1) / total) * 100);
+
+      if (progressText) progressText.innerText = `Recipient ${messagingQueueIndex + 1} of ${total}`;
+      if (progressPercent) progressPercent.innerText = `${pct}% Completed`;
+      if (progressBar) progressBar.style.width = `${pct}%`;
+
+      if (nameEl) nameEl.innerText = rec.fullName;
+      if (phoneEl) phoneEl.innerText = rec.phone ? normalizePhoneClient(rec.phone) : '';
+      if (catEl) catEl.innerText = rec.category;
+      if (avatarEl) avatarEl.innerText = (rec.firstName.trim().charAt(0) || 'M').toUpperCase();
+
+      const textarea = document.getElementById('msgBodyTextarea');
+      const template = textarea ? textarea.value : MSG_TEMPLATES.THANK_YOU;
+      const svcName = document.getElementById('msgServiceSelect')?.value || 'Service';
+      const dateIso = document.getElementById('msgSessionDateSelect')?.value || 'LATEST';
+
+      const personalized = formatWhatsAppMessageForRecipient(template, rec, svcName, dateIso);
+      if (msgBox) msgBox.innerText = personalized;
+
+      if (sendBtn) {
+        sendBtn.innerHTML = '<i class="fa-brands fa-whatsapp" style="font-size: 18px; margin-right: 6px;"></i> Send on WhatsApp &amp; Next';
+        sendBtn.onclick = executeQueueSendAndAdvance;
+        sendBtn.style.background = '#25d366';
+      }
+    }
+
+    function executeQueueSendAndAdvance() {
+      if (messagingQueueIndex >= messagingQueue.length) {
+        closeWhatsAppDispatchModal();
+        return;
+      }
+
+      const rec = messagingQueue[messagingQueueIndex];
+      const textarea = document.getElementById('msgBodyTextarea');
+      const template = textarea ? textarea.value : MSG_TEMPLATES.THANK_YOU;
+      const svcName = document.getElementById('msgServiceSelect')?.value || 'Service';
+      const dateIso = document.getElementById('msgSessionDateSelect')?.value || 'LATEST';
+
+      const personalized = formatWhatsAppMessageForRecipient(template, rec, svcName, dateIso);
+      const url = `https://wa.me/${rec.waPhone}?text=${encodeURIComponent(personalized)}`;
+
+      // Open WhatsApp chat
+      window.open(url, '_blank');
+
+      // Advance queue
+      messagingQueueIndex++;
+      renderCurrentQueueItem();
+    }
+
+    function queueSkipRecipient() {
+      if (messagingQueueIndex < messagingQueue.length) {
+        messagingQueueIndex++;
+        renderCurrentQueueItem();
+      }
+    }
+
+    function queuePreviousRecipient() {
+      if (messagingQueueIndex > 0) {
+        messagingQueueIndex--;
+        renderCurrentQueueItem();
+      }
+    }
+
+    function closeWhatsAppDispatchModal() {
+      const modal = document.getElementById('whatsappDispatchModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function copyAllRecipientPhones() {
+      const selected = messagingRecipients.filter(r => selectedRecipientIds.has(String(r.id)) && Boolean(r.waPhone));
+      if (selected.length === 0) {
+        showToast('No recipients selected with valid phone numbers.', 'warning', 'Empty Selection');
+        return;
+      }
+
+      const phones = selected.map(r => r.normPhone || r.phone).filter(Boolean);
+      const csvPhones = phones.join(', ');
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(csvPhones).then(() => {
+          showToast(`Copied <strong>${phones.length}</strong> phone numbers to clipboard! You can paste directly into WhatsApp broadcast lists.`, 'success', 'Numbers Copied');
+        }).catch(() => {
+          prompt('Copy all recipient phone numbers below:', csvPhones);
+        });
+      } else {
+        prompt('Copy all recipient phone numbers below:', csvPhones);
+      }
+    }
+
+    function exportMessagingRosterCsv() {
+      if (!messagingRecipients || messagingRecipients.length === 0) {
+        showToast('No recipient records available to export.', 'warning', 'Export Empty');
+        return;
+      }
+
+      const svcName = document.getElementById('msgServiceSelect')?.value || 'Service';
+      const dateIso = document.getElementById('msgSessionDateSelect')?.value || 'all';
+
+      const headers = ['Recipient Name', 'First Name', 'Last Name', 'Phone Number', 'WhatsApp Number', 'Category / Status', 'Gender'];
+      const rows = messagingRecipients.map(r => [
+        `"${(r.fullName || '').replace(/"/g, '""')}"`,
+        `"${(r.firstName || '').replace(/"/g, '""')}"`,
+        `"${(r.lastName || '').replace(/"/g, '""')}"`,
+        `"${(r.normPhone || r.phone || '').replace(/"/g, '""')}"`,
+        `"${(r.waPhone || '').replace(/"/g, '""')}"`,
+        `"${(r.category || '').replace(/"/g, '""')}"`,
+        `"${(r.gender || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `SFMI_Messaging_Roster_${svcName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateIso}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast(`Exported ${messagingRecipients.length} messaging recipients to CSV!`, 'success', 'CSV Exported');
+    }
+
+    function syncMessagingViewMode() {
+      // Responsive hook for messaging section
+    }
+    window.addEventListener("resize", syncMessagingViewMode);
 
 </body>
 
