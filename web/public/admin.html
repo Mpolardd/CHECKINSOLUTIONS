@@ -3043,7 +3043,7 @@
                 <select id="msgSessionDateSelect" class="form-ctrl" style="font-size: 12.5px; font-weight: 600;" onchange="handleMsgSessionDateChange()">
                   <!-- Populated dynamically with dates from _programSessionsMap -->
                 </select>
-                <input type="date" id="msgCustomDateInput" class="form-ctrl" style="display: none; margin-top: 6px; font-size: 12px; padding: 6px 10px;" onchange="handleMsgCustomDateChange()">
+                <input type="date" id="msgCustomDateInput" class="form-ctrl" style="display: none; margin-top: 6px; font-size: 12px; padding: 6px 10px;" oninput="handleMsgCustomDateChange()" onchange="handleMsgCustomDateChange()">
               </div>
             </div>
 
@@ -12739,7 +12739,7 @@ _Warm Regards,_
     }
 
     function formatLocalDateDisplay(dateInput) {
-      if (!dateInput || dateInput === 'TODAY' || dateInput === 'LATEST') {
+      if (!dateInput || dateInput === 'TODAY' || dateInput === 'LATEST' || dateInput === 'CUSTOM') {
         const svcSelect = document.getElementById('msgServiceSelect');
         const svcName = svcSelect ? svcSelect.value : '';
         dateInput = getRecentServiceDateIso(svcName);
@@ -12771,26 +12771,33 @@ _Warm Regards,_
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         return `${days[dt.getDay()]}, ${months[dt.getMonth()]} ${dt.getDate()}, ${dt.getFullYear()}`;
       }
-      return String(dateInput || '');
+      return '';
+    }
+
+    function getEffectiveSessionDateIso() {
+      const dateSelect = document.getElementById('msgSessionDateSelect');
+      if (!dateSelect) return 'LATEST';
+      if (dateSelect.value === 'CUSTOM') {
+        const customInput = document.getElementById('msgCustomDateInput');
+        if (customInput && customInput.value) {
+          return customInput.value;
+        }
+        const today = formatLocalDate(new Date());
+        if (customInput) customInput.value = today;
+        return today;
+      }
+      return dateSelect.value || 'LATEST';
     }
 
     function getSelectedSessionDateLabel() {
+      const effectiveIso = getEffectiveSessionDateIso();
+      if (effectiveIso && effectiveIso !== 'LATEST' && effectiveIso !== 'TODAY' && effectiveIso !== 'CUSTOM') {
+        const formatted = formatLocalDateDisplay(effectiveIso);
+        if (formatted) return formatted;
+      }
+
       const svcSelect = document.getElementById('msgServiceSelect');
-      const dateSelect = document.getElementById('msgSessionDateSelect');
       const svcName = svcSelect ? svcSelect.value : '';
-      const dateVal = dateSelect ? dateSelect.value : '';
-
-      if (dateVal === 'CUSTOM') {
-        const customInput = document.getElementById('msgCustomDateInput');
-        if (customInput && customInput.value) {
-          return formatLocalDateDisplay(customInput.value);
-        }
-      }
-
-      if (dateVal && dateVal !== 'LATEST' && dateVal !== 'TODAY' && dateVal !== 'CUSTOM') {
-        return formatLocalDateDisplay(dateVal);
-      }
-
       const canon = (svcName || '').trim().toLowerCase();
       const sessions = (window._programSessionsMap && (window._programSessionsMap[svcName] || window._programSessionsMap[canon])) || [];
       if (sessions.length > 0 && sessions[0].dateIso) {
@@ -13055,7 +13062,7 @@ _Warm Regards,_
       const groupSelect = document.getElementById('msgTargetGroupSelect');
 
       const svcName = svcSelect ? svcSelect.value : '';
-      const dateIso = dateSelect ? dateSelect.value : 'LATEST';
+      const dateIso = getEffectiveSessionDateIso();
       const targetGroup = groupSelect ? groupSelect.value : 'ATTENDEES';
 
       const tbody = document.getElementById('msgRecipientsTableBody');
@@ -13414,9 +13421,14 @@ _Warm Regards,_
       const fullName = (recipient?.fullName || '').trim() || (recipient?.firstName || 'Beloved');
       const fName = fullName; // User requested to use the person full name
       const svc = serviceName || (document.getElementById('msgServiceSelect')?.value || 'Sunday: Family & Friends Service');
-      const dateStr = (sessionDateStr && sessionDateStr !== 'LATEST' && sessionDateStr !== 'TODAY')
-        ? formatLocalDateDisplay(sessionDateStr)
-        : getSelectedSessionDateLabel();
+      
+      let dateStr = '';
+      if (sessionDateStr && sessionDateStr !== 'LATEST' && sessionDateStr !== 'TODAY' && sessionDateStr !== 'CUSTOM') {
+        dateStr = formatLocalDateDisplay(sessionDateStr);
+      }
+      if (!dateStr) {
+        dateStr = getSelectedSessionDateLabel();
+      }
 
       return templateText
         .replace(/\uFFFD/g, '')
@@ -13453,9 +13465,8 @@ _Warm Regards,_
           });
 
       const svcSelect = document.getElementById('msgServiceSelect');
-      const dateSelect = document.getElementById('msgSessionDateSelect');
       const svcName = svcSelect ? svcSelect.value : 'Sunday: Family & Friends Service';
-      const dateIso = dateSelect ? dateSelect.value : '';
+      const dateIso = getEffectiveSessionDateIso();
 
       const personalized = formatWhatsAppMessageForRecipient(val, sample, svcName, dateIso);
 
@@ -13485,7 +13496,7 @@ _Warm Regards,_
       const textarea = document.getElementById('msgBodyTextarea');
       const template = textarea ? textarea.value : MSG_TEMPLATES.THANK_YOU;
       const svcName = document.getElementById('msgServiceSelect')?.value || 'Service';
-      const dateIso = document.getElementById('msgSessionDateSelect')?.value || 'LATEST';
+      const dateIso = getEffectiveSessionDateIso();
 
       const text = formatWhatsAppMessageForRecipient(template, rec, svcName, dateIso);
       const url = `https://wa.me/${rec.waPhone}?text=${encodeURIComponent(text)}`;
@@ -13568,7 +13579,7 @@ _Warm Regards,_
       const textarea = document.getElementById('msgBodyTextarea');
       const template = textarea ? textarea.value : MSG_TEMPLATES.THANK_YOU;
       const svcName = document.getElementById('msgServiceSelect')?.value || 'Service';
-      const dateIso = document.getElementById('msgSessionDateSelect')?.value || 'LATEST';
+      const dateIso = getEffectiveSessionDateIso();
 
       const personalized = formatWhatsAppMessageForRecipient(template, rec, svcName, dateIso);
       if (msgBox) msgBox.innerText = personalized;
@@ -13590,7 +13601,7 @@ _Warm Regards,_
       const textarea = document.getElementById('msgBodyTextarea');
       const template = textarea ? textarea.value : MSG_TEMPLATES.THANK_YOU;
       const svcName = document.getElementById('msgServiceSelect')?.value || 'Service';
-      const dateIso = document.getElementById('msgSessionDateSelect')?.value || 'LATEST';
+      const dateIso = getEffectiveSessionDateIso();
 
       const personalized = formatWhatsAppMessageForRecipient(template, rec, svcName, dateIso);
       const url = `https://wa.me/${rec.waPhone}?text=${encodeURIComponent(personalized)}`;
