@@ -1387,6 +1387,262 @@
         align-items: flex-start;
       }
     }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       PREMIUM CONTACT & WHATSAPP MESSAGING CENTER STYLES
+       ══════════════════════════════════════════════════════════════════════ */
+    .messaging-two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      gap: 22px;
+      align-items: start;
+    }
+    @media (max-width: 1024px) {
+      .messaging-two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .msg-hero-card {
+      background: radial-gradient(130% 130% at 10% 10%, #064e3b 0%, #022c22 55%, #0b1320 100%);
+      border: 1px solid rgba(200, 155, 85, 0.38);
+      border-radius: 16px;
+      color: #ffffff;
+      padding: 26px 30px;
+      box-shadow: 0 12px 32px -10px rgba(6, 78, 59, 0.45), 0 1px 3px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+    .msg-hero-card::before {
+      content: '';
+      position: absolute;
+      top: -80px;
+      right: -80px;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, rgba(37, 211, 102, 0.2) 0%, rgba(37, 211, 102, 0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .msg-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(37, 211, 102, 0.16);
+      border: 1px solid rgba(37, 211, 102, 0.45);
+      color: #25d366;
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 5px 12px;
+      border-radius: 30px;
+    }
+    .msg-pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #25d366;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+      animation: msgPulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    }
+    @keyframes msgPulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(37, 211, 102, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+    }
+
+    .msg-metric-card {
+      background: #ffffff;
+      border: 1px solid rgba(216, 226, 220, 0.9);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .msg-metric-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px -8px rgba(13, 26, 20, 0.08);
+      border-color: rgba(200, 155, 85, 0.5);
+    }
+    .msg-metric-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .msg-segment-bar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      background: #f1f5f3;
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+    .msg-segment-btn {
+      flex: 1 1 auto;
+      min-width: 120px;
+      text-align: center;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .msg-segment-btn:hover {
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.7);
+    }
+    .msg-segment-btn.active {
+      color: #064e3b;
+      background: #ffffff;
+      border-color: rgba(6, 78, 59, 0.2);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .msg-segment-btn .count-badge {
+      background: rgba(6, 78, 59, 0.1);
+      color: #064e3b;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .msg-segment-btn.active .count-badge {
+      background: #064e3b;
+      color: #ffffff;
+    }
+
+    .msg-template-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .msg-tpl-pill {
+      padding: 6px 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      color: var(--ink);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+    }
+    .msg-tpl-pill:hover {
+      background: #ffffff;
+      border-color: var(--accent);
+      color: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+    .msg-tpl-pill.active {
+      background: #064e3b;
+      color: #ffffff;
+      border-color: #064e3b;
+      box-shadow: 0 2px 8px rgba(6, 78, 59, 0.25);
+    }
+
+    .msg-token-chip {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .msg-token-chip:hover {
+      background: #f3f4f6;
+      border-color: #107c41;
+      color: #107c41;
+      transform: translateY(-1px);
+    }
+
+    .msg-phone-frame {
+      background: #eae6df;
+      border: 1px solid #cfd5d8;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px -6px rgba(0,0,0,0.12);
+      position: relative;
+    }
+    .msg-phone-top {
+      background: #075e54;
+      color: #ffffff;
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    .msg-phone-chat-bg {
+      padding: 18px 16px;
+      min-height: 220px;
+      background-color: #e5ddd5;
+      background-image: radial-gradient(rgba(0,0,0,0.04) 1px, transparent 0);
+      background-size: 16px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .msg-bubble-card {
+      background: #ffffff;
+      border-radius: 12px 0px 12px 12px;
+      padding: 14px 16px;
+      box-shadow: 0 1.5px 3px rgba(0,0,0,0.18);
+      max-width: 92%;
+      margin-left: auto;
+      position: relative;
+      word-break: break-word;
+    }
+    .msg-bubble-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: -8px;
+      width: 0;
+      height: 0;
+      border-top: 10px solid #ffffff;
+      border-right: 10px solid transparent;
+    }
+
+    .msg-roster-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
   </style>
 </head>
 
@@ -2514,71 +2770,76 @@
     <!-- TAB: CONTACT & WHATSAPP MESSAGING CENTER -->
     <div id="secMessaging" style="display: none;">
 
-      <!-- Header Banner Card -->
-      <div class="admin-card" style="margin-bottom: 20px; background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); color: white; border: none; padding: 22px 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-          <div>
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
-              <span style="background: rgba(37,211,102,0.25); color: #25d366; padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 6px;">
-                <i class="fa-brands fa-whatsapp" style="font-size: 14px;"></i> WhatsApp Communication Hub
+      <!-- Hero Header Banner -->
+      <div class="msg-hero-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
+          <div style="max-width: 720px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+              <span class="msg-live-badge">
+                <span class="msg-pulse-dot"></span> WhatsApp Gateway Active
               </span>
-              <span style="background: rgba(255,255,255,0.15); color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">Direct &amp; Bulk Dispatch</span>
+              <span style="background: rgba(200, 155, 85, 0.22); border: 1px solid rgba(200, 155, 85, 0.4); color: #fde047; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+                <i class="fas fa-bolt" style="font-size: 10px;"></i> Direct &amp; Bulk Dispatch
+              </span>
             </div>
-            <h1 style="font-size: 22px; font-weight: 800; font-family: Manrope, sans-serif; margin: 0; color: white;">
+            <h1 style="font-size: 26px; font-weight: 800; font-family: Manrope, sans-serif; margin: 0 0 8px 0; color: #ffffff; letter-spacing: -0.02em;">
               Contact &amp; WhatsApp Messaging Center
             </h1>
-            <p style="font-size: 13.5px; color: rgba(255,255,255,0.85); margin: 6px 0 0 0; max-width: 680px; line-height: 1.45;">
-              Send personalized post-service thank-you notes, pastoral check-ins for absent members, first-timer welcome messages, and program reminders directly via WhatsApp.
+            <p style="font-size: 14px; color: rgba(255,255,255,0.85); margin: 0; line-height: 1.55;">
+              Personalized post-service thank-you notes, pastoral care follow-ups for absent members, visitor welcomes, and service reminder broadcasts—powered by instant WhatsApp direct delivery.
             </p>
           </div>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button class="btn-main" style="background: #25d366; color: #064e3b; font-weight: 800; border: none; padding: 10px 18px; font-size: 13.5px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);" onclick="launchWhatsAppDispatcherQueue()">
-              <i class="fa-brands fa-whatsapp" style="font-size: 16px; margin-right: 6px;"></i> Start WhatsApp Dispatcher
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button class="btn-main" style="background: linear-gradient(135deg, #25d366 0%, #128C7E 100%); color: white; font-weight: 800; border: none; padding: 13px 24px; font-size: 14px; border-radius: 10px; box-shadow: 0 6px 20px rgba(37,211,102,0.38); display: inline-flex; align-items: center; gap: 9px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'" onclick="launchWhatsAppDispatcherQueue()">
+              <i class="fa-brands fa-whatsapp" style="font-size: 20px;"></i> Start WhatsApp Dispatcher
             </button>
           </div>
         </div>
       </div>
 
       <!-- Top Overview Metrics Bar -->
-      <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 20px;">
-        <div class="metric-card">
-          <div class="metric-icon" style="background: rgba(37, 211, 102, 0.12); color: #128C7E;">
+      <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin-bottom: 24px; gap: 16px;">
+        <div class="msg-metric-card">
+          <div class="msg-metric-icon" style="background: rgba(37, 211, 102, 0.12); color: #128C7E;">
             <i class="fa-brands fa-whatsapp"></i>
           </div>
-          <div class="metric-content">
-            <div class="metric-label">Contactable Members</div>
-            <div class="metric-val" id="msgStatContactableCount">0</div>
-            <div class="metric-sub" id="msgStatContactableSub">Valid phone records in directory</div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 11.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Contactable Members</div>
+            <div style="font-size: 24px; font-weight: 800; color: var(--ink); margin: 2px 0;" id="msgStatContactableCount">0</div>
+            <div style="font-size: 11.5px; color: #107c41; font-weight: 600;" id="msgStatContactableSub">Verified phone records</div>
           </div>
         </div>
-        <div class="metric-card">
-          <div class="metric-icon" style="background: rgba(20, 83, 45, 0.1); color: var(--emerald);">
+
+        <div class="msg-metric-card">
+          <div class="msg-metric-icon" style="background: rgba(20, 83, 45, 0.1); color: var(--emerald);">
             <i class="fas fa-users-check"></i>
           </div>
-          <div class="metric-content">
-            <div class="metric-label">Target Recipients</div>
-            <div class="metric-val" id="msgStatSelectedCount">0</div>
-            <div class="metric-sub" id="msgStatSelectedSub">Selected for current broadcast</div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 11.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Target Audience</div>
+            <div style="font-size: 24px; font-weight: 800; color: var(--ink); margin: 2px 0;" id="msgStatSelectedCount">0</div>
+            <div style="font-size: 11.5px; color: var(--muted); font-weight: 600;" id="msgStatSelectedSub">Selected for broadcast</div>
           </div>
         </div>
-        <div class="metric-card">
-          <div class="metric-icon" style="background: rgba(200, 155, 85, 0.15); color: var(--accent);">
-            <i class="fas fa-comment-dots"></i>
+
+        <div class="msg-metric-card">
+          <div class="msg-metric-icon" style="background: rgba(200, 155, 85, 0.15); color: var(--accent);">
+            <i class="fas fa-message-captions"></i>
           </div>
-          <div class="metric-content">
-            <div class="metric-label">Active Template</div>
-            <div class="metric-val" style="font-size: 15px; font-weight: 800;" id="msgStatTemplateName">Thank You Note</div>
-            <div class="metric-sub">Personalized dynamic tokens</div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 11.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Active Template</div>
+            <div style="font-size: 16px; font-weight: 800; color: var(--ink); margin: 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="msgStatTemplateName">Thank You Note</div>
+            <div style="font-size: 11.5px; color: var(--muted); font-weight: 600;">Personalized dynamic tokens</div>
           </div>
         </div>
-        <div class="metric-card">
-          <div class="metric-icon" style="background: rgba(59, 130, 246, 0.1); color: #2563eb;">
+
+        <div class="msg-metric-card">
+          <div class="msg-metric-icon" style="background: rgba(59, 130, 246, 0.1); color: #2563eb;">
             <i class="fas fa-paper-plane"></i>
           </div>
-          <div class="metric-content">
-            <div class="metric-label">Dispatch Mode</div>
-            <div class="metric-val" style="font-size: 15px; font-weight: 800; color: #2563eb;" id="msgStatDispatchMode">Queue Dispatcher</div>
-            <div class="metric-sub">One-click WhatsApp flow</div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 11.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Dispatch Engine</div>
+            <div style="font-size: 16px; font-weight: 800; color: #2563eb; margin: 3px 0;" id="msgStatDispatchMode">Interactive Queue</div>
+            <div style="font-size: 11.5px; color: var(--muted); font-weight: 600;">1-Click wa.me flow</div>
           </div>
         </div>
       </div>
@@ -2586,167 +2847,254 @@
       <!-- Main Two-Column Layout -->
       <div class="messaging-two-col">
         
-        <!-- Column 1: Audience Selection & Message Composer -->
-        <div class="admin-card" style="margin-bottom: 0;">
-          <div class="card-head-row" style="margin-bottom: 16px;">
-            <div>
-              <h2 class="card-title" style="font-size: 16px;"><i class="fas fa-sliders" style="color: var(--accent); margin-right: 6px;"></i> 1. Audience &amp; Template Setup</h2>
-              <p class="card-sub">Select your target audience, filter by service attendance or absence, and compose your message.</p>
-            </div>
-          </div>
-
-          <!-- Audience Controls Form -->
-          <div style="display: flex; flex-direction: column; gap: 14px;">
-            
-            <!-- Service / Program Selection -->
-            <div>
-              <label class="form-label" style="font-weight: 700;">Program / Service Gathering</label>
-              <select id="msgServiceSelect" class="form-ctrl" onchange="handleMsgServiceChange()">
-                <!-- Populated dynamically -->
-              </select>
-            </div>
-
-            <!-- Session Date & Target Group Selectors -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <!-- Column 1: Audience & Message Composer -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          
+          <!-- Card A: Step 1 - Gathering & Audience Selector -->
+          <div class="admin-card" style="margin-bottom: 0; border-top: 4px solid var(--emerald); border-radius: 14px;">
+            <div class="card-head-row" style="margin-bottom: 14px;">
               <div>
-                <label class="form-label" style="font-weight: 700;">Service Session Date</label>
-                <select id="msgSessionDateSelect" class="form-ctrl" onchange="handleMsgFilterChange()">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <span style="background: #e8f5e9; color: #15803d; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.06em;">Step 1</span>
+                  <h2 class="card-title" style="font-size: 16px; margin: 0;"><i class="fas fa-filter" style="color: var(--accent); margin-right: 4px;"></i> Gathering &amp; Target Audience</h2>
+                </div>
+                <p class="card-sub" style="margin: 0;">Choose the church service, session date, and who you wish to contact.</p>
+              </div>
+            </div>
+
+            <!-- Gathering Controls Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+              <div>
+                <label class="form-label" style="font-weight: 700; font-size: 12px;"><i class="fas fa-church" style="color: var(--emerald); margin-right: 4px;"></i> Program / Service</label>
+                <select id="msgServiceSelect" class="form-ctrl" style="font-size: 12.5px; font-weight: 600;" onchange="handleMsgServiceChange()">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+              <div>
+                <label class="form-label" style="font-weight: 700; font-size: 12px;"><i class="fas fa-calendar-day" style="color: var(--emerald); margin-right: 4px;"></i> Session Date</label>
+                <select id="msgSessionDateSelect" class="form-ctrl" style="font-size: 12.5px; font-weight: 600;" onchange="handleMsgFilterChange()">
                   <!-- Populated dynamically with dates from _programSessionsMap -->
                 </select>
               </div>
-              <div>
-                <label class="form-label" style="font-weight: 700;">Target Group</label>
-                <select id="msgTargetGroupSelect" class="form-ctrl" onchange="handleMsgFilterChange()">
-                  <option value="ATTENDEES" selected>✅ Attendees (Checked in / Present)</option>
-                  <option value="ABSENTEES">❌ Absent Members (Missed this session)</option>
-                  <option value="VISITORS">🌟 Visitors &amp; First-Timers Only</option>
-                  <option value="ALL_MEMBERS">👥 All Church Members (Full Directory)</option>
-                  <option value="YOUTH">🧒 Youth &amp; Young Adults</option>
-                  <option value="MEN">👨 Men's Fellowship</option>
-                  <option value="WOMEN">👩 Women's Fellowship</option>
-                </select>
+            </div>
+
+            <!-- Audience Segment Filter Bar -->
+            <div>
+              <label class="form-label" style="font-weight: 700; font-size: 12px; margin-bottom: 6px;">
+                <i class="fas fa-users" style="color: var(--accent); margin-right: 4px;"></i> Target Recipient Group:
+              </label>
+
+              <!-- Hidden select kept in sync for logic -->
+              <select id="msgTargetGroupSelect" style="display: none;" onchange="handleMsgFilterChange()">
+                <option value="ATTENDEES" selected>ATTENDEES</option>
+                <option value="ABSENTEES">ABSENTEES</option>
+                <option value="VISITORS">VISITORS</option>
+                <option value="ALL_MEMBERS">ALL_MEMBERS</option>
+                <option value="YOUTH">YOUTH</option>
+                <option value="MEN">MEN</option>
+                <option value="WOMEN">WOMEN</option>
+              </select>
+
+              <!-- Tactile Segmented Buttons -->
+              <div class="msg-segment-bar">
+                <button type="button" class="msg-segment-btn active" data-group="ATTENDEES" onclick="setMsgTargetGroup('ATTENDEES')">
+                  <i class="fas fa-check-circle" style="color: #107c41;"></i> Present Attendees
+                </button>
+                <button type="button" class="msg-segment-btn" data-group="ABSENTEES" onclick="setMsgTargetGroup('ABSENTEES')">
+                  <i class="fas fa-heart-crack" style="color: #dc2626;"></i> Absent Members (Check-In)
+                </button>
+                <button type="button" class="msg-segment-btn" data-group="VISITORS" onclick="setMsgTargetGroup('VISITORS')">
+                  <i class="fas fa-star" style="color: var(--accent);"></i> 1st Time Visitors
+                </button>
+                <button type="button" class="msg-segment-btn" data-group="ALL_MEMBERS" onclick="setMsgTargetGroup('ALL_MEMBERS')">
+                  <i class="fas fa-address-book" style="color: #2563eb;"></i> Full Directory
+                </button>
+                <button type="button" class="msg-segment-btn" data-group="YOUTH" onclick="setMsgTargetGroup('YOUTH')">
+                  <i class="fas fa-child"></i> Youth
+                </button>
+                <button type="button" class="msg-segment-btn" data-group="MEN" onclick="setMsgTargetGroup('MEN')">
+                  <i class="fas fa-mars"></i> Men
+                </button>
+                <button type="button" class="msg-segment-btn" data-group="WOMEN" onclick="setMsgTargetGroup('WOMEN')">
+                  <i class="fas fa-venus"></i> Women
+                </button>
               </div>
             </div>
 
-            <!-- Pre-Built Template Selector -->
+          </div>
+
+          <!-- Card B: Step 2 - Message Composer & Templates -->
+          <div class="admin-card" style="margin-bottom: 0; border-top: 4px solid var(--accent); border-radius: 14px;">
+            <div class="card-head-row" style="margin-bottom: 12px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <span style="background: #fef3c7; color: #b45309; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.06em;">Step 2</span>
+                  <h2 class="card-title" style="font-size: 16px; margin: 0;"><i class="fas fa-feather-pointed" style="color: var(--accent); margin-right: 4px;"></i> Compose &amp; Personalize Note</h2>
+                </div>
+                <p class="card-sub" style="margin: 0;">Choose a pre-written pastoral note or write your own custom message.</p>
+              </div>
+            </div>
+
+            <!-- Quick Template Selector Pills -->
+            <div style="margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label class="form-label" style="font-weight: 700; font-size: 12px; margin-bottom: 0;">Pre-Built Templates:</label>
+                <span style="font-size: 11px; color: var(--muted);"><i class="fas fa-wand-magic-sparkles" style="color: var(--accent);"></i> Click to apply</span>
+              </div>
+
+              <!-- Hidden select kept in sync -->
+              <select id="msgTemplateSelect" style="display: none;" onchange="handleMsgTemplateChange()">
+                <option value="THANK_YOU" selected>THANK_YOU</option>
+                <option value="WE_MISSED_YOU">WE_MISSED_YOU</option>
+                <option value="VISITOR_WELCOME">VISITOR_WELCOME</option>
+                <option value="UPCOMING_REMINDER">UPCOMING_REMINDER</option>
+                <option value="PRAYER_CHECKIN">PRAYER_CHECKIN</option>
+                <option value="CUSTOM">CUSTOM</option>
+              </select>
+
+              <div class="msg-template-pills">
+                <button type="button" class="msg-tpl-pill active" data-tpl="THANK_YOU" onclick="setMsgTemplate('THANK_YOU')">
+                  🙏 Thank You Note
+                </button>
+                <button type="button" class="msg-tpl-pill" data-tpl="WE_MISSED_YOU" onclick="setMsgTemplate('WE_MISSED_YOU')">
+                  ❤️ We Missed You
+                </button>
+                <button type="button" class="msg-tpl-pill" data-tpl="VISITOR_WELCOME" onclick="setMsgTemplate('VISITOR_WELCOME')">
+                  🌟 Visitor Welcome
+                </button>
+                <button type="button" class="msg-tpl-pill" data-tpl="UPCOMING_REMINDER" onclick="setMsgTemplate('UPCOMING_REMINDER')">
+                  📢 Service Reminder
+                </button>
+                <button type="button" class="msg-tpl-pill" data-tpl="PRAYER_CHECKIN" onclick="setMsgTemplate('PRAYER_CHECKIN')">
+                  🕊️ Pastoral Prayer
+                </button>
+                <button type="button" class="msg-tpl-pill" data-tpl="CUSTOM" onclick="setMsgTemplate('CUSTOM')">
+                  ✏️ Custom Note
+                </button>
+              </div>
+            </div>
+
+            <!-- Personalization Token Chips -->
+            <div style="margin-bottom: 12px; background: #f8fafc; padding: 10px 12px; border-radius: 10px; border: 1px dashed var(--line);">
+              <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+                <i class="fas fa-tags" style="color: var(--accent);"></i> Insert Personalization Tokens (Cursor Position):
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{firstName}')" title="Recipient's First Name (e.g. Emmanuel)">+{firstName}</button>
+                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{fullName}')" title="Recipient's Full Name (e.g. Emmanuel Mensah)">+{fullName}</button>
+                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{serviceName}')" title="Active Service Gathering Name">+{serviceName}</button>
+                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{date}')" title="Service Session Date">+{date}</button>
+                <button type="button" class="msg-token-chip" onclick="insertMsgToken('{churchName}')" title="Solutions Faith Ministries International">+{churchName}</button>
+              </div>
+            </div>
+
+            <!-- Message Textarea -->
             <div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <label class="form-label" style="font-weight: 700; margin-bottom: 0;">Quick Message Template</label>
-                <span style="font-size: 11px; color: var(--muted);">Pre-written tailored notes</span>
+                <label class="form-label" style="font-weight: 700; font-size: 12px; margin-bottom: 0;">Message Content</label>
+                <span style="font-size: 11px; color: var(--muted);">Supports *<strong>bold</strong>* &amp; _<em>italics</em>_</span>
               </div>
-              <select id="msgTemplateSelect" class="form-ctrl" onchange="handleMsgTemplateChange()">
-                <option value="THANK_YOU" selected>🙏 Thank You for Worshipping With Us (Post-Service)</option>
-                <option value="WE_MISSED_YOU">❤️ We Missed You / Pastoral Check-In (Absentees)</option>
-                <option value="UPCOMING_REMINDER">📢 Upcoming Service / Program Reminder</option>
-                <option value="VISITOR_WELCOME">🌟 First-Timer Welcome &amp; Fellowship Invitation</option>
-                <option value="PRAYER_CHECKIN">🕊️ Pastoral Prayer &amp; Encouragement</option>
-                <option value="CUSTOM">✏️ Custom Free-Form Message</option>
-              </select>
-            </div>
-
-            <!-- Dynamic Placeholders Pill Bar -->
-            <div>
-              <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">
-                Personalization Tokens (Click to insert):
-              </div>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button type="button" class="btn-preset" style="padding: 3px 8px; font-size: 11.5px;" onclick="insertMsgToken('{firstName}')">+{firstName}</button>
-                <button type="button" class="btn-preset" style="padding: 3px 8px; font-size: 11.5px;" onclick="insertMsgToken('{fullName}')">+{fullName}</button>
-                <button type="button" class="btn-preset" style="padding: 3px 8px; font-size: 11.5px;" onclick="insertMsgToken('{serviceName}')">+{serviceName}</button>
-                <button type="button" class="btn-preset" style="padding: 3px 8px; font-size: 11.5px;" onclick="insertMsgToken('{date}')">+{date}</button>
-                <button type="button" class="btn-preset" style="padding: 3px 8px; font-size: 11.5px;" onclick="insertMsgToken('{churchName}')">+{churchName}</button>
-              </div>
-            </div>
-
-            <!-- Message Content Textarea -->
-            <div>
-              <label class="form-label" style="font-weight: 700;">Message Content</label>
-              <textarea id="msgBodyTextarea" class="form-ctrl" rows="7" style="resize: vertical; font-size: 13px; line-height: 1.5; font-family: inherit;" oninput="updateLiveMsgPreview()" placeholder="Type your WhatsApp message here..."></textarea>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 11px; color: var(--muted);">
-                <span>Use *bold*, _italics_ for WhatsApp text formatting</span>
-                <span id="msgCharCount">0 characters</span>
+              <textarea id="msgBodyTextarea" class="form-ctrl" rows="7" style="resize: vertical; font-size: 13px; line-height: 1.55; font-family: inherit; border-radius: 10px; padding: 12px;" oninput="updateLiveMsgPreview()" placeholder="Type your WhatsApp message here..."></textarea>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 11.5px; color: var(--muted);">
+                <span><i class="fa-brands fa-whatsapp" style="color: #25d366;"></i> Direct formatting enabled</span>
+                <span id="msgCharCount" style="font-weight: 700; color: var(--ink);">0 characters</span>
               </div>
             </div>
 
           </div>
+
         </div>
 
-        <!-- Column 2: Live Message Preview & Recipient Roster -->
-        <div style="display: flex; flex-direction: column; gap: 18px;">
+        <!-- Column 2: Live WhatsApp Preview & Interactive Recipient Roster -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
           
-          <!-- Live Preview Card (WhatsApp Bubble) -->
-          <div class="admin-card" style="margin-bottom: 0; background: #e5ddd5; border: 1px solid #d1d7db; position: relative; border-radius: 10px; overflow: hidden; padding: 0;">
-            <div style="background: #075e54; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+          <!-- Live Preview Smartphone Card -->
+          <div class="msg-phone-frame">
+            <div class="msg-phone-top">
               <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 34px; height: 34px; border-radius: 50%; background: #25d366; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 14px;" id="msgPreviewAvatar">
-                  SF
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1.5px solid rgba(255,255,255,0.8);">
+                  <img src="/church-logo.jpg" alt="SFMI" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/Sunday.JPG'" />
                 </div>
                 <div>
-                  <div style="font-weight: 700; font-size: 13.5px;" id="msgPreviewRecipientName">Sample Recipient (Preview)</div>
-                  <div style="font-size: 11px; opacity: 0.85;" id="msgPreviewRecipientPhone">+233 XX XXX XXXX</div>
+                  <div style="font-weight: 800; font-size: 13.5px; color: white; display: flex; align-items: center; gap: 6px;">
+                    <span id="msgPreviewRecipientName">Sample Recipient (Preview)</span>
+                    <i class="fa-solid fa-circle-check" style="font-size: 12px; color: #25d366;" title="Verified Church Contact"></i>
+                  </div>
+                  <div style="font-size: 11px; opacity: 0.9; color: #d1fae5;" id="msgPreviewRecipientPhone">+233 XX XXX XXXX</div>
                 </div>
               </div>
-              <span style="font-size: 11px; background: rgba(255,255,255,0.18); padding: 2px 8px; border-radius: 4px;">Live Preview</span>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 15px; opacity: 0.9;">
+                <i class="fas fa-video"></i>
+                <i class="fas fa-phone"></i>
+                <span style="font-size: 11px; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 12px; font-weight: 700;">Live Preview</span>
+              </div>
             </div>
 
-            <!-- WhatsApp Message Bubble -->
-            <div style="padding: 16px;">
-              <div style="background: #ffffff; border-radius: 8px 0px 8px 8px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.15); max-width: 92%; margin-left: auto; position: relative;">
-                <div id="msgPreviewBubbleContent" style="font-size: 13px; color: #111b21; white-space: pre-wrap; line-height: 1.5; word-break: break-word;">
+            <div class="msg-phone-chat-bg">
+              <div class="msg-bubble-card">
+                <div id="msgPreviewBubbleContent" style="font-size: 13px; color: #111b21; white-space: pre-wrap; line-height: 1.55; word-break: break-word;">
                   <!-- Injected live -->
                 </div>
-                <div style="text-align: right; font-size: 10px; color: #667781; margin-top: 5px;">
-                  <span id="msgPreviewTime">Just now</span> · <i class="fas fa-check-double" style="color: #53bdeb;"></i>
+                <div style="text-align: right; font-size: 10.5px; color: #667781; margin-top: 6px; display: flex; justify-content: flex-end; align-items: center; gap: 4px;">
+                  <span id="msgPreviewTime">Just now</span>
+                  <i class="fa-solid fa-check-double" style="color: #53bdeb; font-size: 12px;"></i>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Recipient List & Action Card -->
-          <div class="admin-card" style="margin-bottom: 0;">
-            <div class="card-head-row" style="margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-              <div>
-                <h3 style="font-size: 15px; font-weight: 800; color: var(--ink); margin: 0;">
-                  Recipient Roster (<span id="msgRecipientCountLabel">0</span>)
-                </h3>
-                <p class="card-sub" id="msgRecipientFilterSubtitle" style="margin-top: 2px;">
-                  All eligible contacts with verified phone numbers
-                </p>
+          <!-- Recipient Roster Card -->
+          <div class="msg-roster-card">
+            <div style="padding: 16px 20px; border-bottom: 1px solid var(--line); background: #ffffff;">
+              <div class="card-head-row" style="margin-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <h3 style="font-size: 16px; font-weight: 800; color: var(--ink); margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-address-book" style="color: var(--emerald);"></i>
+                    Recipient Roster 
+                    <span style="background: rgba(6, 78, 59, 0.1); color: #064e3b; font-size: 12px; padding: 2px 8px; border-radius: 12px; font-weight: 800;" id="msgRecipientCountLabel">0</span>
+                  </h3>
+                  <p class="card-sub" id="msgRecipientFilterSubtitle" style="margin-top: 3px; font-size: 12px;">
+                    All eligible contacts with verified phone numbers
+                  </p>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button type="button" class="btn-main" style="background: linear-gradient(135deg, #25d366 0%, #128C7E 100%); color: white; padding: 8px 14px; font-size: 12.5px; font-weight: 800; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.3);" onclick="launchWhatsAppDispatcherQueue()">
+                    <i class="fa-brands fa-whatsapp" style="font-size: 15px;"></i> Start Queue
+                  </button>
+                  <button type="button" class="btn-main" style="background: #ffffff; color: var(--ink); border: 1px solid var(--line); padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 8px;" onclick="copyAllRecipientPhones()" title="Copy comma-separated phone numbers for WhatsApp Broadcast list">
+                    <i class="fas fa-copy" style="color: var(--accent);"></i> Copy Numbers
+                  </button>
+                  <button type="button" class="btn-main" style="background: #107c41; color: white; border: none; padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 8px;" onclick="exportMessagingRosterCsv()" title="Download CSV roster">
+                    <i class="fas fa-file-excel"></i> Export CSV
+                  </button>
+                </div>
               </div>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button type="button" class="btn-main" style="background: #128C7E; color: white; padding: 6px 12px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" onclick="launchWhatsAppDispatcherQueue()">
-                  <i class="fa-brands fa-whatsapp" style="font-size: 14px;"></i> Start Queue
-                </button>
-                <button type="button" class="btn-main" style="background: var(--light); color: var(--ink); border: 1px solid var(--line); padding: 6px 10px; font-size: 12px;" onclick="copyAllRecipientPhones()" title="Copy comma-separated phone numbers for WhatsApp Broadcast list">
-                  <i class="fas fa-copy"></i> Copy Numbers
-                </button>
-                <button type="button" class="btn-main" style="background: #107c41; color: white; padding: 6px 10px; font-size: 12px;" onclick="exportMessagingRosterCsv()" title="Download CSV roster">
-                  <i class="fas fa-file-excel"></i> Export CSV
-                </button>
-              </div>
-            </div>
 
-            <!-- Search inside roster -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap;">
-              <input type="text" id="msgSearchInput" class="form-ctrl" placeholder="Search recipient name or phone..." style="max-width: 240px; font-size: 12px; padding: 5px 8px;" oninput="filterMsgRecipientsList()" />
-              <div style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
-                <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                  <input type="checkbox" id="msgSelectAllCheckbox" checked onchange="toggleSelectAllMsgRecipients(this.checked)" />
-                  <strong>Select All</strong>
-                </label>
+              <!-- Search & Select All Bar -->
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line);">
+                <div style="position: relative; flex: 1; min-width: 200px;">
+                  <i class="fas fa-search" style="position: absolute; left: 10px; top: 9px; font-size: 12px; color: var(--muted);"></i>
+                  <input type="text" id="msgSearchInput" class="form-ctrl" placeholder="Search by name, phone, or status..." style="padding-left: 30px; font-size: 12px; padding-top: 6px; padding-bottom: 6px;" oninput="filterMsgRecipientsList()" />
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px;">
+                  <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; user-select: none;">
+                    <input type="checkbox" id="msgSelectAllCheckbox" checked onchange="toggleSelectAllMsgRecipients(this.checked)" style="accent-color: #107c41; width: 15px; height: 15px;" />
+                    <strong>Select All Reachable</strong>
+                  </label>
+                </div>
               </div>
             </div>
 
             <!-- Recipient Table Container -->
-            <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--line); border-radius: 6px;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <div style="max-height: 420px; overflow-y: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
                 <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 2; border-bottom: 1px solid var(--line);">
                   <tr>
-                    <th style="width: 32px; text-align: center; padding: 6px 8px;"></th>
-                    <th style="padding: 6px 10px; text-align: left;">Recipient</th>
-                    <th style="padding: 6px 10px; text-align: left;">Category / Status</th>
-                    <th style="padding: 6px 10px; text-align: left;">Phone Number</th>
-                    <th style="padding: 6px 10px; text-align: center; width: 85px;">Action</th>
+                    <th style="width: 36px; text-align: center; padding: 9px 8px;"></th>
+                    <th style="padding: 9px 12px; text-align: left; font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em;">Recipient Member</th>
+                    <th style="padding: 9px 12px; text-align: left; font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em;">Status / Group</th>
+                    <th style="padding: 9px 12px; text-align: left; font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em;">Phone / WhatsApp</th>
+                    <th style="padding: 9px 12px; text-align: center; font-weight: 800; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; width: 90px;">Action</th>
                   </tr>
                 </thead>
                 <tbody id="msgRecipientsTableBody">
@@ -2754,7 +3102,6 @@
                 </tbody>
               </table>
             </div>
-
           </div>
 
         </div>
@@ -12195,12 +12542,10 @@ _Warm Regards,_
     }
 
     function formatPhoneDisplay(raw) {
-      if (!raw) return '<span style="color: var(--muted); font-style: italic;">No Phone</span>';
+      if (!raw) return '<span style="color: #94a3b8; font-style: italic; font-size: 11.5px;"><i class="fas fa-phone-slash" style="margin-right: 4px;"></i>No Phone</span>';
       const norm = normalizePhoneClient(raw);
-      if (norm.length === 10) {
-        return `${norm.slice(0, 3)} ${norm.slice(3, 6)} ${norm.slice(6)}`;
-      }
-      return escapeHtml(raw);
+      const formatted = norm.length === 10 ? `${norm.slice(0, 3)} ${norm.slice(3, 6)} ${norm.slice(6)}` : escapeHtml(raw);
+      return `<span style="display: inline-flex; align-items: center; gap: 5px; color: #064e3b; font-weight: 700;"><i class="fa-brands fa-whatsapp" style="color: #25d366; font-size: 13px;"></i>${formatted}</span>`;
     }
 
     function formatLocalDateDisplay(dateIso) {
@@ -12305,6 +12650,28 @@ _Warm Regards,_
       dateSelect.innerHTML = optsHtml;
     }
 
+    function setMsgTargetGroup(groupKey) {
+      const select = document.getElementById('msgTargetGroupSelect');
+      if (select) {
+        select.value = groupKey;
+        document.querySelectorAll('.msg-segment-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-group') === groupKey);
+        });
+        handleMsgFilterChange();
+      }
+    }
+
+    function setMsgTemplate(tplKey) {
+      const select = document.getElementById('msgTemplateSelect');
+      if (select) {
+        select.value = tplKey;
+        document.querySelectorAll('.msg-tpl-pill').forEach(pill => {
+          pill.classList.toggle('active', pill.getAttribute('data-tpl') === tplKey);
+        });
+        handleMsgTemplateChange();
+      }
+    }
+
     async function handleMsgServiceChange() {
       populateMsgSessionDates();
       await compileMessagingRecipients();
@@ -12332,6 +12699,16 @@ _Warm Regards,_
         }
       }
 
+      // Sync active state on segment buttons and template pills
+      document.querySelectorAll('.msg-segment-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-group') === targetGroup);
+      });
+      if (tplSelect) {
+        document.querySelectorAll('.msg-tpl-pill').forEach(pill => {
+          pill.classList.toggle('active', pill.getAttribute('data-tpl') === tplSelect.value);
+        });
+      }
+
       await compileMessagingRecipients();
     }
 
@@ -12345,6 +12722,10 @@ _Warm Regards,_
       if (MSG_TEMPLATES[tplKey] !== undefined) {
         textarea.value = MSG_TEMPLATES[tplKey];
       }
+
+      document.querySelectorAll('.msg-tpl-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.getAttribute('data-tpl') === tplKey);
+      });
 
       const labels = {
         THANK_YOU: 'Thank You Note',
@@ -12622,7 +13003,28 @@ _Warm Regards,_
 
       const subFilter = document.getElementById('msgRecipientFilterSubtitle');
       if (subFilter) {
-        subFilter.innerText = `${validPhoneRecipients} with verified WhatsApp numbers (${deduped.length - validPhoneRecipients} without phone)`;
+        subFilter.innerText = `${validPhoneRecipients} reachable with verified WhatsApp numbers (${deduped.length - validPhoneRecipients} without phone)`;
+      }
+
+      // Update tactile Segment Button live count badges
+      const btnAtt = document.querySelector('.msg-segment-btn[data-group="ATTENDEES"]');
+      if (btnAtt) btnAtt.innerHTML = `<i class="fas fa-check-circle" style="color: #107c41;"></i> Attendees <span class="count-badge">${attendeeList.length}</span>`;
+
+      const btnAbs = document.querySelector('.msg-segment-btn[data-group="ABSENTEES"]');
+      if (btnAbs) {
+        const absCount = Math.max(0, allMembers.filter(m => !isGuestMember(m)).length - attendeeList.filter(a => !a.isGuest).length);
+        btnAbs.innerHTML = `<i class="fas fa-heart-crack" style="color: #dc2626;"></i> Absentees <span class="count-badge">${absCount}</span>`;
+      }
+
+      const btnGst = document.querySelector('.msg-segment-btn[data-group="VISITORS"]');
+      if (btnGst) {
+        const gstCount = attendeeList.filter(a => a.isGuest).length + allMembers.filter(isGuestMember).length;
+        btnGst.innerHTML = `<i class="fas fa-star" style="color: var(--accent);"></i> Visitors <span class="count-badge">${gstCount}</span>`;
+      }
+
+      const btnAll = document.querySelector('.msg-segment-btn[data-group="ALL_MEMBERS"]');
+      if (btnAll) {
+        btnAll.innerHTML = `<i class="fas fa-address-book" style="color: #2563eb;"></i> Directory <span class="count-badge">${allMembers.filter(m => !isGuestMember(m)).length}</span>`;
       }
 
       renderMessagingRecipientsTable();
@@ -12640,10 +13042,10 @@ _Warm Regards,_
       if (filteredMessagingRecipients.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5" style="text-align: center; padding: 32px 16px; color: var(--muted);">
-              <i class="fa-brands fa-whatsapp" style="font-size: 32px; color: #cbd5e1; margin-bottom: 10px; display: block;"></i>
-              <strong style="color: var(--ink); display: block; margin-bottom: 4px;">No recipients match the current criteria</strong>
-              <span style="font-size: 11.5px;">Try selecting a different service date, target group, or clearing your search filter.</span>
+            <td colspan="5" style="text-align: center; padding: 36px 16px; color: var(--muted);">
+              <i class="fa-brands fa-whatsapp" style="font-size: 36px; color: #cbd5e1; margin-bottom: 12px; display: block;"></i>
+              <strong style="color: var(--ink); font-size: 14px; display: block; margin-bottom: 4px;">No contacts found matching this criteria</strong>
+              <span style="font-size: 12px;">Try switching to another service date, selecting a different target group, or clearing your search.</span>
             </td>
           </tr>
         `;
@@ -12661,44 +13063,47 @@ _Warm Regards,_
         const hasPhone = Boolean(rec.waPhone);
         const initial = (rec.firstName.trim().charAt(0) || rec.fullName.trim().charAt(0) || 'M').toUpperCase();
         
-        let badgeColor = 'background: rgba(16, 124, 65, 0.12); color: #107c41;';
+        let badgeColor = 'background: rgba(16, 124, 65, 0.1); color: #107c41; border: 1px solid rgba(16, 124, 65, 0.25);';
+        let badgeIcon = '<i class="fas fa-check" style="font-size: 9px; margin-right: 3px;"></i>';
         if (rec.isGuest) {
-          badgeColor = 'background: rgba(200, 155, 85, 0.15); color: var(--accent);';
+          badgeColor = 'background: rgba(200, 155, 85, 0.15); color: #b45309; border: 1px solid rgba(200, 155, 85, 0.35);';
+          badgeIcon = '<i class="fas fa-star" style="font-size: 9px; margin-right: 3px;"></i>';
         } else if (rec.category === 'Absent Member') {
-          badgeColor = 'background: rgba(239, 68, 68, 0.1); color: #dc2626;';
+          badgeColor = 'background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.25);';
+          badgeIcon = '<i class="fas fa-user-clock" style="font-size: 9px; margin-right: 3px;"></i>';
         }
 
         html += `
           <tr style="border-bottom: 1px solid var(--line); transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-            <td style="text-align: center; padding: 8px 6px;">
-              <input type="checkbox" ${isChecked ? 'checked' : ''} ${!hasPhone ? 'disabled title="No valid phone number"' : ''} onchange="toggleRecipientSelect('${escapeHtml(rec.id)}', this.checked)" />
+            <td style="text-align: center; padding: 10px 8px;">
+              <input type="checkbox" ${isChecked ? 'checked' : ''} ${!hasPhone ? 'disabled title="No valid phone number"' : ''} onchange="toggleRecipientSelect('${escapeHtml(rec.id)}', this.checked)" style="accent-color: #107c41; width: 14px; height: 14px; cursor: pointer;" />
             </td>
-            <td style="padding: 8px 10px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 28px; height: 28px; border-radius: 50%; background: ${rec.isGuest ? 'var(--accent)' : 'var(--emerald)'}; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0;">
+            <td style="padding: 10px 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: ${rec.isGuest ? 'linear-gradient(135deg, #c89b55, #b45309)' : 'linear-gradient(135deg, #14532d, #047857)'}; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.12);">
                   ${escapeHtml(initial)}
                 </div>
                 <div>
-                  <strong style="color: var(--ink); font-size: 12.5px; display: block;">${escapeHtml(rec.fullName)}</strong>
-                  ${rec.gender ? `<span style="font-size: 10.5px; color: var(--muted);">${escapeHtml(rec.gender)}</span>` : ''}
+                  <strong style="color: var(--ink); font-size: 13px; display: block;">${escapeHtml(rec.fullName)}</strong>
+                  ${rec.gender ? `<span style="font-size: 11px; color: var(--muted);">${escapeHtml(rec.gender)}</span>` : ''}
                 </div>
               </div>
             </td>
-            <td style="padding: 8px 10px;">
-              <span style="display: inline-block; padding: 2px 7px; border-radius: 12px; font-size: 10.5px; font-weight: 700; ${badgeColor}">
-                ${escapeHtml(rec.category)}
+            <td style="padding: 10px 12px;">
+              <span style="display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; ${badgeColor}">
+                ${badgeIcon}${escapeHtml(rec.category)}
               </span>
             </td>
-            <td style="padding: 8px 10px; font-family: monospace; font-size: 11.5px; color: ${hasPhone ? '#128C7E' : 'var(--muted)'};">
+            <td style="padding: 10px 12px; font-family: monospace; font-size: 12px;">
               ${formatPhoneDisplay(rec.phone)}
             </td>
-            <td style="padding: 8px 10px; text-align: center;">
+            <td style="padding: 10px 12px; text-align: center;">
               ${hasPhone ? `
-                <button type="button" class="btn-main" style="background: #25d366; color: white; border: none; padding: 4px 8px; font-size: 11px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="sendDirectWhatsAppToRecipient('${escapeHtml(rec.id)}')" title="Open WhatsApp Web chat directly">
-                  <i class="fa-brands fa-whatsapp"></i> Send
+                <button type="button" class="btn-main" style="background: linear-gradient(135deg, #25d366 0%, #128C7E 100%); color: white; border: none; padding: 5px 10px; font-size: 11.5px; font-weight: 700; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(37,211,102,0.25); cursor: pointer;" onclick="sendDirectWhatsAppToRecipient('${escapeHtml(rec.id)}')" title="Open WhatsApp Web chat directly">
+                  <i class="fa-brands fa-whatsapp"></i> Chat
                 </button>
               ` : `
-                <span style="font-size: 10.5px; color: var(--muted);">No Phone</span>
+                <span style="font-size: 11px; color: #94a3b8; font-style: italic;">No Phone</span>
               `}
             </td>
           </tr>
