@@ -12856,7 +12856,7 @@ closeCreateProgramModal();
     const DEFAULT_MSG_TEMPLATES = {
       THANK_YOU: `Hello *{fullName}*,
 
-Thank you for worshipping with us at *{churchName}* for our *{serviceName}* on *{date}*.
+Thank you for worshipping with us at *{churchName}* for our *{serviceName}* on *{date}* at *{time}*.
 
 We were truly blessed by your fellowship and presence. May the Lord multiply His grace, peace, and abundance in your life and household throughout this week.
 
@@ -12868,7 +12868,7 @@ _Blessings & Warm Regards,_
 
       WE_MISSED_YOU: `Dear *{fullName}*, warm greetings from *{churchName}*.
 
-We missed your warm fellowship during our *{serviceName}* on *{date}*.
+We missed your warm fellowship during our *{serviceName}* on *{date}* at *{time}*.
 
 We are reaching out to ensure all is well with you and your family. Please know that you are always in our hearts and prayers. If you have any prayer requests or need any pastoral support, please feel free to reply to this message.
 
@@ -12892,7 +12892,7 @@ _In His Service,_
 
       VISITOR_WELCOME: `Hello *{fullName}*, a very special and warm welcome from *{churchName}*.
 
-It was our absolute joy and privilege having you as our guest during our *{serviceName}* on *{date}*.
+It was our absolute joy and privilege having you as our guest during our *{serviceName}* on *{date}* at *{time}*.
 
 We pray that you experienced the presence of God and felt warmly embraced by our church family. SFMI is a home of faith, love, and purpose, and we warmly invite you to make this your spiritual home.
 
@@ -12931,12 +12931,16 @@ _Warm Regards,_
       if (savedTpls) {
         const parsed = JSON.parse(savedTpls);
         if (parsed && typeof parsed === 'object') {
-          if (parsed.UPCOMING_REMINDER && !parsed.UPCOMING_REMINDER.includes('{time}')) {
-            parsed.UPCOMING_REMINDER = parsed.UPCOMING_REMINDER
-              .replace(/holding on \*\{date\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{time}* at *{churchName}*')
-              .replace(/holding on \{date\} at \{churchName\}/g, 'holding on {date} at {time} at {churchName}');
-            localStorage.setItem('sfmi_custom_msg_templates', JSON.stringify(parsed));
-          }
+          ['THANK_YOU', 'WE_MISSED_YOU', 'UPCOMING_REMINDER', 'VISITOR_WELCOME'].forEach(key => {
+            if (parsed[key] && !parsed[key].includes('{time}')) {
+              parsed[key] = parsed[key]
+                .replace(/holding on \*\{date\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{time}* at *{churchName}*')
+                .replace(/holding on \{date\} at \{churchName\}/g, 'holding on {date} at {time} at {churchName}')
+                .replace(/on \*\{date\}\*(?!\s*at\s*\{time\})/g, 'on *{date}* at *{time}*')
+                .replace(/on \{date\}(?!\s*at\s*\{time\})/g, 'on {date} at {time}');
+            }
+          });
+          localStorage.setItem('sfmi_custom_msg_templates', JSON.stringify(parsed));
           MSG_TEMPLATES = { ...DEFAULT_MSG_TEMPLATES, ...parsed };
         }
       }
@@ -13180,14 +13184,22 @@ _Warm Regards,_
       // Populate Session Dates for current service
       populateMsgSessionDates();
 
-      // Initialize default template if textarea is blank
+      // Initialize default template if textarea is blank, or upgrade if missing {time}
       const textarea = document.getElementById('msgBodyTextarea');
-      if (textarea && !textarea.value.trim()) {
-        textarea.value = MSG_TEMPLATES.THANK_YOU;
-        const tplSelect = document.getElementById('msgTemplateSelect');
-        if (tplSelect) tplSelect.value = 'THANK_YOU';
-        const statTpl = document.getElementById('msgStatTemplateName');
-        if (statTpl) statTpl.innerText = 'Thank You Note';
+      if (textarea) {
+        if (!textarea.value.trim()) {
+          textarea.value = MSG_TEMPLATES.THANK_YOU;
+          const tplSelect = document.getElementById('msgTemplateSelect');
+          if (tplSelect) tplSelect.value = 'THANK_YOU';
+          const statTpl = document.getElementById('msgStatTemplateName');
+          if (statTpl) statTpl.innerText = 'Thank You Note';
+        } else if (!textarea.value.includes('{time}')) {
+          textarea.value = textarea.value
+            .replace(/holding on \*\{date\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{time}* at *{churchName}*')
+            .replace(/holding on \{date\} at \{churchName\}/g, 'holding on {date} at {time} at {churchName}')
+            .replace(/on \*\{date\}\*(?!\s*at\s*\{time\})/g, 'on *{date}* at *{time}*')
+            .replace(/on \{date\}(?!\s*at\s*\{time\})/g, 'on {date} at {time}');
+        }
       }
 
       // Compile and render recipients
@@ -13828,11 +13840,13 @@ _Warm Regards,_
         .replace(/Solutions Faith Ministries International/gi, 'Solutions Faith Ministry International')
         .replace(/Solutions Faith Ministries/gi, 'Solutions Faith Ministry');
 
-      // Auto-inject at *{time}* if the reminder phrasing does not already contain {time}
+      // Auto-inject at *{time}* if the template does not already contain {time}
       if (!res.includes('{time}')) {
         res = res
           .replace(/holding on \*\{date\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{time}* at *{churchName}*')
-          .replace(/holding on \{date\} at \{churchName\}/g, 'holding on {date} at {time} at {churchName}');
+          .replace(/holding on \{date\} at \{churchName\}/g, 'holding on {date} at {time} at {churchName}')
+          .replace(/on \*\{date\}\*(?!\s*at\s*\{time\})/g, 'on *{date}* at *{time}*')
+          .replace(/on \{date\}(?!\s*at\s*\{time\})/g, 'on {date} at {time}');
       }
 
       return res
