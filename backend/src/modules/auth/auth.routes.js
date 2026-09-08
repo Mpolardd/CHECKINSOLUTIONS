@@ -59,45 +59,6 @@ router.post('/login', async (req, res, next) => {
       isMatch = await bcrypt.compare(cleanPassword, user.passwordHash);
     }
 
-    if (!isMatch && emailNorm === 'women@solutionsfaith.com') {
-      if (['Women12@26', 'women12@26', 'Prophet2468', 'prophet2468'].includes(cleanPassword)) {
-        isMatch = true;
-      }
-    }
-
-    if (!isMatch && (emailNorm === 'admin@solutionsfaith.com' || emailNorm === 'admin@example.com')) {
-      if (['Prophet2468', 'prophet2468', 'Solutions12@26', 'solutions12@26'].includes(cleanPassword)) {
-        isMatch = true;
-      }
-    }
-
-    if (!user && (emailNorm === 'admin@solutionsfaith.com' || emailNorm === 'admin@example.com')) {
-      if (['Prophet2468', 'prophet2468', 'Solutions12@26', 'solutions12@26'].includes(cleanPassword)) {
-        const hash = await bcrypt.hash(cleanPassword, 10);
-        user = await prisma.user.create({
-          data: {
-            email: emailNorm,
-            passwordHash: hash,
-            role: 'SUPER_ADMIN'
-          }
-        });
-        isMatch = true;
-      }
-    }
-
-    if (user && isMatch) {
-      try {
-        const hashMatches = await bcrypt.compare(cleanPassword, user.passwordHash);
-        if (!hashMatches) {
-          const newHash = await bcrypt.hash(cleanPassword, 10);
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { passwordHash: newHash }
-          });
-        }
-      } catch (hErr) {}
-    }
-
     if (!user || !isMatch) {
       // Log failed login attempt
       try {
@@ -112,13 +73,12 @@ router.post('/login', async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const isWomenUser = (user.email || '').toLowerCase() === 'women@solutionsfaith.com';
-    let name = isWomenUser ? "Women's Ministry Leader" : (user.role === 'SUPER_ADMIN' ? 'Super Admin' : (user.role === 'FINANCE' ? 'Treasury Officer' : 'Staff'));
+    let name = user.role === 'SUPER_ADMIN' ? 'Super Admin' : (user.role === 'FINANCE' ? 'Treasury Officer' : 'Sub-Admin');
     let permissions = user.role === 'SUPER_ADMIN'
       ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'finReports', 'subAdmins', 'women']
-      : (isWomenUser ? ['women'] : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']));
+      : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']);
 
-    if (user.role === 'ADMIN' && !isWomenUser) {
+    if (user.role === 'ADMIN') {
       const log = await prisma.auditLog.findFirst({
         where: { entity: 'SUB_ADMIN_PROFILE', entityId: user.id },
         orderBy: { createdAt: 'desc' }
@@ -203,13 +163,12 @@ router.get('/verify', async (req, res) => {
       return res.status(401).json({ error: 'User account no longer exists' });
     }
 
-    const isWomenUser = (user.email || '').toLowerCase() === 'women@solutionsfaith.com';
-    let name = isWomenUser ? "Women's Ministry Leader" : (user.role === 'SUPER_ADMIN' ? 'Super Admin' : (user.role === 'FINANCE' ? 'Treasury Officer' : 'Staff'));
+    let name = user.role === 'SUPER_ADMIN' ? 'Super Admin' : (user.role === 'FINANCE' ? 'Treasury Officer' : 'Sub-Admin');
     let permissions = user.role === 'SUPER_ADMIN'
       ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'finReports', 'subAdmins', 'women']
-      : (isWomenUser ? ['women'] : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']));
+      : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']);
 
-    if (user.role === 'ADMIN' && !isWomenUser) {
+    if (user.role === 'ADMIN') {
       const log = await prisma.auditLog.findFirst({
         where: { entity: 'SUB_ADMIN_PROFILE', entityId: user.id },
         orderBy: { createdAt: 'desc' }

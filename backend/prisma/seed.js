@@ -2,44 +2,53 @@ const bcrypt = require('bcryptjs');
 const prisma = require('../src/config/prisma');
 
 async function main() {
-  const adminHash = await bcrypt.hash('Prophet2468', 12);
-  const financeHash = await bcrypt.hash('Money12@26', 12);
-  const womenHash = await bcrypt.hash('Women12@26', 12);
+  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@solutionsfaith.com').toLowerCase().trim();
+  const adminPassword = process.env.ADMIN_PASSWORD || 'Prophet2468';
+
+  const financeEmail = (process.env.FINANCE_EMAIL || 'finance@solutionsfaith.com').toLowerCase().trim();
+  const financePassword = process.env.FINANCE_PASSWORD || 'Money12@26';
+
+  const womenEmail = (process.env.WOMEN_EMAIL || 'women@solutionsfaith.com').toLowerCase().trim();
+  const womenPassword = process.env.WOMEN_PASSWORD || 'Women12@26';
+
+  const adminHash = await bcrypt.hash(adminPassword, 12);
+  const financeHash = await bcrypt.hash(financePassword, 12);
+  const womenHash = await bcrypt.hash(womenPassword, 12);
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@solutionsfaith.com' },
+    where: { email: adminEmail },
     update: {
       passwordHash: adminHash,
       role: 'SUPER_ADMIN'
     },
     create: {
-      email: 'admin@solutionsfaith.com',
+      email: adminEmail,
       passwordHash: adminHash,
       role: 'SUPER_ADMIN'
     }
   });
 
   const financeUser = await prisma.user.upsert({
-    where: { email: 'finance@solutionsfaith.com' },
+    where: { email: financeEmail },
     update: {
       passwordHash: financeHash,
       role: 'FINANCE'
     },
     create: {
-      email: 'finance@solutionsfaith.com',
+      email: financeEmail,
       passwordHash: financeHash,
       role: 'FINANCE'
     }
   });
 
   const womenUser = await prisma.user.upsert({
-    where: { email: 'women@solutionsfaith.com' },
+    where: { email: womenEmail },
     update: {
       passwordHash: womenHash,
       role: 'ADMIN'
     },
     create: {
-      email: 'women@solutionsfaith.com',
+      email: womenEmail,
       passwordHash: womenHash,
       role: 'ADMIN'
     }
@@ -56,7 +65,7 @@ async function main() {
       entityId: womenUser.id,
       metadata: {
         name: "Women's Ministry Leader",
-        email: 'women@solutionsfaith.com',
+        email: womenEmail,
         permissions: ['women']
       }
     }
