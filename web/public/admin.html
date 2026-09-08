@@ -12856,50 +12856,46 @@ closeCreateProgramModal();
     const DEFAULT_MSG_TEMPLATES = {
       THANK_YOU: `Hello *{fullName}*,
 
-Thank you for worshipping with us at *{churchName}* for our *{serviceName}* on *{date}* at *{time}*.
+Thank you for worshipping with us at *{churchName}* for our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium.
 
 We were truly blessed by your fellowship and presence. May the Lord multiply His grace, peace, and abundance in your life and household throughout this week.
 
 We eagerly look forward to seeing you again in our next service.
 
-_Blessings & Warm Regards,_
-*Solutions Team*
+God bless you,
 *{churchName}*`,
 
       WE_MISSED_YOU: `Dear *{fullName}*, warm greetings from *{churchName}*.
 
-We missed your warm fellowship during our *{serviceName}* on *{date}* at *{time}*.
+We missed your warm fellowship during our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium.
 
 We are reaching out to ensure all is well with you and your family. Please know that you are always in our hearts and prayers. If you have any prayer requests or need any pastoral support, please feel free to reply to this message.
 
 We look forward to worshipping together with you at our next gathering.
 
-_With love in Christ,_
-*Solutions Team*
+God bless you,
 *{churchName}*`,
 
       UPCOMING_REMINDER: `Dear *{fullName}*, grace and peace to you.
 
-This is a gentle reminder that our upcoming *{serviceName}* will be holding on *{date}* at *{time}* at *{churchName}*.
+This is a gentle reminder that our upcoming *{serviceName}* will be holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium.
 
 Come with great expectation, invite your family and friends, and prepare your heart for an encounter with God's Word, power, and presence.
 
 We cannot wait to worship together with you.
 
-_In His Service,_
-*Solutions Team*
+God bless you,
 *{churchName}*`,
 
       VISITOR_WELCOME: `Hello *{fullName}*, a very special and warm welcome from *{churchName}*.
 
-It was our absolute joy and privilege having you as our guest during our *{serviceName}* on *{date}* at *{time}*.
+It was our absolute joy and privilege having you as our guest during our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium.
 
 We pray that you experienced the presence of God and felt warmly embraced by our church family. SFMI is a home of faith, love, and purpose, and we warmly invite you to make this your spiritual home.
 
 If there is any way our team can pray for you or assist you, please do not hesitate to reply directly to this message.
 
-_Warmest Regards,_
-*Solutions Team*
+God bless you,
 *{churchName}*`,
 
       PRAYER_CHECKIN: `Grace, mercy, and peace be multiplied unto you, *{fullName}*.
@@ -12910,8 +12906,7 @@ _"The Lord bless you and keep you; the Lord make His face shine upon you and be 
 
 Have a victorious and blessed week, and see you soon in church.
 
-_Blessings & Love,_
-*Solutions Team*
+God bless you,
 *{churchName}*`,
 
       CUSTOM: `Hello *{fullName}*,
@@ -12920,8 +12915,7 @@ Grace and peace to you from *{churchName}*.
 
 [Type your personalized message here...]
 
-_Warm Regards,_
-*Solutions Team*
+God bless you,
 *{churchName}*`
     };
 
@@ -12931,13 +12925,28 @@ _Warm Regards,_
       if (savedTpls) {
         const parsed = JSON.parse(savedTpls);
         if (parsed && typeof parsed === 'object') {
-          ['THANK_YOU', 'WE_MISSED_YOU', 'UPCOMING_REMINDER', 'VISITOR_WELCOME'].forEach(key => {
-            if (parsed[key] && !parsed[key].includes('{time}')) {
+          ['THANK_YOU', 'WE_MISSED_YOU', 'UPCOMING_REMINDER', 'VISITOR_WELCOME', 'PRAYER_CHECKIN', 'CUSTOM'].forEach(key => {
+            if (parsed[key]) {
+              // Upgrade location & time phrasing if not already present
+              if (!parsed[key].includes('located at Amasaman')) {
+                parsed[key] = parsed[key]
+                  .replace(/will be holding on \*\{date\}\* at \*\{time\}\* at \*\{churchName\}\*/g, 'will be holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium')
+                  .replace(/will be holding on \*\{date\}\* at \*\{churchName\}\*/g, 'will be holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium')
+                  .replace(/holding on \*\{date\}\* at \*\{time\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium')
+                  .replace(/holding on \*\{date\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium')
+                  .replace(/for our \*\{serviceName\}\* on \*\{date\}\* at \*\{time\}\*/g, 'for our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium')
+                  .replace(/for our \*\{serviceName\}\* on \*\{date\}\*/g, 'for our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium')
+                  .replace(/during our \*\{serviceName\}\* on \*\{date\}\* at \*\{time\}\*/g, 'during our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium')
+                  .replace(/during our \*\{serviceName\}\* on \*\{date\}\*/g, 'during our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium');
+              }
+              // Upgrade legacy closing signatures
               parsed[key] = parsed[key]
-                .replace(/holding on \*\{date\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{time}* at *{churchName}*')
-                .replace(/holding on \{date\} at \{churchName\}/g, 'holding on {date} at {time} at {churchName}')
-                .replace(/on \*\{date\}\*(?!\s*at\s*\{time\})/g, 'on *{date}* at *{time}*')
-                .replace(/on \{date\}(?!\s*at\s*\{time\})/g, 'on {date} at {time}');
+                .replace(/_Blessings & Warm Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+                .replace(/_With love in Christ,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+                .replace(/_In His Service,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+                .replace(/_Warmest Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+                .replace(/_Blessings & Love,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+                .replace(/_Warm Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*');
             }
           });
           localStorage.setItem('sfmi_custom_msg_templates', JSON.stringify(parsed));
@@ -13193,12 +13202,25 @@ _Warm Regards,_
           if (tplSelect) tplSelect.value = 'THANK_YOU';
           const statTpl = document.getElementById('msgStatTemplateName');
           if (statTpl) statTpl.innerText = 'Thank You Note';
-        } else if (!textarea.value.includes('{time}')) {
+        } else {
+          if (!textarea.value.includes('located at Amasaman')) {
+            textarea.value = textarea.value
+              .replace(/will be holding on \*\{date\}\* at \*\{time\}\* at \*\{churchName\}\*/g, 'will be holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium')
+              .replace(/will be holding on \*\{date\}\* at \*\{churchName\}\*/g, 'will be holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium')
+              .replace(/holding on \*\{date\}\* at \*\{time\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium')
+              .replace(/holding on \*\{date\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium')
+              .replace(/for our \*\{serviceName\}\* on \*\{date\}\* at \*\{time\}\*/g, 'for our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium')
+              .replace(/for our \*\{serviceName\}\* on \*\{date\}\*/g, 'for our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium')
+              .replace(/during our \*\{serviceName\}\* on \*\{date\}\* at \*\{time\}\*/g, 'during our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium')
+              .replace(/during our \*\{serviceName\}\* on \*\{date\}\*/g, 'during our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium');
+          }
           textarea.value = textarea.value
-            .replace(/holding on \*\{date\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{time}* at *{churchName}*')
-            .replace(/holding on \{date\} at \{churchName\}/g, 'holding on {date} at {time} at {churchName}')
-            .replace(/on \*\{date\}\*(?!\s*at\s*\{time\})/g, 'on *{date}* at *{time}*')
-            .replace(/on \{date\}(?!\s*at\s*\{time\})/g, 'on {date} at {time}');
+            .replace(/_Blessings & Warm Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+            .replace(/_With love in Christ,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+            .replace(/_In His Service,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+            .replace(/_Warmest Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+            .replace(/_Blessings & Love,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+            .replace(/_Warm Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*');
         }
       }
 
@@ -13806,6 +13828,12 @@ _Warm Regards,_
       return parts.length > 0 ? parts[0].trim() : disp.trim();
     }
 
+    function getServiceTimeRange(service) {
+      const disp = getServiceTimeDisplay(service);
+      if (!disp) return '6:00 PM to 8:00 PM';
+      return disp.replace(/\s*[–—-]\s*/, ' to ');
+    }
+
     function updateMsgServiceTimeBadge() {
       const svcSelect = document.getElementById('msgServiceSelect');
       const badge = document.getElementById('msgServiceTimeBadge');
@@ -13824,7 +13852,7 @@ _Warm Regards,_
       const fullName = (recipient?.fullName || '').trim() || (recipient?.firstName || 'Beloved');
       const fName = fullName; // User requested to use the person full name
       const svc = serviceName || (document.getElementById('msgServiceSelect')?.value || 'Sunday: Family & Friends Service');
-      const timeStr = getServiceStartTime(svc);
+      const timeStr = getServiceTimeRange(svc);
       const fullTimeStr = getServiceTimeDisplay(svc);
       
       let dateStr = '';
@@ -13840,14 +13868,31 @@ _Warm Regards,_
         .replace(/Solutions Faith Ministries International/gi, 'Solutions Faith Ministry International')
         .replace(/Solutions Faith Ministries/gi, 'Solutions Faith Ministry');
 
-      // Auto-inject at *{time}* if the template does not already contain {time}
-      if (!res.includes('{time}')) {
+      // Auto-migrate phrasing if using legacy template wording
+      if (!res.includes('located at Amasaman')) {
         res = res
-          .replace(/holding on \*\{date\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{time}* at *{churchName}*')
-          .replace(/holding on \{date\} at \{churchName\}/g, 'holding on {date} at {time} at {churchName}')
-          .replace(/on \*\{date\}\*(?!\s*at\s*\{time\})/g, 'on *{date}* at *{time}*')
-          .replace(/on \{date\}(?!\s*at\s*\{time\})/g, 'on {date} at {time}');
+          .replace(/will be holding on \*\{date\}\* at \*\{time\}\* at \*\{churchName\}\*/g, 'will be holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium')
+          .replace(/will be holding on \*\{date\}\* at \*\{churchName\}\*/g, 'will be holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium')
+          .replace(/holding on \*\{date\}\* at \*\{time\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium')
+          .replace(/holding on \*\{date\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{churchName}*, from *{time}*, located at Amasaman, behind the Stadium')
+          .replace(/for our \*\{serviceName\}\* on \*\{date\}\* at \*\{time\}\*/g, 'for our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium')
+          .replace(/for our \*\{serviceName\}\* on \*\{date\}\*/g, 'for our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium')
+          .replace(/during our \*\{serviceName\}\* on \*\{date\}\* at \*\{time\}\*/g, 'during our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium')
+          .replace(/during our \*\{serviceName\}\* on \*\{date\}\*/g, 'during our *{serviceName}* on *{date}*, from *{time}*, located at Amasaman, behind the Stadium');
       }
+
+      // Auto-migrate legacy signatures
+      res = res
+        .replace(/_Blessings & Warm Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+        .replace(/_With love in Christ,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+        .replace(/_In His Service,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+        .replace(/_Warmest Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+        .replace(/_Blessings & Love,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+        .replace(/_Warm Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
+        .replace(/Blessings & Warm Regards,\s*Solutions Team\s*Solutions Faith Ministry International/gi, 'God bless you,\nSolutions Faith Ministry International')
+        .replace(/In His Service,\s*Solutions Team\s*Solutions Faith Ministry International/gi, 'God bless you,\nSolutions Faith Ministry International')
+        .replace(/With love in Christ,\s*Solutions Team\s*Solutions Faith Ministry International/gi, 'God bless you,\nSolutions Faith Ministry International')
+        .replace(/Warmest Regards,\s*Solutions Team\s*Solutions Faith Ministry International/gi, 'God bless you,\nSolutions Faith Ministry International');
 
       return res
         .replace(/\{fullName\}/g, fullName)
