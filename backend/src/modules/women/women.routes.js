@@ -36,6 +36,11 @@ async function requireWomenAccess(req, res, next) {
   }
 }
 
+function normCol(str) {
+  if (!str) return 'WOMEN_DUES';
+  return String(str).replace(/[^A-Za-z0-9]/g, '_').replace(/_+/g, '_').trim().toUpperCase();
+}
+
 // Helper to safely resolve valid User ID for AuditLog actor relation
 async function resolveActorId(req) {
   const uid = req.user?.id || req.user?.userId || req.user?.sub;
@@ -212,7 +217,7 @@ router.get('/members', async (req, res, next) => {
     const totalsMap = {};
     for (const p of paymentLogs) {
       if (p.metadata) {
-        const pCol = (p.metadata.collectionType || 'WOMEN_DUES').trim().toUpperCase();
+        const pCol = normCol(p.metadata.collectionType);
         const amt = Number(p.metadata.amount) || 0;
         if (p.metadata.womenMemberId) {
           const k = `${p.metadata.womenMemberId}_${pCol}`;
@@ -230,7 +235,7 @@ router.get('/members', async (req, res, next) => {
     }
 
     const enriched = members.map(m => {
-      const mCol = (m.collectionType || 'WOMEN_DUES').trim().toUpperCase();
+      const mCol = normCol(m.collectionType);
       const kId = `${m.id}_${mCol}`;
       const kName = `${(m.memberName || '').trim().toLowerCase()}_${mCol}`;
       return {
@@ -506,7 +511,7 @@ router.get('/matrix', async (req, res, next) => {
     for (const p of allPayments) {
       if (p.targetMonth && p.targetMonth.startsWith(String(year))) {
         const monthPart = p.targetMonth.slice(5, 7); // e.g. "08"
-        const pCol = (p.collectionType || 'WOMEN_DUES').trim().toUpperCase();
+        const pCol = normCol(p.collectionType);
         const amt = Number(p.amount) || 0;
 
         if (p.womenMemberId) {
@@ -542,7 +547,7 @@ router.get('/matrix', async (req, res, next) => {
 
       const monthlyStatus = {};
       let memberYearPaid = 0;
-      const mCol = (m.collectionType || 'WOMEN_DUES').trim().toUpperCase();
+      const mCol = normCol(m.collectionType);
       const kId = `${m.id}_${mCol}`;
       const kName = `${(m.memberName || '').trim().toLowerCase()}_${mCol}`;
 
@@ -560,10 +565,12 @@ router.get('/matrix', async (req, res, next) => {
         const isPastMonth = (year < currentYear) || (year === currentYear && month < currentMonthNum);
         const isCurrentMonth = (month === activeMonthNum);
 
-        if (paidAmount >= pledge && pledge > 0) {
-          status = 'PAID';
-        } else if (paidAmount > 0 && paidAmount < pledge) {
-          status = 'PARTIAL';
+        if (paidAmount > 0) {
+          if (pledge > 0 && paidAmount < pledge) {
+            status = 'PARTIAL';
+          } else {
+            status = 'PAID';
+          }
         } else if (isPastMonth) {
           status = 'MISSED';
         } else if (isCurrentMonth) {
