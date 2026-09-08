@@ -1055,10 +1055,7 @@
 
     <!-- Active Fund Switcher Tabs -->
     <div class="fund-switcher-wrap" id="fundSwitcherPills">
-      <button class="fund-pill active" data-type="WOMEN_DUES" onclick="switchActiveFund('WOMEN_DUES')">
-        <i class="fas fa-calendar-check" style="color: var(--rose);"></i> Women Monthly Dues
-      </button>
-      <button class="fund-pill" data-type="ALL" onclick="switchActiveFund('ALL')">
+      <button class="fund-pill active" data-type="ALL" onclick="switchActiveFund('ALL')">
         <i class="fas fa-layer-group"></i> All Collections
       </button>
       <button class="fund-pill fund-pill-add" onclick="openAddCollectionTypeModal()">
@@ -1553,7 +1550,7 @@
     let cachedPartners = [];
     let cachedCollectionTypes = [];
     let rawMatrixData = [];
-    let activeFundType = 'WOMEN_DUES';
+    let activeFundType = 'ALL';
     let currentReceiptData = null;
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -1755,6 +1752,15 @@
         // 2. Collection Types (Dedicated to Women's Ministry)
         if (colRes && colRes.ok) {
           cachedCollectionTypes = await colRes.json();
+          if (activeFundType !== 'ALL') {
+            const exists = (cachedCollectionTypes || []).some(c => 
+              (c.id || '').toUpperCase() === (activeFundType || '').toUpperCase() || 
+              (c.name || '').toUpperCase() === (activeFundType || '').toUpperCase()
+            );
+            if (!exists) {
+              activeFundType = cachedCollectionTypes.length > 0 ? (cachedCollectionTypes[0].id || cachedCollectionTypes[0].name) : 'ALL';
+            }
+          }
           renderFundSwitcherPills();
           populateFundDropdowns();
         }
