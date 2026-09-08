@@ -3051,7 +3051,10 @@
             <!-- Gathering Controls Grid -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
               <div>
-                <label class="form-label" style="font-weight: 700; font-size: 11.5px; margin-bottom: 4px;"><i class="fas fa-church" style="color: var(--emerald); margin-right: 4px;"></i> Program / Service</label>
+                <label class="form-label" style="font-weight: 700; font-size: 11.5px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                  <span><i class="fas fa-church" style="color: var(--emerald); margin-right: 4px;"></i> Program / Service</span>
+                  <span id="msgServiceTimeBadge" style="font-size: 11px; color: #0284c7; font-weight: 700; background: #e0f2fe; padding: 2px 8px; border-radius: 6px; display: none;"><i class="far fa-clock"></i> 6:00 PM – 8:00 PM</span>
+                </label>
                 <select id="msgServiceSelect" class="form-ctrl" style="font-size: 12px; font-weight: 600;" onchange="handleMsgServiceChange()">
                   <!-- Populated dynamically -->
                 </select>
@@ -3824,6 +3827,7 @@
             <button type="button" class="msg-token-chip" style="background: #e8f5e9; border-color: #107c41; color: #064e3b; padding: 6px 12px; font-size: 12px;" onclick="insertSettingsMsgToken('{fullName}')" title="Recipient's Full Name (e.g. Emmanuel Mensah)"><strong>+{fullName}</strong></button>
             <button type="button" class="msg-token-chip" style="padding: 6px 12px; font-size: 12px;" onclick="insertSettingsMsgToken('{serviceName}')" title="Active Service Gathering Name">+{serviceName}</button>
             <button type="button" class="msg-token-chip" style="padding: 6px 12px; font-size: 12px;" onclick="insertSettingsMsgToken('{date}')" title="Service Session Date">+{date}</button>
+            <button type="button" class="msg-token-chip" style="padding: 6px 12px; font-size: 12px; background: #e0f2fe; border-color: #0284c7; color: #0369a1;" onclick="insertSettingsMsgToken('{time}')" title="Service Time (e.g. 6:00 PM)"><strong>+{time}</strong></button>
             <button type="button" class="msg-token-chip" style="padding: 6px 12px; font-size: 12px;" onclick="insertSettingsMsgToken('{churchName}')" title="Solutions Faith Ministry International">+{churchName}</button>
           </div>
         </div>
@@ -12876,7 +12880,7 @@ _With love in Christ,_
 
       UPCOMING_REMINDER: `Dear *{fullName}*, grace and peace to you.
 
-This is a gentle reminder that our upcoming *{serviceName}* will be holding on *{date}* at *{churchName}*.
+This is a gentle reminder that our upcoming *{serviceName}* will be holding on *{date}* at *{time}* at *{churchName}*.
 
 Come with great expectation, invite your family and friends, and prepare your heart for an encounter with God's Word, power, and presence.
 
@@ -12927,6 +12931,12 @@ _Warm Regards,_
       if (savedTpls) {
         const parsed = JSON.parse(savedTpls);
         if (parsed && typeof parsed === 'object') {
+          if (parsed.UPCOMING_REMINDER && !parsed.UPCOMING_REMINDER.includes('{time}')) {
+            parsed.UPCOMING_REMINDER = parsed.UPCOMING_REMINDER
+              .replace(/holding on \*\{date\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{time}* at *{churchName}*')
+              .replace(/holding on \{date\} at \{churchName\}/g, 'holding on {date} at {time} at {churchName}');
+            localStorage.setItem('sfmi_custom_msg_templates', JSON.stringify(parsed));
+          }
           MSG_TEMPLATES = { ...DEFAULT_MSG_TEMPLATES, ...parsed };
         }
       }
@@ -13153,7 +13163,9 @@ _Warm Regards,_
         const prevSvc = svcSelect.value;
         let optsHtml = '';
         allServices.forEach(s => {
-          optsHtml += `<option value="${escapeHtml(s.name)}">${s.isStandard ? '⛪ ' : '🌟 [Special Program] '}${escapeHtml(s.name)}</option>`;
+          const timeDisp = getServiceTimeDisplay(s);
+          const timeBadge = timeDisp ? ` (${timeDisp})` : '';
+          optsHtml += `<option value="${escapeHtml(s.name)}">${s.isStandard ? '⛪ ' : '🌟 [Special Program] '}${escapeHtml(s.name)}${timeBadge}</option>`;
         });
         svcSelect.innerHTML = optsHtml;
 
@@ -13162,6 +13174,7 @@ _Warm Regards,_
         } else if (typeof currentSelectedService !== 'undefined' && currentSelectedService && currentSelectedService !== 'ALL' && allServices.some(s => s.name === currentSelectedService)) {
           svcSelect.value = currentSelectedService;
         }
+        updateMsgServiceTimeBadge();
       }
 
       // Populate Session Dates for current service
@@ -13252,8 +13265,10 @@ _Warm Regards,_
     }
 
     async function handleMsgServiceChange() {
+      updateMsgServiceTimeBadge();
       populateMsgSessionDates();
       await compileMessagingRecipients();
+      updateLiveMsgPreview();
     }
 
     async function handleMsgFilterChange() {
@@ -13734,11 +13749,71 @@ _Warm Regards,_
       renderMessagingRecipientsTable();
     }
 
+    function getServiceTimeDisplay(service) {
+      if (!service) return '';
+      const name = (typeof service === 'string' ? service : (service.name || '')).trim();
+      const lower = name.toLowerCase();
+
+      // If service object has schedule property
+      if (typeof service === 'object' && service.schedule) {
+        const s = service.schedule;
+        return s.includes('·') ? s.split('·')[1].trim() : s.trim();
+      }
+
+      // Check standard services from storage or defaults
+      const storage = typeof localStorage !== 'undefined' ? localStorage : null;
+      if (lower.includes('wednesday') || lower.includes('time with the lord') || lower.includes('time with lord')) {
+        const sched = storage ? storage.getItem('sfmi_svc_sched_wed') : null;
+        return sched && sched.includes('·') ? sched.split('·')[1].trim() : '6:00 PM – 8:00 PM';
+      }
+      if (lower.includes('friday') || lower.includes('prophetic') || lower.includes('deliverance')) {
+        const sched = storage ? storage.getItem('sfmi_svc_sched_fri') : null;
+        return sched && sched.includes('·') ? sched.split('·')[1].trim() : '6:00 PM – 8:00 PM';
+      }
+      if (lower.includes('sunday') || lower.includes('family & friends') || lower.includes('family and friends')) {
+        const sched = storage ? storage.getItem('sfmi_svc_sched_sun') : null;
+        return sched && sched.includes('·') ? sched.split('·')[1].trim() : '7:00 AM – 11:00 AM';
+      }
+
+      // Check custom programs array
+      if (typeof customPrograms !== 'undefined' && Array.isArray(customPrograms)) {
+        const found = customPrograms.find(p => (p.name || '').toLowerCase() === lower);
+        if (found && found.schedule) {
+          const s = found.schedule;
+          return s.includes('·') ? s.split('·')[1].trim() : s.trim();
+        }
+      }
+
+      return '';
+    }
+
+    function getServiceStartTime(service) {
+      const disp = getServiceTimeDisplay(service);
+      if (!disp) return '6:00 PM';
+      const parts = disp.split(/[–—-]/);
+      return parts.length > 0 ? parts[0].trim() : disp.trim();
+    }
+
+    function updateMsgServiceTimeBadge() {
+      const svcSelect = document.getElementById('msgServiceSelect');
+      const badge = document.getElementById('msgServiceTimeBadge');
+      if (!svcSelect || !badge) return;
+      const timeDisp = getServiceTimeDisplay(svcSelect.value);
+      if (timeDisp) {
+        badge.innerHTML = `<i class="far fa-clock"></i> ${escapeHtml(timeDisp)}`;
+        badge.style.display = 'inline-flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
     function formatWhatsAppMessageForRecipient(templateText, recipient, serviceName, sessionDateStr) {
       if (!templateText) return '';
       const fullName = (recipient?.fullName || '').trim() || (recipient?.firstName || 'Beloved');
       const fName = fullName; // User requested to use the person full name
       const svc = serviceName || (document.getElementById('msgServiceSelect')?.value || 'Sunday: Family & Friends Service');
+      const timeStr = getServiceStartTime(svc);
+      const fullTimeStr = getServiceTimeDisplay(svc);
       
       let dateStr = '';
       if (sessionDateStr && sessionDateStr !== 'LATEST' && sessionDateStr !== 'TODAY' && sessionDateStr !== 'CUSTOM') {
@@ -13748,14 +13823,25 @@ _Warm Regards,_
         dateStr = getSelectedSessionDateLabel();
       }
 
-      return templateText
+      let res = templateText
         .replace(/\uFFFD/g, '')
         .replace(/Solutions Faith Ministries International/gi, 'Solutions Faith Ministry International')
-        .replace(/Solutions Faith Ministries/gi, 'Solutions Faith Ministry')
+        .replace(/Solutions Faith Ministries/gi, 'Solutions Faith Ministry');
+
+      // Auto-inject at *{time}* if the reminder phrasing does not already contain {time}
+      if (!res.includes('{time}')) {
+        res = res
+          .replace(/holding on \*\{date\}\* at \*\{churchName\}\*/g, 'holding on *{date}* at *{time}* at *{churchName}*')
+          .replace(/holding on \{date\} at \{churchName\}/g, 'holding on {date} at {time} at {churchName}');
+      }
+
+      return res
         .replace(/\{fullName\}/g, fullName)
         .replace(/\{firstName\}/g, fName)
         .replace(/\{serviceName\}/g, svc)
         .replace(/\{date\}/g, dateStr)
+        .replace(/\{time\}/g, timeStr)
+        .replace(/\{schedule\}/g, fullTimeStr)
         .replace(/\{churchName\}/g, MSG_CHURCH_NAME);
     }
 
