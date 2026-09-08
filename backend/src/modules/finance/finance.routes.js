@@ -562,12 +562,20 @@ router.get('/partnerships/matrix', requireAuth, async (req, res, next) => {
       ...(l.metadata || {})
     })).filter(p => p.active !== false && !(p.collectionType || '').toLowerCase().startsWith('women'));
 
-    // 2. Fetch all payments for this year (excluding Women's Ministry payments)
+    // Map active partners by ID to their registered collection type
+    const activePartnerMap = new Map();
+    partners.forEach(p => {
+      activePartnerMap.set(p.id, (p.collectionType || 'PARTNERSHIP').toUpperCase());
+    });
+
+    // 2. Fetch all payments for this year (excluding Women's Ministry and orphaned/deleted partner payments)
     const paymentLogs = await prisma.auditLog.findMany({
       where: { entity: 'PARTNERSHIP_PAYMENT' },
       orderBy: { createdAt: 'desc' }
     });
-    const allPayments = paymentLogs.map(l => l.metadata).filter(p => p && !(p.collectionType || '').toLowerCase().startsWith('women'));
+    const allPayments = paymentLogs
+      .map(l => l.metadata)
+      .filter(p => p && p.partnerId && activePartnerMap.has(p.partnerId));
 
     // Calculate collection breakdown for cards across all main collection types
     const collectionBreakdown = {};
@@ -587,17 +595,15 @@ router.get('/partnerships/matrix', requireAuth, async (req, res, next) => {
     const currMonthPad = String(currentMonthNum).padStart(2, '0');
     const targetCurrMonth = `${year}-${currMonthPad}`;
     allPayments.forEach(pay => {
-      const cTypeKey = (pay.collectionType || 'PARTNERSHIP').trim();
-      const cTypeUpper = cTypeKey.toUpperCase();
-      if (!collectionBreakdown[cTypeUpper]) {
-        collectionBreakdown[cTypeUpper] = { totalPartners: 0, totalMonthlyPledged: 0, currentMonthCollected: 0 };
-      }
-      const payMonth = pay.paymentDate ? pay.paymentDate.slice(0, 7) : pay.targetMonth;
-      if (pay.targetMonth === targetCurrMonth || payMonth === targetCurrMonth) {
-        collectionBreakdown[cTypeUpper].currentMonthCollected += (Number(pay.amount) || 0);
-      }
-      if (cTypeKey !== cTypeUpper) {
-        collectionBreakdown[cTypeKey] = collectionBreakdown[cTypeUpper];
+      const cTypeUpper = activePartnerMap.get(pay.partnerId);
+      if (cTypeUpper) {
+        if (!collectionBreakdown[cTypeUpper]) {
+          collectionBreakdown[cTypeUpper] = { totalPartners: 0, totalMonthlyPledged: 0, currentMonthCollected: 0 };
+        }
+        const payMonth = pay.paymentDate ? pay.paymentDate.slice(0, 7) : pay.targetMonth;
+        if (pay.targetMonth === targetCurrMonth || payMonth === targetCurrMonth) {
+          collectionBreakdown[cTypeUpper].currentMonthCollected += (Number(pay.amount) || 0);
+        }
       }
     });
 
