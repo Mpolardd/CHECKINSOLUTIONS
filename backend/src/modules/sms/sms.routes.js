@@ -74,13 +74,13 @@ router.post('/send', requireAuth, async (req, res, next) => {
  */
 router.post('/send-bulk', requireAuth, async (req, res, next) => {
   try {
-    const { messages, sender } = req.body || {};
+    const { messages, sender, apiKey } = req.body || {};
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Messages array is required' });
     }
 
-    const results = await arkeselService.sendBulkPersonalizedSms(messages, sender);
+    const results = await arkeselService.sendBulkPersonalizedSms(messages, sender, apiKey);
 
     // Record audit log
     await prisma.auditLog.create({

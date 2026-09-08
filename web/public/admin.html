@@ -3757,14 +3757,14 @@
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
           <div>
-            <label class="form-label" style="font-weight: 700; font-size: 12px;">Arkesel API Key *</label>
-            <input type="password" id="settingsSmsApiKey" class="form-ctrl" value="a1FaWVVuVUhKZ3NPdFJhdE1Pd0w" style="font-family: monospace; font-size: 12.5px;" />
-            <span style="font-size: 11px; color: var(--muted); margin-top: 4px; display: block;">Obtained from your Arkesel dashboard under SMS API.</span>
+            <label class="form-label" style="font-weight: 700; font-size: 12px;">Arkesel API Key (Optional Override)</label>
+            <input type="password" id="settingsSmsApiKey" class="form-ctrl" placeholder="Configured securely in backend (.env)" autocomplete="off" style="font-family: monospace; font-size: 12.5px;" />
+            <span style="font-size: 11px; color: var(--muted); margin-top: 4px; display: block;">Default key is stored securely in server environment (.env). Enter here only to override.</span>
           </div>
           <div>
-            <label class="form-label" style="font-weight: 700; font-size: 12px;">SMS Sender ID * (Max 11 chars)</label>
-            <input type="text" id="settingsSmsSenderId" class="form-ctrl" value="SMFI" maxlength="11" style="font-weight: 700; font-size: 13px;" />
-            <span style="font-size: 11px; color: var(--muted); margin-top: 4px; display: block;">Registered on your Arkesel dashboard.</span>
+            <label class="form-label" style="font-weight: 700; font-size: 12px;">SMS Sender ID (Max 11 chars)</label>
+            <input type="text" id="settingsSmsSenderId" class="form-ctrl" placeholder="SMFI" maxlength="11" style="font-weight: 700; font-size: 13px;" />
+            <span style="font-size: 11px; color: var(--muted); margin-top: 4px; display: block;">Default: SMFI (or custom sender ID registered on Arkesel).</span>
           </div>
         </div>
 
@@ -13975,7 +13975,9 @@ _Warm Regards,_
 
       try {
         const token = await getAdminAuthToken();
-        const res = await fetch(`${API_BASE}/sms/balance`, {
+        const customKey = localStorage.getItem('sfmi_arkesel_api_key') || document.getElementById('settingsSmsApiKey')?.value?.trim();
+        const query = customKey ? `?apiKey=${encodeURIComponent(customKey)}` : '';
+        const res = await fetch(`${API_BASE}/sms/balance${query}`, {
           headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
 
@@ -14036,7 +14038,15 @@ _Warm Regards,_
 
       try {
         const token = await getAdminAuthToken();
-        const senderId = document.getElementById('settingsSmsSenderId')?.value?.trim() || 'SMFI';
+        const senderId = document.getElementById('settingsSmsSenderId')?.value?.trim() || localStorage.getItem('sfmi_arkesel_sender_id') || 'SMFI';
+        const customKey = localStorage.getItem('sfmi_arkesel_api_key') || document.getElementById('settingsSmsApiKey')?.value?.trim() || undefined;
+
+        const payload = {
+          recipients: [rec.phone],
+          message: cleanSmsText,
+          sender: senderId
+        };
+        if (customKey) payload.apiKey = customKey;
 
         const res = await fetch(`${API_BASE}/sms/send`, {
           method: 'POST',
@@ -14044,11 +14054,7 @@ _Warm Regards,_
             'Content-Type': 'application/json',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           },
-          body: JSON.stringify({
-            recipients: [rec.phone],
-            message: cleanSmsText,
-            sender: senderId
-          })
+          body: JSON.stringify(payload)
         });
 
         const resData = await res.json().catch(() => ({}));
@@ -14103,16 +14109,21 @@ _Warm Regards,_
 
       try {
         const token = await getAdminAuthToken();
+        const customKey = localStorage.getItem('sfmi_arkesel_api_key') || document.getElementById('settingsSmsApiKey')?.value?.trim() || undefined;
+
+        const payload = {
+          messages: contactMessages,
+          sender: senderId
+        };
+        if (customKey) payload.apiKey = customKey;
+
         const res = await fetch(`${API_BASE}/sms/send-bulk`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           },
-          body: JSON.stringify({
-            messages: contactMessages,
-            sender: senderId
-          })
+          body: JSON.stringify(payload)
         });
 
         const data = await res.json().catch(() => ({}));
@@ -14135,24 +14146,19 @@ _Warm Regards,_
       if (data && data.success) {
         showToast(`Connected to Arkesel! SMS Balance: <strong>${data.smsBalance} credits</strong> (${data.mainBalance || 'GHS 0.00'})`, 'success', 'Arkesel Connected');
       } else {
-        showToast('Arkesel Gateway configured. API key saved and ready for live delivery.', 'info', 'Gateway Configured');
+        showToast('Arkesel Gateway configured. Ready for live delivery.', 'info', 'Gateway Configured');
       }
     }
 
     function saveArkeselSmsSettings() {
       const apiKey = document.getElementById('settingsSmsApiKey')?.value?.trim();
-      const senderId = document.getElementById('settingsSmsSenderId')?.value?.trim();
+      const senderId = document.getElementById('settingsSmsSenderId')?.value?.trim() || 'SMFI';
 
-      if (!apiKey) {
-        showToast('Arkesel API Key is required.', 'error', 'Validation');
-        return;
+      if (apiKey) {
+        localStorage.setItem('sfmi_arkesel_api_key', apiKey);
+      } else {
+        localStorage.removeItem('sfmi_arkesel_api_key');
       }
-      if (!senderId) {
-        showToast('Sender ID is required (Max 11 characters).', 'error', 'Validation');
-        return;
-      }
-
-      localStorage.setItem('sfmi_arkesel_api_key', apiKey);
       localStorage.setItem('sfmi_arkesel_sender_id', senderId);
 
       showToast(`Arkesel SMS configuration saved (Sender ID: <strong>${escapeHtml(senderId)}</strong>)!`, 'success', 'Settings Saved');
