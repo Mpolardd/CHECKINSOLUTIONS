@@ -14087,14 +14087,14 @@ _Warm Regards,_
       try {
         const token = await getAdminAuthToken();
         const senderId = document.getElementById('settingsSmsSenderId')?.value?.trim() || localStorage.getItem('sfmi_arkesel_sender_id') || 'SMFI';
-        const customKey = localStorage.getItem('sfmi_arkesel_api_key') || document.getElementById('settingsSmsApiKey')?.value?.trim() || undefined;
+        const customKey = (document.getElementById('settingsSmsApiKey')?.value?.trim() || localStorage.getItem('sfmi_arkesel_api_key') || '').trim();
 
         const payload = {
           recipients: [rec.phone],
           message: cleanSmsText,
           sender: senderId
         };
-        if (customKey) payload.apiKey = customKey;
+        if (customKey && customKey !== 'undefined' && customKey !== 'null') payload.apiKey = customKey;
 
         const res = await fetch(`${API_BASE}/sms/send`, {
           method: 'POST',
@@ -14157,13 +14157,13 @@ _Warm Regards,_
 
       try {
         const token = await getAdminAuthToken();
-        const customKey = localStorage.getItem('sfmi_arkesel_api_key') || document.getElementById('settingsSmsApiKey')?.value?.trim() || undefined;
+        const customKey = (document.getElementById('settingsSmsApiKey')?.value?.trim() || localStorage.getItem('sfmi_arkesel_api_key') || '').trim();
 
         const payload = {
           messages: contactMessages,
           sender: senderId
         };
-        if (customKey) payload.apiKey = customKey;
+        if (customKey && customKey !== 'undefined' && customKey !== 'null') payload.apiKey = customKey;
 
         const res = await fetch(`${API_BASE}/sms/send-bulk`, {
           method: 'POST',

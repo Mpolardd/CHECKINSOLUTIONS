@@ -64,7 +64,11 @@ router.post('/send', requireAuth, async (req, res, next) => {
       result
     });
   } catch (e) {
-    next(e);
+    console.error('[SMS send route error]:', e.message);
+    res.status(400).json({
+      success: false,
+      error: e.message || 'Failed to dispatch SMS through Arkesel gateway.'
+    });
   }
 });
 
@@ -77,7 +81,7 @@ router.post('/send-bulk', requireAuth, async (req, res, next) => {
     const { messages, sender, apiKey } = req.body || {};
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: 'Messages array is required' });
+      return res.status(400).json({ success: false, error: 'Messages array is required' });
     }
 
     const results = await arkeselService.sendBulkPersonalizedSms(messages, sender, apiKey);
@@ -105,7 +109,11 @@ router.post('/send-bulk', requireAuth, async (req, res, next) => {
       results
     });
   } catch (e) {
-    next(e);
+    console.error('[SMS bulk route error]:', e.message);
+    res.status(400).json({
+      success: false,
+      error: e.message || 'Failed to dispatch bulk SMS through Arkesel gateway.'
+    });
   }
 });
 
