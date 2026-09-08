@@ -122,10 +122,30 @@ router.post('/', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION
 
     // Audit Log
     try {
+      const isVisitor = (b.role && (b.role.toLowerCase().includes('visitor') || b.role.toLowerCase().includes('first timer') || b.role.toLowerCase().includes('first-timer'))) ||
+                        (b.category && (b.category.toLowerCase().includes('visitor') || b.category.toLowerCase().includes('guest')));
+
+      if (isVisitor) {
+        await prisma.auditLog.create({
+          data: {
+            actorId: req.user?.userId || null,
+            action: 'VISITOR_REGISTRATION',
+            entity: 'MEMBER',
+            entityId: m.id,
+            metadata: {
+              name: `${m.firstName} ${m.lastName}`,
+              category: m.category,
+              role: m.role,
+              isGuest: true
+            }
+          }
+        });
+      }
+
       await prisma.auditLog.create({
         data: {
           actorId: req.user?.userId || null,
-          action: 'CREATE_MEMBER',
+          action: isVisitor ? 'REGISTER_VISITOR' : 'CREATE_MEMBER',
           entity: 'MEMBER',
           entityId: m.id,
           metadata: { name: `${m.firstName} ${m.lastName}`, category: m.category, role: m.role }

@@ -1310,7 +1310,7 @@
       <h2 class="modal-title">
         <i class="fas fa-user-plus" style="color: var(--rose);"></i> Enrol Sister / Dues Setup
       </h2>
-      <p class="modal-desc">Set up a female member with a monthly dues rate or register a new sister.</p>
+      <p class="modal-desc">Add an existing church sister or register a new sister as a visitor.</p>
 
       <form onsubmit="handleEnrolSisterSubmit(event)">
         
@@ -1322,7 +1322,7 @@
           </label>
           <label id="lblEnrolNew" onclick="toggleEnrolMode('new')" style="flex: 1; text-align: center; padding: 8px; border: 1.5px solid var(--line); background: white; color: var(--muted); border-radius: 6px; font-weight: 700; font-size: 12.5px; cursor: pointer;">
             <input type="radio" id="radioEnrolNew" name="enrolMode" value="new" style="display: none;" />
-            <i class="fas fa-user-plus"></i> New Sister Details
+            <i class="fas fa-user-plus"></i> New Sister (Visitor)
           </label>
         </div>
 
@@ -2579,7 +2579,7 @@
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
 
-        // 1. If new sister, also register into Member database
+        // 1. If new sister, register into database as a Visitor / Guest (NOT as a full church member)
         if (enrolMode === 'new') {
           const fn = document.getElementById('enrolNewFirstName').value.trim();
           const ln = document.getElementById('enrolNewLastName').value.trim();
@@ -2591,8 +2591,8 @@
               lastName: ln,
               phone,
               gender: 'Female',
-              category: 'Women',
-              role: 'Member'
+              category: 'Visitor / Guest',
+              role: 'Visitor / First Timer'
             })
           });
           if (memRes.ok) {
