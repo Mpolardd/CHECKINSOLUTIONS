@@ -1327,12 +1327,12 @@
         
         <!-- Toggle: Pick Existing Member or Register New Sister -->
         <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-          <label style="flex: 1; text-align: center; padding: 8px; border: 1.5px solid var(--rose); background: var(--rose-subtle); color: var(--rose); border-radius: 6px; font-weight: 700; font-size: 12.5px; cursor: pointer;">
-            <input type="radio" name="enrolMode" value="existing" checked onchange="toggleEnrolMode(this.value)" style="display: none;" />
+          <label id="lblEnrolExisting" onclick="toggleEnrolMode('existing')" style="flex: 1; text-align: center; padding: 8px; border: 1.5px solid var(--rose); background: var(--rose-subtle); color: var(--rose); border-radius: 6px; font-weight: 700; font-size: 12.5px; cursor: pointer;">
+            <input type="radio" id="radioEnrolExisting" name="enrolMode" value="existing" checked style="display: none;" />
             <i class="fas fa-users"></i> Existing Church Sister
           </label>
-          <label style="flex: 1; text-align: center; padding: 8px; border: 1.5px solid var(--line); background: white; color: var(--muted); border-radius: 6px; font-weight: 700; font-size: 12.5px; cursor: pointer;">
-            <input type="radio" name="enrolMode" value="new" onchange="toggleEnrolMode(this.value)" style="display: none;" />
+          <label id="lblEnrolNew" onclick="toggleEnrolMode('new')" style="flex: 1; text-align: center; padding: 8px; border: 1.5px solid var(--line); background: white; color: var(--muted); border-radius: 6px; font-weight: 700; font-size: 12.5px; cursor: pointer;">
+            <input type="radio" id="radioEnrolNew" name="enrolMode" value="new" style="display: none;" />
             <i class="fas fa-user-plus"></i> New Sister Details
           </label>
         </div>
@@ -2286,13 +2286,28 @@
     }
 
     function toggleEnrolMode(mode) {
-      if (mode === 'existing') {
-        document.getElementById('enrolExistingGroup').style.display = 'block';
-        document.getElementById('enrolNewGroup').style.display = 'none';
-      } else {
-        document.getElementById('enrolExistingGroup').style.display = 'none';
-        document.getElementById('enrolNewGroup').style.display = 'block';
+      const isExisting = mode === 'existing';
+      const radioExisting = document.getElementById('radioEnrolExisting');
+      const radioNew = document.getElementById('radioEnrolNew');
+      if (radioExisting) radioExisting.checked = isExisting;
+      if (radioNew) radioNew.checked = !isExisting;
+
+      const lblExisting = document.getElementById('lblEnrolExisting');
+      const lblNew = document.getElementById('lblEnrolNew');
+
+      if (lblExisting) {
+        lblExisting.style.border = isExisting ? '1.5px solid var(--rose)' : '1.5px solid var(--line)';
+        lblExisting.style.background = isExisting ? 'var(--rose-subtle)' : '#ffffff';
+        lblExisting.style.color = isExisting ? 'var(--rose)' : 'var(--muted)';
       }
+      if (lblNew) {
+        lblNew.style.border = !isExisting ? '1.5px solid var(--rose)' : '1.5px solid var(--line)';
+        lblNew.style.background = !isExisting ? 'var(--rose-subtle)' : '#ffffff';
+        lblNew.style.color = !isExisting ? 'var(--rose)' : 'var(--muted)';
+      }
+
+      document.getElementById('enrolExistingGroup').style.display = isExisting ? 'block' : 'none';
+      document.getElementById('enrolNewGroup').style.display = isExisting ? 'none' : 'block';
     }
 
     function handleEnrolMemberSearch(query) {
