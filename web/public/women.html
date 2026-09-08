@@ -910,7 +910,6 @@
       <div class="brand-women">
         <div class="brand-logo-wrap">
           <img src="/church-logo.jpg" alt="Solutions Faith Ministry Logo" onerror="this.src='https://via.placeholder.com/44x44?text=SFM'" />
-          <div class="brand-badge-icon"><i class="fas fa-crown"></i></div>
         </div>
         <div>
           <div class="brand-title">SOLUTIONS FAITH MINISTRY</div>
@@ -922,7 +921,7 @@
 
       <div class="nav-actions" id="womenNavActions" style="display: none;">
         <span id="womenNavUserBadge" style="font-size: 12px; background: rgba(225,29,72,0.2); border: 1px solid rgba(225,29,72,0.4); padding: 6px 12px; border-radius: 20px; font-weight: 700; color: #fda4af; display: inline-flex; align-items: center; gap: 6px;">
-          <i class="fas fa-crown"></i> <span id="womenOfficerName">Women's Ministry Leader</span>
+          <i class="fas fa-user-circle"></i> <span id="womenOfficerName">Women's Ministry Leader</span>
         </span>
         <button type="button" class="btn-header-logout" onclick="handleWomenLogout()">
           <i class="fas fa-sign-out-alt"></i> Sign Out
@@ -934,9 +933,7 @@
   <!-- 2. LOGIN GATE (Dedicated Standalone Screen) -->
   <div class="women-container" id="womenLoginScreen" style="display: none; max-width: 440px; margin: 50px auto;">
     <div class="panel-card" style="text-align: center; padding: 40px 32px; border-top: 4px solid var(--rose); box-shadow: 0 10px 30px rgba(0,0,0,0.06);">
-      <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--rose-subtle); color: var(--rose); display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; border: 1.5px solid #fecdd3;">
-        <i class="fas fa-crown"></i>
-      </div>
+      <img src="/church-logo.jpg" alt="Solutions Faith Ministry Logo" style="width: 58px; height: 58px; border-radius: 50%; border: 2px solid var(--accent); margin-bottom: 14px; object-fit: cover; background: white;" onerror="this.src='https://via.placeholder.com/58x58?text=SFM'" />
       <h2 style="font-family: Manrope, sans-serif; font-size: 22px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
         Women of Faith Portal
       </h2>
@@ -1033,7 +1030,7 @@
     <!-- Active Fund Switcher Tabs -->
     <div class="fund-switcher-wrap" id="fundSwitcherPills">
       <button class="fund-pill active" data-type="WOMEN_DUES" onclick="switchActiveFund('WOMEN_DUES')">
-        <i class="fas fa-crown" style="color: #fb7185;"></i> Women Monthly Dues
+        <i class="fas fa-calendar-check" style="color: var(--rose);"></i> Women Monthly Dues
       </button>
       <button class="fund-pill" data-type="WOMEN_CONTRIBUTION" onclick="switchActiveFund('WOMEN_CONTRIBUTION')">
         <i class="fas fa-gem" style="color: #f472b6;"></i> Women Contribution
@@ -1762,7 +1759,7 @@
 
       let html = `
         <button class="fund-pill ${activeFundType === 'WOMEN_DUES' ? 'active' : ''}" data-type="WOMEN_DUES" onclick="switchActiveFund('WOMEN_DUES')">
-          <i class="fas fa-crown" style="color: #fb7185;"></i> Women Monthly Dues
+          <i class="fas fa-calendar-check" style="color: var(--rose);"></i> Women Monthly Dues
         </button>
         <button class="fund-pill ${activeFundType === 'WOMEN_CONTRIBUTION' ? 'active' : ''}" data-type="WOMEN_CONTRIBUTION" onclick="switchActiveFund('WOMEN_CONTRIBUTION')">
           <i class="fas fa-gem" style="color: #f472b6;"></i> Women Contribution
@@ -1832,7 +1829,7 @@
       const title = document.getElementById('panelMatrixTitle');
       const desc = document.getElementById('panelMatrixDesc');
       if (fundType === 'WOMEN_DUES') {
-        title.innerHTML = '<i class="fas fa-crown" style="color: var(--rose);"></i> Women Monthly Dues Matrix';
+        title.innerHTML = '<i class="fas fa-calendar-check" style="color: var(--rose);"></i> Women Monthly Dues Matrix';
         desc.innerText = 'Track 12-month dues payments (Jan–Dec) per sister. Click any cell to record dues.';
       } else if (fundType === 'WOMEN_CONTRIBUTION') {
         title.innerHTML = '<i class="fas fa-gem" style="color: var(--rose);"></i> Women Contribution Tracking';
