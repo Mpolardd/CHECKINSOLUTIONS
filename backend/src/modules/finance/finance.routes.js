@@ -259,6 +259,11 @@ router.get('/collection-types', requireAuth, async (req, res, next) => {
       orderBy: { createdAt: 'asc' }
     });
 
+    const deletionLogs = await prisma.auditLog.findMany({
+      where: { entity: 'DELETE_COLLECTION_TYPE' }
+    });
+    const deletedIds = new Set(deletionLogs.map(l => (l.entityId || '').trim().toUpperCase()));
+
     const standardTypes = [
       {
         id: 'welfare',
@@ -287,9 +292,11 @@ router.get('/collection-types', requireAuth, async (req, res, next) => {
       ...(l.metadata || {}),
       isStandard: false,
       createdAt: l.createdAt
-    })).filter(t => t.active !== false);
+    })).filter(t => t.active !== false && !deletedIds.has((t.id || '').toUpperCase()) && !deletedIds.has((t.name || '').toUpperCase()));
 
-    res.json([...standardTypes, ...customTypes]);
+    const standards = standardTypes.filter(s => !deletedIds.has(s.id.toUpperCase()) && !deletedIds.has(s.name.toUpperCase()));
+
+    res.json([...standards, ...customTypes]);
   } catch (e) { next(e); }
 });
 
@@ -331,12 +338,22 @@ router.post('/collection-types', requireAuth, requireRoles('SUPER_ADMIN', 'FINAN
 router.delete('/collection-types/:id', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const { id } = req.params;
-    if (id === 'welfare' || id === 'partnership') {
-      return res.status(400).json({ error: 'Standard collection types cannot be deleted' });
-    }
+    const cleanId = (id || '').trim();
+
     await prisma.auditLog.deleteMany({
-      where: { entity: 'COLLECTION_TYPE', entityId: id }
+      where: { entity: 'COLLECTION_TYPE', entityId: cleanId }
     });
+
+    await prisma.auditLog.create({
+      data: {
+        actorId: req.user?.userId || null,
+        action: 'DELETE_COLLECTION_TYPE',
+        entity: 'DELETE_COLLECTION_TYPE',
+        entityId: cleanId.toUpperCase(),
+        metadata: { deletedId: cleanId, deletedAt: new Date().toISOString() }
+      }
+    });
+
     res.json({ success: true, message: 'Collection type removed' });
   } catch (e) { next(e); }
 });
