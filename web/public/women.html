@@ -948,7 +948,12 @@
         </div>
         <div class="form-group">
           <label for="womenLoginPassword" class="form-label">Password *</label>
-          <input required type="password" id="womenLoginPassword" class="form-ctrl" style="width: 100%;" placeholder="Enter password" autocomplete="current-password" />
+          <div style="position: relative;">
+            <input required type="password" id="womenLoginPassword" class="form-ctrl" style="width: 100%; padding-right: 40px;" placeholder="Enter password" autocomplete="current-password" />
+            <button type="button" onclick="toggleWomenLoginPasswordVisibility()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px 6px; font-size: 14px;" title="Show/Hide Password">
+              <i id="womenPwToggleIcon" class="fas fa-eye"></i>
+            </button>
+          </div>
         </div>
 
         <div id="womenLoginErrorMsg" style="display: none; padding: 12px; margin-bottom: 16px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 6px; font-size: 13px; font-weight: 600; text-align: left;"></div>
@@ -1518,7 +1523,6 @@
     <div class="footer-inner" style="justify-content: center; text-align: center;">
       <div>
         <strong style="color: var(--ink);">Solutions Faith Ministry International</strong>
-        <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Women of Faith — Confidential Women's Fellowship Treasury &amp; Dues System</div>
       </div>
     </div>
   </footer>
@@ -1689,6 +1693,19 @@
         purgeWomenAuth();
         showWomenLogin();
         showToast('Signed out safely.', 'info');
+      }
+    }
+
+    function toggleWomenLoginPasswordVisibility() {
+      const pwInput = document.getElementById('womenLoginPassword');
+      const icon = document.getElementById('womenPwToggleIcon');
+      if (!pwInput) return;
+      if (pwInput.type === 'password') {
+        pwInput.type = 'text';
+        if (icon) { icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); }
+      } else {
+        pwInput.type = 'password';
+        if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
       }
     }
 
