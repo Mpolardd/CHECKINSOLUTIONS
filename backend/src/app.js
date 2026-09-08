@@ -34,24 +34,23 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined'));
 }
 
-// Global API rate limiter (300 requests / minute)
+// Global API rate limiter (1000 requests / minute)
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: process.env.NODE_ENV === 'test' ? 10000 : 300,
+  max: process.env.NODE_ENV === 'test' ? 10000 : 1000,
   standardHeaders: true,
   legacyHeaders: false
 });
 app.use(globalLimiter);
 
-// Dedicated security rate limiter for authentication endpoints (15 attempts / 15 minutes)
+// Dedicated security rate limiter for authentication endpoints (60 attempts / 15 minutes)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'test' ? 10000 : 15,
+  max: process.env.NODE_ENV === 'test' ? 10000 : 60,
   message: { error: 'Too many authentication attempts. Please try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false
 });
-app.use(authLimiter);
 
 app.get(['/', '/api', '/api/v1', '/v1'], (req, res) => res.json({ name: 'Church Management API', version: '1.0.0', status: 'operational' }));
 
