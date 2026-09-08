@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const prisma = require('../src/config/prisma');
 
 async function main() {
-  const adminHash = await bcrypt.hash('Solutions12@26', 12);
+  const adminHash = await bcrypt.hash('Prophet2468', 12);
   const financeHash = await bcrypt.hash('Money12@26', 12);
   const womenHash = await bcrypt.hash('Women12@26', 12);
 
