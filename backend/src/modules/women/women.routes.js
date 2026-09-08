@@ -186,7 +186,7 @@ router.get('/members', async (req, res, next) => {
       members = members.filter(m => (m.collectionType || 'WOMEN_DUES').toUpperCase() === cNorm);
     }
 
-    // Fetch payments to compute lifetime contributions
+    // Fetch payments to compute lifetime contributions per collection
     const paymentLogs = await prisma.auditLog.findMany({
       where: { entity: 'WOMEN_PAYMENT' },
       select: { metadata: true }
@@ -194,16 +194,33 @@ router.get('/members', async (req, res, next) => {
 
     const totalsMap = {};
     for (const p of paymentLogs) {
-      if (p.metadata && (p.metadata.womenMemberId || p.metadata.partnerId)) {
-        const mid = p.metadata.womenMemberId || p.metadata.partnerId;
-        totalsMap[mid] = (totalsMap[mid] || 0) + (Number(p.metadata.amount) || 0);
+      if (p.metadata) {
+        const pCol = (p.metadata.collectionType || 'WOMEN_DUES').trim().toUpperCase();
+        const amt = Number(p.metadata.amount) || 0;
+        if (p.metadata.womenMemberId) {
+          const k = `${p.metadata.womenMemberId}_${pCol}`;
+          totalsMap[k] = (totalsMap[k] || 0) + amt;
+        }
+        if (p.metadata.partnerId) {
+          const k = `${p.metadata.partnerId}_${pCol}`;
+          totalsMap[k] = (totalsMap[k] || 0) + amt;
+        }
+        if (p.metadata.memberName) {
+          const k = `${(p.metadata.memberName || '').trim().toLowerCase()}_${pCol}`;
+          totalsMap[k] = (totalsMap[k] || 0) + amt;
+        }
       }
     }
 
-    const enriched = members.map(m => ({
-      ...m,
-      totalContributed: totalsMap[m.id] || 0
-    }));
+    const enriched = members.map(m => {
+      const mCol = (m.collectionType || 'WOMEN_DUES').trim().toUpperCase();
+      const kId = `${m.id}_${mCol}`;
+      const kName = `${(m.memberName || '').trim().toLowerCase()}_${mCol}`;
+      return {
+        ...m,
+        totalContributed: totalsMap[kId] || totalsMap[kName] || 0
+      };
+    });
 
     res.json(enriched);
   } catch (e) { next(e); }
@@ -453,14 +470,29 @@ router.get('/matrix', async (req, res, next) => {
       members = members.filter(m => (m.collectionType || 'WOMEN_DUES').toUpperCase() === cNorm);
     }
 
-    // 5. Map payments by womenMemberId/memberName and month
+    // 5. Map payments by womenMemberId/memberName, collectionType, and month
     const memberMonthMap = {};
     for (const p of allPayments) {
       if (p.targetMonth && p.targetMonth.startsWith(String(year))) {
         const monthPart = p.targetMonth.slice(5, 7); // e.g. "08"
-        const key = p.womenMemberId || p.partnerId || p.memberName;
-        if (!memberMonthMap[key]) memberMonthMap[key] = {};
-        memberMonthMap[key][monthPart] = (memberMonthMap[key][monthPart] || 0) + (Number(p.amount) || 0);
+        const pCol = (p.collectionType || 'WOMEN_DUES').trim().toUpperCase();
+        const amt = Number(p.amount) || 0;
+
+        if (p.womenMemberId) {
+          const k = `${p.womenMemberId}_${pCol}`;
+          if (!memberMonthMap[k]) memberMonthMap[k] = {};
+          memberMonthMap[k][monthPart] = (memberMonthMap[k][monthPart] || 0) + amt;
+        }
+        if (p.partnerId) {
+          const k = `${p.partnerId}_${pCol}`;
+          if (!memberMonthMap[k]) memberMonthMap[k] = {};
+          memberMonthMap[k][monthPart] = (memberMonthMap[k][monthPart] || 0) + amt;
+        }
+        if (p.memberName) {
+          const k = `${(p.memberName || '').trim().toLowerCase()}_${pCol}`;
+          if (!memberMonthMap[k]) memberMonthMap[k] = {};
+          memberMonthMap[k][monthPart] = (memberMonthMap[k][monthPart] || 0) + amt;
+        }
       }
     }
 
@@ -479,10 +511,15 @@ router.get('/matrix', async (req, res, next) => {
 
       const monthlyStatus = {};
       let memberYearPaid = 0;
+      const mCol = (m.collectionType || 'WOMEN_DUES').trim().toUpperCase();
+      const kId = `${m.id}_${mCol}`;
+      const kName = `${(m.memberName || '').trim().toLowerCase()}_${mCol}`;
 
       for (let month = 1; month <= 12; month++) {
         const mKey = String(month).padStart(2, '0');
-        const paidAmount = (memberMonthMap[m.id] && memberMonthMap[m.id][mKey]) || (memberMonthMap[m.memberName] && memberMonthMap[m.memberName][mKey]) || 0;
+        const paidAmount = (memberMonthMap[kId] && memberMonthMap[kId][mKey])
+          || (memberMonthMap[kName] && memberMonthMap[kName][mKey])
+          || 0;
         memberYearPaid += paidAmount;
         totalYearToDate += paidAmount;
 

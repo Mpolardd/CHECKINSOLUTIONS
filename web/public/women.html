@@ -1913,8 +1913,26 @@
         });
       }
 
-      // Update KPI sisters count strictly based on enrolled sisters
-      document.getElementById('kpiTotalSisters').innerText = sisterRows.length;
+      // Update KPI metrics strictly based on enrolled sisters in active table
+      const totalSisters = sisterRows.length;
+      let monthlyTarget = 0;
+      let collectedMonth = 0;
+      let totalYtd = 0;
+      let currentMonthPaidCount = 0;
+
+      sisterRows.forEach(s => {
+        monthlyTarget += Number(s.pledgeAmount) || 0;
+        const curSt = (s.monthlyStatus && s.monthlyStatus[currentMonthKey]) || {};
+        collectedMonth += Number(curSt.paid) || 0;
+        if (curSt.status === 'PAID') currentMonthPaidCount++;
+        totalYtd += Number(s.yearTotalPaid) || 0;
+      });
+
+      if (document.getElementById('kpiTotalSisters')) document.getElementById('kpiTotalSisters').innerText = totalSisters;
+      if (document.getElementById('kpiMonthlyTarget')) document.getElementById('kpiMonthlyTarget').innerText = `GHS ${monthlyTarget.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      if (document.getElementById('kpiCollectedMonth')) document.getElementById('kpiCollectedMonth').innerText = `GHS ${collectedMonth.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      if (document.getElementById('kpiTotalYtd')) document.getElementById('kpiTotalYtd').innerText = `GHS ${totalYtd.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      if (document.getElementById('kpiCollectedSub')) document.getElementById('kpiCollectedSub').innerText = `${currentMonthPaidCount} sisters fully paid`;
 
       if (filtered.length === 0) {
         const tableName = activeFundType === 'ALL' ? 'Women\'s Ministry' : activeFundType.replace(/_/g, ' ');
