@@ -19,6 +19,8 @@ export default defineConfig({
             req.url = `/finance.html${query}`;
           } else if (pathname === '/partnership' || pathname === '/partnerships') {
             req.url = `/partnership.html${query}`;
+          } else if (pathname === '/women' || pathname === '/women-ministry') {
+            req.url = `/women.html${query}`;
           } else if (pathname === '/checkin' || pathname === '/kiosk') {
             req.url = `/checkin.html${query}`;
           }

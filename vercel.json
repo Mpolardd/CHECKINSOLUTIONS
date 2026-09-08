@@ -22,6 +22,8 @@
     { "source": "/finance", "destination": "/finance.html" },
     { "source": "/partnership", "destination": "/partnership.html" },
     { "source": "/partnerships", "destination": "/partnership.html" },
+    { "source": "/women", "destination": "/women.html" },
+    { "source": "/women-ministry", "destination": "/women.html" },
     { "source": "/checkin", "destination": "/checkin.html" },
     { "source": "/kiosk", "destination": "/checkin.html" }
   ],
@@ -36,6 +38,14 @@
     },
     {
       "source": "/admin",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" },
+        { "key": "Expires", "value": "0" }
+      ]
+    },
+    {
+      "source": "/women",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
         { "key": "Pragma", "value": "no-cache" },

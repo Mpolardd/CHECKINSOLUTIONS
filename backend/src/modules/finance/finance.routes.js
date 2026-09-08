@@ -267,6 +267,7 @@ router.get('/collection-types', requireAuth, async (req, res, next) => {
         description: 'Monthly welfare dues, member emergency support, and benevolence funds',
         icon: 'fas fa-hand-holding-heart',
         color: '#0284c7',
+        targetGroup: 'ALL',
         isStandard: true
       },
       {
@@ -276,6 +277,27 @@ router.get('/collection-types', requireAuth, async (req, res, next) => {
         description: 'Monthly ministry partnership pledges, vision builders, and covenant partners',
         icon: 'fas fa-handshake',
         color: '#c89b55',
+        targetGroup: 'ALL',
+        isStandard: true
+      },
+      {
+        id: 'women_dues',
+        name: 'Women Dues',
+        category: "Women's Ministry",
+        description: "Monthly dues tracking for female church members & Women's Fellowship",
+        icon: 'fas fa-crown',
+        color: '#e11d48',
+        targetGroup: 'WOMEN',
+        isStandard: true
+      },
+      {
+        id: 'women_contribution',
+        name: 'Women Contribution',
+        category: "Women's Ministry",
+        description: "General contributions, special seeds, and offerings for Women's Ministry",
+        icon: 'fas fa-gem',
+        color: '#ec4899',
+        targetGroup: 'WOMEN',
         isStandard: true
       }
     ];
@@ -293,7 +315,7 @@ router.get('/collection-types', requireAuth, async (req, res, next) => {
 
 router.post('/collection-types', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
-    const { name, category = 'Ministry Collection', description = '', frequency = 'MONTHLY', targetAmount = 0, icon = 'fas fa-layer-group', color = '#10b981' } = req.body || {};
+    const { name, category = 'Ministry Collection', description = '', frequency = 'MONTHLY', targetAmount = 0, icon = 'fas fa-layer-group', color = '#10b981', targetGroup = 'ALL' } = req.body || {};
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Collection type name is required' });
     }
@@ -308,6 +330,7 @@ router.post('/collection-types', requireAuth, requireRoles('SUPER_ADMIN', 'FINAN
       targetAmount: Number(targetAmount) || 0,
       icon,
       color,
+      targetGroup: targetGroup ? targetGroup.trim().toUpperCase() : 'ALL',
       active: true
     };
 
