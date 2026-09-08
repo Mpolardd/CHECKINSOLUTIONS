@@ -5909,20 +5909,50 @@
       const mfEl = document.getElementById('repAttMaleFemale');
       if (mfEl) mfEl.innerText = `${maleCount} M / ${femaleCount} F`;
 
-      // Group into compiled service sessions
+      // Group into compiled service sessions (normalized by date and service title)
       compiledAttSessionsMap = {};
       list.forEach(item => {
-        const rawDate = formatLocalDate(item.checkedInAt || Date.now());
-        const dateFormatted = new Date(item.checkedInAt || Date.now()).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
-        const serviceName = item.service?.serviceType?.name || item.serviceName || 'Sunday Service';
-        const key = `${rawDate}_${serviceName}`;
+        // Resolve clean ISO YYYY-MM-DD date using UTC to avoid local timezone shifts
+        let rawDate = '';
+        if (item.service && item.service.serviceDate) {
+          rawDate = typeof item.service.serviceDate === 'string'
+            ? item.service.serviceDate.slice(0, 10)
+            : formatLocalDate(item.service.serviceDate);
+        }
+        if (!rawDate && item.checkedInAt) {
+          if (typeof item.checkedInAt === 'string') {
+            rawDate = item.checkedInAt.slice(0, 10);
+          } else {
+            const d = new Date(item.checkedInAt);
+            const y = d.getUTCFullYear();
+            const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(d.getUTCDate()).padStart(2, '0');
+            rawDate = `${y}-${m}-${day}`;
+          }
+        }
+        if (!rawDate) rawDate = formatLocalDate(new Date());
+
+        // Format nice display date e.g. "Sep 4, 2026"
+        const dParts = rawDate.split('-');
+        let dateFormatted = rawDate;
+        if (dParts.length === 3) {
+          const dObj = new Date(Number(dParts[0]), Number(dParts[1]) - 1, Number(dParts[2]));
+          dateFormatted = dObj.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        // Normalize service title so "THE NIGHT OF SUPERNATURAL", "Sunday: THE NIGHT OF SUPERNATURAL", etc. group together
+        const rawServiceName = item.service?.serviceType?.name || item.serviceName || 'Sunday Service';
+        const cleanServiceName = rawServiceName.replace(/^(Sunday|Wednesday|Friday)[:\s—-]+/i, '').trim();
+        const normServiceKey = cleanServiceName.toUpperCase().replace(/\s+/g, ' ');
+
+        const key = `${rawDate}_${normServiceKey}`;
 
         if (!compiledAttSessionsMap[key]) {
           compiledAttSessionsMap[key] = {
             id: key,
             dateRaw: rawDate,
             dateFormatted,
-            serviceName,
+            serviceName: cleanServiceName || 'Sunday Service',
             totalLogs: 0,
             maleCount: 0,
             femaleCount: 0,
