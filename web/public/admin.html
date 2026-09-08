@@ -4928,7 +4928,7 @@
         currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
       } catch (e) {}
 
-      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN');
       const isSuperAdmin = !isSubAdmin;
 
       // Sub-Admins NEVER have access to Financial Overview & Analytics or Staff & Sub-Admins
@@ -5464,7 +5464,7 @@
       try {
         currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
       } catch (e) {}
-      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN');
       const isSuperAdmin = !isSubAdmin;
 
       // Apply tab permissions first so sub-admins never see financial tabs
@@ -5653,7 +5653,7 @@
       } catch (e) {}
 
       // Hard guard: Sub-Admins cannot access Financial Overview & Analytics or Sub-Admin management under any circumstances
-      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN');
       if (isSubAdmin) {
         const rawPerms = Array.isArray(currentUser.permissions) 
           ? currentUser.permissions 
@@ -5705,11 +5705,11 @@
         currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
       } catch (e) {}
 
-      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN');
       const isSuperAdmin = !isSubAdmin;
 
-      const name = (currentUser && currentUser.name) ? currentUser.name : (isSuperAdmin ? 'Super Administrator' : 'Staff Officer');
-      const email = (currentUser && currentUser.email) ? currentUser.email : 'admin@solutionsfaith.com';
+      const name = (currentUser && currentUser.name) ? currentUser.name : (isSuperAdmin ? 'Super Admin' : 'Staff Officer');
+      const email = (currentUser && currentUser.email) ? currentUser.email : (isSuperAdmin ? 'admin@solutionsfaith.com' : 'staff@solutionsfaith.com');
       const roleLabel = isSuperAdmin ? 'SUPER ADMIN (Executive)' : 'SUB ADMIN (Staff)';
       const avatarChar = (name.trim().charAt(0) || 'A').toUpperCase();
 
@@ -5729,7 +5729,7 @@
         roleBadgeEl.style.borderColor = isSuperAdmin ? '#fde68a' : '#bae6fd';
       }
       if (headerBadge) {
-        headerBadge.innerText = name.split(' ')[0] || 'Profile';
+        headerBadge.innerText = name;
       }
     }
 
@@ -6892,7 +6892,7 @@
       try {
         currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
       } catch (e) {}
-      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN' || currentUser.role !== 'SUPER_ADMIN');
+      const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN');
       if (isSubAdmin) {
         rawFinanceEntries = [];
         filteredFinanceEntries = [];
