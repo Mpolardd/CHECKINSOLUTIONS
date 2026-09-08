@@ -143,6 +143,14 @@ router.post('/collection-types', async (req, res, next) => {
       active: true
     };
 
+    // Clear any prior deletion tombstones for this name/id so it displays cleanly
+    await prisma.auditLog.deleteMany({
+      where: {
+        entity: 'DELETE_WOMEN_COLLECTION_TYPE',
+        entityId: { in: [cleanName.toUpperCase(), cleanName.replace(/\s+/g, '_').toUpperCase(), typeId.toUpperCase()] }
+      }
+    });
+
     await prisma.auditLog.create({
       data: {
         actorId: await resolveActorId(req),
