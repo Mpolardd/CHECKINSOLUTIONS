@@ -2204,12 +2204,12 @@
 
     <!-- Reusable Custom Confirmation Modal -->
     <div class="modal-backdrop" id="customConfirmModal" style="display: none;" onclick="if(event.target===this)closeCustomConfirmModal(false)">
-      <div class="modal-card" style="max-width: 400px; text-align: center; padding: 28px 24px;">
-        <div style="width: 56px; height: 56px; border-radius: 50%; background: #fff1f2; color: #e11d48; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px;">
+      <div class="modal-card" style="max-width: 460px; text-align: center; padding: 28px 24px;">
+        <div id="confirmModalIconWrap" style="width: 56px; height: 56px; border-radius: 50%; background: #fff1f2; color: #e11d48; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px;">
           <i class="fas fa-sign-out-alt" id="confirmModalIcon"></i>
         </div>
         <h3 style="font-family: Manrope, sans-serif; font-size: 19px; font-weight: 800; color: var(--ink); margin-bottom: 8px;" id="confirmModalTitle">Confirm Action</h3>
-        <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px; line-height: 1.45;" id="confirmModalText">Are you sure you want to proceed?</p>
+        <div style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px; line-height: 1.45;" id="confirmModalText">Are you sure you want to proceed?</div>
         
         <div style="display: flex; gap: 10px; justify-content: center;">
           <button type="button" class="btn-main" style="flex: 1; background: #f1f5f9; color: var(--ink); border: 1px solid var(--line); justify-content: center; font-size: 13.5px;" onclick="closeCustomConfirmModal(false)">Cancel</button>
@@ -10770,31 +10770,79 @@ closeCreateProgramModal();
 
     /* ── CUSTOM CONFIRMATION MODAL SYSTEM ── */
     let _confirmCallback = null;
-    function showConfirmModal(title, text, callback, iconClass = 'fas fa-sign-out-alt', btnText = 'Log Out', btnColor = '#c5221f') {
-      const titleEl = document.getElementById('confirmModalTitle');
-      const textEl = document.getElementById('confirmModalText');
-      const okBtn = document.getElementById('confirmModalOkBtn');
-      const icon = document.getElementById('confirmModalIcon');
-      const modal = document.getElementById('customConfirmModal');
+    let _confirmResolver = null;
 
-      if (titleEl) titleEl.innerText = title;
-      if (textEl) textEl.innerText = text;
-      if (okBtn) {
-        okBtn.innerText = btnText;
-        okBtn.style.background = btnColor;
-      }
-      if (icon) icon.className = iconClass;
-      _confirmCallback = callback;
-      if (modal) modal.style.display = 'flex';
+    function showConfirmModal(title, text, callbackOrBtnText, iconClass = 'fas fa-sign-out-alt', btnText = 'Proceed', btnColor = '#c5221f') {
+      return new Promise((resolve) => {
+        _confirmResolver = resolve;
+        _confirmCallback = null;
+
+        let finalIcon = iconClass;
+        let finalBtnText = btnText;
+        let finalBtnColor = btnColor;
+
+        if (typeof callbackOrBtnText === 'function') {
+          _confirmCallback = callbackOrBtnText;
+        } else if (typeof callbackOrBtnText === 'string') {
+          finalBtnText = callbackOrBtnText;
+          if (iconClass === 'fas fa-sign-out-alt') {
+            finalIcon = 'fas fa-paper-plane';
+            finalBtnColor = '#0284c7';
+          }
+        }
+
+        const titleEl = document.getElementById('confirmModalTitle');
+        const textEl = document.getElementById('confirmModalText');
+        const okBtn = document.getElementById('confirmModalOkBtn');
+        const icon = document.getElementById('confirmModalIcon');
+        const iconWrap = document.getElementById('confirmModalIconWrap');
+        const modal = document.getElementById('customConfirmModal');
+
+        if (titleEl) titleEl.innerText = title || 'Confirm Action';
+        if (textEl) {
+          if (typeof text === 'string' && text.includes('<') && text.includes('>')) {
+            textEl.innerHTML = text;
+          } else {
+            textEl.innerText = text || '';
+          }
+        }
+        if (okBtn) {
+          okBtn.innerText = finalBtnText;
+          okBtn.style.background = finalBtnColor;
+          okBtn.style.borderColor = finalBtnColor;
+        }
+        if (icon) icon.className = finalIcon;
+        if (iconWrap) {
+          if (finalBtnColor === '#0284c7' || finalBtnColor === 'var(--primary)') {
+            iconWrap.style.background = '#e0f2fe';
+            iconWrap.style.color = '#0284c7';
+          } else if (finalBtnColor === '#16a34a' || finalBtnColor === '#22c55e') {
+            iconWrap.style.background = '#dcfce7';
+            iconWrap.style.color = '#16a34a';
+          } else {
+            iconWrap.style.background = '#fff1f2';
+            iconWrap.style.color = '#e11d48';
+          }
+        }
+        if (modal) modal.style.display = 'flex';
+      });
     }
 
     function closeCustomConfirmModal(confirmed) {
       const modal = document.getElementById('customConfirmModal');
       if (modal) modal.style.display = 'none';
-      if (confirmed && typeof _confirmCallback === 'function') {
-        _confirmCallback();
-      }
+
+      const cb = _confirmCallback;
+      const res = _confirmResolver;
       _confirmCallback = null;
+      _confirmResolver = null;
+
+      if (confirmed && typeof cb === 'function') {
+        cb();
+      }
+      if (typeof res === 'function') {
+        res(Boolean(confirmed));
+      }
     }
 
     /* TOAST NOTIFICATION SYSTEM */
