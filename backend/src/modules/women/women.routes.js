@@ -19,8 +19,9 @@ async function requireWomenAccess(req, res, next) {
 
     // 2. Sub-Admin with 'women' permission
     if (role === 'ADMIN') {
+      const targetUserId = req.user.id || req.user.userId || req.user.sub;
       const log = await prisma.auditLog.findFirst({
-        where: { entity: 'SUB_ADMIN_PROFILE', entityId: req.user.sub || req.user.userId },
+        where: { entity: 'SUB_ADMIN_PROFILE', entityId: targetUserId },
         orderBy: { createdAt: 'desc' }
       });
       const perms = (log && log.metadata && Array.isArray(log.metadata.permissions)) ? log.metadata.permissions : [];
@@ -37,7 +38,7 @@ async function requireWomenAccess(req, res, next) {
 
 // Helper to safely resolve valid User ID for AuditLog actor relation
 async function resolveActorId(req) {
-  const uid = req.user?.userId || req.user?.sub;
+  const uid = req.user?.id || req.user?.userId || req.user?.sub;
   if (!uid) return null;
   try {
     const u = await prisma.user.findUnique({ where: { id: uid }, select: { id: true } });
@@ -237,14 +238,28 @@ router.post('/members', async (req, res, next) => {
 
     const cleanName = memberName.trim();
     const cleanCollection = (collectionType || 'WOMEN_DUES').trim();
-    const womenMemberId = id || `wmem_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
-    // Remove any previous active record with same ID to prevent duplicates
-    if (id) {
-      await prisma.auditLog.deleteMany({
-        where: { entity: 'WOMEN_MEMBER', entityId: id }
+    let targetEntityId = id;
+    if (!targetEntityId) {
+      const existingLogs = await prisma.auditLog.findMany({
+        where: { entity: 'WOMEN_MEMBER' }
       });
+      const match = existingLogs.find(l =>
+        l.metadata &&
+        (l.metadata.memberName || '').trim().toLowerCase() === cleanName.toLowerCase() &&
+        (l.metadata.collectionType || 'WOMEN_DUES').trim().toUpperCase() === cleanCollection.toUpperCase()
+      );
+      if (match) {
+        targetEntityId = match.entityId || match.id;
+      }
     }
+
+    const womenMemberId = targetEntityId || `wmem_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+
+    // Remove any previous active record with same entityId to update in place
+    await prisma.auditLog.deleteMany({
+      where: { entity: 'WOMEN_MEMBER', entityId: womenMemberId }
+    });
 
     const metadata = {
       memberId: memberId || null,
@@ -515,6 +530,8 @@ router.get('/matrix', async (req, res, next) => {
       const kId = `${m.id}_${mCol}`;
       const kName = `${(m.memberName || '').trim().toLowerCase()}_${mCol}`;
 
+      const activeMonthNum = (year < currentYear) ? 12 : ((year > currentYear) ? 1 : currentMonthNum);
+
       for (let month = 1; month <= 12; month++) {
         const mKey = String(month).padStart(2, '0');
         const paidAmount = (memberMonthMap[kId] && memberMonthMap[kId][mKey])
@@ -525,7 +542,7 @@ router.get('/matrix', async (req, res, next) => {
 
         let status = 'PENDING';
         const isPastMonth = (year < currentYear) || (year === currentYear && month < currentMonthNum);
-        const isCurrentMonth = (year === currentYear && month === currentMonthNum);
+        const isCurrentMonth = (month === activeMonthNum);
 
         if (paidAmount >= pledge && pledge > 0) {
           status = 'PAID';

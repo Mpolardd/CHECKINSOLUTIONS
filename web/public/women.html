@@ -2663,7 +2663,11 @@ Solutions Faith Ministry International`
             return;
           }
 
-          tbody.innerHTML = womenPayments.slice(0, 25).map(p => `
+          window.womenRecentPaymentsMap = {};
+          tbody.innerHTML = womenPayments.slice(0, 25).map(p => {
+            const payId = p.paymentId || p.id || `pay_${Math.random()}`;
+            window.womenRecentPaymentsMap[payId] = p;
+            return `
             <tr style="border-bottom: 1px solid #f1f5f9;">
               <td style="padding: 10px 14px; color: var(--muted);">${p.paymentDate || '—'}</td>
               <td style="padding: 10px 14px;"><strong>${escapeHtml(p.memberName || 'Sister')}</strong></td>
@@ -2683,14 +2687,20 @@ Solutions Faith Ministry International`
               <td style="padding: 10px 14px; color: var(--muted); font-size: 12px;">${p.paymentMethod || 'CASH'}</td>
               <td style="padding: 10px 14px; color: var(--muted); font-size: 12px;">${escapeHtml(p.recordedBy || 'Officer')}</td>
               <td style="padding: 10px 14px; text-align: right;">
-                <button type="button" class="btn-outline" style="padding: 3px 8px; font-size: 11px;" onclick="showReceiptModal(${escapeHtml(JSON.stringify(p))})">
+                <button type="button" class="btn-outline" style="padding: 3px 8px; font-size: 11px;" onclick="viewRecentPaymentReceipt('${payId}')">
                   <i class="fas fa-receipt"></i> View
                 </button>
               </td>
             </tr>
-          `).join('');
+          `;
+          }).join('');
         }
       } catch (err) {}
+    }
+
+    function viewRecentPaymentReceipt(paymentId) {
+      const p = window.womenRecentPaymentsMap && window.womenRecentPaymentsMap[paymentId];
+      if (p) showReceiptModal(p);
     }
 
     // ── EXCEL EXPORT ──
