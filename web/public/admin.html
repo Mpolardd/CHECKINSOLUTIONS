@@ -3763,8 +3763,8 @@
           </div>
           <div>
             <label class="form-label" style="font-weight: 700; font-size: 12px;">SMS Sender ID * (Max 11 chars)</label>
-            <input type="text" id="settingsSmsSenderId" class="form-ctrl" value="Solutions" maxlength="11" style="font-weight: 700; font-size: 13px;" />
-            <span style="font-size: 11px; color: var(--muted); margin-top: 4px; display: block;">e.g. Solutions, SFMI, FaithMin (Registered on Arkesel).</span>
+            <input type="text" id="settingsSmsSenderId" class="form-ctrl" value="SMFI" maxlength="11" style="font-weight: 700; font-size: 13px;" />
+            <span style="font-size: 11px; color: var(--muted); margin-top: 4px; display: block;">Registered on your Arkesel dashboard.</span>
           </div>
         </div>
 
@@ -14034,7 +14034,7 @@ _Warm Regards,_
 
       try {
         const token = await getAdminAuthToken();
-        const senderId = document.getElementById('settingsSmsSenderId')?.value?.trim() || 'Solutions';
+        const senderId = document.getElementById('settingsSmsSenderId')?.value?.trim() || 'SMFI';
 
         const res = await fetch(`${API_BASE}/sms/send`, {
           method: 'POST',
@@ -14073,7 +14073,7 @@ _Warm Regards,_
       const template = textarea ? textarea.value : MSG_TEMPLATES.THANK_YOU;
       const svcName = document.getElementById('msgServiceSelect')?.value || 'Service';
       const dateIso = getEffectiveSessionDateIso();
-      const senderId = document.getElementById('settingsSmsSenderId')?.value?.trim() || 'Solutions';
+      const senderId = document.getElementById('settingsSmsSenderId')?.value?.trim() || 'SMFI';
 
       // Preview sample
       const sampleText = formatWhatsAppMessageForRecipient(template, selected[0], svcName, dateIso)

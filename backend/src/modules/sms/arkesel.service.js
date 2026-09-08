@@ -14,8 +14,8 @@ class ArkeselSmsService {
   }
 
   getSenderId(explicitSender) {
-    const s = (explicitSender || process.env.ARKESEL_SENDER_ID || 'Solutions').trim();
-    return s.substring(0, 11) || 'Solutions';
+    const s = (explicitSender || process.env.ARKESEL_SENDER_ID || 'SMFI').trim();
+    return s.substring(0, 11) || 'SMFI';
   }
 
   /**
