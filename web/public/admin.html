@@ -12853,6 +12853,33 @@ closeCreateProgramModal();
        CONTACT & WHATSAPP MESSAGING CENTER LOGIC
        ══════════════════════════════════════════════════════════════════════ */
 
+    function cleanDuplicateLocationTime(text) {
+      if (!text || typeof text !== 'string') return text || '';
+      // Pattern 1: Raw duplicate of 'from ..., located at Amasaman, behind the Stadium'
+      let s = text.replace(/(,\s*from\s+[^,\n]+,\s*located at Amasaman, behind the Stadium)\s*,\s*from\s+[^,\n]+,\s*located at Amasaman, behind the Stadium/gi, '$1');
+      
+      // Pattern 2: Template token duplicate 'from *{time}*, located at Amasaman, behind the Stadium'
+      s = s.replace(/(,\s*from\s+\*?\{time\}\*?,\s*located at Amasaman, behind the Stadium)\s*,\s*from\s+\*?\{time\}\*?,\s*located at Amasaman, behind the Stadium/gi, '$1');
+
+      // Pattern 3: Substring duplicate guard
+      const phrase = 'located at Amasaman, behind the Stadium';
+      const firstIdx = s.indexOf(phrase);
+      if (firstIdx !== -1) {
+        const nextIdx = s.indexOf(phrase, firstIdx + phrase.length);
+        if (nextIdx !== -1) {
+          const before = s.slice(0, nextIdx);
+          const after = s.slice(nextIdx + phrase.length);
+          const lastComma = before.lastIndexOf(', from ');
+          if (lastComma !== -1 && lastComma > firstIdx) {
+            s = s.slice(0, lastComma) + after;
+          } else {
+            s = s.slice(0, nextIdx) + after;
+          }
+        }
+      }
+      return s;
+    }
+
     const DEFAULT_MSG_TEMPLATES = {
       THANK_YOU: `Hello *{fullName}*,
 
@@ -12947,6 +12974,7 @@ God bless you,
                 .replace(/_Warmest Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
                 .replace(/_Blessings & Love,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
                 .replace(/_Warm Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*');
+              parsed[key] = cleanDuplicateLocationTime(parsed[key]);
             }
           });
           localStorage.setItem('sfmi_custom_msg_templates', JSON.stringify(parsed));
@@ -13221,6 +13249,7 @@ God bless you,
             .replace(/_Warmest Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
             .replace(/_Blessings & Love,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*')
             .replace(/_Warm Regards,_\s*\*Solutions Team\*\s*\*\{churchName\}\*/gi, 'God bless you,\n*{churchName}*');
+          textarea.value = cleanDuplicateLocationTime(textarea.value);
         }
       }
 
@@ -13314,15 +13343,15 @@ God bless you,
       if (tplSelect && textarea) {
         if (targetGroup === 'ABSENTEES' && tplSelect.value === 'THANK_YOU') {
           tplSelect.value = 'WE_MISSED_YOU';
-          textarea.value = MSG_TEMPLATES.WE_MISSED_YOU;
+          textarea.value = cleanDuplicateLocationTime(MSG_TEMPLATES.WE_MISSED_YOU);
           document.getElementById('msgStatTemplateName').innerText = 'We Missed You';
         } else if (targetGroup === 'ATTENDEES' && tplSelect.value === 'WE_MISSED_YOU') {
           tplSelect.value = 'THANK_YOU';
-          textarea.value = MSG_TEMPLATES.THANK_YOU;
+          textarea.value = cleanDuplicateLocationTime(MSG_TEMPLATES.THANK_YOU);
           document.getElementById('msgStatTemplateName').innerText = 'Thank You Note';
         } else if (targetGroup === 'VISITORS' && (tplSelect.value === 'THANK_YOU' || tplSelect.value === 'WE_MISSED_YOU')) {
           tplSelect.value = 'VISITOR_WELCOME';
-          textarea.value = MSG_TEMPLATES.VISITOR_WELCOME;
+          textarea.value = cleanDuplicateLocationTime(MSG_TEMPLATES.VISITOR_WELCOME);
           document.getElementById('msgStatTemplateName').innerText = 'Visitor Welcome';
         }
       }
@@ -13348,7 +13377,7 @@ God bless you,
 
       const tplKey = tplSelect.value;
       if (MSG_TEMPLATES[tplKey] !== undefined) {
-        textarea.value = MSG_TEMPLATES[tplKey];
+        textarea.value = cleanDuplicateLocationTime(MSG_TEMPLATES[tplKey]);
       }
 
       document.querySelectorAll('.msg-tpl-pill').forEach(pill => {
@@ -13894,7 +13923,8 @@ God bless you,
         .replace(/With love in Christ,\s*Solutions Team\s*Solutions Faith Ministry International/gi, 'God bless you,\nSolutions Faith Ministry International')
         .replace(/Warmest Regards,\s*Solutions Team\s*Solutions Faith Ministry International/gi, 'God bless you,\nSolutions Faith Ministry International');
 
-      return res
+      res = cleanDuplicateLocationTime(res);
+      res = res
         .replace(/\{fullName\}/g, fullName)
         .replace(/\{firstName\}/g, fName)
         .replace(/\{serviceName\}/g, svc)
@@ -13902,6 +13932,8 @@ God bless you,
         .replace(/\{time\}/g, timeStr)
         .replace(/\{schedule\}/g, fullTimeStr)
         .replace(/\{churchName\}/g, MSG_CHURCH_NAME);
+
+      return cleanDuplicateLocationTime(res);
     }
 
     function updateLiveMsgPreview() {
@@ -13914,6 +13946,12 @@ God bless you,
       const timeEl = document.getElementById('msgPreviewTime');
 
       if (!textarea) return;
+      if (textarea.value) {
+        const cleaned = cleanDuplicateLocationTime(textarea.value);
+        if (cleaned !== textarea.value) {
+          textarea.value = cleaned;
+        }
+      }
       const val = textarea.value;
 
       if (charCount) charCount.innerText = `${val.length} characters`;
