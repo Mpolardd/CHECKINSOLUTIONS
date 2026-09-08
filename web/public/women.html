@@ -1512,10 +1512,7 @@
       </div>
 
       <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-        <button type="button" class="btn-main" style="background: #25d366; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);" id="btnSendReceiptWhatsapp">
-          <i class="fab fa-whatsapp"></i> Send WhatsApp Receipt
-        </button>
-        <button type="button" class="btn-outline" onclick="window.print()">
+        <button type="button" class="btn-main" onclick="window.print()">
           <i class="fas fa-print"></i> Print
         </button>
         <button type="button" class="btn-outline" onclick="closeReceiptModal()">Close</button>
@@ -2657,9 +2654,10 @@
       document.getElementById('receiptDateOfficer').innerText = `${data.paymentDate} · ${data.recordedBy}`;
 
       const waBtn = document.getElementById('btnSendReceiptWhatsapp');
-      if (data.phone && data.phone !== '—') {
-        const cleanPhone = data.phone.replace(/[^0-9]/g, '');
-        const msg = encodeURIComponent(
+      if (waBtn) {
+        if (data.phone && data.phone !== '—') {
+          const cleanPhone = data.phone.replace(/[^0-9]/g, '');
+          const msg = encodeURIComponent(
 `*Solutions Faith Ministry — Women's Ministry* 🌸
 Official Payment Receipt
 
@@ -2679,12 +2677,13 @@ May God multiply your seed sown and bless your household abundantly!
 _Blessings & Warm Regards,_
 *Women of Faith Treasury Team*
 Solutions Faith Ministry International`
-        );
+          );
 
-        waBtn.onclick = () => window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
-        waBtn.style.display = 'inline-flex';
-      } else {
-        waBtn.style.display = 'none';
+          waBtn.onclick = () => window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
+          waBtn.style.display = 'inline-flex';
+        } else {
+          waBtn.style.display = 'none';
+        }
       }
 
       document.getElementById('receiptModal').style.display = 'flex';
