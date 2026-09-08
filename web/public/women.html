@@ -1523,6 +1523,29 @@
     </div>
   </div>
 
+  <!-- CUSTOM CONFIRMATION MODAL -->
+  <div class="modal-backdrop" id="customConfirmModal" style="display: none;" onclick="if(event.target===this)closeCustomConfirmModal(false)">
+    <div class="modal-card" style="max-width: 440px; text-align: center; padding: 28px 24px;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: #fef2f2; color: #ef4444; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 14px;">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3 style="font-family: Manrope, sans-serif; font-size: 18px; font-weight: 800; color: var(--ink); margin-bottom: 8px;" id="confirmModalTitle">
+        Confirm Action
+      </h3>
+      <p style="font-size: 13.5px; color: var(--muted); line-height: 1.5; margin-bottom: 22px;" id="confirmModalMessage">
+        Are you sure you want to proceed?
+      </p>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button type="button" class="btn-outline" style="flex: 1; justify-content: center; padding: 9px;" onclick="closeCustomConfirmModal(false)">
+          Cancel
+        </button>
+        <button type="button" class="btn-main" id="btnConfirmActionSubmit" style="flex: 1; justify-content: center; padding: 9px; background: #dc2626; border-color: #dc2626;">
+          <i class="fas fa-trash-alt"></i> Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- FOOTER (Isolated & Private) -->
   <footer class="app-footer">
     <div class="footer-inner" style="justify-content: center; text-align: center;">
@@ -2515,9 +2538,13 @@
     // ── DELETE / REMOVE SISTER FROM COLLECTION TABLE ──
     async function deleteSisterFromCollection(id, name, colType) {
       const fundLabel = (colType || activeFundType).replace(/_/g, ' ');
-      if (!confirm(`Are you sure you want to remove "${name}" from the ${fundLabel} table?`)) {
-        return;
-      }
+      const confirmed = await showConfirmModal(
+        'Remove Sister from Table?',
+        `Are you sure you want to remove <strong>"${escapeHtml(name)}"</strong> from the <strong>${escapeHtml(fundLabel)}</strong> table?`,
+        'Remove Sister'
+      );
+      if (!confirmed) return;
+
       try {
         const token = getWomenToken();
         const res = await fetch(`${API_BASE}/women/members/${id}`, {
@@ -2525,7 +2552,7 @@
           headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
         if (res.ok) {
-          showToast(`Removed "${name}" from ${fundLabel} table.`, 'info');
+          showToast(`Removed "<strong>${escapeHtml(name)}</strong>" from <strong>${escapeHtml(fundLabel)}</strong> table.`, 'info');
           loadWomenData();
         } else {
           showToast('Failed to remove sister from roster.', 'error');
@@ -2537,9 +2564,13 @@
 
     // ── DELETE / REMOVE COLLECTION TYPE TABLE ──
     async function deleteWomenCollectionType(id, name) {
-      if (!confirm(`Are you sure you want to delete the collection fund "${name}"? This will remove this collection table from the portal.`)) {
-        return;
-      }
+      const confirmed = await showConfirmModal(
+        'Delete Collection Fund Table?',
+        `Are you sure you want to delete the collection fund <strong>"${escapeHtml(name)}"</strong>? This will remove this collection table from the portal.`,
+        'Delete Collection Table'
+      );
+      if (!confirmed) return;
+
       try {
         const token = getWomenToken();
         const res = await fetch(`${API_BASE}/women/collection-types/${encodeURIComponent(id)}`, {
@@ -2797,6 +2828,41 @@ Solutions Faith Ministry International`
         toast.style.transition = 'all 0.3s ease';
         setTimeout(() => toast.remove(), 300);
       }, 4000);
+    }
+
+    let currentConfirmResolver = null;
+
+    function showConfirmModal(title, message, btnText = 'Delete', isDanger = true) {
+      return new Promise((resolve) => {
+        currentConfirmResolver = resolve;
+        if (document.getElementById('confirmModalTitle')) document.getElementById('confirmModalTitle').innerText = title;
+        if (document.getElementById('confirmModalMessage')) document.getElementById('confirmModalMessage').innerHTML = message;
+
+        const btn = document.getElementById('btnConfirmActionSubmit');
+        if (btn) {
+          btn.innerHTML = `<i class="fas fa-trash-alt"></i> ${escapeHtml(btnText)}`;
+          if (isDanger) {
+            btn.style.background = '#dc2626';
+            btn.style.borderColor = '#dc2626';
+          } else {
+            btn.style.background = 'var(--rose)';
+            btn.style.borderColor = 'var(--rose)';
+          }
+          btn.onclick = () => closeCustomConfirmModal(true);
+        }
+
+        const modal = document.getElementById('customConfirmModal');
+        if (modal) modal.style.display = 'flex';
+      });
+    }
+
+    function closeCustomConfirmModal(confirmed) {
+      const modal = document.getElementById('customConfirmModal');
+      if (modal) modal.style.display = 'none';
+      if (currentConfirmResolver) {
+        currentConfirmResolver(confirmed);
+        currentConfirmResolver = null;
+      }
     }
 
     function escapeHtml(str) {
