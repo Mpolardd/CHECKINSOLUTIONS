@@ -5,10 +5,17 @@
 
 class ArkeselSmsService {
   constructor() {
-    this.apiKey = process.env.ARKESEL_API_KEY || 'QVN5bUhqUGZidlN2QkluSmpUQVQ';
-    this.defaultSenderId = process.env.ARKESEL_SENDER_ID || 'Solutions';
     this.baseUrlV2 = 'https://sms.arkesel.com/api/v2';
     this.baseUrlV1 = 'https://sms.arkesel.com/sms/api';
+  }
+
+  getApiKey(explicitKey) {
+    return (explicitKey || process.env.ARKESEL_API_KEY || '').trim();
+  }
+
+  getSenderId(explicitSender) {
+    const s = (explicitSender || process.env.ARKESEL_SENDER_ID || 'Solutions').trim();
+    return s.substring(0, 11) || 'Solutions';
   }
 
   /**
@@ -34,13 +41,23 @@ class ArkeselSmsService {
   /**
    * Retrieve real-time SMS and Main Credit balance from Arkesel
    */
-  async checkBalance() {
+  async checkBalance(explicitApiKey) {
+    const apiKey = this.getApiKey(explicitApiKey);
+    if (!apiKey) {
+      return {
+        success: false,
+        smsBalance: 0,
+        mainBalance: 'GHS 0.00',
+        error: 'No Arkesel API key configured'
+      };
+    }
+
     try {
       // Try v2 balance endpoint first
       const v2Res = await fetch(`${this.baseUrlV2}/clients/balance-details`, {
         method: 'GET',
         headers: {
-          'api-key': this.apiKey,
+          'api-key': apiKey,
           'Content-Type': 'application/json'
         }
       });
@@ -97,9 +114,14 @@ class ArkeselSmsService {
    * @param {string} [options.callbackUrl] - Webhook callback URL
    * @param {boolean} [options.sandbox=false] - Send in sandboxed test mode
    */
-  async sendSms({ recipients, message, sender, callbackUrl, sandbox = false }) {
+  async sendSms({ recipients, message, sender, callbackUrl, sandbox = false, apiKey = null }) {
     if (!message || !message.trim()) {
       throw new Error('SMS message content cannot be empty');
+    }
+
+    const key = this.getApiKey(apiKey);
+    if (!key) {
+      throw new Error('No Arkesel API key provided or configured');
     }
 
     const rawList = Array.isArray(recipients) ? recipients : [recipients];
@@ -111,9 +133,7 @@ class ArkeselSmsService {
       throw new Error('No valid recipient phone numbers provided');
     }
 
-    // Sender ID max 11 chars
-    let senderId = (sender || this.defaultSenderId).trim().substring(0, 11);
-    if (!senderId) senderId = 'Solutions';
+    const senderId = this.getSenderId(sender);
 
     try {
       // 1. Send via Arkesel v2 API
@@ -131,7 +151,7 @@ class ArkeselSmsService {
       const response = await fetch(`${this.baseUrlV2}/sms/send`, {
         method: 'POST',
         headers: {
-          'api-key': this.apiKey,
+          'api-key': key,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
@@ -151,7 +171,7 @@ class ArkeselSmsService {
 
       // If v2 returns error, attempt v1 endpoint fallback
       if (cleanRecipients.length === 1) {
-        const v1Url = `${this.baseUrlV1}?action=send-sms&api_key=${encodeURIComponent(this.apiKey)}&to=${encodeURIComponent(cleanRecipients[0])}&from=${encodeURIComponent(senderId)}&sms=${encodeURIComponent(message.trim())}`;
+        const v1Url = `${this.baseUrlV1}?action=send-sms&api_key=${encodeURIComponent(key)}&to=${encodeURIComponent(cleanRecipients[0])}&from=${encodeURIComponent(senderId)}&sms=${encodeURIComponent(message.trim())}`;
         const v1Res = await fetch(v1Url);
         const v1Data = await v1Res.json().catch(() => ({}));
 
@@ -177,8 +197,9 @@ class ArkeselSmsService {
    * Dispatches personalized messages to a list of contacts
    * @param {Array<{phone: string, message: string, name?: string}>} contactMessages
    * @param {string} [sender]
+   * @param {string} [apiKey]
    */
-  async sendBulkPersonalizedSms(contactMessages = [], sender = null) {
+  async sendBulkPersonalizedSms(contactMessages = [], sender = null, apiKey = null) {
     const results = {
       total: contactMessages.length,
       sent: 0,
@@ -195,7 +216,8 @@ class ArkeselSmsService {
           const res = await this.sendSms({
             recipients: item.phone,
             message: item.message,
-            sender: sender || this.defaultSenderId
+            sender: sender,
+            apiKey: apiKey
           });
           results.sent++;
           results.details.push({

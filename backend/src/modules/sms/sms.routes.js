@@ -9,7 +9,8 @@ const arkeselService = require('./arkesel.service');
  */
 router.get('/balance', requireAuth, async (req, res, next) => {
   try {
-    const balance = await arkeselService.checkBalance();
+    const { apiKey } = req.query || {};
+    const balance = await arkeselService.checkBalance(apiKey);
     res.json(balance);
   } catch (e) {
     next(e);
@@ -22,7 +23,7 @@ router.get('/balance', requireAuth, async (req, res, next) => {
  */
 router.post('/send', requireAuth, async (req, res, next) => {
   try {
-    const { recipients, message, sender, sandbox = false } = req.body || {};
+    const { recipients, message, sender, sandbox = false, apiKey } = req.body || {};
 
     if (!recipients || (Array.isArray(recipients) && recipients.length === 0)) {
       return res.status(400).json({ error: 'Recipient phone number is required' });
@@ -36,7 +37,8 @@ router.post('/send', requireAuth, async (req, res, next) => {
       recipients,
       message: message.trim(),
       sender,
-      sandbox
+      sandbox,
+      apiKey
     });
 
     // Log dispatch to audit logs
