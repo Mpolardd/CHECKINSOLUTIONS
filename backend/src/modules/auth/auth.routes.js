@@ -48,10 +48,11 @@ router.post('/login', async (req, res, next) => {
     let user = await prisma.user.findFirst({
       where: {
         email: { equals: emailNorm, mode: 'insensitive' }
-      }
+      },
+      include: { member: true }
     });
     if (!user) {
-      user = await prisma.user.findUnique({ where: { email: emailNorm } });
+      user = await prisma.user.findUnique({ where: { email: emailNorm }, include: { member: true } });
     }
 
     let isMatch = false;
@@ -81,7 +82,8 @@ router.post('/login', async (req, res, next) => {
             email: emailNorm,
             passwordHash: hash,
             role: 'SUPER_ADMIN'
-          }
+          },
+          include: { member: true }
         });
         isMatch = true;
       }
@@ -95,7 +97,8 @@ router.post('/login', async (req, res, next) => {
             email: emailNorm,
             passwordHash: hash,
             role: 'ADMIN'
-          }
+          },
+          include: { member: true }
         });
         isMatch = true;
       }
@@ -129,12 +132,12 @@ router.post('/login', async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    let name = user.role === 'SUPER_ADMIN' ? 'Super Admin' : (user.role === 'FINANCE' ? 'Treasury Officer' : 'Sub-Admin');
+    let name = '';
     let permissions = user.role === 'SUPER_ADMIN'
       ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'finReports', 'subAdmins', 'women']
       : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']);
 
-    if (user.role === 'ADMIN') {
+    if (user.role === 'ADMIN' || user.role === 'SUB_ADMIN') {
       const log = await prisma.auditLog.findFirst({
         where: { entity: 'SUB_ADMIN_PROFILE', entityId: user.id },
         orderBy: { createdAt: 'desc' }
@@ -142,6 +145,21 @@ router.post('/login', async (req, res, next) => {
       if (log && log.metadata) {
         if (log.metadata.name) name = log.metadata.name;
         if (Array.isArray(log.metadata.permissions)) permissions = log.metadata.permissions;
+      }
+    }
+
+    if (!name && user.member && user.member.firstName) {
+      name = `${user.member.firstName} ${user.member.lastName || ''}`.trim();
+    }
+
+    if (!name) {
+      if (emailNorm === 'admin@solutionsfaith.com' || emailNorm === 'admin@example.com') {
+        name = 'Super Admin';
+      } else if (emailNorm === 'women@solutionsfaith.com') {
+        name = 'Women Ministry Leader';
+      } else {
+        const username = user.email.split('@')[0];
+        name = username.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
       }
     }
 
@@ -213,18 +231,18 @@ router.get('/verify', async (req, res) => {
     const decoded = jwt.verify(token, secret);
     const user = await prisma.user.findUnique({
       where: { id: decoded.sub },
-      select: { id: true, email: true, role: true, memberId: true }
+      include: { member: true }
     });
     if (!user) {
       return res.status(401).json({ error: 'User account no longer exists' });
     }
 
-    let name = user.role === 'SUPER_ADMIN' ? 'Super Admin' : (user.role === 'FINANCE' ? 'Treasury Officer' : 'Sub-Admin');
+    let name = '';
     let permissions = user.role === 'SUPER_ADMIN'
       ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'finReports', 'subAdmins', 'women']
       : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']);
 
-    if (user.role === 'ADMIN') {
+    if (user.role === 'ADMIN' || user.role === 'SUB_ADMIN') {
       const log = await prisma.auditLog.findFirst({
         where: { entity: 'SUB_ADMIN_PROFILE', entityId: user.id },
         orderBy: { createdAt: 'desc' }
@@ -232,6 +250,22 @@ router.get('/verify', async (req, res) => {
       if (log && log.metadata) {
         if (log.metadata.name) name = log.metadata.name;
         if (Array.isArray(log.metadata.permissions)) permissions = log.metadata.permissions;
+      }
+    }
+
+    if (!name && user.member && user.member.firstName) {
+      name = `${user.member.firstName} ${user.member.lastName || ''}`.trim();
+    }
+
+    if (!name) {
+      const emailNorm = (user.email || '').toLowerCase();
+      if (emailNorm === 'admin@solutionsfaith.com' || emailNorm === 'admin@example.com') {
+        name = 'Super Admin';
+      } else if (emailNorm === 'women@solutionsfaith.com') {
+        name = 'Women Ministry Leader';
+      } else {
+        const username = user.email.split('@')[0];
+        name = username.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
       }
     }
 
