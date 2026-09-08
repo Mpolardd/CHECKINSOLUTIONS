@@ -279,26 +279,6 @@ router.get('/collection-types', requireAuth, async (req, res, next) => {
         color: '#c89b55',
         targetGroup: 'ALL',
         isStandard: true
-      },
-      {
-        id: 'women_dues',
-        name: 'Women Dues',
-        category: "Women's Ministry",
-        description: "Monthly dues tracking for female church members & Women's Fellowship",
-        icon: 'fas fa-crown',
-        color: '#e11d48',
-        targetGroup: 'WOMEN',
-        isStandard: true
-      },
-      {
-        id: 'women_contribution',
-        name: 'Women Contribution',
-        category: "Women's Ministry",
-        description: "General contributions, special seeds, and offerings for Women's Ministry",
-        icon: 'fas fa-gem',
-        color: '#ec4899',
-        targetGroup: 'WOMEN',
-        isStandard: true
       }
     ];
 
@@ -375,13 +355,13 @@ router.get('/partners', requireAuth, async (req, res, next) => {
       collectionType: (l.metadata && l.metadata.collectionType) || 'PARTNERSHIP',
       ...(l.metadata || {}),
       createdAt: l.createdAt
-    })).filter(p => p.active !== false);
+    })).filter(p => p.active !== false && !(p.collectionType || '').toLowerCase().startsWith('women'));
 
     if (collectionType && collectionType.toUpperCase() !== 'ALL') {
       partners = partners.filter(p => (p.collectionType || 'PARTNERSHIP').toLowerCase() === collectionType.toLowerCase());
     }
 
-    // Fetch all partnership payments to calculate lifetime contributions
+    // Fetch all partnership payments to calculate lifetime contributions per partner & collection
     const paymentLogs = await prisma.auditLog.findMany({
       where: { entity: 'PARTNERSHIP_PAYMENT' },
       select: { metadata: true }
@@ -390,14 +370,21 @@ router.get('/partners', requireAuth, async (req, res, next) => {
     const totalsMap = {};
     for (const p of paymentLogs) {
       if (p.metadata && p.metadata.partnerId) {
-        totalsMap[p.metadata.partnerId] = (totalsMap[p.metadata.partnerId] || 0) + (Number(p.metadata.amount) || 0);
+        const cType = (p.metadata.collectionType || 'PARTNERSHIP').toUpperCase();
+        if (cType.startsWith('WOMEN')) continue;
+        const key = `${p.metadata.partnerId}_${cType}`;
+        totalsMap[key] = (totalsMap[key] || 0) + (Number(p.metadata.amount) || 0);
       }
     }
 
-    const enriched = partners.map(p => ({
-      ...p,
-      totalContributed: totalsMap[p.id] || 0
-    }));
+    const enriched = partners.map(p => {
+      const cType = (p.collectionType || 'PARTNERSHIP').toUpperCase();
+      const key = `${p.id}_${cType}`;
+      return {
+        ...p,
+        totalContributed: totalsMap[key] || 0
+      };
+    });
 
     res.json(enriched);
   } catch (e) { next(e); }
@@ -537,7 +524,7 @@ router.get('/partnerships/payments', requireAuth, async (req, res, next) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    let payments = logs.map(l => l.metadata).filter(Boolean);
+    let payments = logs.map(l => l.metadata).filter(p => p && !(p.collectionType || '').toLowerCase().startsWith('women'));
 
     if (partnerId) {
       payments = payments.filter(p => p.partnerId === partnerId);
@@ -564,7 +551,7 @@ router.get('/partnerships/matrix', requireAuth, async (req, res, next) => {
     const currentMonthNum = new Date().getMonth() + 1; // 1 to 12
     const currentYear = new Date().getFullYear();
 
-    // 1. Fetch all partners
+    // 1. Fetch all partners (excluding Women's Ministry specific partners)
     const partnerLogs = await prisma.auditLog.findMany({
       where: { entity: 'PARTNER' },
       orderBy: { createdAt: 'desc' }
@@ -573,35 +560,44 @@ router.get('/partnerships/matrix', requireAuth, async (req, res, next) => {
       id: l.entityId || l.id,
       collectionType: (l.metadata && l.metadata.collectionType) || 'PARTNERSHIP',
       ...(l.metadata || {})
-    })).filter(p => p.active !== false);
+    })).filter(p => p.active !== false && !(p.collectionType || '').toLowerCase().startsWith('women'));
 
-    // 2. Fetch all payments for this year
+    // 2. Fetch all payments for this year (excluding Women's Ministry payments)
     const paymentLogs = await prisma.auditLog.findMany({
       where: { entity: 'PARTNERSHIP_PAYMENT' },
       orderBy: { createdAt: 'desc' }
     });
-    const allPayments = paymentLogs.map(l => l.metadata).filter(Boolean);
+    const allPayments = paymentLogs.map(l => l.metadata).filter(p => p && !(p.collectionType || '').toLowerCase().startsWith('women'));
 
-    // Calculate collection breakdown for cards across all types
+    // Calculate collection breakdown for cards across all main collection types
     const collectionBreakdown = {};
     partners.forEach(p => {
-      const cType = (p.collectionType || 'PARTNERSHIP').toUpperCase();
-      if (!collectionBreakdown[cType]) {
-        collectionBreakdown[cType] = { totalPartners: 0, totalMonthlyPledged: 0, currentMonthCollected: 0 };
+      const cTypeKey = (p.collectionType || 'PARTNERSHIP').trim();
+      const cTypeUpper = cTypeKey.toUpperCase();
+      if (!collectionBreakdown[cTypeUpper]) {
+        collectionBreakdown[cTypeUpper] = { totalPartners: 0, totalMonthlyPledged: 0, currentMonthCollected: 0 };
       }
-      collectionBreakdown[cType].totalPartners++;
-      collectionBreakdown[cType].totalMonthlyPledged += (Number(p.pledgeAmount) || 0);
+      collectionBreakdown[cTypeUpper].totalPartners++;
+      collectionBreakdown[cTypeUpper].totalMonthlyPledged += (Number(p.pledgeAmount) || 0);
+      if (cTypeKey !== cTypeUpper) {
+        collectionBreakdown[cTypeKey] = collectionBreakdown[cTypeUpper];
+      }
     });
 
     const currMonthPad = String(currentMonthNum).padStart(2, '0');
     const targetCurrMonth = `${year}-${currMonthPad}`;
     allPayments.forEach(pay => {
-      if (pay.targetMonth === targetCurrMonth) {
-        const cType = (pay.collectionType || 'PARTNERSHIP').toUpperCase();
-        if (!collectionBreakdown[cType]) {
-          collectionBreakdown[cType] = { totalPartners: 0, totalMonthlyPledged: 0, currentMonthCollected: 0 };
-        }
-        collectionBreakdown[cType].currentMonthCollected += (Number(pay.amount) || 0);
+      const cTypeKey = (pay.collectionType || 'PARTNERSHIP').trim();
+      const cTypeUpper = cTypeKey.toUpperCase();
+      if (!collectionBreakdown[cTypeUpper]) {
+        collectionBreakdown[cTypeUpper] = { totalPartners: 0, totalMonthlyPledged: 0, currentMonthCollected: 0 };
+      }
+      const payMonth = pay.paymentDate ? pay.paymentDate.slice(0, 7) : pay.targetMonth;
+      if (pay.targetMonth === targetCurrMonth || payMonth === targetCurrMonth) {
+        collectionBreakdown[cTypeUpper].currentMonthCollected += (Number(pay.amount) || 0);
+      }
+      if (cTypeKey !== cTypeUpper) {
+        collectionBreakdown[cTypeKey] = collectionBreakdown[cTypeUpper];
       }
     });
 
@@ -610,13 +606,15 @@ router.get('/partnerships/matrix', requireAuth, async (req, res, next) => {
       partners = partners.filter(p => (p.collectionType || 'PARTNERSHIP').toLowerCase() === collectionType.toLowerCase());
     }
 
-    // Map payments by partnerId and month (01 to 12)
+    // Map payments strictly by `${partnerId}_${collectionType}` and month (01 to 12)
     const partnerMonthMap = {};
     for (const p of allPayments) {
       if (p.targetMonth && p.targetMonth.startsWith(String(year))) {
         const monthPart = p.targetMonth.slice(5, 7); // e.g. "08"
-        if (!partnerMonthMap[p.partnerId]) partnerMonthMap[p.partnerId] = {};
-        partnerMonthMap[p.partnerId][monthPart] = (partnerMonthMap[p.partnerId][monthPart] || 0) + (Number(p.amount) || 0);
+        const cType = (p.collectionType || 'PARTNERSHIP').toUpperCase();
+        const mapKey = `${p.partnerId}_${cType}`;
+        if (!partnerMonthMap[mapKey]) partnerMonthMap[mapKey] = {};
+        partnerMonthMap[mapKey][monthPart] = (partnerMonthMap[mapKey][monthPart] || 0) + (Number(p.amount) || 0);
       }
     }
 
@@ -634,10 +632,12 @@ router.get('/partnerships/matrix', requireAuth, async (req, res, next) => {
 
       const monthlyStatus = {};
       let partnerYearPaid = 0;
+      const partnerCType = (p.collectionType || 'PARTNERSHIP').toUpperCase();
+      const partnerMapKey = `${p.id}_${partnerCType}`;
 
       for (let m = 1; m <= 12; m++) {
         const mKey = String(m).padStart(2, '0');
-        const paidAmount = (partnerMonthMap[p.id] && partnerMonthMap[p.id][mKey]) || 0;
+        const paidAmount = (partnerMonthMap[partnerMapKey] && partnerMonthMap[partnerMapKey][mKey]) || 0;
         partnerYearPaid += paidAmount;
 
         let status = 'PENDING'; // Future month
@@ -648,6 +648,8 @@ router.get('/partnerships/matrix', requireAuth, async (req, res, next) => {
           status = 'PAID';
         } else if (paidAmount > 0 && paidAmount < pledge) {
           status = 'PARTIAL';
+        } else if (paidAmount > 0 && pledge === 0) {
+          status = 'PAID';
         } else if (isPastMonth) {
           status = 'MISSED';
         } else if (isCurrentMonth) {

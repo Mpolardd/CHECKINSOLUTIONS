@@ -9921,17 +9921,27 @@ closeCreateProgramModal();
       let currentMonthCollected = 0;
       let currentMonthMissed = 0;
 
+      const activeCardStats = (cachedCollectionBreakdown && (cachedCollectionBreakdown[activeCollectionType.toUpperCase()] || cachedCollectionBreakdown[activeCollectionType])) || null;
+
       rawPartnershipMatrix.forEach(item => {
         const pAmt = Number(item.pledgeAmount) || 0;
         totalPledged += pAmt;
         const mInfo = item.monthlyStatus && item.monthlyStatus[curMonthKey];
         if (mInfo) {
-          currentMonthCollected += (Number(mInfo.paid) || 0);
           if (mInfo.status === 'MISSED' || mInfo.status === 'DUE') {
             currentMonthMissed++;
           }
         }
       });
+
+      if (activeCardStats && activeCardStats.currentMonthCollected !== undefined) {
+        currentMonthCollected = Number(activeCardStats.currentMonthCollected) || 0;
+      } else {
+        rawPartnershipMatrix.forEach(item => {
+          const mInfo = item.monthlyStatus && item.monthlyStatus[curMonthKey];
+          if (mInfo) currentMonthCollected += (Number(mInfo.paid) || 0);
+        });
+      }
 
       const statCount = document.getElementById('statPartCount');
       const statPledged = document.getElementById('statPartPledged');
