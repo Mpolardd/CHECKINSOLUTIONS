@@ -1,0 +1,225 @@
+/**
+ * Arkesel SMS Service Adapter
+ * Provides integration with Arkesel SMS Gateway v2 (with v1 fallback)
+ */
+
+class ArkeselSmsService {
+  constructor() {
+    this.apiKey = process.env.ARKESEL_API_KEY || 'QVN5bUhqUGZidlN2QkluSmpUQVQ';
+    this.defaultSenderId = process.env.ARKESEL_SENDER_ID || 'Solutions';
+    this.baseUrlV2 = 'https://sms.arkesel.com/api/v2';
+    this.baseUrlV1 = 'https://sms.arkesel.com/sms/api';
+  }
+
+  /**
+   * Cleans and standardizes phone number to international E.164 without leading '+'
+   * e.g., '0544919953' -> '233544919953', '+233 24 123 4567' -> '233241234567'
+   */
+  formatPhoneNumber(rawPhone) {
+    if (!rawPhone) return null;
+    let clean = String(rawPhone).replace(/[^0-9+]/g, '').trim();
+
+    if (clean.startsWith('+')) {
+      clean = clean.substring(1);
+    }
+
+    if (clean.startsWith('0') && clean.length === 10) {
+      // Ghana local 10-digit format (02X, 05X, 03X)
+      clean = '233' + clean.substring(1);
+    }
+
+    return clean.length >= 9 ? clean : null;
+  }
+
+  /**
+   * Retrieve real-time SMS and Main Credit balance from Arkesel
+   */
+  async checkBalance() {
+    try {
+      // Try v2 balance endpoint first
+      const v2Res = await fetch(`${this.baseUrlV2}/clients/balance-details`, {
+        method: 'GET',
+        headers: {
+          'api-key': this.apiKey,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (v2Res.ok) {
+        const data = await v2Res.json();
+        if (data && data.status === 'success' && data.data) {
+          return {
+            success: true,
+            smsBalance: parseInt(data.data.sms_balance, 10) || 0,
+            mainBalance: data.data.main_balance || 'GHS 0.00',
+            currency: 'GHS',
+            raw: data.data
+          };
+        }
+      }
+
+      // Fallback to v1 balance endpoint
+      const v1Res = await fetch(`${this.baseUrlV1}?action=check-balance&api_key=${encodeURIComponent(this.apiKey)}&response=json`);
+      if (v1Res.ok) {
+        const v1Data = await v1Res.json();
+        return {
+          success: true,
+          smsBalance: parseInt(v1Data.balance, 10) || 0,
+          mainBalance: v1Data.main_balance ? `GHS ${Number(v1Data.main_balance).toFixed(2)}` : 'GHS 0.00',
+          currency: 'GHS',
+          raw: v1Data
+        };
+      }
+
+      return {
+        success: false,
+        smsBalance: 0,
+        mainBalance: 'GHS 0.00',
+        error: 'Unable to query Arkesel balance endpoint'
+      };
+    } catch (err) {
+      console.error('[ArkeselService] checkBalance error:', err.message);
+      return {
+        success: false,
+        smsBalance: 0,
+        mainBalance: 'GHS 0.00',
+        error: err.message
+      };
+    }
+  }
+
+  /**
+   * Send single or broadcast SMS
+   * @param {Object} options
+   * @param {string|string[]} options.recipients - Phone number or array of phone numbers
+   * @param {string} options.message - SMS content
+   * @param {string} [options.sender] - Sender ID (max 11 chars)
+   * @param {string} [options.callbackUrl] - Webhook callback URL
+   * @param {boolean} [options.sandbox=false] - Send in sandboxed test mode
+   */
+  async sendSms({ recipients, message, sender, callbackUrl, sandbox = false }) {
+    if (!message || !message.trim()) {
+      throw new Error('SMS message content cannot be empty');
+    }
+
+    const rawList = Array.isArray(recipients) ? recipients : [recipients];
+    const cleanRecipients = rawList
+      .map(p => this.formatPhoneNumber(p))
+      .filter(Boolean);
+
+    if (cleanRecipients.length === 0) {
+      throw new Error('No valid recipient phone numbers provided');
+    }
+
+    // Sender ID max 11 chars
+    let senderId = (sender || this.defaultSenderId).trim().substring(0, 11);
+    if (!senderId) senderId = 'Solutions';
+
+    try {
+      // 1. Send via Arkesel v2 API
+      const payload = {
+        sender: senderId,
+        message: message.trim(),
+        recipients: cleanRecipients,
+        sandbox: Boolean(sandbox)
+      };
+
+      if (callbackUrl) {
+        payload.callback_url = callbackUrl;
+      }
+
+      const response = await fetch(`${this.baseUrlV2}/sms/send`, {
+        method: 'POST',
+        headers: {
+          'api-key': this.apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const resData = await response.json().catch(() => ({}));
+
+      if (response.ok && (resData.status === 'success' || resData.code === 'ok')) {
+        return {
+          success: true,
+          recipientCount: cleanRecipients.length,
+          recipients: cleanRecipients,
+          sender: senderId,
+          data: resData
+        };
+      }
+
+      // If v2 returns error, attempt v1 endpoint fallback
+      if (cleanRecipients.length === 1) {
+        const v1Url = `${this.baseUrlV1}?action=send-sms&api_key=${encodeURIComponent(this.apiKey)}&to=${encodeURIComponent(cleanRecipients[0])}&from=${encodeURIComponent(senderId)}&sms=${encodeURIComponent(message.trim())}`;
+        const v1Res = await fetch(v1Url);
+        const v1Data = await v1Res.json().catch(() => ({}));
+
+        if (v1Res.ok && (v1Data.code === 'ok' || v1Data.message === 'Successfully Sent')) {
+          return {
+            success: true,
+            recipientCount: 1,
+            recipients: cleanRecipients,
+            sender: senderId,
+            data: v1Data
+          };
+        }
+      }
+
+      throw new Error(resData.message || resData.error || `Arkesel dispatch failed with HTTP ${response.status}`);
+    } catch (err) {
+      console.error('[ArkeselService] sendSms error:', err.message);
+      throw err;
+    }
+  }
+
+  /**
+   * Dispatches personalized messages to a list of contacts
+   * @param {Array<{phone: string, message: string, name?: string}>} contactMessages
+   * @param {string} [sender]
+   */
+  async sendBulkPersonalizedSms(contactMessages = [], sender = null) {
+    const results = {
+      total: contactMessages.length,
+      sent: 0,
+      failed: 0,
+      details: []
+    };
+
+    // Process in batches of 10 to respect rate limits and keep response snappy
+    const batchSize = 10;
+    for (let i = 0; i < contactMessages.length; i += batchSize) {
+      const batch = contactMessages.slice(i, i + batchSize);
+      const promises = batch.map(async (item) => {
+        try {
+          const res = await this.sendSms({
+            recipients: item.phone,
+            message: item.message,
+            sender: sender || this.defaultSenderId
+          });
+          results.sent++;
+          results.details.push({
+            phone: item.phone,
+            name: item.name,
+            success: true,
+            res
+          });
+        } catch (err) {
+          results.failed++;
+          results.details.push({
+            phone: item.phone,
+            name: item.name,
+            success: false,
+            error: err.message
+          });
+        }
+      });
+
+      await Promise.all(promises);
+    }
+
+    return results;
+  }
+}
+
+module.exports = new ArkeselSmsService();

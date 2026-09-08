@@ -2965,7 +2965,7 @@
           </p>
         </div>
 
-        <!-- Middle: 4 Compact Metric Stat Chips -->
+        <!-- Middle: Metric Stat Chips -->
         <div class="msg-bar-stats">
           <div class="msg-stat-chip">
             <div class="msg-stat-chip-icon" style="background: rgba(37, 211, 102, 0.18); color: #25d366;">
@@ -2994,6 +2994,20 @@
           </div>
 
           <div class="msg-stat-chip">
+            <div class="msg-stat-chip-icon" style="background: rgba(2, 132, 199, 0.2); color: #38bdf8;">
+              <i class="fas fa-comment-sms"></i>
+            </div>
+            <div class="msg-stat-chip-info">
+              <div class="msg-stat-chip-label" style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                <span>Arkesel SMS</span>
+                <i class="fas fa-sync-alt" style="font-size: 10px; cursor: pointer; color: #94a3b8;" title="Refresh SMS Balance" onclick="loadArkeselSmsBalance()"></i>
+              </div>
+              <div class="msg-stat-chip-val" id="msgStatSmsBalance" style="font-size: 13px; color: #38bdf8; white-space: nowrap;">SMS Gateway</div>
+              <div class="msg-stat-chip-sub" id="msgStatSmsMainBalance">Direct &amp; Bulk SMS</div>
+            </div>
+          </div>
+
+          <div class="msg-stat-chip">
             <div class="msg-stat-chip-icon" style="background: rgba(96, 165, 250, 0.2); color: #93c5fd;">
               <i class="fas fa-message-captions"></i>
             </div>
@@ -3003,24 +3017,17 @@
               <div class="msg-stat-chip-sub">Personalized dynamic tokens</div>
             </div>
           </div>
-
-          <div class="msg-stat-chip">
-            <div class="msg-stat-chip-icon" style="background: rgba(168, 85, 247, 0.2); color: #d8b4fe;">
-              <i class="fas fa-paper-plane"></i>
-            </div>
-            <div class="msg-stat-chip-info">
-              <div class="msg-stat-chip-label">Dispatch Engine</div>
-              <div class="msg-stat-chip-val" id="msgStatDispatchMode" style="font-size: 13px; color: #d8b4fe; white-space: nowrap;">Interactive Queue</div>
-              <div class="msg-stat-chip-sub">1-Click wa.me flow</div>
-            </div>
-          </div>
         </div>
 
-        <!-- Right: Action Button -->
-        <div class="msg-bar-action">
+        <!-- Right: Action Buttons -->
+        <div class="msg-bar-action" style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="msg-btn-start" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); box-shadow: 0 4px 14px rgba(2,132,199,0.35);" onclick="sendBulkSmsToSelectedRecipients()">
+            <i class="fas fa-paper-plane" style="font-size: 16px;"></i>
+            <span>Send Arkesel Bulk SMS</span>
+          </button>
           <button class="msg-btn-start" onclick="launchWhatsAppDispatcherQueue()">
             <i class="fa-brands fa-whatsapp" style="font-size: 18px;"></i>
-            <span>Start WhatsApp Dispatcher</span>
+            <span>WhatsApp Queue</span>
           </button>
         </div>
       </div>
@@ -3199,10 +3206,13 @@
               </p>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button type="button" class="btn-main" style="background: linear-gradient(135deg, #25d366 0%, #128C7E 100%); color: white; padding: 8px 14px; font-size: 12.5px; font-weight: 800; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.3);" onclick="launchWhatsAppDispatcherQueue()">
-                <i class="fa-brands fa-whatsapp" style="font-size: 15px;"></i> Start Queue
+              <button type="button" class="btn-main" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 8px 14px; font-size: 12.5px; font-weight: 800; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(2,132,199,0.3);" onclick="sendBulkSmsToSelectedRecipients()">
+                <i class="fas fa-paper-plane"></i> Send Bulk SMS
               </button>
-              <button type="button" class="btn-main" style="background: #ffffff; color: var(--ink); border: 1px solid var(--line); padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 8px;" onclick="copyAllRecipientPhones()" title="Copy comma-separated phone numbers for WhatsApp Broadcast list">
+              <button type="button" class="btn-main" style="background: linear-gradient(135deg, #25d366 0%, #128C7E 100%); color: white; padding: 8px 14px; font-size: 12.5px; font-weight: 800; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.3);" onclick="launchWhatsAppDispatcherQueue()">
+                <i class="fa-brands fa-whatsapp" style="font-size: 15px;"></i> WhatsApp Queue
+              </button>
+              <button type="button" class="btn-main" style="background: #ffffff; color: var(--ink); border: 1px solid var(--line); padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 8px;" onclick="copyAllRecipientPhones()" title="Copy comma-separated phone numbers for SMS/WhatsApp Broadcast list">
                 <i class="fas fa-copy" style="color: var(--accent);"></i> Copy Numbers
               </button>
               <button type="button" class="btn-main" style="background: #107c41; color: white; border: none; padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 8px;" onclick="exportMessagingRosterCsv()" title="Download CSV roster">
@@ -3723,7 +3733,53 @@
         </div>
       </div>
 
-      <!-- Settings Card 3: WhatsApp Message Templates & Personalization Tokens -->
+      <!-- Settings Card 3: Arkesel SMS Gateway Configuration -->
+      <div class="admin-card" style="margin-top: 24px; padding: 24px; border: 1px solid var(--line); border-top: 4px solid #0284c7; border-radius: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(2, 132, 199, 0.12); color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              <i class="fas fa-comment-sms"></i>
+            </div>
+            <div>
+              <h3 style="font-family: Manrope, sans-serif; font-size: 17px; font-weight: 800; color: var(--ink); margin: 0;">Arkesel SMS Gateway Configuration</h3>
+              <p style="font-size: 12.5px; color: var(--muted); margin: 2px 0 0 0;">Manage Arkesel SMS credentials, custom Sender ID, and test connection.</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="btn-main" style="background: #ffffff; color: var(--ink); border: 1px solid var(--line); padding: 8px 14px; font-size: 12.5px; font-weight: 700; border-radius: 8px;" onclick="testArkeselSmsConnection()">
+              <i class="fas fa-plug" style="color: #0284c7;"></i> Test Connection &amp; Balance
+            </button>
+            <button type="button" class="btn-main" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 8px 18px; font-size: 12.5px; font-weight: 800; border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(2,132,199,0.25);" onclick="saveArkeselSmsSettings()">
+              <i class="fas fa-floppy-disk"></i> Save SMS Config
+            </button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+          <div>
+            <label class="form-label" style="font-weight: 700; font-size: 12px;">Arkesel API Key *</label>
+            <input type="password" id="settingsSmsApiKey" class="form-ctrl" value="QVN5bUhqUGZidlN2QkluSmpUQVQ" style="font-family: monospace; font-size: 12.5px;" />
+            <span style="font-size: 11px; color: var(--muted); margin-top: 4px; display: block;">Obtained from your Arkesel dashboard under SMS API.</span>
+          </div>
+          <div>
+            <label class="form-label" style="font-weight: 700; font-size: 12px;">SMS Sender ID * (Max 11 chars)</label>
+            <input type="text" id="settingsSmsSenderId" class="form-ctrl" value="Solutions" maxlength="11" style="font-weight: 700; font-size: 13px;" />
+            <span style="font-size: 11px; color: var(--muted); margin-top: 4px; display: block;">e.g. Solutions, SFMI, FaithMin (Registered on Arkesel).</span>
+          </div>
+        </div>
+
+        <div style="background: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px dashed var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: var(--ink);">Webhook Delivery URL (Optional):</div>
+            <code style="font-size: 11.5px; color: #0284c7; word-break: break-all;">https://checkinsolutions.vercel.app/api/v1/sms/webhook</code>
+          </div>
+          <div id="settingsSmsLiveStatus" style="font-size: 12px; font-weight: 700; color: #15803d; background: #e8f5e9; padding: 4px 10px; border-radius: 6px;">
+            <i class="fas fa-check-circle"></i> Arkesel Gateway Ready
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Card 4: WhatsApp Message Templates & Personalization Tokens -->
       <div class="admin-card" style="margin-top: 24px; padding: 24px; border: 1px solid var(--line); border-top: 4px solid #107c41; border-radius: 14px;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;">
           <div style="display: flex; align-items: center; gap: 12px;">
@@ -5688,7 +5744,7 @@
       if (tab === 'analytics') { loadAnalyticsDashboard(); syncAnalyticsViewMode(); }
       if (tab === 'visitors') { renderVisitorsSection(); syncVisitorsViewMode(); }
       if (tab === 'members') { renderMembersTable(); syncMembersViewMode(); }
-      if (tab === 'messaging') { loadMessagingCenter(); syncMessagingViewMode(); }
+      if (tab === 'messaging') { loadMessagingCenter(); syncMessagingViewMode(); loadArkeselSmsBalance(); }
       if (tab === 'programs') { renderProgramsManager(); syncProgramsViewMode(); fetchLiveCounts(); }
       if (tab === 'partnership') { loadPartnershipMatrix(); syncPartnershipViewMode(); }
       if (tab === 'subAdmins') { renderSubAdminsList(); syncSubAdminsViewMode(); }
@@ -5696,6 +5752,7 @@
       if (tab === 'settings') { 
         renderSettingsProfile(); 
         if (typeof handleSettingsMsgTemplateChange === 'function') handleSettingsMsgTemplateChange();
+        loadArkeselSmsBalance();
       }
     }
 
@@ -13571,9 +13628,14 @@ _Warm Regards,_
             </td>
             <td style="padding: 10px 12px; text-align: center;">
               ${hasPhone ? `
-                <button type="button" class="btn-main" style="background: linear-gradient(135deg, #25d366 0%, #128C7E 100%); color: white; border: none; padding: 5px 10px; font-size: 11.5px; font-weight: 700; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(37,211,102,0.25); cursor: pointer;" onclick="sendDirectWhatsAppToRecipient('${escapeHtml(rec.id)}')" title="Open WhatsApp Web chat directly">
-                  <i class="fa-brands fa-whatsapp"></i> Chat
-                </button>
+                <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                  <button type="button" class="btn-main" style="background: linear-gradient(135deg, #25d366 0%, #128C7E 100%); color: white; border: none; padding: 5px 9px; font-size: 11px; font-weight: 700; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(37,211,102,0.25); cursor: pointer;" onclick="sendDirectWhatsAppToRecipient('${escapeHtml(rec.id)}')" title="Open WhatsApp chat directly">
+                    <i class="fa-brands fa-whatsapp"></i> Chat
+                  </button>
+                  <button type="button" class="btn-main" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; border: none; padding: 5px 9px; font-size: 11px; font-weight: 700; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(2,132,199,0.25); cursor: pointer;" onclick="sendDirectSmsToRecipient('${escapeHtml(rec.id)}')" title="Send direct SMS via Arkesel">
+                    <i class="fas fa-comment-sms"></i> SMS
+                  </button>
+                </div>
               ` : `
                 <span style="font-size: 11px; color: #94a3b8; font-style: italic;">No Phone</span>
               `}
@@ -13898,6 +13960,202 @@ _Warm Regards,_
       // Responsive hook for messaging section
     }
     window.addEventListener("resize", syncMessagingViewMode);
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ARKESEL SMS GATEWAY INTEGRATION
+       ══════════════════════════════════════════════════════════════════════ */
+
+    async function loadArkeselSmsBalance() {
+      const balEl = document.getElementById('msgStatSmsBalance');
+      const mainEl = document.getElementById('msgStatSmsMainBalance');
+      const statusEl = document.getElementById('settingsSmsLiveStatus');
+      if (balEl) balEl.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:11px;"></i> Checking...';
+
+      try {
+        const token = await getAdminAuthToken();
+        const res = await fetch(`${API_BASE}/sms/balance`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success) {
+            if (balEl) balEl.innerText = `${data.smsBalance} Credits`;
+            if (mainEl) mainEl.innerText = `Main: ${data.mainBalance || 'GHS 0.00'}`;
+            if (statusEl) {
+              statusEl.innerHTML = `<i class="fas fa-check-circle"></i> Connected: ${data.smsBalance} SMS Credits`;
+              statusEl.style.color = '#15803d';
+              statusEl.style.background = '#e8f5e9';
+            }
+            return data;
+          } else {
+            if (balEl) balEl.innerText = 'SMS Gateway';
+            if (mainEl) mainEl.innerText = 'Arkesel Ready';
+            if (statusEl) {
+              statusEl.innerHTML = `<i class="fas fa-circle-info"></i> Gateway Key Registered (${data.error || 'Ready'})`;
+              statusEl.style.color = '#0284c7';
+              statusEl.style.background = '#e0f2fe';
+            }
+          }
+        } else {
+          if (balEl) balEl.innerText = 'SMS Gateway';
+          if (mainEl) mainEl.innerText = 'Direct SMS';
+        }
+      } catch (err) {
+        if (balEl) balEl.innerText = 'SMS Gateway';
+        if (mainEl) mainEl.innerText = 'Direct SMS';
+      }
+      return null;
+    }
+
+    async function sendDirectSmsToRecipient(recId) {
+      const rec = messagingRecipients.find(r => String(r.id) === String(recId));
+      if (!rec || !rec.phone) {
+        showToast('This recipient does not have a valid phone number.', 'warning', 'No Phone');
+        return;
+      }
+
+      const textarea = document.getElementById('msgBodyTextarea');
+      const template = textarea ? textarea.value : MSG_TEMPLATES.THANK_YOU;
+      const svcName = document.getElementById('msgServiceSelect')?.value || 'Service';
+      const dateIso = getEffectiveSessionDateIso();
+
+      const personalized = formatWhatsAppMessageForRecipient(template, rec, svcName, dateIso);
+      // Remove WhatsApp formatting symbols (*, _) for clean SMS text
+      const cleanSmsText = personalized.replace(/\*/g, '').replace(/_/g, '').trim();
+
+      const confirmed = await showConfirmModal(
+        `Send SMS to ${escapeHtml(rec.fullName)}?`,
+        `<div style="text-align: left; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--line); font-size: 13px; color: var(--ink); line-height: 1.5; white-space: pre-wrap; margin-bottom: 8px;">${escapeHtml(cleanSmsText)}</div>
+        <div style="font-size: 12px; color: var(--muted);"><i class="fas fa-phone" style="color: #0284c7;"></i> Phone: <strong>${escapeHtml(rec.phone)}</strong> · ~${Math.ceil(cleanSmsText.length / 160)} SMS page(s)</div>`,
+        'Send SMS Now'
+      );
+      if (!confirmed) return;
+
+      try {
+        const token = await getAdminAuthToken();
+        const senderId = document.getElementById('settingsSmsSenderId')?.value?.trim() || 'Solutions';
+
+        const res = await fetch(`${API_BASE}/sms/send`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            recipients: [rec.phone],
+            message: cleanSmsText,
+            sender: senderId
+          })
+        });
+
+        const resData = await res.json().catch(() => ({}));
+        if (res.ok && resData.success) {
+          showToast(`SMS successfully sent to <strong>${escapeHtml(rec.fullName)}</strong> via Arkesel!`, 'success', 'SMS Delivered');
+          loadArkeselSmsBalance();
+        } else {
+          showToast(resData.error || resData.message || 'Failed to dispatch SMS through Arkesel gateway.', 'error', 'SMS Failed');
+        }
+      } catch (err) {
+        showToast('Network error sending SMS.', 'error', 'Network Error');
+      }
+    }
+
+    async function sendBulkSmsToSelectedRecipients() {
+      const selected = messagingRecipients.filter(r => selectedRecipientIds.has(String(r.id)) && Boolean(r.phone));
+
+      if (selected.length === 0) {
+        showToast('Please select at least one recipient with a valid phone number from the roster.', 'warning', 'No Selection');
+        return;
+      }
+
+      const textarea = document.getElementById('msgBodyTextarea');
+      const template = textarea ? textarea.value : MSG_TEMPLATES.THANK_YOU;
+      const svcName = document.getElementById('msgServiceSelect')?.value || 'Service';
+      const dateIso = getEffectiveSessionDateIso();
+      const senderId = document.getElementById('settingsSmsSenderId')?.value?.trim() || 'Solutions';
+
+      // Preview sample
+      const sampleText = formatWhatsAppMessageForRecipient(template, selected[0], svcName, dateIso)
+        .replace(/\*/g, '').replace(/_/g, '').trim();
+
+      const confirmed = await showConfirmModal(
+        `Send Arkesel Bulk SMS to ${selected.length} Recipient(s)?`,
+        `<div style="font-size: 13px; margin-bottom: 10px;">You are about to dispatch personalized SMS to <strong>${selected.length} recipient(s)</strong> using Sender ID: <strong style="color: #0284c7;">${escapeHtml(senderId)}</strong>.</div>
+        <div style="text-align: left; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--line); font-size: 12.5px; color: var(--ink); line-height: 1.5; white-space: pre-wrap; max-height: 140px; overflow-y: auto;"><strong>Sample Preview:</strong>\n${escapeHtml(sampleText)}</div>`,
+        `Send ${selected.length} Bulk SMS`
+      );
+      if (!confirmed) return;
+
+      const contactMessages = selected.map(rec => {
+        const text = formatWhatsAppMessageForRecipient(template, rec, svcName, dateIso)
+          .replace(/\*/g, '').replace(/_/g, '').trim();
+        return {
+          phone: rec.phone,
+          name: rec.fullName,
+          message: text
+        };
+      });
+
+      showToast(`Dispatching ${selected.length} SMS via Arkesel Gateway...`, 'info', 'Sending Bulk SMS');
+
+      try {
+        const token = await getAdminAuthToken();
+        const res = await fetch(`${API_BASE}/sms/send-bulk`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            messages: contactMessages,
+            sender: senderId
+          })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
+          const sent = data.results?.sent || 0;
+          const failed = data.results?.failed || 0;
+          showToast(`Bulk SMS completed: <strong>${sent}</strong> delivered successfully${failed > 0 ? `, ${failed} failed` : ''}.`, 'success', 'Bulk Dispatch Complete');
+          loadArkeselSmsBalance();
+        } else {
+          showToast(data.error || 'Failed to complete bulk SMS dispatch.', 'error', 'Dispatch Error');
+        }
+      } catch (err) {
+        showToast('Network error during bulk SMS dispatch.', 'error', 'Network Error');
+      }
+    }
+
+    async function testArkeselSmsConnection() {
+      showToast('Testing connection to Arkesel SMS Gateway...', 'info', 'Connecting');
+      const data = await loadArkeselSmsBalance();
+      if (data && data.success) {
+        showToast(`Connected to Arkesel! SMS Balance: <strong>${data.smsBalance} credits</strong> (${data.mainBalance || 'GHS 0.00'})`, 'success', 'Arkesel Connected');
+      } else {
+        showToast('Arkesel Gateway configured. API key saved and ready for live delivery.', 'info', 'Gateway Configured');
+      }
+    }
+
+    function saveArkeselSmsSettings() {
+      const apiKey = document.getElementById('settingsSmsApiKey')?.value?.trim();
+      const senderId = document.getElementById('settingsSmsSenderId')?.value?.trim();
+
+      if (!apiKey) {
+        showToast('Arkesel API Key is required.', 'error', 'Validation');
+        return;
+      }
+      if (!senderId) {
+        showToast('Sender ID is required (Max 11 characters).', 'error', 'Validation');
+        return;
+      }
+
+      localStorage.setItem('sfmi_arkesel_api_key', apiKey);
+      localStorage.setItem('sfmi_arkesel_sender_id', senderId);
+
+      showToast(`Arkesel SMS configuration saved (Sender ID: <strong>${escapeHtml(senderId)}</strong>)!`, 'success', 'Settings Saved');
+      testArkeselSmsConnection();
+    }
 
   </script>
 
