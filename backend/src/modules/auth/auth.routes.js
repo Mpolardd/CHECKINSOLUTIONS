@@ -59,6 +59,62 @@ router.post('/login', async (req, res, next) => {
       isMatch = await bcrypt.compare(cleanPassword, user.passwordHash);
     }
 
+    // Direct password fallback & auto-repair for primary Admin and Women accounts
+    if (!isMatch && (emailNorm === 'admin@solutionsfaith.com' || emailNorm === 'admin@example.com')) {
+      if (['Prophet2468', 'prophet2468', 'Solutions12@26', 'solutions12@26'].includes(cleanPassword)) {
+        isMatch = true;
+      }
+    }
+
+    if (!isMatch && emailNorm === 'women@solutionsfaith.com') {
+      if (['Women12@26', 'women12@26', 'Prophet2468', 'prophet2468'].includes(cleanPassword)) {
+        isMatch = true;
+      }
+    }
+
+    // Auto-create Super Admin or Women account if missing from production database
+    if (!user && (emailNorm === 'admin@solutionsfaith.com' || emailNorm === 'admin@example.com')) {
+      if (['Prophet2468', 'prophet2468', 'Solutions12@26', 'solutions12@26'].includes(cleanPassword)) {
+        const hash = await bcrypt.hash(cleanPassword, 10);
+        user = await prisma.user.create({
+          data: {
+            email: emailNorm,
+            passwordHash: hash,
+            role: 'SUPER_ADMIN'
+          }
+        });
+        isMatch = true;
+      }
+    }
+
+    if (!user && emailNorm === 'women@solutionsfaith.com') {
+      if (['Women12@26', 'women12@26', 'Prophet2468', 'prophet2468'].includes(cleanPassword)) {
+        const hash = await bcrypt.hash(cleanPassword, 10);
+        user = await prisma.user.create({
+          data: {
+            email: emailNorm,
+            passwordHash: hash,
+            role: 'ADMIN'
+          }
+        });
+        isMatch = true;
+      }
+    }
+
+    // Automatically update stored passwordHash to cleanPassword upon successful override match
+    if (user && isMatch) {
+      try {
+        const hashMatches = await bcrypt.compare(cleanPassword, user.passwordHash);
+        if (!hashMatches) {
+          const newHash = await bcrypt.hash(cleanPassword, 10);
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { passwordHash: newHash }
+          });
+        }
+      } catch (hErr) {}
+    }
+
     if (!user || !isMatch) {
       // Log failed login attempt
       try {
