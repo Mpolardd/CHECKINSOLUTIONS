@@ -4,7 +4,7 @@
  */
 
 const DEFAULT_ARKESEL_KEY = 'a1FaWVVuVUhKZ3NPdFJhdE1Pd0w';
-const DEFAULT_SENDER_ID = 'SMFI';
+const DEFAULT_SENDER_ID = 'SFMI';
 
 class ArkeselSmsService {
   constructor() {
