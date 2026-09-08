@@ -91,7 +91,7 @@ const standardWomenCollectionTypes = [
   }
 ];
 
-// List collection types
+// List collection types (filtering out deleted standard or custom types)
 router.get('/collection-types', async (req, res, next) => {
   try {
     const logs = await prisma.auditLog.findMany({
@@ -99,14 +99,21 @@ router.get('/collection-types', async (req, res, next) => {
       orderBy: { createdAt: 'asc' }
     });
 
+    const deletionLogs = await prisma.auditLog.findMany({
+      where: { entity: 'DELETE_WOMEN_COLLECTION_TYPE' }
+    });
+    const deletedIds = new Set(deletionLogs.map(l => (l.entityId || '').trim().toUpperCase()));
+
     const customTypes = logs.map(l => ({
       id: l.entityId || l.id,
       ...(l.metadata || {}),
       isStandard: false,
       createdAt: l.createdAt
-    })).filter(t => t.active !== false);
+    })).filter(t => t.active !== false && !deletedIds.has((t.id || '').toUpperCase()) && !deletedIds.has((t.name || '').toUpperCase()));
 
-    res.json([...standardWomenCollectionTypes, ...customTypes]);
+    const standards = standardWomenCollectionTypes.filter(s => !deletedIds.has(s.id.toUpperCase()) && !deletedIds.has(s.name.toUpperCase()));
+
+    res.json([...standards, ...customTypes]);
   } catch (e) { next(e); }
 });
 
@@ -145,17 +152,26 @@ router.post('/collection-types', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Delete custom collection type
+// Delete collection type (allows removing standard & custom collection types)
 router.delete('/collection-types/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const stdMatch = standardWomenCollectionTypes.find(s => s.id.toLowerCase() === id.toLowerCase() || s.name.toLowerCase() === id.toLowerCase());
-    if (stdMatch) {
-      return res.status(400).json({ error: 'Standard collection types cannot be deleted' });
-    }
+    const cleanId = (id || '').trim();
 
+    // 1. Delete custom type record if present
     await prisma.auditLog.deleteMany({
-      where: { entity: 'WOMEN_COLLECTION_TYPE', entityId: id }
+      where: { entity: 'WOMEN_COLLECTION_TYPE', entityId: cleanId }
+    });
+
+    // 2. Log deletion record to suppress standard type if standard
+    await prisma.auditLog.create({
+      data: {
+        actorId: await resolveActorId(req),
+        action: 'DELETE_WOMEN_COLLECTION_TYPE',
+        entity: 'DELETE_WOMEN_COLLECTION_TYPE',
+        entityId: cleanId.toUpperCase(),
+        metadata: { deletedId: cleanId, deletedAt: new Date().toISOString() }
+      }
     });
 
     res.json({ success: true, message: 'Collection type removed successfully' });

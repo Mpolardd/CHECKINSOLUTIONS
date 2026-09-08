@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Women's Ministry Portal &amp; Dues Management — Solutions Faith Ministry</title>
-  
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23e11d48'/><path d='M50 25 C40 10 20 20 20 38 C20 58 50 80 50 80 C50 80 80 58 80 38 C80 20 60 10 50 25 Z' fill='%23ffffff'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
@@ -461,6 +461,26 @@
 
     .fund-pill-add:hover {
       background: var(--rose);
+      color: white;
+    }
+
+    .pill-remove-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.08);
+      color: inherit;
+      font-size: 10px;
+      margin-left: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pill-remove-btn:hover {
+      background: #ef4444;
       color: white;
     }
 
@@ -1109,7 +1129,7 @@
           <thead>
             <tr>
               <th class="th-left" style="min-width: 220px;">Sister / Member</th>
-              <th style="min-width: 100px;">Rate / Fund</th>
+              <th style="min-width: 120px;">Fund / Table</th>
               <th>Jan</th>
               <th>Feb</th>
               <th>Mar</th>
@@ -1278,17 +1298,9 @@
         </div>
 
         <!-- Notes / Ref -->
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom: 20px;">
           <label for="payNotes" class="form-label">Reference / Receipt Notes (Optional)</label>
           <input type="text" id="payNotes" class="form-ctrl" style="width: 100%;" placeholder="e.g. MoMo Ref #12345 / Received in Sunday Fellowship" />
-        </div>
-
-        <!-- Checkbox: Send WhatsApp Receipt -->
-        <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-          <input type="checkbox" id="paySendWhatsapp" checked style="width: 16px; height: 16px; accent-color: #25d366; cursor: pointer;" />
-          <label for="paySendWhatsapp" style="font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer;">
-            <i class="fab fa-whatsapp" style="color: #25d366; font-size: 15px;"></i> Generate 1-Click WhatsApp Receipt for sister upon saving
-          </label>
         </div>
 
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
@@ -1353,20 +1365,10 @@
           </div>
         </div>
 
-        <!-- Dues & Fund Details -->
-        <div class="grid-2">
-          <div class="form-group">
-            <label for="enrolMonthlyDues" class="form-label">Monthly Dues (GHS) *</label>
-            <input required type="number" step="0.01" min="1" id="enrolMonthlyDues" class="form-ctrl form-ctrl-money" style="width: 100%;" value="50.00" />
-          </div>
-          <div class="form-group">
-            <label for="enrolCollectionType" class="form-label">Primary Fund</label>
-            <select id="enrolCollectionType" class="form-ctrl" style="width: 100%;">
-              <option value="WOMEN_DUES">Women Monthly Dues</option>
-              <option value="WOMEN_CONTRIBUTION">Women Contribution</option>
-              <option value="WOMEN_WELFARE">Women Welfare</option>
-            </select>
-          </div>
+        <!-- Collection Fund Selection -->
+        <div class="form-group">
+          <label for="enrolCollectionType" class="form-label">Collection Fund Table *</label>
+          <select id="enrolCollectionType" class="form-ctrl" style="width: 100%;"></select>
         </div>
 
         <div class="form-group">
@@ -1763,28 +1765,18 @@
       const container = document.getElementById('fundSwitcherPills');
       if (!container) return;
 
-      let html = `
-        <button class="fund-pill ${activeFundType === 'WOMEN_DUES' ? 'active' : ''}" data-type="WOMEN_DUES" onclick="switchActiveFund('WOMEN_DUES')">
-          <i class="fas fa-calendar-check" style="color: var(--rose);"></i> Women Monthly Dues
-        </button>
-        <button class="fund-pill ${activeFundType === 'WOMEN_CONTRIBUTION' ? 'active' : ''}" data-type="WOMEN_CONTRIBUTION" onclick="switchActiveFund('WOMEN_CONTRIBUTION')">
-          <i class="fas fa-gem" style="color: #f472b6;"></i> Women Contribution
-        </button>
-        <button class="fund-pill ${activeFundType === 'WOMEN_WELFARE' ? 'active' : ''}" data-type="WOMEN_WELFARE" onclick="switchActiveFund('WOMEN_WELFARE')">
-          <i class="fas fa-hand-holding-heart" style="color: #38bdf8;"></i> Women Welfare
-        </button>
-      `;
-
+      let html = '';
       (cachedCollectionTypes || []).forEach(c => {
-        const cId = (c.id || '').toUpperCase();
-        if (!['WOMEN_DUES', 'WOMEN_CONTRIBUTION', 'WOMEN_WELFARE'].includes(cId)) {
-          const isAct = activeFundType.toUpperCase() === c.name.toUpperCase() || activeFundType.toUpperCase() === cId;
-          html += `
-            <button class="fund-pill ${isAct ? 'active' : ''}" data-type="${escapeHtml(c.name)}" onclick="switchActiveFund('${escapeHtml(c.name)}')">
-              <i class="${c.icon || 'fas fa-gem'}" style="color: ${c.color || '#e11d48'};"></i> ${escapeHtml(c.name)}
-            </button>
-          `;
-        }
+        const cId = c.id || c.name;
+        const normKey = (c.id || c.name).toUpperCase();
+        const isAct = activeFundType.toUpperCase() === normKey || activeFundType.toUpperCase() === (c.name || '').toUpperCase();
+
+        html += `
+          <button class="fund-pill ${isAct ? 'active' : ''}" data-type="${escapeHtml(cId)}" onclick="switchActiveFund('${escapeHtml(cId)}')">
+            <i class="${c.icon || 'fas fa-gem'}" style="color: ${isAct ? 'white' : (c.color || '#e11d48')};"></i> ${escapeHtml(c.name)}
+            <span class="pill-remove-btn" title="Delete this collection fund table" onclick="event.stopPropagation(); deleteWomenCollectionType('${escapeHtml(cId)}', '${escapeHtml(c.name)}')">✕</span>
+          </button>
+        `;
       });
 
       html += `
@@ -1792,7 +1784,7 @@
           <i class="fas fa-layer-group"></i> All Collections
         </button>
         <button class="fund-pill fund-pill-add" onclick="openAddCollectionTypeModal()">
-          <i class="fas fa-plus"></i> Add New Collection
+          <i class="fas fa-plus"></i> Add New Collection Fund
         </button>
       `;
 
@@ -1805,19 +1797,12 @@
       if (!paySelect) return;
 
       const currentPayVal = paySelect.value;
-      const currentEnrolVal = enrolSelect ? enrolSelect.value : 'WOMEN_DUES';
+      const currentEnrolVal = enrolSelect ? enrolSelect.value : '';
 
-      let options = `
-        <option value="WOMEN_DUES">Women Monthly Dues</option>
-        <option value="WOMEN_CONTRIBUTION">Women Contribution</option>
-        <option value="WOMEN_WELFARE">Women Welfare Fund</option>
-      `;
-
+      let options = '';
       (cachedCollectionTypes || []).forEach(c => {
-        const cId = (c.id || '').toUpperCase();
-        if (!['WOMEN_DUES', 'WOMEN_CONTRIBUTION', 'WOMEN_WELFARE'].includes(cId)) {
-          options += `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`;
-        }
+        const val = c.id || c.name;
+        options += `<option value="${escapeHtml(val)}">${escapeHtml(c.name)}</option>`;
       });
 
       paySelect.innerHTML = options;
@@ -2192,11 +2177,14 @@
 
       document.getElementById('payBannerName').innerText = name;
       document.getElementById('payBannerPhone').innerHTML = `<i class="fas fa-phone"></i> ${phone || 'No phone recorded'}`;
-      document.getElementById('payBannerRate').innerText = `Rate: GHS ${Number(rate).toFixed(2)} / mo`;
+      document.getElementById('payBannerRate').innerText = `Collection: ${escapeHtml((collectionType || activeFundType).replace(/_/g, ' '))}`;
       document.getElementById('paySelectedSisterBanner').style.display = 'flex';
 
       const amtInput = document.getElementById('payAmount');
-      if (amtInput && rate > 0 && !amtInput.value) amtInput.value = rate;
+      if (amtInput) {
+        amtInput.value = '';
+        amtInput.focus();
+      }
     }
 
     function setPayQuickAmount(val) {
@@ -2430,7 +2418,7 @@
     async function handleEnrolSisterSubmit(e) {
       e.preventDefault();
       const enrolMode = document.querySelector('input[name="enrolMode"]:checked').value;
-      const duesRate = parseFloat(document.getElementById('enrolMonthlyDues').value) || 50;
+      const duesRate = 0;
       const collectionType = document.getElementById('enrolCollectionType').value;
       const startDate = document.getElementById('enrolStartDate').value;
       const notes = document.getElementById('enrolNotes').value.trim();
@@ -2544,6 +2532,33 @@
         }
       } catch (err) {
         showToast('Network error removing sister.', 'error');
+      }
+    }
+
+    // ── DELETE / REMOVE COLLECTION TYPE TABLE ──
+    async function deleteWomenCollectionType(id, name) {
+      if (!confirm(`Are you sure you want to delete the collection fund "${name}"? This will remove this collection table from the portal.`)) {
+        return;
+      }
+      try {
+        const token = getWomenToken();
+        const res = await fetch(`${API_BASE}/women/collection-types/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+
+        if (res.ok) {
+          showToast(`Collection table "<strong>${escapeHtml(name)}</strong>" removed successfully.`, 'info');
+          if (activeFundType.toUpperCase() === (id || '').toUpperCase() || activeFundType.toUpperCase() === (name || '').toUpperCase()) {
+            activeFundType = 'ALL';
+          }
+          await loadWomenData();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.error || 'Failed to delete collection type.', 'error');
+        }
+      } catch (err) {
+        showToast('Network error removing collection type.', 'error');
       }
     }
 
