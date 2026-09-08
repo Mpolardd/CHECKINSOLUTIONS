@@ -1085,7 +1085,7 @@
 
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
           <button type="button" class="btn-main" onclick="openEnrolSisterModal(activeFundType)" id="btnAddSisterToActiveTable">
-            <i class="fas fa-user-plus"></i> + Add Sister to this Table
+            <i class="fas fa-user-plus"></i> Add member
           </button>
           <button type="button" class="btn-outline" onclick="exportWomenMatrixExcel()">
             <i class="fas fa-file-excel" style="color: #15803d;"></i> Export Excel
@@ -1843,7 +1843,7 @@
       const displayName = fundType === 'ALL' ? 'Fellowship' : fundType.replace(/_/g, ' ');
 
       if (addBtn) {
-        addBtn.innerHTML = `<i class="fas fa-user-plus"></i> + Add Sister to ${escapeHtml(displayName)} Table`;
+        addBtn.innerHTML = `<i class="fas fa-user-plus"></i> Add member`;
       }
 
       if (fundType === 'WOMEN_DUES') {
@@ -1950,7 +1950,7 @@
                 Female church members are not added automatically. Click below to add a sister to this collection table.
               </p>
               <button type="button" class="btn-main" style="padding: 8px 18px; font-size: 13px;" onclick="openEnrolSisterModal('${escapeHtml(activeFundType)}')">
-                <i class="fas fa-user-plus"></i> + Add Sister to ${escapeHtml(tableName)} Table
+                <i class="fas fa-user-plus"></i> Add member
               </button>
             </td>
           </tr>
@@ -1959,7 +1959,7 @@
           <div style="text-align:center; color: var(--muted); padding: 36px 16px;">
             <p style="margin-bottom: 12px; font-size: 13px;">No sisters enrolled in this table yet.</p>
             <button type="button" class="btn-main" onclick="openEnrolSisterModal('${escapeHtml(activeFundType)}')">
-              <i class="fas fa-user-plus"></i> + Add Sister
+              <i class="fas fa-user-plus"></i> Add member
             </button>
           </div>
         `;
@@ -2149,7 +2149,7 @@
           <div style="padding: 12px; font-size: 13px; color: var(--muted); text-align: center;">
             No enrolled sister found matching "<strong>${escapeHtml(q)}</strong>".<br/>
             <button type="button" class="btn-main" style="margin-top: 6px; padding: 4px 10px; font-size: 11.5px;" onclick="openEnrolSisterModalWithName('${escapeHtml(q)}')">
-              <i class="fas fa-user-plus"></i> Add Sister to Roster
+              <i class="fas fa-user-plus"></i> Add member
             </button>
           </div>
         `;
