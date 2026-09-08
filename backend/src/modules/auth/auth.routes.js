@@ -82,12 +82,13 @@ router.post('/login', async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    let name = user.role === 'SUPER_ADMIN' ? 'Super Admin' : (user.role === 'FINANCE' ? 'Treasury Officer' : 'Staff');
+    const isWomenUser = (user.email || '').toLowerCase() === 'women@solutionsfaith.com';
+    let name = isWomenUser ? "Women's Ministry Leader" : (user.role === 'SUPER_ADMIN' ? 'Super Admin' : (user.role === 'FINANCE' ? 'Treasury Officer' : 'Staff'));
     let permissions = user.role === 'SUPER_ADMIN'
       ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'finReports', 'subAdmins', 'women']
-      : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']);
+      : (isWomenUser ? ['women'] : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']));
 
-    if (user.role === 'ADMIN') {
+    if (user.role === 'ADMIN' && !isWomenUser) {
       const log = await prisma.auditLog.findFirst({
         where: { entity: 'SUB_ADMIN_PROFILE', entityId: user.id },
         orderBy: { createdAt: 'desc' }
@@ -172,12 +173,13 @@ router.get('/verify', async (req, res) => {
       return res.status(401).json({ error: 'User account no longer exists' });
     }
 
-    let name = user.role === 'SUPER_ADMIN' ? 'Super Admin' : (user.role === 'FINANCE' ? 'Treasury Officer' : 'Staff');
+    const isWomenUser = (user.email || '').toLowerCase() === 'women@solutionsfaith.com';
+    let name = isWomenUser ? "Women's Ministry Leader" : (user.role === 'SUPER_ADMIN' ? 'Super Admin' : (user.role === 'FINANCE' ? 'Treasury Officer' : 'Staff'));
     let permissions = user.role === 'SUPER_ADMIN'
       ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'finReports', 'subAdmins', 'women']
-      : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']);
+      : (isWomenUser ? ['women'] : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']));
 
-    if (user.role === 'ADMIN') {
+    if (user.role === 'ADMIN' && !isWomenUser) {
       const log = await prisma.auditLog.findFirst({
         where: { entity: 'SUB_ADMIN_PROFILE', entityId: user.id },
         orderBy: { createdAt: 'desc' }
