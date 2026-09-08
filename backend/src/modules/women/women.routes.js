@@ -192,7 +192,7 @@ router.get('/members', async (req, res, next) => {
     let members = logs.map(l => ({
       id: l.entityId || l.id,
       collectionType: (l.metadata && l.metadata.collectionType) || 'WOMEN_DUES',
-      pledgeAmount: (l.metadata && Number(l.metadata.pledgeAmount)) || 50,
+      pledgeAmount: (l.metadata && Number(l.metadata.pledgeAmount)) || 0,
       currency: (l.metadata && l.metadata.currency) || 'GHS',
       ...(l.metadata || {}),
       createdAt: l.createdAt
@@ -457,7 +457,7 @@ router.get('/matrix', async (req, res, next) => {
     let members = memberLogs.map(l => ({
       id: l.entityId || l.id,
       collectionType: (l.metadata && l.metadata.collectionType) || 'WOMEN_DUES',
-      pledgeAmount: (l.metadata && Number(l.metadata.pledgeAmount)) || 50,
+      pledgeAmount: (l.metadata && Number(l.metadata.pledgeAmount)) || 0,
       currency: (l.metadata && l.metadata.currency) || 'GHS',
       ...(l.metadata || {})
     })).filter(m => m.active !== false);

@@ -1896,10 +1896,10 @@
           id: item.womenMemberId || item.id,
           memberName: item.memberName,
           phone: item.phone || '—',
-          pledgeAmount: item.pledgeAmount || 50,
+          pledgeAmount: item.pledgeAmount || 0,
           collectionType: item.collectionType || 'WOMEN_DUES',
           yearTotalPaid: item.yearTotalPaid || 0,
-          monthlyStatus: item.monthlyStatus || generateDefaultMonthlyStatus(item.pledgeAmount || 50)
+          monthlyStatus: item.monthlyStatus || generateDefaultMonthlyStatus(item.pledgeAmount || 0)
         });
       });
 
@@ -1996,8 +1996,8 @@
               </div>
             </td>
             <td>
-              <span style="font-size: 11.5px; font-weight: 800; background: #fff1f2; color: #e11d48; padding: 2px 7px; border-radius: 4px;" title="${colLabel}">
-                GHS ${rate.toFixed(2)}/mo
+              <span style="font-size: 11.5px; font-weight: 800; background: #fff1f2; color: #e11d48; padding: 3px 8px; border-radius: 4px;" title="${escapeHtml(colLabel)}">
+                ${escapeHtml(colLabel)}
               </span>
             </td>
         `;
@@ -2050,7 +2050,7 @@
               </div>
               <div style="text-align: right;">
                 <span style="font-size: 11px; font-weight: 800; background: var(--rose-subtle); color: var(--rose); padding: 2px 6px; border-radius: 4px;">
-                  GHS ${rate.toFixed(2)}/mo
+                  ${escapeHtml(colLabel)}
                 </span>
                 <div style="font-size: 12px; font-weight: 800; color: #15803d; margin-top: 2px;">
                   Total: GHS ${(sister.yearTotalPaid || 0).toFixed(2)}
@@ -2093,7 +2093,7 @@
       mobileContainer.innerHTML = mobileHtml;
     }
 
-    function generateDefaultMonthlyStatus(rate) {
+    function generateDefaultMonthlyStatus(rate = 0) {
       const now = new Date();
       const currentYear = now.getFullYear();
       const currentMonth = now.getMonth() + 1;
@@ -2173,7 +2173,7 @@
             </div>
             <div style="text-align: right;">
               <span style="font-size: 11px; font-weight: 800; background: var(--rose-subtle); color: var(--rose); padding: 2px 6px; border-radius: 4px;">
-                GHS ${rate.toFixed(2)}/mo
+                ${escapeHtml((m.collectionType || 'Dues').replace(/_/g, ' '))}
               </span>
             </div>
           </div>
