@@ -921,9 +921,9 @@
       </div>
 
       <div class="nav-actions" id="womenNavActions" style="display: none;">
-        <a href="/admin" class="btn-header-link"><i class="fas fa-arrow-left"></i> Admin Portal</a>
-        <a href="/finance" class="btn-header-link"><i class="fas fa-coins"></i> Treasury</a>
-        <a href="/partnership" class="btn-header-link"><i class="fas fa-handshake"></i> Partnerships</a>
+        <span id="womenNavUserBadge" style="font-size: 12px; background: rgba(225,29,72,0.2); border: 1px solid rgba(225,29,72,0.4); padding: 6px 12px; border-radius: 20px; font-weight: 700; color: #fda4af; display: inline-flex; align-items: center; gap: 6px;">
+          <i class="fas fa-crown"></i> <span id="womenOfficerName">Women's Ministry Leader</span>
+        </span>
         <button type="button" class="btn-header-logout" onclick="handleWomenLogout()">
           <i class="fas fa-sign-out-alt"></i> Sign Out
         </button>
@@ -931,32 +931,32 @@
     </div>
   </nav>
 
-  <!-- 2. LOGIN GATE (If not already authenticated) -->
-  <div class="women-container" id="womenLoginScreen" style="display: none; max-width: 440px; margin: 40px auto;">
-    <div class="panel-card" style="text-align: center; padding: 36px 30px;">
-      <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--rose-subtle); color: var(--rose); display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 16px;">
+  <!-- 2. LOGIN GATE (Dedicated Standalone Screen) -->
+  <div class="women-container" id="womenLoginScreen" style="display: none; max-width: 440px; margin: 50px auto;">
+    <div class="panel-card" style="text-align: center; padding: 40px 32px; border-top: 4px solid var(--rose); box-shadow: 0 10px 30px rgba(0,0,0,0.06);">
+      <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--rose-subtle); color: var(--rose); display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; border: 1.5px solid #fecdd3;">
         <i class="fas fa-crown"></i>
       </div>
       <h2 style="font-family: Manrope, sans-serif; font-size: 22px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">
-        Women's Ministry Portal
+        Women of Faith Portal
       </h2>
-      <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px;">
-        Sign in with your administrative or treasury credentials to manage Women Dues and Fellowship Collections.
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 24px;">
+        Private Treasury &amp; Dues Management for Women's Ministry Leaders
       </p>
 
       <form onsubmit="handleWomenLoginSubmit(event)" autocomplete="off">
         <div class="form-group">
-          <label for="womenLoginEmail" class="form-label">Officer Email</label>
-          <input required type="email" id="womenLoginEmail" class="form-ctrl" style="width: 100%;" placeholder="Enter officer email address" autocomplete="off" />
+          <label for="womenLoginEmail" class="form-label">Leader Email Address *</label>
+          <input required type="email" id="womenLoginEmail" class="form-ctrl" style="width: 100%;" placeholder="e.g. women@solutionsfaith.com" autocomplete="off" />
         </div>
         <div class="form-group">
-          <label for="womenLoginPassword" class="form-label">Password</label>
+          <label for="womenLoginPassword" class="form-label">Password *</label>
           <input required type="password" id="womenLoginPassword" class="form-ctrl" style="width: 100%;" placeholder="Enter password" autocomplete="current-password" />
         </div>
 
-        <div id="womenLoginErrorMsg" style="display: none; padding: 10px; margin-bottom: 14px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 6px; font-size: 13px; font-weight: 600;"></div>
+        <div id="womenLoginErrorMsg" style="display: none; padding: 12px; margin-bottom: 16px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 6px; font-size: 13px; font-weight: 600; text-align: left;"></div>
 
-        <button type="submit" class="btn-main" style="width: 100%; justify-content: center;">
+        <button type="submit" class="btn-main" style="width: 100%; justify-content: center; padding: 12px;">
           <i class="fas fa-lock-open"></i> Sign In to Women's Portal
         </button>
       </form>
@@ -1222,7 +1222,6 @@
               <option value="WOMEN_DUES">Women Monthly Dues</option>
               <option value="WOMEN_CONTRIBUTION">Women Contribution</option>
               <option value="WOMEN_WELFARE">Women Welfare Fund</option>
-              <!-- Dynamic options populated from collection types -->
             </select>
           </div>
 
@@ -1517,17 +1516,12 @@
     </div>
   </div>
 
-  <!-- FOOTER -->
+  <!-- FOOTER (Isolated & Private) -->
   <footer class="app-footer">
-    <div class="footer-inner">
+    <div class="footer-inner" style="justify-content: center; text-align: center;">
       <div>
         <strong style="color: var(--ink);">Solutions Faith Ministry International</strong>
-        <div style="font-size: 12px; color: var(--muted);">Women of Faith — Women's Fellowship Treasury &amp; Dues System</div>
-      </div>
-      <div style="display: flex; gap: 14px;">
-        <a href="/admin" style="color: var(--muted); text-decoration: none; font-weight: 600;">Admin Dashboard</a>
-        <a href="/finance" style="color: var(--muted); text-decoration: none; font-weight: 600;">Service Collections</a>
-        <a href="/partnership" style="color: var(--muted); text-decoration: none; font-weight: 600;">Partnerships</a>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Women of Faith — Confidential Women's Fellowship Treasury &amp; Dues System</div>
       </div>
     </div>
   </footer>
@@ -1547,36 +1541,66 @@
       checkWomenAuth();
     });
 
-    // ── AUTHENTICATION GATE ──
+    // ── AUTHENTICATION & ACCESS CONTROL ──
+    function getWomenToken() {
+      return sessionStorage.getItem('sfmi_women_token') || localStorage.getItem('sfmi_women_token');
+    }
+
+    function isAuthorizedForWomen(user) {
+      if (!user) return false;
+      if (user.role === 'SUPER_ADMIN') return true;
+      if ((user.email || '').toLowerCase() === 'women@solutionsfaith.com') return true;
+      if (Array.isArray(user.permissions) && user.permissions.includes('women')) return true;
+      return false;
+    }
+
     async function checkWomenAuth() {
-      const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      const token = getWomenToken();
 
       if (!token) {
+        purgeWomenAuth();
         showWomenLogin();
         return;
       }
-
-      showWomenDashboard();
 
       try {
         const res = await fetch(`${API_BASE}/auth/verify`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+
         if (res.ok) {
           const data = await res.json();
-          sessionStorage.setItem('sfmi_fin_token', token);
-          if (data.user) sessionStorage.setItem('sfmi_fin_user', JSON.stringify(data.user));
-        } else if (res.status === 401 || res.status === 403) {
-          purgeAuth();
+          if (isAuthorizedForWomen(data.user)) {
+            sessionStorage.setItem('sfmi_women_token', token);
+            if (data.user) sessionStorage.setItem('sfmi_women_user', JSON.stringify(data.user));
+            showWomenDashboard();
+            return;
+          } else {
+            purgeWomenAuth();
+            showWomenLogin();
+            showToast('Access Denied: You do not have Women\'s Ministry privileges.', 'error', 'Restricted Portal');
+            return;
+          }
+        } else {
+          purgeWomenAuth();
           showWomenLogin();
         }
-      } catch (err) {}
+      } catch (err) {
+        // Offline or connection error with valid cached token
+        const cachedUser = JSON.parse(sessionStorage.getItem('sfmi_women_user') || '{}');
+        if (cachedUser && isAuthorizedForWomen(cachedUser)) {
+          showWomenDashboard();
+        } else {
+          purgeWomenAuth();
+          showWomenLogin();
+        }
+      }
     }
 
-    function purgeAuth() {
-      sessionStorage.removeItem('sfmi_fin_token');
-      sessionStorage.removeItem('sfmi_fin_user');
-      localStorage.removeItem('sfmi_fin_token');
+    function purgeWomenAuth() {
+      sessionStorage.removeItem('sfmi_women_token');
+      sessionStorage.removeItem('sfmi_women_user');
+      localStorage.removeItem('sfmi_women_token');
     }
 
     function showWomenLogin() {
@@ -1589,6 +1613,14 @@
       document.getElementById('womenLoginScreen').style.display = 'none';
       document.getElementById('womenDashboardContent').style.display = 'block';
       document.getElementById('womenNavActions').style.display = 'flex';
+
+      try {
+        const u = JSON.parse(sessionStorage.getItem('sfmi_women_user') || localStorage.getItem('sfmi_women_user') || '{}');
+        const badge = document.getElementById('womenOfficerName');
+        if (badge && (u.name || u.email)) {
+          badge.innerText = u.name || u.email.split('@')[0];
+        }
+      } catch(e) {}
 
       const now = new Date();
       const curMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -1603,11 +1635,11 @@
 
       let officer = '';
       try {
-        const u = JSON.parse(sessionStorage.getItem('sfmi_fin_user') || localStorage.getItem('sfmi_fin_user') || sessionStorage.getItem('sfmi_current_user') || '{}');
+        const u = JSON.parse(sessionStorage.getItem('sfmi_women_user') || localStorage.getItem('sfmi_women_user') || '{}');
         if (u.name) officer = u.name;
       } catch(e) {}
       const offInput = document.getElementById('payOfficer');
-      if (offInput && !offInput.value) offInput.value = officer || 'Treasury Officer';
+      if (offInput && !offInput.value) offInput.value = officer || 'Women\'s Ministry Leader';
 
       loadWomenData();
       loadRecentPayments();
@@ -1632,19 +1664,24 @@
 
         if (res.ok) {
           const data = await res.json();
-          sessionStorage.setItem('sfmi_fin_token', data.accessToken);
-          localStorage.setItem('sfmi_fin_token', data.accessToken);
-          sessionStorage.setItem('sfmi_fin_user', JSON.stringify(data.user));
-          showWomenDashboard();
-          showToast('Signed in to Women\'s Ministry Portal!', 'success');
+          if (isAuthorizedForWomen(data.user)) {
+            sessionStorage.setItem('sfmi_women_token', data.accessToken);
+            localStorage.setItem('sfmi_women_token', data.accessToken);
+            sessionStorage.setItem('sfmi_women_user', JSON.stringify(data.user));
+            showWomenDashboard();
+            showToast('Welcome to the Women\'s Ministry Portal!', 'success', 'Sign In Successful');
+          } else {
+            errorMsg.style.display = 'block';
+            errorMsg.innerText = 'Access Restricted: This account does not have Women\'s Ministry privileges. Only authorized Women\'s Fellowship leaders may access this portal.';
+          }
         } else {
           const err = await res.json().catch(() => ({}));
           errorMsg.style.display = 'block';
-          errorMsg.innerText = err.message || 'Invalid email or password.';
+          errorMsg.innerText = err.error || err.message || 'Invalid email address or password. Please try again.';
         }
       } catch (err) {
         errorMsg.style.display = 'block';
-        errorMsg.innerText = 'Network error connecting to auth server.';
+        errorMsg.innerText = 'Network error connecting to authentication server.';
       } finally {
         if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-lock-open"></i> Sign In to Women\'s Portal'; }
       }
@@ -1652,7 +1689,7 @@
 
     function handleWomenLogout() {
       if (confirm('Are you sure you want to sign out from the Women\'s Ministry Portal?')) {
-        purgeAuth();
+        purgeWomenAuth();
         showWomenLogin();
         showToast('Signed out safely.', 'info');
       }
@@ -1660,7 +1697,7 @@
 
     // ── DATA LOADING & FILTERING ──
     async function loadWomenData() {
-      const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      const token = getWomenToken();
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
       const year = document.getElementById('matrixYearSelect').value || new Date().getFullYear();
@@ -2303,7 +2340,7 @@
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving payment…'; }
 
       try {
-        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const token = getWomenToken();
         const headers = {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -2392,7 +2429,7 @@
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…'; }
 
       try {
-        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const token = getWomenToken();
         const headers = {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -2471,7 +2508,7 @@
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating…'; }
 
       try {
-        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const token = getWomenToken();
         const res = await fetch(`${API_BASE}/finance/collection-types`, {
           method: 'POST',
           headers: {
@@ -2556,7 +2593,7 @@ Solutions Faith Ministry International`
       if (!tbody) return;
 
       try {
-        const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const token = getWomenToken();
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
         const res = await fetch(`${API_BASE}/finance/partnerships/payments`, { headers });

@@ -1908,9 +1908,6 @@
       <button class="tab-btn" id="tabBtnPartnership" onclick="switchTab('partnership')">
         <i class="fas fa-handshake"></i> Pledges
       </button>
-      <a href="/women" class="tab-btn" id="tabBtnWomen" style="text-decoration: none; color: #be123c; background: #fff1f2; border: 1.5px solid #fecdd3; font-weight: 700;" title="Open Women's Ministry Portal">
-        <i class="fas fa-crown" style="color: #e11d48;"></i> Women Ministry
-      </a>
       <button class="tab-btn" id="tabBtnSubAdmins" onclick="switchTab('subAdmins')">
         <i class="fas fa-user-shield"></i> Staff & Sub-Admins
       </button>
@@ -1956,9 +1953,6 @@
         <button class="mobile-menu-item" id="mobBtnPartnership" onclick="mobileSwitchTab('partnership')">
           <i class="fas fa-handshake menu-icon"></i> Pledges
         </button>
-        <a href="/women" class="mobile-menu-item" style="text-decoration: none; color: #be123c; background: #fff1f2;">
-          <i class="fas fa-crown menu-icon" style="color: #e11d48;"></i> Women's Ministry Portal
-        </a>
         <button class="mobile-menu-item" id="mobBtnSubAdmins" onclick="mobileSwitchTab('subAdmins')">
           <i class="fas fa-user-shield menu-icon"></i> Staff & Sub-Admins
         </button>
@@ -4261,6 +4255,11 @@
             <input type="checkbox" id="permFinReports" aria-label="Services Financial Analytics Report Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span><i class="fa-solid fa-file-invoice-dollar" style="color: var(--emerald); margin-right: 6px;"></i> Services Financial Analytics Report</span>
             </label>
+
+            <label for="permWomen" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="permWomen" aria-label="Women's Ministry Portal Privilege" style="width: 18px; height: 18px; accent-color: #e11d48;" />
+              <span><i class="fas fa-crown" style="color: #e11d48; margin-right: 6px;"></i> Women's Ministry Private Portal (/women)</span>
+            </label>
           </div>
         </div>
 
@@ -4338,6 +4337,11 @@
             <label for="editPermFinReports" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
             <input type="checkbox" id="editPermFinReports" aria-label="Edit Services Financial Analytics Report Privilege" style="width: 18px; height: 18px; accent-color: var(--emerald);" />
               <span><i class="fa-solid fa-file-invoice-dollar" style="color: var(--emerald); margin-right: 6px;"></i> Services Financial Analytics Report</span>
+            </label>
+
+            <label for="editPermWomen" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; font-weight: 700;">
+            <input type="checkbox" id="editPermWomen" aria-label="Edit Women's Ministry Privilege" style="width: 18px; height: 18px; accent-color: #e11d48;" />
+              <span><i class="fas fa-crown" style="color: #e11d48; margin-right: 6px;"></i> Women's Ministry Private Portal (/women)</span>
             </label>
           </div>
         </div>
@@ -5038,6 +5042,7 @@
         if (p === 'reports') return `<span class="badge-check" style="background:#e0e7ff; color:#3730a3;"><i class="fas fa-clipboard-user"></i> Attendance Reports</span>`;
         if (p === 'finReports') return `<span class="badge-check" style="background:#fef2f2; color:#b91c1c;"><i class="fas fa-file-invoice-dollar"></i> Financial Reports</span>`;
         if (p === 'finance') return `<span class="badge-check" style="background:#fee2e2; color:#991b1b;"><i class="fas fa-coins"></i> Finance</span>`;
+        if (p === 'women') return `<span class="badge-check" style="background:#fff1f2; color:#be123c;"><i class="fas fa-crown"></i> Women Ministry</span>`;
         return '';
       }).join(' ');
 
@@ -5137,6 +5142,7 @@
       if (document.getElementById('permPartnership')?.checked) perms.push('partnership');
       if (document.getElementById('permReports')?.checked) perms.push('reports');
       if (document.getElementById('permFinReports')?.checked) perms.push('finReports');
+      if (document.getElementById('permWomen')?.checked) perms.push('women');
 
       if (perms.length === 0) {
         showToast('Please select at least one module privilege for this sub-admin.', 'error', 'No Privileges Selected');
@@ -5200,6 +5206,7 @@
       if (document.getElementById('editPermPartnership')) document.getElementById('editPermPartnership').checked = perms.includes('partnership');
       if (document.getElementById('editPermReports')) document.getElementById('editPermReports').checked = perms.includes('reports');
       if (document.getElementById('editPermFinReports')) document.getElementById('editPermFinReports').checked = perms.includes('finReports');
+      if (document.getElementById('editPermWomen')) document.getElementById('editPermWomen').checked = perms.includes('women');
 
       const modal = document.getElementById('editSubAdminModal');
       if (!modal) return;
@@ -5227,6 +5234,7 @@
       if (document.getElementById('editPermPartnership')?.checked) perms.push('partnership');
       if (document.getElementById('editPermReports')?.checked) perms.push('reports');
       if (document.getElementById('editPermFinReports')?.checked) perms.push('finReports');
+      if (document.getElementById('editPermWomen')?.checked) perms.push('women');
 
       if (perms.length === 0) {
         showToast('Please select at least one module privilege.', 'error', 'No Privileges Selected');

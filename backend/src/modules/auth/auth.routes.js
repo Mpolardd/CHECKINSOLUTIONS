@@ -60,7 +60,7 @@ router.post('/login', async (req, res, next) => {
 
     let name = user.role === 'SUPER_ADMIN' ? 'Super Admin' : (user.role === 'FINANCE' ? 'Treasury Officer' : 'Staff');
     let permissions = user.role === 'SUPER_ADMIN'
-      ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'finReports', 'subAdmins']
+      ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'finReports', 'subAdmins', 'women']
       : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']);
 
     if (user.role === 'ADMIN') {
@@ -150,7 +150,7 @@ router.get('/verify', async (req, res) => {
 
     let name = user.role === 'SUPER_ADMIN' ? 'Super Admin' : (user.role === 'FINANCE' ? 'Treasury Officer' : 'Staff');
     let permissions = user.role === 'SUPER_ADMIN'
-      ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'finReports', 'subAdmins']
+      ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'finReports', 'subAdmins', 'women']
       : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']);
 
     if (user.role === 'ADMIN') {

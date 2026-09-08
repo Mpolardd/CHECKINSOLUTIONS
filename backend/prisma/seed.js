@@ -4,6 +4,7 @@ const prisma = require('../src/config/prisma');
 async function main() {
   const adminHash = await bcrypt.hash('Solutions12@26', 12);
   const financeHash = await bcrypt.hash('Money12@26', 12);
+  const womenHash = await bcrypt.hash('Women12@26', 12);
 
   const admin = await prisma.user.upsert({
     where: { email: 'admin@solutionsfaith.com' },
@@ -28,6 +29,36 @@ async function main() {
       email: 'finance@solutionsfaith.com',
       passwordHash: financeHash,
       role: 'FINANCE'
+    }
+  });
+
+  const womenUser = await prisma.user.upsert({
+    where: { email: 'women@solutionsfaith.com' },
+    update: {
+      passwordHash: womenHash,
+      role: 'ADMIN'
+    },
+    create: {
+      email: 'women@solutionsfaith.com',
+      passwordHash: womenHash,
+      role: 'ADMIN'
+    }
+  });
+
+  await prisma.auditLog.deleteMany({
+    where: { entity: 'SUB_ADMIN_PROFILE', entityId: womenUser.id }
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      action: 'CREATE_SUB_ADMIN',
+      entity: 'SUB_ADMIN_PROFILE',
+      entityId: womenUser.id,
+      metadata: {
+        name: "Women's Ministry Leader",
+        email: 'women@solutionsfaith.com',
+        permissions: ['women']
+      }
     }
   });
 
