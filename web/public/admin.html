@@ -11009,38 +11009,42 @@ closeCreateProgramModal();
       processedVisitorsList = Array.from(mergedMap.values());
 
       // 3. Compute Metrics
-      const totalVisits = processedVisitorsList.length;
-      const uniqueNames = new Set(processedVisitorsList.map(v => `${v.name.toLowerCase()}_${(v.phone || "").trim()}`));
-      const totalUnique = uniqueNames.size;
+      const updateVisitorKpis = (list) => {
+        const totalVisits = list.length;
+        const uniqueNames = new Set(list.map(v => `${(v.name || "").toLowerCase().trim()}_${(v.phone || "").trim()}`));
+        const totalUnique = uniqueNames.size;
 
-      let sundayVisits = 0;
-      let midweekVisits = 0;
-      let phoneReady = 0;
+        let sundayVisits = 0;
+        let midweekVisits = 0;
+        let phoneReady = 0;
 
-      processedVisitorsList.forEach(v => {
-        const s = (v.serviceName || "").toLowerCase();
-        if (s.includes("sunday") || s.includes("family") || s.includes("friends")) {
-          sundayVisits++;
-        } else if (s.includes("wednesday") || s.includes("friday") || s.includes("time with") || s.includes("prophetic")) {
-          midweekVisits++;
-        }
-        if (v.phone && v.phone !== "—" && v.phone.replace(/\D/g, "").length >= 9) {
-          phoneReady++;
-        }
-      });
+        list.forEach(v => {
+          const s = (v.serviceName || "").toLowerCase();
+          if (s.includes("sunday") || s.includes("family") || s.includes("friends") || s.includes("weekend")) {
+            sundayVisits++;
+          } else {
+            midweekVisits++;
+          }
+          if (v.phone && v.phone !== "—" && v.phone.replace(/\D/g, "").length >= 9) {
+            phoneReady++;
+          }
+        });
 
-      // Update KPI Stat Boxes
-      const elTotal = document.getElementById("statVisTotal");
-      const elVisits = document.getElementById("statVisVisits");
-      const elSunday = document.getElementById("statVisSunday");
-      const elMidweek = document.getElementById("statVisMidweek");
-      const elPhone = document.getElementById("statVisPhone");
+        // Update KPI Stat Boxes
+        const elTotal = document.getElementById("statVisTotal");
+        const elVisits = document.getElementById("statVisVisits");
+        const elSunday = document.getElementById("statVisSunday");
+        const elMidweek = document.getElementById("statVisMidweek");
+        const elPhone = document.getElementById("statVisPhone");
 
-      if (elTotal) elTotal.innerText = totalUnique;
-      if (elVisits) elVisits.innerText = totalVisits;
-      if (elSunday) elSunday.innerText = sundayVisits;
-      if (elMidweek) elMidweek.innerText = midweekVisits;
-      if (elPhone) elPhone.innerText = `${phoneReady} Ready`;
+        if (elTotal) elTotal.innerText = totalUnique;
+        if (elVisits) elVisits.innerText = totalVisits;
+        if (elSunday) elSunday.innerText = sundayVisits;
+        if (elMidweek) elMidweek.innerText = midweekVisits;
+        if (elPhone) elPhone.innerText = `${phoneReady} Ready`;
+      };
+
+      updateVisitorKpis(processedVisitorsList);
 
       // 4. Apply active filters & render table
       handleVisFilterChange();
@@ -11080,6 +11084,39 @@ closeCreateProgramModal();
           );
         });
       }
+
+      // Dynamically update KPI Stat Boxes for filtered view
+      const totalVisits = filtered.length;
+      const uniqueNames = new Set(filtered.map(v => `${(v.name || "").toLowerCase().trim()}_${(v.phone || "").trim()}`));
+      const totalUnique = uniqueNames.size;
+
+      let sundayVisits = 0;
+      let midweekVisits = 0;
+      let phoneReady = 0;
+
+      filtered.forEach(v => {
+        const s = (v.serviceName || "").toLowerCase();
+        if (s.includes("sunday") || s.includes("family") || s.includes("friends") || s.includes("weekend")) {
+          sundayVisits++;
+        } else {
+          midweekVisits++;
+        }
+        if (v.phone && v.phone !== "—" && v.phone.replace(/\D/g, "").length >= 9) {
+          phoneReady++;
+        }
+      });
+
+      const elTotal = document.getElementById("statVisTotal");
+      const elVisits = document.getElementById("statVisVisits");
+      const elSunday = document.getElementById("statVisSunday");
+      const elMidweek = document.getElementById("statVisMidweek");
+      const elPhone = document.getElementById("statVisPhone");
+
+      if (elTotal) elTotal.innerText = totalUnique;
+      if (elVisits) elVisits.innerText = totalVisits;
+      if (elSunday) elSunday.innerText = sundayVisits;
+      if (elMidweek) elMidweek.innerText = midweekVisits;
+      if (elPhone) elPhone.innerText = `${phoneReady} Ready`;
 
       renderVisitorsTableHTML(filtered);
     }
