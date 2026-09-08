@@ -1059,11 +1059,14 @@
             <i class="fas fa-calendar-alt" style="color: var(--rose);"></i> 12-Month Dues Tracking Matrix
           </h2>
           <p style="font-size: 13px; color: var(--muted); margin-top: 3px;" id="panelMatrixDesc">
-            Click any month cell to quickly record a dues payment or update dues status.
+            Track payments and dues for enrolled sisters in this table.
           </p>
         </div>
 
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn-main" onclick="openEnrolSisterModal(activeFundType)" id="btnAddSisterToActiveTable">
+            <i class="fas fa-user-plus"></i> + Add Sister to this Table
+          </button>
           <button type="button" class="btn-outline" onclick="exportWomenMatrixExcel()">
             <i class="fas fa-file-excel" style="color: #15803d;"></i> Export Excel
           </button>
@@ -1717,14 +1720,13 @@
       const year = document.getElementById('matrixYearSelect').value || new Date().getFullYear();
 
       try {
-        const [memRes, partRes, colRes, matRes] = await Promise.all([
+        const [memRes, colRes, matRes] = await Promise.all([
           fetch(`${API_BASE}/members`, { headers }).catch(() => null),
-          fetch(`${API_BASE}/finance/partners`, { headers }).catch(() => null),
-          fetch(`${API_BASE}/finance/collection-types`, { headers }).catch(() => null),
-          fetch(`${API_BASE}/finance/partnerships/matrix?year=${year}`, { headers }).catch(() => null)
+          fetch(`${API_BASE}/women/collection-types`, { headers }).catch(() => null),
+          fetch(`${API_BASE}/women/matrix?year=${year}`, { headers }).catch(() => null)
         ]);
 
-        // 1. Members: Exclusively Female
+        // 1. Members: Exclusively Female (Strictly used for autocomplete when adding a sister to a table)
         if (memRes && memRes.ok) {
           const allMembers = await memRes.json();
           cachedFemaleMembers = (Array.isArray(allMembers) ? allMembers : (allMembers.members || [])).filter(m => {
@@ -1735,19 +1737,14 @@
           });
         }
 
-        // 2. Collection Types
+        // 2. Collection Types (Dedicated to Women's Ministry)
         if (colRes && colRes.ok) {
           cachedCollectionTypes = await colRes.json();
           renderFundSwitcherPills();
           populateFundDropdowns();
         }
 
-        // 3. Registered Partners (for dues rates)
-        if (partRes && partRes.ok) {
-          cachedPartners = await partRes.json();
-        }
-
-        // 4. Matrix Data
+        // 3. Matrix Data strictly for enrolled Women Fellowship members
         if (matRes && matRes.ok) {
           const mData = await matRes.json();
           rawMatrixData = mData.matrix || [];
@@ -1766,14 +1763,6 @@
       const container = document.getElementById('fundSwitcherPills');
       if (!container) return;
 
-      // Filter collection types that are for Women or Standard
-      const womenCols = (cachedCollectionTypes || []).filter(c => {
-        const cat = (c.category || '').toLowerCase();
-        const grp = (c.targetGroup || '').toUpperCase();
-        const id = (c.id || '').toLowerCase();
-        return cat.includes('women') || grp === 'WOMEN' || id.startsWith('women_');
-      });
-
       let html = `
         <button class="fund-pill ${activeFundType === 'WOMEN_DUES' ? 'active' : ''}" data-type="WOMEN_DUES" onclick="switchActiveFund('WOMEN_DUES')">
           <i class="fas fa-calendar-check" style="color: var(--rose);"></i> Women Monthly Dues
@@ -1786,9 +1775,10 @@
         </button>
       `;
 
-      womenCols.forEach(c => {
-        if (!['women_dues', 'women_contribution', 'women_welfare'].includes(c.id.toLowerCase())) {
-          const isAct = activeFundType.toLowerCase() === c.name.toLowerCase() || activeFundType === c.id;
+      (cachedCollectionTypes || []).forEach(c => {
+        const cId = (c.id || '').toUpperCase();
+        if (!['WOMEN_DUES', 'WOMEN_CONTRIBUTION', 'WOMEN_WELFARE'].includes(cId)) {
+          const isAct = activeFundType.toUpperCase() === c.name.toUpperCase() || activeFundType.toUpperCase() === cId;
           html += `
             <button class="fund-pill ${isAct ? 'active' : ''}" data-type="${escapeHtml(c.name)}" onclick="switchActiveFund('${escapeHtml(c.name)}')">
               <i class="${c.icon || 'fas fa-gem'}" style="color: ${c.color || '#e11d48'};"></i> ${escapeHtml(c.name)}
@@ -1824,10 +1814,8 @@
       `;
 
       (cachedCollectionTypes || []).forEach(c => {
-        const cat = (c.category || '').toLowerCase();
-        const grp = (c.targetGroup || '').toUpperCase();
-        const id = (c.id || '').toLowerCase();
-        if ((cat.includes('women') || grp === 'WOMEN' || id.startsWith('women_')) && !['women_dues', 'women_contribution', 'women_welfare', 'welfare', 'partnership'].includes(id)) {
+        const cId = (c.id || '').toUpperCase();
+        if (!['WOMEN_DUES', 'WOMEN_CONTRIBUTION', 'WOMEN_WELFARE'].includes(cId)) {
           options += `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`;
         }
       });
@@ -1845,17 +1833,28 @@
 
       const title = document.getElementById('panelMatrixTitle');
       const desc = document.getElementById('panelMatrixDesc');
+      const addBtn = document.getElementById('btnAddSisterToActiveTable');
+
+      const displayName = fundType === 'ALL' ? 'Fellowship' : fundType.replace(/_/g, ' ');
+
+      if (addBtn) {
+        addBtn.innerHTML = `<i class="fas fa-user-plus"></i> + Add Sister to ${escapeHtml(displayName)} Table`;
+      }
+
       if (fundType === 'WOMEN_DUES') {
-        title.innerHTML = '<i class="fas fa-calendar-check" style="color: var(--rose);"></i> Women Monthly Dues Matrix';
-        desc.innerText = 'Track 12-month dues payments (Jan–Dec) per sister. Click any cell to record dues.';
+        title.innerHTML = '<i class="fas fa-calendar-check" style="color: var(--rose);"></i> Women Monthly Dues Table';
+        desc.innerText = 'Track 12-month dues payments (Jan–Dec) per enrolled sister. Click any cell to record dues.';
       } else if (fundType === 'WOMEN_CONTRIBUTION') {
-        title.innerHTML = '<i class="fas fa-gem" style="color: var(--rose);"></i> Women Contribution Tracking';
-        desc.innerText = 'Track special fellowship offerings, seeds, and love contributions from sisters.';
+        title.innerHTML = '<i class="fas fa-gem" style="color: var(--rose);"></i> Women Contribution Table';
+        desc.innerText = 'Track special fellowship offerings, seeds, and love contributions from enrolled sisters.';
+      } else if (fundType === 'WOMEN_WELFARE') {
+        title.innerHTML = '<i class="fas fa-hand-holding-heart" style="color: var(--rose);"></i> Women Welfare Fund Table';
+        desc.innerText = 'Track sister-to-sister emergency support, benevolence, and welfare dues.';
       } else if (fundType === 'ALL') {
-        title.innerHTML = '<i class="fas fa-layer-group" style="color: var(--rose);"></i> All Women Collections Matrix';
-        desc.innerText = 'Consolidated view of all dues, welfare, and special collections for female members.';
+        title.innerHTML = '<i class="fas fa-layer-group" style="color: var(--rose);"></i> All Women Collections Overview';
+        desc.innerText = 'Consolidated view of all dues, welfare, and special collections for enrolled sisters.';
       } else {
-        title.innerHTML = `<i class="fas fa-folder-open" style="color: var(--rose);"></i> ${escapeHtml(fundType)} Matrix`;
+        title.innerHTML = `<i class="fas fa-folder-open" style="color: var(--rose);"></i> ${escapeHtml(fundType)} Table`;
         desc.innerText = `Track payments and member contributions for ${escapeHtml(fundType)}.`;
       }
 
@@ -1873,61 +1872,27 @@
       const now = new Date();
       const currentMonthKey = String(now.getMonth() + 1).padStart(2, '0');
 
-      // Create a unified map of female members merged with partner matrix records
-      const sisterRows = [];
+      // Filter rawMatrixData by activeFundType (NO AUTO-POPULATING ALL FEMALES)
+      let sisterRows = [];
 
-      // 1. Process matrix items that belong to female members or women collections
-      const processedMemberIds = new Set();
-
-      rawMatrixData.forEach(item => {
-        const partner = cachedPartners.find(p => p.id === item.partnerId || p.memberName === item.memberName);
-        const colType = (item.collectionType || (partner && partner.collectionType) || 'WOMEN_DUES').toUpperCase();
-
-        // Check if matching active fund filter
+      (rawMatrixData || []).forEach(item => {
+        const colType = (item.collectionType || 'WOMEN_DUES').toUpperCase();
         if (activeFundType !== 'ALL') {
           const actNorm = activeFundType.toUpperCase();
-          if (colType !== actNorm && !(actNorm === 'WOMEN_DUES' && colType === 'PARTNERSHIP')) {
-            // If activeFundType is WOMEN_DUES, also check if standard dues
+          if (colType !== actNorm) {
             return;
           }
         }
 
-        // Ensure this sister is female or in female members list
-        const femaleMatch = cachedFemaleMembers.find(m => 
-          (item.partnerId && m.id === item.partnerId) || 
-          (partner && partner.memberId && m.id === partner.memberId) ||
-          `${m.firstName || ''} ${m.lastName || ''}`.trim().toLowerCase() === (item.memberName || '').trim().toLowerCase()
-        );
-
-        if (femaleMatch) {
-          processedMemberIds.add(femaleMatch.id);
-        }
-
         sisterRows.push({
-          id: item.partnerId || (femaleMatch && femaleMatch.id),
+          id: item.womenMemberId || item.id,
           memberName: item.memberName,
-          phone: item.phone || (femaleMatch && femaleMatch.phone) || '—',
-          pledgeAmount: item.pledgeAmount || (partner && partner.pledgeAmount) || 50,
-          collectionType: colType,
+          phone: item.phone || '—',
+          pledgeAmount: item.pledgeAmount || 50,
+          collectionType: item.collectionType || 'WOMEN_DUES',
           yearTotalPaid: item.yearTotalPaid || 0,
           monthlyStatus: item.monthlyStatus || generateDefaultMonthlyStatus(item.pledgeAmount || 50)
         });
-      });
-
-      // 2. Also add female members who haven't registered a dues profile yet
-      cachedFemaleMembers.forEach(m => {
-        if (!processedMemberIds.has(m.id)) {
-          const fullName = `${m.firstName || ''} ${m.lastName || ''}`.trim();
-          sisterRows.push({
-            id: m.id,
-            memberName: fullName,
-            phone: m.phone || '—',
-            pledgeAmount: 50.00, // Standard default monthly dues
-            collectionType: 'WOMEN_DUES',
-            yearTotalPaid: 0,
-            monthlyStatus: generateDefaultMonthlyStatus(50.00)
-          });
-        }
       });
 
       // Filter by search query
@@ -1948,21 +1913,33 @@
         });
       }
 
-      // Update KPI sisters count based on all unique female sisters
-      document.getElementById('kpiTotalSisters').innerText = cachedFemaleMembers.length || sisterRows.length;
+      // Update KPI sisters count strictly based on enrolled sisters
+      document.getElementById('kpiTotalSisters').innerText = sisterRows.length;
 
       if (filtered.length === 0) {
+        const tableName = activeFundType === 'ALL' ? 'Women\'s Ministry' : activeFundType.replace(/_/g, ' ');
         tbody.innerHTML = `
           <tr>
-            <td colspan="16" style="padding: 36px; text-align: center; color: var(--muted);">
-              No sisters found matching your search.
-              <br/><button type="button" class="btn-main" style="margin-top: 10px; padding: 6px 14px; font-size: 12px;" onclick="openEnrolSisterModal()">
-                <i class="fas fa-user-plus"></i> Enrol Sister / Dues Setup
+            <td colspan="16" style="padding: 44px 20px; text-align: center; color: var(--muted);">
+              <div style="font-size: 32px; margin-bottom: 8px;">📋</div>
+              <strong style="font-size: 15px; color: var(--ink);">No sisters enrolled in this ${escapeHtml(tableName)} table yet.</strong>
+              <p style="font-size: 13px; color: var(--muted); margin: 6px auto 14px; max-width: 440px;">
+                Female church members are not added automatically. Click below to add a sister to this collection table.
+              </p>
+              <button type="button" class="btn-main" style="padding: 8px 18px; font-size: 13px;" onclick="openEnrolSisterModal('${escapeHtml(activeFundType)}')">
+                <i class="fas fa-user-plus"></i> + Add Sister to ${escapeHtml(tableName)} Table
               </button>
             </td>
           </tr>
         `;
-        mobileContainer.innerHTML = `<div style="text-align:center; color: var(--muted); padding: 24px;">No records found.</div>`;
+        mobileContainer.innerHTML = `
+          <div style="text-align:center; color: var(--muted); padding: 36px 16px;">
+            <p style="margin-bottom: 12px; font-size: 13px;">No sisters enrolled in this table yet.</p>
+            <button type="button" class="btn-main" onclick="openEnrolSisterModal('${escapeHtml(activeFundType)}')">
+              <i class="fas fa-user-plus"></i> + Add Sister
+            </button>
+          </div>
+        `;
         return;
       }
 
@@ -1970,9 +1947,10 @@
       let desktopHtml = '';
       let mobileHtml = '';
 
-      filtered.forEach((sister, idx) => {
+      filtered.forEach((sister) => {
         const initials = sister.memberName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'SF';
         const rate = Number(sister.pledgeAmount) || 50;
+        const colLabel = (sister.collectionType || activeFundType).replace(/_/g, ' ');
 
         desktopHtml += `
           <tr>
@@ -1992,7 +1970,7 @@
               </div>
             </td>
             <td>
-              <span style="font-size: 11.5px; font-weight: 800; background: #fff1f2; color: #e11d48; padding: 2px 7px; border-radius: 4px;">
+              <span style="font-size: 11.5px; font-weight: 800; background: #fff1f2; color: #e11d48; padding: 2px 7px; border-radius: 4px;" title="${colLabel}">
                 GHS ${rate.toFixed(2)}/mo
               </span>
             </td>
@@ -2003,11 +1981,10 @@
           const mKey = String(m).padStart(2, '0');
           const st = sister.monthlyStatus[mKey] || { status: 'PENDING', paid: 0 };
           const statusClass = `status-${st.status.toLowerCase()}`;
-          const paidDisplay = st.paid > 0 ? `GHS ${st.paid}` : (st.status === 'PAID' ? 'PAID' : st.status);
 
           desktopHtml += `
             <td>
-              <div class="cell-month-badge ${statusClass}" title="${st.monthName || ('Month ' + m)}: ${st.status} (GHS ${st.paid})" onclick="openPayMonthModal('${escapeHtml(sister.id)}', '${escapeHtml(sister.memberName)}', '${escapeHtml(sister.phone)}', ${rate}, '${document.getElementById('matrixYearSelect').value}-${mKey}')">
+              <div class="cell-month-badge ${statusClass}" title="${st.monthName || ('Month ' + m)}: ${st.status} (GHS ${st.paid})" onclick="openPayMonthModal('${escapeHtml(sister.id)}', '${escapeHtml(sister.memberName)}', '${escapeHtml(sister.phone)}', ${rate}, '${document.getElementById('matrixYearSelect').value}-${mKey}', '${escapeHtml(sister.collectionType)}')">
                 <span>${st.status}</span>
                 ${st.paid > 0 ? `<span class="cell-amt">GHS ${st.paid}</span>` : ''}
               </div>
@@ -2022,9 +1999,14 @@
               </strong>
             </td>
             <td>
-              <button type="button" class="btn-main" style="padding: 5px 10px; font-size: 11.5px;" onclick="openPaySisterModal('${escapeHtml(sister.id)}', '${escapeHtml(sister.memberName)}', '${escapeHtml(sister.phone)}', ${rate})">
-                <i class="fas fa-receipt"></i> Pay
-              </button>
+              <div style="display: flex; gap: 4px; align-items: center; justify-content: center;">
+                <button type="button" class="btn-main" style="padding: 5px 9px; font-size: 11.5px;" onclick="openPaySisterModal('${escapeHtml(sister.id)}', '${escapeHtml(sister.memberName)}', '${escapeHtml(sister.phone)}', ${rate}, '${escapeHtml(sister.collectionType)}')">
+                  <i class="fas fa-receipt"></i> Pay
+                </button>
+                <button type="button" class="btn-outline" style="padding: 5px 7px; font-size: 11.5px; color: #ef4444; border-color: #fecdd3;" title="Remove sister from this table" onclick="deleteSisterFromCollection('${escapeHtml(sister.id)}', '${escapeHtml(sister.memberName)}', '${escapeHtml(sister.collectionType)}')">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
             </td>
           </tr>
         `;
@@ -2060,7 +2042,7 @@
           const statusClass = `status-${st.status.toLowerCase()}`;
 
           mobileHtml += `
-            <div class="cell-month-badge ${statusClass}" style="width: 100%;" onclick="openPayMonthModal('${escapeHtml(sister.id)}', '${escapeHtml(sister.memberName)}', '${escapeHtml(sister.phone)}', ${rate}, '${document.getElementById('matrixYearSelect').value}-${mKey}')">
+            <div class="cell-month-badge ${statusClass}" style="width: 100%;" onclick="openPayMonthModal('${escapeHtml(sister.id)}', '${escapeHtml(sister.memberName)}', '${escapeHtml(sister.phone)}', ${rate}, '${document.getElementById('matrixYearSelect').value}-${mKey}', '${escapeHtml(sister.collectionType)}')">
               <span style="font-size: 10px;">${monthNames[m-1]}</span>
               <span style="font-size: 9px; font-weight: 800;">${st.status}</span>
             </div>
@@ -2068,6 +2050,14 @@
         }
 
         mobileHtml += `
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
+              <button type="button" class="btn-main" style="padding: 4px 10px; font-size: 11px;" onclick="openPaySisterModal('${escapeHtml(sister.id)}', '${escapeHtml(sister.memberName)}', '${escapeHtml(sister.phone)}', ${rate}, '${escapeHtml(sister.collectionType)}')">
+                <i class="fas fa-receipt"></i> Pay
+              </button>
+              <button type="button" class="btn-outline" style="padding: 4px 8px; font-size: 11px; color: #ef4444; border-color: #fecdd3;" onclick="deleteSisterFromCollection('${escapeHtml(sister.id)}', '${escapeHtml(sister.memberName)}', '${escapeHtml(sister.collectionType)}')">
+                <i class="fas fa-trash-alt"></i> Remove
+              </button>
             </div>
           </div>
         `;
@@ -2104,9 +2094,9 @@
     }
 
     function renderKpis(summary) {
-      const monthlyTarget = summary.currentMonthPledged || (cachedFemaleMembers.length * 50);
+      const monthlyTarget = summary.currentMonthPledged || 0;
       const collectedMonth = summary.currentMonthCollected || 0;
-      const totalYtd = rawMatrixData.reduce((acc, r) => acc + (r.yearTotalPaid || 0), 0);
+      const totalYtd = summary.totalYearToDate || rawMatrixData.reduce((acc, r) => acc + (r.yearTotalPaid || 0), 0);
 
       document.getElementById('kpiMonthlyTarget').innerText = `GHS ${monthlyTarget.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
       document.getElementById('kpiCollectedMonth').innerText = `GHS ${collectedMonth.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
@@ -2124,18 +2114,19 @@
         return;
       }
 
-      const matches = (cachedFemaleMembers || []).filter(m => {
-        const name = `${m.firstName || ''} ${m.lastName || ''}`.trim().toLowerCase();
-        const phone = (m.phone || '').toLowerCase();
+      // Search in enrolled sisters first, or all female church members
+      const matches = (rawMatrixData || []).filter(s => {
+        const name = (s.memberName || '').toLowerCase();
+        const phone = (s.phone || '').toLowerCase();
         return name.includes(q) || phone.includes(q);
       }).slice(0, 8);
 
       if (matches.length === 0) {
         dropdown.innerHTML = `
           <div style="padding: 12px; font-size: 13px; color: var(--muted); text-align: center;">
-            No sister found matching "<strong>${escapeHtml(q)}</strong>".<br/>
+            No enrolled sister found matching "<strong>${escapeHtml(q)}</strong>".<br/>
             <button type="button" class="btn-main" style="margin-top: 6px; padding: 4px 10px; font-size: 11.5px;" onclick="openEnrolSisterModalWithName('${escapeHtml(q)}')">
-              <i class="fas fa-user-plus"></i> Enrol as New Sister
+              <i class="fas fa-user-plus"></i> Add Sister to Roster
             </button>
           </div>
         `;
@@ -2145,15 +2136,14 @@
 
       let html = '';
       matches.forEach(m => {
-        const fullName = `${m.firstName || ''} ${m.lastName || ''}`.trim();
-        const partner = cachedPartners.find(p => p.memberId === m.id || p.memberName === fullName);
-        const rate = (partner && partner.pledgeAmount) ? Number(partner.pledgeAmount) : 50;
+        const fullName = m.memberName;
+        const rate = Number(m.pledgeAmount) || 50;
 
         html += `
-          <div class="suggest-item" onclick="selectSisterForPayment('${escapeHtml(m.id)}', '${escapeHtml(fullName)}', '${escapeHtml(m.phone || '')}', ${rate})">
+          <div class="suggest-item" onclick="selectSisterForPayment('${escapeHtml(m.id)}', '${escapeHtml(fullName)}', '${escapeHtml(m.phone || '')}', ${rate}, '${escapeHtml(m.collectionType || 'WOMEN_DUES')}')">
             <div>
               <strong>${escapeHtml(fullName)}</strong>
-              <div style="font-size: 11.5px; color: var(--muted);">${m.phone || 'No phone'}</div>
+              <div style="font-size: 11.5px; color: var(--muted);">${m.phone || 'No phone'} · ${(m.collectionType || 'Dues').replace(/_/g, ' ')}</div>
             </div>
             <div style="text-align: right;">
               <span style="font-size: 11px; font-weight: 800; background: var(--rose-subtle); color: var(--rose); padding: 2px 6px; border-radius: 4px;">
@@ -2168,7 +2158,7 @@
       dropdown.style.display = 'block';
     }
 
-    function selectSisterForPayment(id, name, phone, rate) {
+    function selectSisterForPayment(id, name, phone, rate, collectionType) {
       document.getElementById('paySisterId').value = id;
       document.getElementById('paySisterName').value = name;
       document.getElementById('paySisterPhone').value = phone;
@@ -2177,9 +2167,14 @@
       document.getElementById('paySisterSearch').value = name;
       document.getElementById('paySisterSuggestDropdown').style.display = 'none';
 
+      if (collectionType) {
+        const sel = document.getElementById('payCollectionType');
+        if (sel) sel.value = collectionType;
+      }
+
       document.getElementById('payBannerName').innerText = name;
       document.getElementById('payBannerPhone').innerHTML = `<i class="fas fa-phone"></i> ${phone || 'No phone recorded'}`;
-      document.getElementById('payBannerRate').innerText = `Dues: GHS ${Number(rate).toFixed(2)} / mo`;
+      document.getElementById('payBannerRate').innerText = `Rate: GHS ${Number(rate).toFixed(2)} / mo`;
       document.getElementById('paySelectedSisterBanner').style.display = 'flex';
 
       const amtInput = document.getElementById('payAmount');
@@ -2202,7 +2197,7 @@
       if (val === 'WOMEN_DUES') {
         monthGroup.style.display = 'block';
       } else {
-        monthGroup.style.display = 'block'; // Keep for tracking, default to current month
+        monthGroup.style.display = 'block';
       }
     }
 
@@ -2225,25 +2220,33 @@
       document.getElementById('payNotes').value = '';
     }
 
-    function openPaySisterModal(id, name, phone, rate) {
+    function openPaySisterModal(id, name, phone, rate, collectionType) {
       openRecordPaymentModal();
-      selectSisterForPayment(id, name, phone, rate);
+      selectSisterForPayment(id, name, phone, rate, collectionType);
     }
 
-    function openPayMonthModal(id, name, phone, rate, targetMonth) {
+    function openPayMonthModal(id, name, phone, rate, targetMonth, collectionType) {
       openRecordPaymentModal();
-      selectSisterForPayment(id, name, phone, rate);
+      selectSisterForPayment(id, name, phone, rate, collectionType);
       document.getElementById('payTargetMonth').value = targetMonth;
     }
 
-    function openEnrolSisterModal() {
+    function openEnrolSisterModal(targetFund) {
       populateFundDropdowns();
+      if (targetFund && targetFund !== 'ALL') {
+        const enrolSel = document.getElementById('enrolCollectionType');
+        if (enrolSel) enrolSel.value = targetFund;
+      }
       document.getElementById('enrolSisterModal').style.display = 'flex';
       toggleEnrolMode('existing');
+      document.getElementById('enrolSisterSelectSearch').value = '';
+      document.getElementById('enrolMemberId').value = '';
+      document.getElementById('enrolMemberName').value = '';
+      document.getElementById('enrolMemberPhone').value = '';
     }
 
     function openEnrolSisterModalWithName(name) {
-      openEnrolSisterModal();
+      openEnrolSisterModal(activeFundType);
       toggleEnrolMode('new');
       const parts = name.split(' ');
       document.getElementById('enrolNewFirstName').value = parts[0] || '';
@@ -2335,7 +2338,6 @@
       const paymentDate = document.getElementById('payDate').value;
       const recordedBy = document.getElementById('payOfficer').value.trim();
       const notes = document.getElementById('payNotes').value.trim();
-      const sendWhatsapp = document.getElementById('paySendWhatsapp').checked;
 
       if (!memberName) {
         showToast('Please select or enter sister\'s name.', 'error');
@@ -2360,11 +2362,11 @@
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
 
-        const res = await fetch(`${API_BASE}/finance/partnerships/payments`, {
+        const res = await fetch(`${API_BASE}/women/payments`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
-            partnerId: partnerId || `sister_${Date.now()}`,
+            womenMemberId: partnerId || null,
             memberName,
             amount,
             targetMonth,
@@ -2406,7 +2408,7 @@
       }
     }
 
-    // ── SAVE ENROL SISTER ──
+    // ── SAVE ENROL SISTER (MANUAL ADD TO TABLE) ──
     async function handleEnrolSisterSubmit(e) {
       e.preventDefault();
       const enrolMode = document.querySelector('input[name="enrolMode"]:checked').value;
@@ -2449,7 +2451,7 @@
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
 
-        // 1. If new sister, register into Member database first
+        // 1. If new sister, also register into Member database
         if (enrolMode === 'new') {
           const fn = document.getElementById('enrolNewFirstName').value.trim();
           const ln = document.getElementById('enrolNewLastName').value.trim();
@@ -2471,8 +2473,8 @@
           }
         }
 
-        // 2. Register dues pledge in partner database
-        const res = await fetch(`${API_BASE}/finance/partners`, {
+        // 2. Register into Women's Ministry table
+        const res = await fetch(`${API_BASE}/women/members`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
@@ -2490,7 +2492,8 @@
 
         if (res.ok) {
           closeEnrolSisterModal();
-          showToast(`Sister <strong>${escapeHtml(memberName)}</strong> enrolled with GHS ${duesRate.toFixed(2)}/month dues!`, 'success');
+          showToast(`Sister <strong>${escapeHtml(memberName)}</strong> added to <strong>${escapeHtml(collectionType.replace(/_/g, ' '))}</strong> table!`, 'success');
+          activeFundType = collectionType;
           loadWomenData();
         } else {
           const err = await res.json().catch(() => ({}));
@@ -2500,6 +2503,29 @@
         showToast('Network error enrolling sister.', 'error');
       } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save &amp; Enrol Sister'; }
+      }
+    }
+
+    // ── DELETE / REMOVE SISTER FROM COLLECTION TABLE ──
+    async function deleteSisterFromCollection(id, name, colType) {
+      const fundLabel = (colType || activeFundType).replace(/_/g, ' ');
+      if (!confirm(`Are you sure you want to remove "${name}" from the ${fundLabel} table?`)) {
+        return;
+      }
+      try {
+        const token = getWomenToken();
+        const res = await fetch(`${API_BASE}/women/members/${id}`, {
+          method: 'DELETE',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (res.ok) {
+          showToast(`Removed "${name}" from ${fundLabel} table.`, 'info');
+          loadWomenData();
+        } else {
+          showToast('Failed to remove sister from roster.', 'error');
+        }
+      } catch (err) {
+        showToast('Network error removing sister.', 'error');
       }
     }
 
@@ -2523,7 +2549,7 @@
 
       try {
         const token = getWomenToken();
-        const res = await fetch(`${API_BASE}/finance/collection-types`, {
+        const res = await fetch(`${API_BASE}/women/collection-types`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -2536,14 +2562,13 @@
             frequency,
             targetAmount,
             icon,
-            color,
-            targetGroup: 'WOMEN'
+            color
           })
         });
 
         if (res.ok) {
           closeAddCollectionModal();
-          showToast(`New Women Collection "<strong>${escapeHtml(name)}</strong>" created!`, 'success');
+          showToast(`New Women Collection table "<strong>${escapeHtml(name)}</strong>" created!`, 'success');
           activeFundType = name;
           loadWomenData();
         } else {
@@ -2610,14 +2635,10 @@ Solutions Faith Ministry International`
         const token = getWomenToken();
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-        const res = await fetch(`${API_BASE}/finance/partnerships/payments`, { headers });
+        const res = await fetch(`${API_BASE}/women/payments`, { headers });
         if (res.ok) {
           const payments = await res.json();
-          // Filter payments that belong to Women collections or female members
-          const womenPayments = (Array.isArray(payments) ? payments : []).filter(p => {
-            const col = (p.collectionType || '').toUpperCase();
-            return col.includes('WOMEN') || cachedFemaleMembers.some(m => `${m.firstName || ''} ${m.lastName || ''}`.trim().toLowerCase() === (p.memberName || '').trim().toLowerCase());
-          });
+          const womenPayments = Array.isArray(payments) ? payments : [];
 
           if (womenPayments.length === 0) {
             tbody.innerHTML = `<tr><td colspan="8" style="padding: 24px; text-align: center; color: var(--muted);">No women payments logged yet.</td></tr>`;
@@ -2666,12 +2687,17 @@ Solutions Faith Ministry International`
 
       const exportRows = [];
 
-      rawMatrixData.forEach((sister, idx) => {
+      let sistersToExport = rawMatrixData || [];
+      if (activeFundType !== 'ALL') {
+        sistersToExport = sistersToExport.filter(s => (s.collectionType || 'WOMEN_DUES').toUpperCase() === activeFundType.toUpperCase());
+      }
+
+      sistersToExport.forEach((sister, idx) => {
         const row = {
           'No.': idx + 1,
           'Sister Name': sister.memberName,
           'Phone': sister.phone || '',
-          'Fund / Collection': (sister.collectionType || 'WOMEN_DUES').replace(/_/g, ' '),
+          'Fund / Collection': (sister.collectionType || activeFundType).replace(/_/g, ' '),
           'Monthly Rate (GHS)': Number(sister.pledgeAmount) || 0
         };
 

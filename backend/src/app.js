@@ -13,6 +13,7 @@ const attendance = require('./modules/attendance/attendance.routes');
 const finance = require('./modules/finance/finance.routes');
 const celebrations = require('./modules/celebrations/celebrations.routes');
 const reminders = require('./modules/reminders/reminders.routes');
+const women = require('./modules/women/women.routes');
 const health = require('./modules/health/health.routes');
 const error = require('./middleware/error');
 
@@ -50,6 +51,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 });
+app.use(authLimiter);
 
 app.get(['/', '/api', '/api/v1', '/v1'], (req, res) => res.json({ name: 'Church Management API', version: '1.0.0', status: 'operational' }));
 
@@ -59,6 +61,7 @@ app.use(['/api/v1/auth', '/v1/auth'], auth);
 app.use(['/api/v1/members', '/v1/members'], members);
 app.use(['/api/v1/attendance', '/v1/attendance'], attendance);
 app.use(['/api/v1/finance', '/v1/finance'], finance);
+app.use(['/api/v1/women', '/v1/women'], women);
 app.use(['/api/v1/celebrations', '/v1/celebrations'], celebrations);
 app.use(['/api/v1/reminders', '/v1/reminders'], reminders);
 
