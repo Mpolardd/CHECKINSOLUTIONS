@@ -3758,7 +3758,7 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
           <div>
             <label class="form-label" style="font-weight: 700; font-size: 12px;">Arkesel API Key *</label>
-            <input type="password" id="settingsSmsApiKey" class="form-ctrl" value="QVN5bUhqUGZidlN2QkluSmpUQVQ" style="font-family: monospace; font-size: 12.5px;" />
+            <input type="password" id="settingsSmsApiKey" class="form-ctrl" value="a1FaWVVuVUhKZ3NPdFJhdE1Pd0w" style="font-family: monospace; font-size: 12.5px;" />
             <span style="font-size: 11px; color: var(--muted); margin-top: 4px; display: block;">Obtained from your Arkesel dashboard under SMS API.</span>
           </div>
           <div>
@@ -5355,6 +5355,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       initInactivityListeners();
       checkAuthSession();
+      if (typeof initArkeselSmsSettings === 'function') initArkeselSmsSettings();
     });
 
     /* ── 12-HOUR EXTENDED INACTIVITY AUTO-LOGOUT SYSTEM ── */
@@ -5751,6 +5752,7 @@
       if (tab === 'reports') { loadHistoricalAttendanceReport(); syncReportsViewMode(); }
       if (tab === 'settings') { 
         renderSettingsProfile(); 
+        if (typeof initArkeselSmsSettings === 'function') initArkeselSmsSettings();
         if (typeof handleSettingsMsgTemplateChange === 'function') handleSettingsMsgTemplateChange();
         loadArkeselSmsBalance();
       }
@@ -14155,6 +14157,19 @@ _Warm Regards,_
 
       showToast(`Arkesel SMS configuration saved (Sender ID: <strong>${escapeHtml(senderId)}</strong>)!`, 'success', 'Settings Saved');
       testArkeselSmsConnection();
+    }
+
+    function initArkeselSmsSettings() {
+      const savedKey = localStorage.getItem('sfmi_arkesel_api_key');
+      const savedSender = localStorage.getItem('sfmi_arkesel_sender_id');
+      if (savedKey) {
+        const keyEl = document.getElementById('settingsSmsApiKey');
+        if (keyEl) keyEl.value = savedKey;
+      }
+      if (savedSender) {
+        const senderEl = document.getElementById('settingsSmsSenderId');
+        if (senderEl) senderEl.value = savedSender;
+      }
     }
 
   </script>
