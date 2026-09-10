@@ -13,20 +13,20 @@ async function requireWomenAccess(req, res, next) {
     const role = req.user.role;
     const email = (req.user.email || '').toLowerCase();
 
-    // 1. Super Admin or dedicated women user
-    if (role === 'SUPER_ADMIN' || email === 'women@solutionsfaith.com') {
+    // 1. Super Admin or dedicated women user or administrator
+    if (role === 'SUPER_ADMIN' || role === 'ADMIN' || email === 'women@solutionsfaith.com') {
       return next();
     }
 
-    // 2. Sub-Admin with 'women' permission
-    if (role === 'ADMIN') {
+    // 2. Sub-Admin with 'women' or 'members' permission
+    if (role === 'SUB_ADMIN') {
       const targetUserId = req.user.id || req.user.userId || req.user.sub;
       const log = await prisma.auditLog.findFirst({
         where: { entity: 'SUB_ADMIN_PROFILE', entityId: targetUserId },
         orderBy: { createdAt: 'desc' }
       });
       const perms = (log && log.metadata && Array.isArray(log.metadata.permissions)) ? log.metadata.permissions : [];
-      if (perms.includes('women')) {
+      if (perms.includes('women') || perms.includes('members')) {
         return next();
       }
     }

@@ -11,6 +11,23 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script>
+    // Synchronous Auth Guard - prevents visual flash of protected content
+    (function() {
+      const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token') || sessionStorage.getItem('sfmi_sub_session');
+      if (!token) {
+        // No session found, ensure we stay on the login screen
+        document.documentElement.style.visibility = 'hidden';
+        window.addEventListener('DOMContentLoaded', () => {
+          document.getElementById('loginScreen').style.display = 'block';
+          document.getElementById('dashboardContent').style.display = 'none';
+          document.documentElement.style.visibility = '';
+        });
+      }
+    })();
+  </script>
+
   <script src="https://cdn.jsdelivr.net/npm/heic-to@1.5.2/dist/iife/heic-to.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>

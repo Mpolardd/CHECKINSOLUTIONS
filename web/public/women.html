@@ -14,6 +14,22 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
+    .login-container {
+      max-width: 440px;
+      width: 100%;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+
+    .login-card {
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 38px 32px;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+
     :root {
       --ink: #0f172a;
       --paper: #f8fafc;
@@ -790,22 +806,55 @@
         </div>
       </div>
 
-      <div class="nav-actions">
+      <div class="nav-actions" id="womenNavActions" style="display: none;">
         <span id="adminUserPill" style="font-size: 0.82rem; color: #fecdd3; font-weight: 600; background: rgba(0,0,0,0.25); padding: 6px 12px; border-radius: 20px;">
           <i class="fa-solid fa-user-shield"></i> Admin
         </span>
         <a href="/admin.html" class="btn-nav">
           <i class="fa-solid fa-arrow-left"></i> Main Admin Portal
         </a>
-        <button id="btnLogout" class="btn-nav" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4);">
+        <button id="btnLogout" class="btn-nav" onclick="handleWomenLogout()" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4);">
           <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="main-container">
+  <!-- 1. Women's Ministry Embedded Login Screen -->
+  <div class="login-container" id="womenLoginScreen" style="display: none;">
+    <div class="login-card">
+      <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--rose-subtle); color: var(--rose); display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 16px;">
+        <i class="fa-solid fa-venus"></i>
+      </div>
+      <h2 style="font-family: Manrope, sans-serif; font-size: 22px; margin-bottom: 6px; color: var(--ink);">Women's Ministry Login</h2>
+      <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px;">Sign in with your administrator or leader credentials to manage women's ministry funds &amp; rosters.</p>
+
+      <form onsubmit="handleWomenLoginSubmit(event)" autocomplete="off">
+        <div style="text-align: left; margin-bottom: 16px;">
+          <label for="womenLoginEmail" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--ink);">Email Address</label>
+          <input required type="email" id="womenLoginEmail" class="form-input" style="width: 100%; border: 1.5px solid var(--line); padding: 10px 14px; border-radius: 8px; font-size: 14px;" placeholder="Enter your email address" autocomplete="username" />
+        </div>
+        <div style="text-align: left; margin-bottom: 16px;">
+          <label for="womenLoginPassword" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--ink);">Password</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input required type="password" id="womenLoginPassword" class="form-input" style="width: 100%; border: 1.5px solid var(--line); padding: 10px 42px 10px 14px; border-radius: 8px; font-size: 14px;" placeholder="Enter password" autocomplete="current-password" />
+            <button type="button" onclick="toggleWomenPasswordVisibility()" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; display: flex; align-items: center; justify-content: center; font-size: 15px;">
+              <i class="fa-solid fa-eye" id="womenEyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="womenLoginErrorMsg" style="display: none; padding: 10px 14px; margin-bottom: 16px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 6px; font-size: 13px; font-weight: 600; text-align: left;"></div>
+
+        <button type="submit" class="btn-solid" id="btnWomenLoginSubmit" style="width: 100%; padding: 12px; font-size: 14px; justify-content: center;">
+          <i class="fa-solid fa-right-to-bracket"></i> Sign In to Women Portal
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Main Dashboard Content (Protected) -->
+  <main class="main-container" id="womenDashboardContent" style="display: none;">
 
     <!-- Fund Switcher Tabs -->
     <div class="fund-switcher-container">
@@ -1150,31 +1199,179 @@
     const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const FULL_MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+    const API_BASE = (() => {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      return isLocal ? 'http://localhost:4000/api/v1' : '/api/v1';
+    })();
+
     // Init application
     document.addEventListener('DOMContentLoaded', async () => {
-      checkAuth();
       setupEventListeners();
-      await loadCollectionFunds();
-      await loadChurchFemaleMembers();
-      await loadMatrix();
+      await checkAuth();
     });
 
     function getAuthToken() {
-      return localStorage.getItem('token') || sessionStorage.getItem('token') || localStorage.getItem('sfmi_token') || sessionStorage.getItem('sfmi_token');
+      return sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token') || sessionStorage.getItem('token') || localStorage.getItem('token') || '';
     }
 
-    function checkAuth() {
-      const token = getAuthToken();
-      if (!token) {
-        window.location.href = '/login.html?redirect=women.html';
-        return;
-      }
+    function purgeWomenSession() {
+      sessionStorage.removeItem('sfmi_token');
+      localStorage.removeItem('sfmi_token');
+      sessionStorage.removeItem('token');
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('sfmi_current_user');
+      localStorage.removeItem('sfmi_current_user');
+    }
+
+    function showWomenLogin() {
+      document.getElementById('womenLoginScreen').style.display = 'block';
+      document.getElementById('womenDashboardContent').style.display = 'none';
+      const navActions = document.getElementById('womenNavActions');
+      if (navActions) navActions.style.display = 'none';
+    }
+
+    function showWomenDashboard(user) {
+      document.getElementById('womenLoginScreen').style.display = 'none';
+      document.getElementById('womenDashboardContent').style.display = 'block';
+      const navActions = document.getElementById('womenNavActions');
+      if (navActions) navActions.style.display = 'flex';
+
       try {
-        const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('sfmi_current_user') || '{}');
-        if (user && (user.fullName || user.name)) {
-          document.getElementById('adminUserPill').innerHTML = `<i class="fa-solid fa-user-shield"></i> ${user.fullName || user.name}`;
+        const u = user || JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user') || '{}');
+        const pill = document.getElementById('adminUserPill');
+        if (pill) {
+          pill.innerHTML = `<i class="fa-solid fa-user-shield"></i> ${escapeHtml(u.name || u.fullName || u.email || 'Admin')}`;
         }
       } catch (e) {}
+    }
+
+    async function checkAuth() {
+      const token = getAuthToken();
+      if (!token) {
+        showWomenLogin();
+        return;
+      }
+
+      // Fast optimistic display
+      showWomenDashboard();
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/verify`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const user = data.user || {};
+          if (user.role === 'FINANCE') {
+            purgeWomenSession();
+            showWomenLogin();
+            showToast('Access Denied: Treasury officers cannot access the Women Portal.', 'error');
+            return;
+          }
+          sessionStorage.setItem('sfmi_current_user', JSON.stringify(user));
+          localStorage.setItem('sfmi_current_user', JSON.stringify(user));
+          showWomenDashboard(user);
+          await loadInitialData();
+        } else if (res.status === 401 || res.status === 403) {
+          purgeWomenSession();
+          showWomenLogin();
+          showToast('Session expired. Please sign in to continue.', 'warning');
+        } else {
+          await loadInitialData();
+        }
+      } catch (err) {
+        await loadInitialData();
+      }
+    }
+
+    async function loadInitialData() {
+      try {
+        await loadCollectionFunds();
+        await loadChurchFemaleMembers();
+        await loadMatrix();
+      } catch (e) {}
+    }
+
+    async function handleWomenLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('womenLoginEmail').value.trim();
+      const password = document.getElementById('womenLoginPassword').value.trim();
+      const errorMsg = document.getElementById('womenLoginErrorMsg');
+      const submitBtn = document.getElementById('btnWomenLoginSubmit');
+
+      if (errorMsg) errorMsg.style.display = 'none';
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing In…'; }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const user = data.user || {};
+          if (user.role === 'FINANCE') {
+            purgeWomenSession();
+            if (errorMsg) {
+              errorMsg.style.display = 'block';
+              errorMsg.innerText = 'Access Denied: Treasury officers cannot access the Women Portal.';
+            }
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to Women Portal'; }
+            return;
+          }
+
+          sessionStorage.setItem('sfmi_token', data.accessToken);
+          localStorage.setItem('sfmi_token', data.accessToken);
+          sessionStorage.setItem('token', data.accessToken);
+          localStorage.setItem('token', data.accessToken);
+          sessionStorage.setItem('sfmi_current_user', JSON.stringify(user));
+          localStorage.setItem('sfmi_current_user', JSON.stringify(user));
+
+          showWomenDashboard(user);
+          await loadInitialData();
+          showToast('Welcome to the Women\'s Ministry Portal!', 'success');
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          if (errorMsg) {
+            errorMsg.style.display = 'block';
+            errorMsg.innerText = errData.error || errData.message || 'Invalid email or password. Please try again.';
+          }
+        }
+      } catch (err) {
+        if (errorMsg) {
+          errorMsg.style.display = 'block';
+          errorMsg.innerText = 'Unable to connect to authentication server. Please check your connection.';
+        }
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to Women Portal'; }
+      }
+    }
+
+    function handleWomenLogout() {
+      purgeWomenSession();
+      showWomenLogin();
+      showToast('You have been logged out safely.', 'info');
+    }
+
+    function toggleWomenPasswordVisibility() {
+      const input = document.getElementById('womenLoginPassword');
+      const icon = document.getElementById('womenEyeIcon');
+      if (input && icon) {
+        if (input.type === 'password') {
+          input.type = 'text';
+          icon.classList.remove('fa-eye');
+          icon.classList.add('fa-eye-slash');
+        } else {
+          input.type = 'password';
+          icon.classList.remove('fa-eye-slash');
+          icon.classList.add('fa-eye');
+        }
+      }
     }
 
     async function apiRequest(url, options = {}) {
@@ -1185,9 +1382,12 @@
         ...options.headers
       };
 
-      const res = await fetch(url, { ...options, headers });
+      const fullUrl = url.startsWith('http') ? url : (url.startsWith('/api/v1') ? url : `${API_BASE}${url.replace(/^\/api/, '')}`);
+      const res = await fetch(fullUrl, { ...options, headers });
       if (res.status === 401) {
-        window.location.href = '/login.html?redirect=women.html';
+        purgeWomenSession();
+        showWomenLogin();
+        showToast('Your session has expired. Please log in again.', 'warning');
         return null;
       }
       const data = await res.json().catch(() => ({}));
@@ -1228,7 +1428,7 @@
     // Load Funds / Collections
     async function loadCollectionFunds() {
       try {
-        const res = await apiRequest('/api/women/collection-types');
+        const res = await apiRequest(`${API_BASE}/women/collection-types`);
         const list = Array.isArray(res) ? res : (res?.data || res?.collections || []);
         if (list && list.length > 0) {
           state.funds = list;
@@ -1279,7 +1479,7 @@
     // Load Female Church Members for easy dropdown selection
     async function loadChurchFemaleMembers() {
       try {
-        const res = await apiRequest('/api/members?limit=300');
+        const res = await apiRequest(`${API_BASE}/members?limit=300`);
         const list = Array.isArray(res) ? res : (res?.members || res?.data || []);
         if (list && list.length > 0) {
           state.churchMembers = list.filter(m => (m.gender || '').toUpperCase().startsWith('F') || (m.title || '').match(/sister|mrs|ms|madam/i));
@@ -1312,7 +1512,7 @@
       `;
 
       try {
-        const res = await apiRequest(`/api/women/matrix?year=${state.selectedYear}&collectionType=${state.activeFundId}`);
+        const res = await apiRequest(`${API_BASE}/women/matrix?year=${state.selectedYear}&collectionType=${state.activeFundId}`);
         const data = res?.data || res;
         if (!data) throw new Error('Could not fetch matrix');
 
@@ -1558,13 +1758,7 @@
 
       document.getElementById('btnExportExcel').addEventListener('click', exportMatrixToExcel);
 
-      document.getElementById('btnLogout').addEventListener('click', () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('sfmi_token');
-        localStorage.removeItem('user');
-        sessionStorage.clear();
-        window.location.href = '/login.html';
-      });
+      const btnL = document.getElementById('btnLogout'); if (btnL) btnL.addEventListener('click', handleWomenLogout);
 
       document.getElementById('payCollectionType').addEventListener('change', recalculateModalAmount);
 
@@ -1606,7 +1800,7 @@
           const amtPerMonth = amount / months.length;
 
           for (const m of months) {
-            await apiRequest('/api/women/payments', {
+            await apiRequest(`${API_BASE}/women/payments`, {
               method: 'POST',
               body: JSON.stringify({
                 womenMemberId: memberId,
@@ -1650,7 +1844,7 @@
         submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Registering...`;
 
         try {
-          await apiRequest('/api/women/members', {
+          await apiRequest(`${API_BASE}/women/members`, {
             method: 'POST',
             body: JSON.stringify({
               fullName: name,
@@ -1689,7 +1883,7 @@
         submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Creating...`;
 
         try {
-          const res = await apiRequest('/api/women/collection-types', {
+          const res = await apiRequest(`${API_BASE}/women/collection-types`, {
             method: 'POST',
             body: JSON.stringify({
               name,
@@ -1723,7 +1917,7 @@
       tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading recent records...</td></tr>`;
 
       try {
-        const res = await apiRequest(`/api/women/payments?limit=50&year=${state.selectedYear}`);
+        const res = await apiRequest(`${API_BASE}/women/payments?limit=50&year=${state.selectedYear}`);
         const list = Array.isArray(res) ? res : (res?.data || res?.payments || []);
         if (!list || list.length === 0) {
           tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--muted);">No payment logs recorded yet for ${state.selectedYear}.</td></tr>`;

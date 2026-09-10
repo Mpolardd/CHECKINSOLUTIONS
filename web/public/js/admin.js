@@ -612,7 +612,7 @@
       const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
       const subToken = sessionStorage.getItem('sfmi_sub_session');
 
-      // 1. If no session or token exists, show login screen
+      // Immediate UI safety: ensure dashboard is hidden and login is shown if no potential token exists
       if (!token && !subToken) {
         purgeAuthSession();
         showLogin();
