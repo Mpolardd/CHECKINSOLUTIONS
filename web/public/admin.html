@@ -1956,11 +1956,11 @@
     
     <!-- Desktop Tab Navigation -->
     <div class="admin-tabs-bar">
-      <button class="tab-btn active" id="tabBtnFinance" onclick="switchTab('finance')">
-        <i class="fas fa-coins"></i> Financial Overview & Analytics
-      </button>
-      <button class="tab-btn" id="tabBtnAttendance" onclick="switchTab('attendance')">
+      <button class="tab-btn active" id="tabBtnAttendance" onclick="switchTab('attendance')">
         <i class="fas fa-list-check"></i> Attendance & Demographics
+      </button>
+      <button class="tab-btn" id="tabBtnFinance" onclick="switchTab('finance')">
+        <i class="fas fa-coins"></i> Financial Overview & Analytics
       </button>
       <button class="tab-btn" id="tabBtnAnalytics" onclick="switchTab('analytics')">
         <i class="fas fa-chart-line"></i> Attendance &amp; Engagement Analytics
@@ -1997,15 +1997,15 @@
     <!-- Mobile Hamburger Navigation -->
     <div class="mobile-nav-bar">
       <button class="hamburger-btn" onclick="toggleMobileMenu()" id="hamburgerBtn">
-        <span id="activeTabLabel"><i class="fas fa-coins"></i> Financial Overview & Analytics</span>
+        <span id="activeTabLabel"><i class="fas fa-list-check"></i> Attendance & Demographics</span>
         <i class="fas fa-bars ham-icon" id="hamburgerIcon"></i>
       </button>
       <div class="mobile-menu-drawer" id="mobileMenuDrawer">
-        <button class="mobile-menu-item active" id="mobBtnFinance" onclick="mobileSwitchTab('finance')">
-          <i class="fas fa-coins menu-icon"></i> Financial Overview & Analytics
-        </button>
-        <button class="mobile-menu-item" id="mobBtnAttendance" onclick="mobileSwitchTab('attendance')">
+        <button class="mobile-menu-item active" id="mobBtnAttendance" onclick="mobileSwitchTab('attendance')">
           <i class="fas fa-list-check menu-icon"></i> Attendance & Demographics
+        </button>
+        <button class="mobile-menu-item" id="mobBtnFinance" onclick="mobileSwitchTab('finance')">
+          <i class="fas fa-coins menu-icon"></i> Financial Overview & Analytics
         </button>
         <button class="mobile-menu-item" id="mobBtnAnalytics" onclick="mobileSwitchTab('analytics')">
           <i class="fas fa-chart-line menu-icon"></i> Attendance &amp; Engagement Analytics

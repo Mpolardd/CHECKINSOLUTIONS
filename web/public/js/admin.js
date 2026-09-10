@@ -179,7 +179,7 @@
         : ['attendance', 'members', 'programs', 'partnership', 'reports'];
 
       const permissions = isSuperAdmin 
-        ? ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'subAdmins', 'reports', 'finReports', 'settings']
+        ? ['attendance', 'finance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'subAdmins', 'reports', 'finReports', 'settings']
         : rawPerms.filter(p => p !== 'finance' && p !== 'subAdmins');
 
       if (!isSuperAdmin && (rawPerms.includes('attendance') || rawPerms.includes('members') || rawPerms.includes('visitors'))) {
@@ -188,7 +188,7 @@
       }
       if (!permissions.includes('settings')) permissions.push('settings');
 
-      const allTabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'subAdmins', 'reports', 'finReports', 'settings'];
+      const allTabs = ['attendance', 'finance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'subAdmins', 'reports', 'finReports', 'settings'];
       let firstAllowedTab = null;
 
       allTabs.forEach(t => {
@@ -233,7 +233,7 @@
       if (firstAllowedTab) {
         switchTab(firstAllowedTab);
       } else {
-        switchTab(isSuperAdmin ? 'finance' : 'attendance');
+        switchTab(isSuperAdmin ? 'attendance' : 'attendance');
       }
     }
 
@@ -1086,7 +1086,7 @@
         }
       }
 
-      const tabs = ['finance', 'attendance', 'analytics', 'visitors', 'members', 'messaging', 'programs', 'partnership', 'subAdmins', 'reports', 'finReports', 'settings'];
+      const tabs = ['attendance', 'finance', 'analytics', 'visitors', 'members', 'messaging', 'programs', 'partnership', 'subAdmins', 'reports', 'finReports', 'settings'];
       tabs.forEach(t => {
         const sec = document.getElementById(`sec${t.charAt(0).toUpperCase() + t.slice(1)}`);
         const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
