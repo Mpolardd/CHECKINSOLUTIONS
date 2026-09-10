@@ -388,6 +388,9 @@
   <main class="women-container" id="womenDashboardContent" style="display: none;">
     <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:12px;">
        <div class="fund-tabs-bar" id="fundTabsContainer" style="margin-bottom:0; flex:1;"></div>
+       <div id="backgroundSyncIndicator" style="display:none; font-size:11px; color:var(--rose); font-weight:700; margin-bottom:18px; align-items:center; gap:6px;">
+         <i class="fas fa-circle-notch fa-spin"></i> Syncing...
+       </div>
        <button class="btn-main btn-outline" onclick="openModal('newFundModal')" style="padding:8px 14px; font-size:12.5px; white-space:nowrap; margin-bottom:12px;">
          <i class="fas fa-plus-circle" style="color:var(--rose);"></i> Add New Fund
        </button>
@@ -721,9 +724,16 @@
       } catch (e) { showToast('Error deleting fund.', 'error'); }
     }
 
-    async function loadMatrix() {
+    async function loadMatrix(silent = false) {
       const tbody = document.getElementById('matrixTableBody');
-      tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:40px;"><i class="fas fa-circle-notch fa-spin"></i> Syncing...</td></tr>`;
+      const sync = document.getElementById('backgroundSyncIndicator');
+
+      if (!silent) {
+        tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:40px;"><i class="fas fa-circle-notch fa-spin"></i> Syncing...</td></tr>`;
+      } else if (sync) {
+        sync.style.display = 'inline-flex';
+      }
+
       try {
         const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         const res = await fetch(`${API_BASE}/women/matrix?year=${state.selectedYear}&collectionType=${state.activeFundId}`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -731,7 +741,11 @@
         state.matrixData = data;
         updateKpis(data);
         renderMatrixTable();
-      } catch (e) { tbody.innerHTML = `<tr><td colspan="16" style="text-align:center;">Error loading.</td></tr>`; }
+      } catch (e) {
+        if (!silent) tbody.innerHTML = `<tr><td colspan="16" style="text-align:center;">Error loading.</td></tr>`;
+      } finally {
+        if (sync) sync.style.display = 'none';
+      }
     }
 
     function updateKpis(data) {
@@ -801,7 +815,7 @@
         for (const m of months) {
           await fetch(`${API_BASE}/women/payments`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ womenMemberId: document.getElementById('payMemberId').value, fullName: document.getElementById('payMemberName').value, collectionType: document.getElementById('payCollectionType').value, month: m, year: state.selectedYear, amount: amt, paymentMethod: document.getElementById('payMethod').value }) });
         }
-        showToast('Payment saved!', 'success'); closeModal('quickPayModal'); loadMatrix();
+        showToast('Payment saved!', 'success'); closeModal('quickPayModal'); loadMatrix(true);
       } catch (e) { showToast('Error saving payment.', 'error'); }
       btn.disabled = false;
     }
@@ -841,7 +855,7 @@
         if (res.ok) {
           showToast('Payment deleted.', 'success');
           loadPaymentHistory();
-          loadMatrix();
+          loadMatrix(true);
         } else {
           showToast('Failed to delete payment.', 'error');
         }
