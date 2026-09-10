@@ -534,6 +534,44 @@
     </div>
   </header>
 
+  <style>
+    /* Autocomplete Suggestions Box */
+    .suggestions-box {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      z-index: 3000;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+    .suggestion-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 13.5px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: #fff8f9; }
+    .suggestion-item .member-tag {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      background: #f1f5f9;
+      color: var(--muted);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  </style>
+
   <!-- Login Screen -->
   <div class="login-wrapper" id="womenLoginScreen" style="display: none;">
     <div class="login-card">
@@ -715,21 +753,19 @@
       </div>
       <form id="addSisterForm">
         <div class="modal-body">
-          <div class="form-group">
-            <label>Select from Female Members</label>
-            <select id="existingFemaleSelect" class="form-ctrl" style="width:100%; font-weight:600;">
-              <option value="">-- Or enter new details below --</option>
-            </select>
-          </div>
-          <div style="text-align: center; color: var(--muted); font-size: 11px; font-weight: 800; margin: 10px 0;">— OR ENTER NEW SISTER —</div>
-          <div class="form-group">
+          <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">Search from existing church members/visitors or enter new details.</p>
+
+          <div class="form-group" style="position: relative;">
             <label>Full Name *</label>
-            <input type="text" id="newSisterName" class="form-ctrl" style="width:100%;" required placeholder="e.g. Sister Grace Mensah" />
+            <input type="text" id="newSisterName" class="form-ctrl" style="width:100%;" required placeholder="Type name to search..." oninput="handleSisterSearchInput(this.value)" autocomplete="off" />
+            <div id="sisterSuggestionsBox" class="suggestions-box"></div>
           </div>
+
           <div class="form-group">
             <label>Phone Number *</label>
             <input type="tel" id="newSisterPhone" class="form-ctrl" style="width:100%;" required placeholder="e.g. 0244123456" />
           </div>
+
           <div class="form-group">
             <label>Monthly Rate (GH₵)</label>
             <input type="number" step="0.01" id="newSisterRate" class="form-ctrl" style="width:100%;" value="50.00" />
@@ -1021,56 +1057,133 @@
       document.getElementById('statusFilter').addEventListener('change', e => { state.filterStatus = e.target.value; renderMatrixTable(); });
       document.getElementById('yearSelector').addEventListener('change', e => { state.selectedYear = Number(e.target.value); loadMatrix(); });
       document.getElementById('quickPayForm').addEventListener('submit', handlePaymentSubmit);
-      document.getElementById('existingFemaleSelect').addEventListener('change', e => {
-        const opt = e.target.options[e.target.selectedIndex];
-        if (opt.value) {
-          document.getElementById('newSisterName').value = opt.dataset.name;
-          document.getElementById('newSisterPhone').value = opt.dataset.phone;
-        }
-      });
+
+      // Add Sister Form Submission
       document.getElementById('addSisterForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btnSubmitNewSister');
         btn.disabled = true;
         try {
           const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
-          await fetch(`${API_BASE}/women/members`, {
+          const res = await fetch(`${API_BASE}/women/members`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({
-              fullName: document.getElementById('newSisterName').value,
-              phone: document.getElementById('newSisterPhone').value,
+              fullName: document.getElementById('newSisterName').value.trim(),
+              phone: document.getElementById('newSisterPhone').value.trim(),
               pledgeAmount: parseFloat(document.getElementById('newSisterRate').value)
             })
           });
-          showToast('Sister registered!', 'success');
-          closeModal('addSisterModal');
-          loadInitialData();
-        } catch (e) { showToast('Registration failed.', 'error'); }
+          if (res.ok) {
+            showToast('Sister registered successfully!', 'success');
+            closeModal('addSisterModal');
+            document.getElementById('addSisterForm').reset();
+            loadInitialData();
+          } else {
+            const err = await res.json();
+            showToast(err.error || 'Registration failed.', 'error');
+          }
+        } catch (e) { showToast('Network error.', 'error'); }
         btn.disabled = false;
       });
+
+      // New Fund Form Submission
       document.getElementById('newFundForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btnSubmitNewFund');
         btn.disabled = true;
         try {
           const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
-          await fetch(`${API_BASE}/women/collection-types`, {
+          const res = await fetch(`${API_BASE}/women/collection-types`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({
-              name: document.getElementById('newFundName').value,
+              name: document.getElementById('newFundName').value.trim(),
               defaultAmount: parseFloat(document.getElementById('newFundRate').value),
               description: document.getElementById('newFundDesc').value
             })
           });
-          showToast('Fund created!', 'success');
-          closeModal('newFundModal');
-          loadCollectionFunds();
-        } catch (e) { showToast('Creation failed.', 'error'); }
+          if (res.ok) {
+            showToast('Fund created!', 'success');
+            closeModal('newFundModal');
+            loadCollectionFunds();
+          } else {
+            const err = await res.json();
+            showToast(err.error || 'Creation failed.', 'error');
+          }
+        } catch (e) { showToast('Network error.', 'error'); }
         btn.disabled = false;
       });
     }
+
+    // Smart Search for Registering Sisters
+    let _femaleDirectory = [];
+    async function loadFemaleMembers() {
+      try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const res = await fetch(`${API_BASE}/members?limit=1000`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          const members = Array.isArray(data) ? data : (data.members || []);
+          // Filter females or those with female roles/titles
+          _femaleDirectory = members.filter(m => {
+            const g = (m.gender || '').toUpperCase();
+            const c = (m.category || '').toLowerCase();
+            const r = (m.role || '').toLowerCase();
+            return g.startsWith('F') || c.includes('women') || r.includes('women');
+          });
+        }
+      } catch (e) { console.error('Directory fetch error:', e); }
+    }
+
+    window.handleSisterSearchInput = function(query) {
+      const box = document.getElementById('sisterSuggestionsBox');
+      const q = query.trim().toLowerCase();
+      if (!q) {
+        box.style.display = 'none';
+        return;
+      }
+
+      const matches = _femaleDirectory.filter(m => {
+        const name = `${m.firstName} ${m.lastName}`.toLowerCase();
+        return name.includes(q) || (m.phone && m.phone.includes(q));
+      }).slice(0, 5);
+
+      if (matches.length === 0) {
+        box.style.display = 'none';
+        return;
+      }
+
+      box.innerHTML = matches.map(m => {
+        const fullName = `${m.firstName} ${m.lastName}`;
+        const isVisitor = (m.role || '').toLowerCase().includes('visitor') || (m.category || '').toLowerCase().includes('visitor');
+        return `
+          <div class="suggestion-item" onclick="selectSisterSuggestion('${escapeHtml(fullName)}', '${escapeHtml(m.phone || '')}')">
+            <div>
+              <div style="font-weight: 700;">${escapeHtml(fullName)}</div>
+              <div style="font-size: 11px; color: var(--muted);">${m.phone || 'No Phone'}</div>
+            </div>
+            <span class="member-tag">${isVisitor ? 'Visitor' : 'Member'}</span>
+          </div>
+        `;
+      }).join('');
+      box.style.display = 'block';
+    };
+
+    window.selectSisterSuggestion = function(name, phone) {
+      document.getElementById('newSisterName').value = name;
+      document.getElementById('newSisterPhone').value = phone;
+      document.getElementById('sisterSuggestionsBox').style.display = 'none';
+      document.getElementById('newSisterRate').focus();
+    };
+
+    // Close suggestions box when clicking outside
+    document.addEventListener('click', (e) => {
+      const box = document.getElementById('sisterSuggestionsBox');
+      if (box && !e.target.closest('.form-group')) {
+        box.style.display = 'none';
+      }
+    });
 
     window.openQuickPay = (id, name, rate) => openQuickPayForMonth(id, name, state.selectedMonth, rate);
     window.openQuickPayForMonth = (id, name, month, rate) => {
