@@ -501,6 +501,7 @@ router.post('/payments', async (req, res, next) => {
     const paymentId = `wpay_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const monthNumber = parseInt(resolvedMonth.slice(5, 7), 10) || 1;
     const yearNumber = parseInt(resolvedMonth.slice(0, 4), 10) || new Date().getFullYear();
+    const transactionRef = `WMN-${paymentId.slice(-8).toUpperCase()}`;
 
     const paymentMeta = {
       id: paymentId,
@@ -518,7 +519,8 @@ router.post('/payments', async (req, res, next) => {
       paymentMethod,
       collectionType: resolvedCollection,
       recordedBy: recordedBy ? recordedBy.trim() : "Women's Ministry Leader",
-      notes: notes ? notes.trim() : ''
+      notes: notes ? notes.trim() : '',
+      transactionRef
     };
 
     await prisma.auditLog.create({
@@ -549,7 +551,7 @@ router.post('/payments', async (req, res, next) => {
           accountId: acct.id,
           type: 'INCOME',
           amount: parsedAmount,
-          reference: `WMN-${paymentId.slice(-6).toUpperCase()}`,
+          reference: transactionRef,
           description: `Women ${resolvedCollection} Payment: ${cleanMemberName} for ${resolvedMonth} via ${paymentMethod}`
         }
       });
@@ -606,9 +608,34 @@ router.get('/payments', async (req, res, next) => {
 router.delete('/payments/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
+
+    // Find the payment to get the transaction reference
+    const log = await prisma.auditLog.findFirst({
+      where: { entity: 'WOMEN_PAYMENT', entityId: id }
+    });
+
+    if (log && log.metadata && log.metadata.transactionRef) {
+      try {
+        await prisma.financialTransaction.deleteMany({
+          where: { reference: log.metadata.transactionRef }
+        });
+      } catch (fErr) {
+        console.error('Failed to delete associated financial transaction:', fErr);
+      }
+    } else if (log && log.metadata) {
+      // Fallback for older records using the REC- prefix logic
+      const legacyRef = `WMN-${id.slice(-6).toUpperCase()}`;
+      try {
+        await prisma.financialTransaction.deleteMany({
+          where: { reference: legacyRef }
+        });
+      } catch (fErr) {}
+    }
+
     await prisma.auditLog.deleteMany({
       where: { entity: 'WOMEN_PAYMENT', entityId: id }
     });
+
     res.json({ success: true, message: 'Payment record removed' });
   } catch (e) { next(e); }
 });

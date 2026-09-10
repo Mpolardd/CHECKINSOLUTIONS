@@ -482,6 +482,10 @@
             <label>Select Months</label>
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 6px;" id="payMonthsGrid"></div>
           </div>
+          <div id="existingPaymentsContainer" style="display:none; margin-bottom: 16px; padding: 12px; background: #fff8f9; border: 1px solid #fecdd3; border-radius: 8px;">
+            <label style="display:block; font-size:11px; font-weight:800; text-transform:uppercase; color:var(--rose); margin-bottom:8px;">Existing payments for this month:</label>
+            <div id="existingPaymentsList" style="font-size:12px;"></div>
+          </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div class="form-group">
               <label>Amount (GH₵)</label>
@@ -586,6 +590,7 @@
                 <th>Month</th>
                 <th>Amount</th>
                 <th>Method</th>
+                <th style="text-align: right;">Action</th>
               </tr>
             </thead>
             <tbody id="historyTableBody"></tbody>
@@ -803,13 +808,46 @@
 
     async function loadPaymentHistory() {
       const tbody = document.getElementById('historyTableBody');
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">Loading...</td></tr>`;
       try {
         const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         const res = await fetch(`${API_BASE}/women/payments?limit=50&year=${state.selectedYear}`, { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json(); const payments = data.payments || data.data || [];
-        tbody.innerHTML = payments.map(p => `<tr><td>${p.receiptNumber}</td><td>${new Date(p.paymentDate).toLocaleDateString()}</td><td>${p.fullName}</td><td>${p.collectionType}</td><td>${MONTH_NAMES[p.month-1]}</td><td>GH₵${p.amount}</td><td>${p.paymentMethod}</td></tr>`).join('');
-      } catch (e) { tbody.innerHTML = `<tr><td colspan="7">Error.</td></tr>`; }
+        tbody.innerHTML = payments.map(p => `<tr>
+          <td>${p.receiptNumber}</td>
+          <td>${new Date(p.paymentDate).toLocaleDateString()}</td>
+          <td>${p.fullName}</td>
+          <td>${p.collectionType}</td>
+          <td>${MONTH_NAMES[p.month-1]}</td>
+          <td>GH₵${p.amount}</td>
+          <td>${p.paymentMethod}</td>
+          <td style="text-align: right;">
+            <button class="btn-main btn-outline" style="padding: 4px 8px; color: #c5221f; border-color: #fecdd3;" onclick="deletePayment('${p.paymentId || p.id}', '${escapeHtml(p.fullName)}', ${p.amount})">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </td>
+        </tr>`).join('');
+      } catch (e) { tbody.innerHTML = `<tr><td colspan="8">Error.</td></tr>`; }
+    }
+
+    async function deletePayment(id, name, amount) {
+      if (!confirm(`Are you sure you want to delete payment of GH₵${amount} for ${name}?`)) return;
+      try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const res = await fetch(`${API_BASE}/women/payments/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          showToast('Payment deleted.', 'success');
+          loadPaymentHistory();
+          loadMatrix();
+        } else {
+          showToast('Failed to delete payment.', 'error');
+        }
+      } catch (e) {
+        showToast('Error deleting payment.', 'error');
+      }
     }
 
     function setupEventListeners() {
@@ -843,9 +881,61 @@
       document.getElementById('payMemberName').value = name;
       document.getElementById('payAmount').value = rate;
       const grid = document.getElementById('payMonthsGrid');
-      grid.innerHTML = MONTH_NAMES.map((n, i) => `<div class="status-pill ${i+1 === month ? 'status-paid' : 'status-unpaid'}" style="padding:8px 0;" onclick="this.className=this.className.includes('status-paid')?'status-pill status-unpaid':'status-pill status-paid'">${n}</div>`).join('');
+      grid.innerHTML = MONTH_NAMES.map((n, i) => `<div class="status-pill ${i+1 === month ? 'status-paid' : 'status-unpaid'}" style="padding:8px 0;" onclick="togglePayMonth(this, ${i+1})">${n}</div>`).join('');
       document.getElementById('payCollectionType').innerHTML = state.funds.map(f => `<option value="${f.id}" ${f.id===state.activeFundId?'selected':''}>${f.name}</option>`).join('');
+
+      checkExistingPayments(id, month);
       openModal('quickPayModal');
+    };
+
+    window.togglePayMonth = (el, monthNum) => {
+      el.className = el.className.includes('status-paid') ? 'status-pill status-unpaid' : 'status-pill status-paid';
+
+      const activeMonths = Array.from(document.querySelectorAll('#payMonthsGrid .status-paid'))
+        .map(el => MONTH_NAMES.indexOf(el.innerText) + 1);
+
+      if (activeMonths.length === 1) {
+        checkExistingPayments(document.getElementById('payMemberId').value, activeMonths[0]);
+      } else {
+        document.getElementById('existingPaymentsContainer').style.display = 'none';
+      }
+    };
+
+    async function checkExistingPayments(memberId, month) {
+      const container = document.getElementById('existingPaymentsContainer');
+      const list = document.getElementById('existingPaymentsList');
+      const fundId = document.getElementById('payCollectionType').value;
+
+      try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const targetMonth = `${state.selectedYear}-${String(month).padStart(2, '0')}`;
+        const res = await fetch(`${API_BASE}/women/payments?womenMemberId=${memberId}&targetMonth=${targetMonth}&collectionType=${fundId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const payments = data.payments || data.data || [];
+
+        if (payments.length > 0) {
+          list.innerHTML = payments.map(p => `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; padding-bottom:4px; border-bottom:1px dashed #fecdd3;">
+              <span><b>${p.receiptNumber}</b>: GH₵${p.amount}</span>
+              <button type="button" class="btn-main btn-outline" style="padding:2px 6px; font-size:10px; color:#c5221f; border-color:#fecdd3;" onclick="deletePaymentFromModal('${p.paymentId || p.id}', '${escapeHtml(p.fullName)}', ${p.amount}, ${month})">
+                <i class="fas fa-trash-alt"></i> Delete
+              </button>
+            </div>
+          `).join('');
+          container.style.display = 'block';
+        } else {
+          container.style.display = 'none';
+        }
+      } catch (e) {
+        container.style.display = 'none';
+      }
+    }
+
+    window.deletePaymentFromModal = async (id, name, amount, month) => {
+      await deletePayment(id, name, amount);
+      checkExistingPayments(document.getElementById('payMemberId').value, month);
     };
 
     window.exportToExcel = () => {
