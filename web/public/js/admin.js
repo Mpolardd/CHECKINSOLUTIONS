@@ -8,6 +8,11 @@
       return isLocal ? 'http://localhost:4000/api/v1' : '/api/v1';
     })();
 
+    // Runtime state flags
+    window._birthdayToastShown = false;
+    window._isFetchingLiveAttendance = false;
+    window._attendanceDataLoadedOnce = false;
+
     // Centralized safe HTML sanitizer to prevent XSS attacks in dynamic tables
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
@@ -1100,7 +1105,20 @@
       if (lbl) lbl.innerHTML = TAB_LABELS[tab] || '';
       
       if (tab === 'finance') { renderAdminFinanceTable(); syncFinanceViewMode(); loadFinanceData(); }
-      if (tab === 'attendance') { renderAttendanceAndDemographics(); syncAttendanceViewMode(); fetchLiveCounts(); }
+      if (tab === 'attendance') {
+        if (!window._attendanceDataLoadedOnce) {
+          const tbody = document.getElementById('attendanceTableBody');
+          if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 48px 16px; color: var(--muted);">
+            <div style="display: inline-flex; align-items: center; gap: 10px;">
+              <i class="fas fa-circle-notch fa-spin" style="font-size: 20px; color: var(--accent);"></i>
+              <span>Syncing live attendance data...</span>
+            </div>
+          </td></tr>`;
+        }
+        renderAttendanceAndDemographics();
+        syncAttendanceViewMode();
+        fetchLiveCounts();
+      }
       if (tab === 'analytics') { loadAnalyticsDashboard(); syncAnalyticsViewMode(); }
       if (tab === 'visitors') { renderVisitorsSection(); syncVisitorsViewMode(); loadVisitorsData(); }
       if (tab === 'members') { renderMembersTable(); syncMembersViewMode(); loadSavedMembers(); }
@@ -3194,6 +3212,21 @@
     }
 
     async function fetchLiveCounts() {
+      if (window._isFetchingLiveAttendance) return;
+      window._isFetchingLiveAttendance = true;
+
+      const tbody = document.getElementById('attendanceTableBody');
+      const isInitialLoad = !window._attendanceDataLoadedOnce;
+
+      if (tbody && (isInitialLoad || currentSelectedService === 'ALL')) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 48px 16px; color: var(--muted);">
+          <div style="display: inline-flex; align-items: center; gap: 10px;">
+            <i class="fas fa-circle-notch fa-spin" style="font-size: 20px; color: var(--accent);"></i>
+            <span>Syncing live attendance data from cloud...</span>
+          </div>
+        </td></tr>`;
+      }
+
       try {
         const headers = await getAuthHeaders();
 
@@ -3474,6 +3507,9 @@
         }
       } catch (e) {
         console.error('fetchLiveCounts error:', e);
+      } finally {
+        window._isFetchingLiveAttendance = false;
+        window._attendanceDataLoadedOnce = true;
       }
     }
 
@@ -3785,8 +3821,11 @@
         }
       }).join('');
 
-      if ((notifyToast || todayCount > 0) && toastNoticeText.length > 0) {
-        showToast(`🎉 Today's Birthday(s): <strong>${toastNoticeText.join(', ')}</strong>! Send wishes!`, 'success', 'Birthday Celebration!');
+      if (toastNoticeText.length > 0) {
+        if (notifyToast || !window._birthdayToastShown) {
+          showToast(`🎉 Today's Birthday(s): <strong>${toastNoticeText.join(', ')}</strong>! Send wishes!`, 'success', 'Birthday Celebration!');
+          window._birthdayToastShown = true;
+        }
       }
     }
 
