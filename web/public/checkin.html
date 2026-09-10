@@ -770,7 +770,7 @@
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em;">Active Service:</span>
           <select id="kioskServiceSelector" class="kiosk-service-select" aria-label="Active Church Service Selection" onchange="applySelectedService(this.value)">
-            <option value="Sunday: Family & Friends Service">Sunday — Family & Friends Service</option>
+            <option value="Sunday: Loading...">Sunday — Loading...</option>
             <option value="Wednesday: Time with the Lord">Wednesday — Time with the Lord</option>
             <option value="Friday: Prophetic Healing & Deliverance">Friday — Prophetic Deliverance</option>
           </select>
@@ -785,14 +785,102 @@
       <!-- Left Column: Compact Service Flyer Showcase -->
       <div class="service-banner-hero">
         <div class="flyer-wrapper">
-          <img id="serviceHeroImg" src="/Sunday.JPG" alt="Service Flyer" />
+          <img id="serviceHeroImg" src="" alt="Service Flyer" />
         </div>
         <div class="service-info-strip">
-          <div class="service-day-tag" id="heroServiceDay">SUNDAY SERVICE</div>
-          <div class="service-title-display" id="heroServiceName">Family & Friends Service</div>
-          <div class="service-hours-tag" id="heroServiceHours">7:00 AM – 11:00 AM · Main Sanctuary</div>
+          <div class="service-day-tag" id="heroServiceDay"></div>
+          <div class="service-title-display" id="heroServiceName">Loading...</div>
+          <div class="service-hours-tag" id="heroServiceHours"></div>
         </div>
       </div>
+
+      <script>
+        (function() {
+          try {
+            const activeKiosk = localStorage.getItem('sfmi_active_kiosk_service');
+            const savedPrograms = localStorage.getItem('sfmi_custom_programs');
+            let serviceKey = activeKiosk;
+            if (!serviceKey) {
+              const d = new Date().getDay();
+              if (d === 3) serviceKey = 'Wednesday: Time with the Lord';
+              else if (d === 5) serviceKey = 'Friday: Prophetic Healing & Deliverance';
+              else serviceKey = 'Sunday: Family & Friends Service';
+            }
+            let dayName = 'Sunday', title = 'Family & Friends Service', hours = '7:00 AM – 11:00 AM', img = '/Sunday.JPG';
+            let customProg = null;
+            if (savedPrograms) {
+              const list = JSON.parse(savedPrograms);
+              customProg = list.find(p => p.name.trim().toLowerCase() === String(serviceKey).trim().toLowerCase());
+            }
+            if (customProg) {
+              dayName = customProg.tag || customProg.category || 'SPECIAL PROGRAM';
+              title = customProg.name;
+              hours = customProg.schedule || 'Active Program · Main Sanctuary';
+              img = customProg.flyerUrl || '/Sunday.JPG';
+            } else {
+              const lower = String(serviceKey).toLowerCase().trim();
+              if (lower.includes('time with the lord') || lower.includes('wednesday')) {
+                dayName = 'Wednesday'; title = localStorage.getItem('sfmi_svc_name_wed') || 'Wednesday: Time with the Lord';
+                hours = localStorage.getItem('sfmi_svc_sched_wed') || '6:00 PM – 8:00 PM'; img = localStorage.getItem('sfmi_svc_img_wed') || '/WEDNESDAY.JPG';
+              } else if (lower.includes('prophetic healing') || lower.includes('friday')) {
+                dayName = 'Friday'; title = localStorage.getItem('sfmi_svc_name_fri') || 'Friday: Prophetic Healing & Deliverance';
+                hours = localStorage.getItem('sfmi_svc_sched_fri') || '6:00 PM – 8:00 PM'; img = localStorage.getItem('sfmi_svc_img_fri') || '/FRIDAY.JPG';
+              } else if (lower.includes('family & friends') || lower.includes('sunday')) {
+                dayName = 'Sunday'; title = localStorage.getItem('sfmi_svc_name_sun') || 'Sunday: Family & Friends Service';
+                hours = localStorage.getItem('sfmi_svc_sched_sun') || '7:00 AM – 11:00 AM'; img = localStorage.getItem('sfmi_svc_img_sun') || '/Sunday.JPG';
+              }
+            }
+            document.getElementById('heroServiceDay').innerText = dayName.toUpperCase() + ' SERVICE';
+            document.getElementById('heroServiceName').innerText = title;
+            document.getElementById('heroServiceHours').innerText = hours + ' · Main Sanctuary';
+            document.getElementById('serviceHeroImg').src = img;
+          } catch(e) {}
+        })();
+      </script>
+
+      <script>
+        (function() {
+          try {
+            const activeKiosk = localStorage.getItem('sfmi_active_kiosk_service');
+            const savedPrograms = localStorage.getItem('sfmi_custom_programs');
+            let serviceKey = activeKiosk;
+            if (!serviceKey) {
+              const d = new Date().getDay();
+              if (d === 3) serviceKey = 'Wednesday: Time with the Lord';
+              else if (d === 5) serviceKey = 'Friday: Prophetic Healing & Deliverance';
+              else serviceKey = 'Sunday: Family & Friends Service';
+            }
+            let dayName = 'Sunday', title = 'Family & Friends Service', hours = '7:00 AM – 11:00 AM', img = '/Sunday.JPG';
+            let customProg = null;
+            if (savedPrograms) {
+              const list = JSON.parse(savedPrograms);
+              customProg = list.find(p => p.name.trim().toLowerCase() === String(serviceKey).trim().toLowerCase());
+            }
+            if (customProg) {
+              dayName = customProg.tag || customProg.category || 'SPECIAL PROGRAM';
+              title = customProg.name;
+              hours = customProg.schedule || 'Active Program · Main Sanctuary';
+              img = customProg.flyerUrl || '/Sunday.JPG';
+            } else {
+              const lower = String(serviceKey).toLowerCase().trim();
+              if (lower.includes('time with the lord') || lower.includes('wednesday')) {
+                dayName = 'Wednesday'; title = localStorage.getItem('sfmi_svc_name_wed') || 'Wednesday: Time with the Lord';
+                hours = localStorage.getItem('sfmi_svc_sched_wed') || '6:00 PM – 8:00 PM'; img = localStorage.getItem('sfmi_svc_img_wed') || '/WEDNESDAY.JPG';
+              } else if (lower.includes('prophetic healing') || lower.includes('friday')) {
+                dayName = 'Friday'; title = localStorage.getItem('sfmi_svc_name_fri') || 'Friday: Prophetic Healing & Deliverance';
+                hours = localStorage.getItem('sfmi_svc_sched_fri') || '6:00 PM – 8:00 PM'; img = localStorage.getItem('sfmi_svc_img_fri') || '/FRIDAY.JPG';
+              } else if (lower.includes('family & friends') || lower.includes('sunday')) {
+                dayName = 'Sunday'; title = localStorage.getItem('sfmi_svc_name_sun') || 'Sunday: Family & Friends Service';
+                hours = localStorage.getItem('sfmi_svc_sched_sun') || '7:00 AM – 11:00 AM'; img = localStorage.getItem('sfmi_svc_img_sun') || '/Sunday.JPG';
+              }
+            }
+            document.getElementById('heroServiceDay').innerText = dayName.toUpperCase() + ' SERVICE';
+            document.getElementById('heroServiceName').innerText = title;
+            document.getElementById('heroServiceHours').innerText = hours + ' · Main Sanctuary';
+            document.getElementById('serviceHeroImg').src = img;
+          } catch(e) {}
+        })();
+      </script>
 
       <!-- Right Column: Interactive Check-In Area -->
       <div class="terminal-content" id="viewSearch">
@@ -835,7 +923,7 @@
           <p style="font-size: 13.5px; color: var(--muted);">Please verify your details before check-in</p>
 
           <div class="confirm-details">
-            <div style="margin-bottom: 4px;"><strong>Service:</strong> <span id="confirmServiceName">Family & Friends Service</span></div>
+            <div style="margin-bottom: 4px;"><strong>Service:</strong> <span id="confirmServiceName"></span></div>
             <div style="margin-bottom: 4px;"><strong>Phone:</strong> <span id="confirmPhone">—</span></div>
             <div style="margin-bottom: 4px;"><strong>Gender:</strong> <span id="confirmGender">—</span></div>
             <div style="margin-bottom: 4px;"><strong>Location / Address:</strong> <span id="confirmAddress">—</span></div>
