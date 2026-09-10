@@ -24,6 +24,7 @@
       --emerald-dark: #072216;
       --rose: #e11d48;
       --rose-dark: #9f1239;
+      --rose-subtle: #fff1f2;
       --accent: #c89b55;
       --accent-hover: #b38642;
       --max: 1300px;
@@ -139,12 +140,18 @@
     /* Fund Tabs */
     .fund-tabs-bar {
       display: flex;
-      gap: 8px;
+      gap: 12px;
       margin-bottom: 20px;
       border-bottom: 1px solid var(--line);
       padding-bottom: 12px;
       overflow-x: auto;
       scrollbar-width: none;
+    }
+
+    .fund-tab-item {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
     }
 
     .fund-tab-btn {
@@ -180,6 +187,25 @@
       background: rgba(0,0,0,0.1);
       padding: 2px 6px;
       border-radius: 4px;
+    }
+
+    .btn-delete-fund {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #c5221f;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      z-index: 5;
     }
 
     /* Metric Grid */
@@ -402,7 +428,8 @@
       border-radius: 12px;
       width: 100%;
       max-width: 500px;
-      overflow: hidden;
+      max-height: 90vh;
+      overflow-y: auto;
       box-shadow: 0 20px 40px rgba(0,0,0,0.2);
     }
 
@@ -461,16 +488,19 @@
       font-size: 12.5px;
       color: var(--muted);
     }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--ink); }
   </style>
 
   <script>
     // Synchronous Auth Guard - prevents visual flash of protected content
     (function() {
-      const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
       if (!token) {
         document.documentElement.style.visibility = 'hidden';
         window.addEventListener('DOMContentLoaded', () => {
-          document.getElementById('womenLoginScreen').style.display = 'block';
+          document.getElementById('womenLoginScreen').style.display = 'flex';
           document.getElementById('womenDashboardContent').style.display = 'none';
           document.documentElement.style.visibility = '';
         });
@@ -537,9 +567,13 @@
   <!-- Dashboard Container -->
   <main class="women-container" id="womenDashboardContent" style="display: none;">
 
-    <!-- Fund Tabs Navigation -->
-    <div class="fund-tabs-bar" id="fundTabsContainer">
-      <!-- Dynamically Injected -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:12px;">
+       <div class="fund-tabs-bar" id="fundTabsContainer" style="margin-bottom:0; flex:1;">
+         <!-- Dynamically Injected -->
+       </div>
+       <button class="btn-main btn-outline" onclick="openModal('newFundModal')" style="padding:8px 14px; font-size:12.5px; white-space:nowrap; margin-bottom:12px;">
+         <i class="fas fa-plus-circle" style="color:var(--rose);"></i> Add New Fund
+       </button>
     </div>
 
     <!-- Statistics Grid -->
@@ -638,25 +672,25 @@
       <form id="quickPayForm">
         <div class="modal-body">
           <input type="hidden" id="payMemberId" />
-          <div style="margin-bottom: 16px;">
-            <label style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Sister Name</label>
+          <div class="form-group">
+            <label>Sister Name</label>
             <input type="text" id="payMemberName" class="form-ctrl" style="width:100%; font-weight:800; background:#f1f5f9;" readonly />
           </div>
-          <div style="margin-bottom: 16px;">
-            <label style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Fund Type</label>
+          <div class="form-group">
+            <label>Fund Type</label>
             <select id="payCollectionType" class="form-ctrl" style="width:100%; font-weight:700;"></select>
           </div>
-          <div style="margin-bottom: 16px;">
-            <label style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Select Months</label>
+          <div class="form-group">
+            <label>Select Months</label>
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 6px;" id="payMonthsGrid"></div>
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div>
-              <label style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Amount (GH₵)</label>
+            <div class="form-group">
+              <label>Amount (GH₵)</label>
               <input type="number" step="0.01" id="payAmount" class="form-ctrl" style="width:100%; font-weight:800; font-size:16px; color:var(--rose);" required />
             </div>
-            <div>
-              <label style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Method</label>
+            <div class="form-group">
+              <label>Method</label>
               <select id="payMethod" class="form-ctrl" style="width:100%;">
                 <option value="CASH">Cash</option>
                 <option value="MOMO">MoMo</option>
@@ -673,9 +707,106 @@
     </div>
   </div>
 
-  <div class="toast-container" id="toastContainer" style="position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:10px; pointer-events:none;"></div>
+  <!-- ADD SISTER MODAL -->
+  <div class="modal-overlay" id="addSisterModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-family: Manrope, sans-serif; font-weight: 800;"><i class="fas fa-user-plus" style="color: var(--rose);"></i> Register Sister</h3>
+        <button style="background:none; border:none; font-size:20px; cursor:pointer;" onclick="closeModal('addSisterModal')">&times;</button>
+      </div>
+      <form id="addSisterForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Select from Female Members</label>
+            <select id="existingFemaleSelect" class="form-ctrl" style="width:100%; font-weight:600;">
+              <option value="">-- Or enter new details below --</option>
+            </select>
+          </div>
+          <div style="text-align: center; color: var(--muted); font-size: 11px; font-weight: 800; margin: 10px 0;">— OR ENTER NEW SISTER —</div>
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" id="newSisterName" class="form-ctrl" style="width:100%;" required placeholder="e.g. Sister Grace Mensah" />
+          </div>
+          <div class="form-group">
+            <label>Phone Number *</label>
+            <input type="tel" id="newSisterPhone" class="form-ctrl" style="width:100%;" required placeholder="e.g. 0244123456" />
+          </div>
+          <div class="form-group">
+            <label>Monthly Rate (GH₵)</label>
+            <input type="number" step="0.01" id="newSisterRate" class="form-ctrl" style="width:100%;" value="50.00" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-main btn-outline" onclick="closeModal('addSisterModal')">Cancel</button>
+          <button type="submit" class="btn-main btn-rose" id="btnSubmitNewSister">Register Sister</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-  <!-- External JS reference -->
+  <!-- NEW FUND MODAL -->
+  <div class="modal-overlay" id="newFundModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-family: Manrope, sans-serif; font-weight: 800;"><i class="fas fa-folder-plus" style="color: var(--rose);"></i> Create New Fund</h3>
+        <button style="background:none; border:none; font-size:20px; cursor:pointer;" onclick="closeModal('newFundModal')">&times;</button>
+      </div>
+      <form id="newFundForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Fund Name *</label>
+            <input type="text" id="newFundName" class="form-ctrl" style="width:100%;" required placeholder="e.g. Welfare Dues" />
+          </div>
+          <div class="form-group">
+            <label>Default Rate (GH₵) *</label>
+            <input type="number" step="0.01" min="1" id="newFundRate" class="form-ctrl" style="width:100%;" value="50.00" required />
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="newFundDesc" class="form-ctrl" style="width:100%; resize:none;" rows="2" placeholder="Purpose of this fund..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-main btn-outline" onclick="closeModal('newFundModal')">Cancel</button>
+          <button type="submit" class="btn-main btn-rose" id="btnSubmitNewFund">Create Fund</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- HISTORY MODAL -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal-card" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3 style="font-family: Manrope, sans-serif; font-weight: 800;"><i class="fas fa-receipt" style="color: var(--rose);"></i> Payment Logs</h3>
+        <button style="background:none; border:none; font-size:20px; cursor:pointer;" onclick="closeModal('historyModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:0;">
+        <div class="responsive-table" style="max-height:480px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Receipt #</th>
+                <th>Date</th>
+                <th>Sister Name</th>
+                <th>Fund</th>
+                <th>Month</th>
+                <th>Amount</th>
+                <th>Method</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-main btn-outline" onclick="closeModal('historyModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
   <script>
     const state = {
       activeFundId: 'WOMEN_DUES',
@@ -683,14 +814,11 @@
       selectedMonth: new Date().getMonth() + 1,
       funds: [],
       matrixData: null,
-      churchMembers: [],
       filterText: '',
       filterStatus: 'ALL'
     };
 
     const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const FULL_MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
     const API_BASE = (() => {
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       return isLocal ? 'http://localhost:4000/api/v1' : '/api/v1';
@@ -717,7 +845,7 @@
     }
 
     function showWomenLogin() {
-      document.getElementById('womenLoginScreen').style.display = 'block';
+      document.getElementById('womenLoginScreen').style.display = 'flex';
       document.getElementById('womenDashboardContent').style.display = 'none';
       document.getElementById('womenNavActions').style.display = 'none';
     }
@@ -739,6 +867,7 @@
     async function loadInitialData() {
       await loadCollectionFunds();
       await loadMatrix();
+      await loadFemaleMembers();
     }
 
     async function loadCollectionFunds() {
@@ -755,23 +884,39 @@
     function renderFundTabs() {
       const container = document.getElementById('fundTabsContainer');
       container.innerHTML = state.funds.map(f => `
-        <button class="fund-tab-btn ${f.id === state.activeFundId ? 'active' : ''}" onclick="switchFund('${f.id}')">
-          <i class="fas ${f.icon || 'fa-hand-holding-heart'}"></i>
-          ${escapeHtml(f.name)}
-          <span class="fund-badge">GH₵ ${f.defaultAmount}</span>
-        </button>
+        <div class="fund-tab-item">
+          <button class="fund-tab-btn ${f.id === state.activeFundId ? 'active' : ''}" onclick="switchFund('${f.id}')">
+            <i class="fas ${f.icon || 'fa-hand-holding-heart'}"></i>
+            ${escapeHtml(f.name)}
+            <span class="fund-badge">GH₵ ${f.defaultAmount}</span>
+          </button>
+          ${!f.isStandard ? `<button class="btn-delete-fund" onclick="deleteFund('${f.id}', '${escapeHtml(f.name)}')">×</button>` : ''}
+        </div>
       `).join('');
     }
 
-    window.switchFund = (id) => {
-      state.activeFundId = id;
-      renderFundTabs();
-      loadMatrix();
-    };
+    window.switchFund = (id) => { state.activeFundId = id; renderFundTabs(); loadMatrix(); };
+
+    async function deleteFund(id, name) {
+      if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
+      try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const res = await fetch(`${API_BASE}/women/collection-types/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          showToast('Fund deleted.', 'success');
+          if (state.activeFundId === id) state.activeFundId = 'WOMEN_DUES';
+          await loadCollectionFunds();
+          await loadMatrix();
+        }
+      } catch (e) { showToast('Error deleting fund.', 'error'); }
+    }
 
     async function loadMatrix() {
       const tbody = document.getElementById('matrixTableBody');
-      tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:40px;"><i class="fas fa-circle-notch fa-spin"></i> Syncing matrix...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:40px;"><i class="fas fa-circle-notch fa-spin"></i> Syncing...</td></tr>`;
       try {
         const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         const res = await fetch(`${API_BASE}/women/matrix?year=${state.selectedYear}&collectionType=${state.activeFundId}`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -779,9 +924,7 @@
         state.matrixData = data;
         updateKpis(data);
         renderMatrixTable();
-      } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; color:red;">Failed to sync data.</td></tr>`;
-      }
+      } catch (e) { tbody.innerHTML = `<tr><td colspan="16" style="text-align:center;">Error loading matrix.</td></tr>`; }
     }
 
     function updateKpis(data) {
@@ -798,73 +941,48 @@
       const mob = document.getElementById('mobileMatrixCards');
       const members = (state.matrixData?.members || []).filter(m => {
         const q = state.filterText.toLowerCase();
-        return !q || (m.fullName || '').toLowerCase().includes(q) || (m.phone || '').includes(q);
+        const matchesQuery = !q || (m.fullName || '').toLowerCase().includes(q) || (m.phone || '').includes(q);
+        if (!matchesQuery) return false;
+        if (state.filterStatus === 'PAID') return (m.months[state.selectedMonth] || 0) >= (m.pledgeAmount || 50);
+        if (state.filterStatus === 'DUE') return (m.months[state.selectedMonth] || 0) < (m.pledgeAmount || 50);
+        return true;
       });
 
-      if (!members.length) {
-        tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:40px;">No records found.</td></tr>`;
-        return;
-      }
+      if (!members.length) { tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:40px;">No records.</td></tr>`; return; }
 
       tbody.innerHTML = members.map(m => {
         const rate = m.pledgeAmount || 50;
-        let monthCells = '';
+        let cells = '';
         for (let i = 1; i <= 12; i++) {
           const paid = m.months[i] || 0;
           const status = paid >= rate ? 'status-paid' : (paid > 0 ? 'status-partial' : 'status-unpaid');
-          monthCells += `<td style="text-align:center;"><span class="status-pill ${status}" onclick="openQuickPayForMonth('${m.id}', '${escapeHtml(m.fullName)}', ${i}, ${rate})">${paid > 0 ? 'GH₵'+paid : '—'}</span></td>`;
+          cells += `<td style="text-align:center;"><span class="status-pill ${status}" onclick="openQuickPayForMonth('${m.id}', '${escapeHtml(m.fullName)}', ${i}, ${rate})">${paid > 0 ? 'GH₵'+paid : '—'}</span></td>`;
         }
-        return `
-          <tr>
-            <td class="sticky-col">
-              <div style="font-weight:700; color:var(--ink);">${escapeHtml(m.fullName)}</div>
-              <div style="font-size:11px; color:var(--muted);">${m.phone || '—'}</div>
-            </td>
-            <td style="text-align:center; font-weight:700; color:var(--muted);">GH₵${rate}</td>
-            ${monthCells}
-            <td style="text-align:center; font-weight:800; color:var(--emerald-dark);">GH₵${(m.totalPaid || 0).toFixed(2)}</td>
-            <td style="text-align:right;"><button class="btn-main btn-rose" style="padding:4px 10px; font-size:11px;" onclick="openQuickPay('${m.id}', '${escapeHtml(m.fullName)}', ${rate})">+ Pay</button></td>
-          </tr>
-        `;
+        return `<tr>
+          <td class="sticky-col"><b>${escapeHtml(m.fullName)}</b><br><small>${m.phone || '—'}</small></td>
+          <td style="text-align:center; font-weight:700;">${rate}</td>
+          ${cells}
+          <td style="text-align:center; font-weight:800; color:var(--rose);">GH₵${(m.totalPaid || 0).toFixed(2)}</td>
+          <td style="text-align:right;"><button class="btn-main btn-rose" style="padding:4px 8px; font-size:11px;" onclick="openQuickPay('${m.id}', '${escapeHtml(m.fullName)}', ${rate})">+ Pay</button></td>
+        </tr>`;
       }).join('');
 
       mob.innerHTML = members.map(m => `
         <div class="mob-card">
-          <div class="mob-card-header">
-            <div style="font-weight:800;">${escapeHtml(m.fullName)}</div>
-            <div style="color:var(--rose); font-weight:800;">GH₵${(m.totalPaid || 0).toFixed(2)}</div>
-          </div>
-          <div class="mob-grid">
-            ${MONTH_NAMES.map((name, i) => {
-              const paid = m.months[i+1] || 0;
-              return `<div style="font-size:10px; text-align:center; padding:4px; border:1px solid #f1f5f9; border-radius:4px; ${paid > 0 ? 'background:#ecfdf5;' : ''}">${name}: <b>${paid}</b></div>`;
-            }).join('')}
-          </div>
-          <button class="btn-main btn-rose" style="width:100%; margin-top:12px; font-size:12px;" onclick="openQuickPay('${m.id}', '${escapeHtml(m.fullName)}', ${m.pledgeAmount})">Record Payment</button>
-        </div>
-      `).join('');
+          <div class="mob-card-header"><b>${escapeHtml(m.fullName)}</b><span style="color:var(--rose);">GH₵${(m.totalPaid || 0).toFixed(2)}</span></div>
+          <div class="mob-grid">${MONTH_NAMES.map((n, i) => `<div style="font-size:10px; border:1px solid #eee; padding:4px; border-radius:4px; ${(m.months[i+1]||0)>0?'background:#ecfdf5;':''}">${n}: <b>${m.months[i+1]||0}</b></div>`).join('')}</div>
+          <button class="btn-main btn-rose" style="width:100%; margin-top:10px; font-size:12px;" onclick="openQuickPay('${m.id}', '${escapeHtml(m.fullName)}', ${m.pledgeAmount})">Pay</button>
+        </div>`).join('');
     }
 
-    window.openQuickPay = (id, name, rate) => openQuickPayForMonth(id, name, state.selectedMonth, rate);
-    window.openQuickPayForMonth = (id, name, month, rate) => {
-      document.getElementById('payMemberId').value = id;
-      document.getElementById('payMemberName').value = name;
-      document.getElementById('payAmount').value = rate;
-      const grid = document.getElementById('payMonthsGrid');
-      grid.innerHTML = MONTH_NAMES.map((n, i) => `
-        <div class="status-pill ${i+1 === month ? 'status-paid' : 'status-unpaid'}" style="padding:8px 0;" onclick="this.className=this.className.includes('status-paid')?'status-pill status-unpaid':'status-pill status-paid'">${n}</div>
-      `).join('');
-      document.getElementById('payCollectionType').innerHTML = state.funds.map(f => `<option value="${f.id}" ${f.id===state.activeFundId?'selected':''}>${f.name}</option>`).join('');
-      openModal('quickPayModal');
-    };
-
-    function openModal(id) { document.getElementById(id).classList.add('active'); }
-    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-
-    function setupEventListeners() {
-      document.getElementById('searchInput').addEventListener('input', e => { state.filterText = e.target.value; renderMatrixTable(); });
-      document.getElementById('yearSelector').addEventListener('change', e => { state.selectedYear = e.target.value; loadMatrix(); });
-      document.getElementById('quickPayForm').addEventListener('submit', handlePaymentSubmit);
+    async function loadFemaleMembers() {
+      try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const res = await fetch(`${API_BASE}/members?limit=500`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        const females = (data.members || []).filter(m => (m.gender || '').toUpperCase().startsWith('F'));
+        document.getElementById('existingFemaleSelect').innerHTML = `<option value="">-- Quick Select --</option>` + females.map(m => `<option value="${m.id}" data-name="${m.firstName} ${m.lastName}" data-phone="${m.phone}">${m.firstName} ${m.lastName} (${m.phone})</option>`).join('');
+      } catch (e) {}
     }
 
     async function handlePaymentSubmit(e) {
@@ -874,83 +992,122 @@
       try {
         const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         const months = Array.from(document.querySelectorAll('#payMonthsGrid .status-paid')).map(el => MONTH_NAMES.indexOf(el.innerText) + 1);
-        const amtPerMonth = parseFloat(document.getElementById('payAmount').value) / (months.length || 1);
-
+        const amt = parseFloat(document.getElementById('payAmount').value) / (months.length || 1);
         for (const m of months) {
           await fetch(`${API_BASE}/women/payments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({
-              womenMemberId: document.getElementById('payMemberId').value,
-              fullName: document.getElementById('payMemberName').value,
-              collectionType: document.getElementById('payCollectionType').value,
-              month: m,
-              year: state.selectedYear,
-              amount: amtPerMonth,
-              paymentMethod: document.getElementById('payMethod').value
-            })
+            body: JSON.stringify({ womenMemberId: document.getElementById('payMemberId').value, fullName: document.getElementById('payMemberName').value, collectionType: document.getElementById('payCollectionType').value, month: m, year: state.selectedYear, amount: amt, paymentMethod: document.getElementById('payMethod').value })
           });
         }
-        showToast('Payment saved successfully!', 'success');
-        closeModal('quickPayModal');
-        loadMatrix();
+        showToast('Payment saved!', 'success'); closeModal('quickPayModal'); loadMatrix();
       } catch (e) { showToast('Error saving payment.', 'error'); }
       btn.disabled = false;
     }
 
+    async function loadPaymentHistory() {
+      const tbody = document.getElementById('historyTableBody');
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>`;
+      try {
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const res = await fetch(`${API_BASE}/women/payments?limit=50&year=${state.selectedYear}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        const payments = data.payments || data.data || [];
+        tbody.innerHTML = payments.map(p => `<tr><td>${p.receiptNumber}</td><td>${new Date(p.paymentDate).toLocaleDateString()}</td><td>${p.fullName}</td><td>${p.collectionType}</td><td>${MONTH_NAMES[p.month-1]}</td><td>GH₵${p.amount}</td><td>${p.paymentMethod}</td></tr>`).join('');
+      } catch (e) { tbody.innerHTML = `<tr><td colspan="7">Error loading logs.</td></tr>`; }
+    }
+
+    function setupEventListeners() {
+      document.getElementById('searchInput').addEventListener('input', e => { state.filterText = e.target.value; renderMatrixTable(); });
+      document.getElementById('statusFilter').addEventListener('change', e => { state.filterStatus = e.target.value; renderMatrixTable(); });
+      document.getElementById('yearSelector').addEventListener('change', e => { state.selectedYear = Number(e.target.value); loadMatrix(); });
+      document.getElementById('btnOpenAddSisterModal').addEventListener('click', () => openModal('addSisterModal'));
+      document.getElementById('btnOpenHistoryModal').addEventListener('click', () => { openModal('historyModal'); loadPaymentHistory(); });
+      document.getElementById('quickPayForm').addEventListener('submit', handlePaymentSubmit);
+      document.getElementById('btnExportExcel').addEventListener('click', exportToExcel);
+      document.getElementById('existingFemaleSelect').addEventListener('change', e => {
+        const opt = e.target.options[e.target.selectedIndex];
+        if (opt.value) { document.getElementById('newSisterName').value = opt.dataset.name; document.getElementById('newSisterPhone').value = opt.dataset.phone; }
+      });
+
+      document.getElementById('addSisterForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmitNewSister'); btn.disabled = true;
+        try {
+          const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+          await fetch(`${API_BASE}/women/members`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ fullName: document.getElementById('newSisterName').value, phone: document.getElementById('newSisterPhone').value, pledgeAmount: parseFloat(document.getElementById('newSisterRate').value) })
+          });
+          showToast('Sister registered!', 'success'); closeModal('addSisterModal'); loadInitialData();
+        } catch (e) { showToast('Registration failed.', 'error'); }
+        btn.disabled = false;
+      });
+
+      document.getElementById('newFundForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmitNewFund'); btn.disabled = true;
+        try {
+          const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+          await fetch(`${API_BASE}/women/collection-types`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ name: document.getElementById('newFundName').value, defaultAmount: parseFloat(document.getElementById('newFundRate').value), description: document.getElementById('newFundDesc').value })
+          });
+          showToast('Fund created!', 'success'); closeModal('newFundModal'); loadCollectionFunds();
+        } catch (e) { showToast('Creation failed.', 'error'); }
+        btn.disabled = false;
+      });
+    }
+
+    window.openQuickPay = (id, name, rate) => openQuickPayForMonth(id, name, state.selectedMonth, rate);
+    window.openQuickPayForMonth = (id, name, month, rate) => {
+      document.getElementById('payMemberId').value = id;
+      document.getElementById('payMemberName').value = name;
+      document.getElementById('payAmount').value = rate;
+      const grid = document.getElementById('payMonthsGrid');
+      grid.innerHTML = MONTH_NAMES.map((n, i) => `<div class="status-pill ${i+1 === month ? 'status-paid' : 'status-unpaid'}" style="padding:8px 0;" onclick="this.className=this.className.includes('status-paid')?'status-pill status-unpaid':'status-pill status-paid'">${n}</div>`).join('');
+      document.getElementById('payCollectionType').innerHTML = state.funds.map(f => `<option value="${f.id}" ${f.id===state.activeFundId?'selected':''}>${f.name}</option>`).join('');
+      openModal('quickPayModal');
+    };
+
+    function exportToExcel() {
+      const data = (state.matrixData?.members || []).map(m => {
+        const row = { 'Sister Name': m.fullName, 'Phone': m.phone, 'Rate': m.pledgeAmount };
+        MONTH_NAMES.forEach((n, i) => row[n] = m.months[i+1] || 0);
+        row['Total'] = m.totalPaid; return row;
+      });
+      const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Matrix"); XLSX.writeFile(wb, "Women_Matrix.xlsx");
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
     function showToast(msg, type) {
       const container = document.getElementById('toastContainer');
       const t = document.createElement('div');
       t.className = 'status-pill status-' + (type==='success'?'paid':'unpaid');
       t.style = 'padding:12px 20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); pointer-events:auto;';
-      t.innerHTML = msg;
-      container.appendChild(t);
-      setTimeout(() => t.remove(), 3000);
+      t.innerHTML = msg; container.appendChild(t); setTimeout(() => t.remove(), 3000);
     }
-
     function toggleWomenPasswordVisibility() {
-      const p = document.getElementById('womenLoginPassword');
-      const i = document.getElementById('womenEyeIcon');
-      p.type = p.type === 'password' ? 'text' : 'password';
-      i.className = p.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+      const p = document.getElementById('womenLoginPassword'); const i = document.getElementById('womenEyeIcon');
+      p.type = p.type === 'password' ? 'text' : 'password'; i.className = p.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
     }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
+    function escapeHtml(str) { if (!str) return ''; return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function populateFundDropdowns() { const s = document.getElementById('payCollectionType'); if (s) s.innerHTML = state.funds.map(f => `<option value="${f.id}">${f.name}</option>`).join(''); }
     async function handleWomenLoginSubmit(e) {
-      e.preventDefault();
-      const err = document.getElementById('womenLoginErrorMsg');
-      const btn = document.getElementById('btnWomenLoginSubmit');
-      err.style.display = 'none';
-      btn.disabled = true;
+      e.preventDefault(); const err = document.getElementById('womenLoginErrorMsg'); const btn = document.getElementById('btnWomenLoginSubmit');
+      err.style.display = 'none'; btn.disabled = true;
       try {
-        const res = await fetch(`${API_BASE}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: document.getElementById('womenLoginEmail').value, password: document.getElementById('womenLoginPassword').value })
-        });
+        const res = await fetch(`${API_BASE}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: document.getElementById('womenLoginEmail').value, password: document.getElementById('womenLoginPassword').value }) });
         const data = await res.json();
-        if (res.ok) {
-          sessionStorage.setItem('sfmi_token', data.accessToken);
-          localStorage.setItem('sfmi_token', data.accessToken);
-          window.location.reload();
-        } else {
-          err.style.display = 'block';
-          err.innerText = data.message || 'Login failed.';
-        }
+        if (res.ok) { sessionStorage.setItem('sfmi_token', data.accessToken); localStorage.setItem('sfmi_token', data.accessToken); window.location.reload(); }
+        else { err.style.display = 'block'; err.innerText = data.message || 'Login failed.'; }
       } catch (e) { err.style.display = 'block'; err.innerText = 'Server error.'; }
       btn.disabled = false;
     }
-
-    function populateFundDropdowns() {
-      const s = document.getElementById('payCollectionType');
-      if (s) s.innerHTML = state.funds.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
-    }
   </script>
-
 </body>
-
 </html>
