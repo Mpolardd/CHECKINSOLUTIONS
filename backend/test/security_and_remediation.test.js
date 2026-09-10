@@ -232,6 +232,23 @@ async function runTests() {
       assert.strictEqual(res.status, 401);
     });
 
+    // ── 8. REALTIME SSE STREAM & STATUS ──
+    await test('Realtime: GET /realtime/status returns operational status and client count', async () => {
+      const res = await fetch(`${baseUrl}/realtime/status`);
+      assert.strictEqual(res.status, 200);
+      const data = await res.json();
+      assert.strictEqual(data.status, 'operational');
+      assert.strictEqual(typeof data.connectedClients, 'number');
+    });
+
+    await test('Realtime: GET /realtime/stream establishes Server-Sent Events connection', async () => {
+      const controller = new AbortController();
+      const res = await fetch(`${baseUrl}/realtime/stream`, { signal: controller.signal });
+      assert.strictEqual(res.status, 200);
+      assert.ok((res.headers.get('content-type') || '').includes('text/event-stream'));
+      controller.abort();
+    });
+
   } finally {
     server.close();
   }

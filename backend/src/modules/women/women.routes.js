@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const prisma = require('../../config/prisma');
 const { requireAuth } = require('../../middleware/auth');
+const realtimeService = require('../realtime/realtime.service');
 
 // Dedicated Access Control Middleware for Women's Ministry
 async function requireWomenAccess(req, res, next) {
@@ -30,7 +31,7 @@ async function requireWomenAccess(req, res, next) {
       }
     }
 
-    return res.status(403).json({ error: 'Access Denied: Women\'s Ministry leader privileges required' });
+    return res.status(403).json({ error: "Access Denied: Women's Ministry leader privileges required" });
   } catch (err) {
     return res.status(500).json({ error: 'Internal authorization error' });
   }
@@ -65,20 +66,9 @@ const standardWomenCollectionTypes = [
     description: "Monthly fellowship dues for registered Women of Faith members",
     frequency: 'MONTHLY',
     targetAmount: 50,
+    defaultAmount: 50,
     icon: 'fas fa-calendar-check',
     color: '#e11d48',
-    isStandard: true,
-    active: true
-  },
-  {
-    id: 'WOMEN_CONTRIBUTION',
-    name: 'Women Contribution',
-    category: "Women's Ministry",
-    description: "General fellowship offerings, special seeds, and love contributions",
-    frequency: 'MONTHLY',
-    targetAmount: 0,
-    icon: 'fas fa-gem',
-    color: '#f472b6',
     isStandard: true,
     active: true
   },
@@ -89,94 +79,156 @@ const standardWomenCollectionTypes = [
     description: "Sister-to-sister emergency support, benevolence, and visitation dues",
     frequency: 'MONTHLY',
     targetAmount: 20,
+    defaultAmount: 20,
     icon: 'fas fa-hand-holding-heart',
     color: '#38bdf8',
+    isStandard: true,
+    active: true
+  },
+  {
+    id: 'WOMEN_CONTRIBUTION',
+    name: 'Women Contribution',
+    category: "Women's Ministry",
+    description: "General fellowship offerings, special seeds, and love contributions",
+    frequency: 'MONTHLY',
+    targetAmount: 100,
+    defaultAmount: 100,
+    icon: 'fas fa-gem',
+    color: '#f472b6',
     isStandard: true,
     active: true
   }
 ];
 
-// List collection types (filtering out deleted standard or custom types)
+// Helper to load and deduplicate all collection types
+async function getAllCollectionTypes() {
+  const logs = await prisma.auditLog.findMany({
+    where: { entity: 'WOMEN_COLLECTION_TYPE' },
+    orderBy: { createdAt: 'asc' }
+  });
+
+  const deletionLogs = await prisma.auditLog.findMany({
+    where: { entity: 'DELETE_WOMEN_COLLECTION_TYPE' }
+  });
+  const deletedIds = new Set(deletionLogs.map(l => (l.entityId || '').trim().toUpperCase()));
+
+  const seenNorm = new Set();
+  const result = [];
+
+  // Add standard collection types first if not deleted
+  for (const s of standardWomenCollectionTypes) {
+    const sId = (s.id || '').toUpperCase();
+    const sName = normCol(s.name);
+    if (!deletedIds.has(sId) && !deletedIds.has(sName) && !seenNorm.has(sName)) {
+      seenNorm.add(sName);
+      seenNorm.add(sId);
+      result.push(s);
+    }
+  }
+
+  // Add custom collection types, strictly deduplicating by normalized name & ID
+  for (const l of logs) {
+    const cid = (l.entityId || l.id || '').toUpperCase();
+    const cName = normCol(l.metadata?.name || '');
+    if (l.metadata && l.metadata.active !== false && !deletedIds.has(cid) && !deletedIds.has(cName) && !seenNorm.has(cName)) {
+      seenNorm.add(cName);
+      seenNorm.add(cid);
+      const tgt = Number(l.metadata.targetAmount || l.metadata.defaultAmount || 50);
+      result.push({
+        id: l.entityId || l.id,
+        ...(l.metadata || {}),
+        targetAmount: tgt,
+        defaultAmount: tgt,
+        isStandard: false,
+        createdAt: l.createdAt
+      });
+    }
+  }
+
+  return result;
+}
+
+// List collection types (returns both array and { data } compatibility)
 router.get('/collection-types', async (req, res, next) => {
   try {
-    const logs = await prisma.auditLog.findMany({
-      where: { entity: 'WOMEN_COLLECTION_TYPE' },
-      orderBy: { createdAt: 'asc' }
+    const collections = await getAllCollectionTypes();
+    res.json({
+      success: true,
+      data: collections,
+      collections
     });
-
-    const deletionLogs = await prisma.auditLog.findMany({
-      where: { entity: 'DELETE_WOMEN_COLLECTION_TYPE' }
-    });
-    const deletedIds = new Set(deletionLogs.map(l => (l.entityId || '').trim().toUpperCase()));
-
-    const customTypes = logs.map(l => ({
-      id: l.entityId || l.id,
-      ...(l.metadata || {}),
-      isStandard: false,
-      createdAt: l.createdAt
-    })).filter(t => t.active !== false && !deletedIds.has((t.id || '').toUpperCase()) && !deletedIds.has((t.name || '').toUpperCase()));
-
-    const standards = standardWomenCollectionTypes.filter(s => !deletedIds.has(s.id.toUpperCase()) && !deletedIds.has(s.name.toUpperCase()));
-
-    res.json([...standards, ...customTypes]);
   } catch (e) { next(e); }
 });
 
-// Create a new collection type for Women's Ministry
+// Create or update a collection type for Women's Ministry
 router.post('/collection-types', async (req, res, next) => {
   try {
-    const { name, category = "Women's Ministry", description = '', frequency = 'MONTHLY', targetAmount = 0, icon = 'fas fa-gem', color = '#e11d48' } = req.body || {};
+    const { id, name, category = "Women's Ministry", description = '', frequency = 'MONTHLY', targetAmount = 0, defaultAmount = 0, icon = 'fas fa-gem', color = '#e11d48' } = req.body || {};
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Collection name is required' });
     }
 
     const cleanName = name.trim();
-    const typeId = `wcol_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const cleanNorm = normCol(cleanName);
+    const amountVal = Number(defaultAmount || targetAmount || 50);
+
+    const existingLogs = await prisma.auditLog.findMany({
+      where: { entity: 'WOMEN_COLLECTION_TYPE' }
+    });
+    const match = existingLogs.find(l => 
+      (l.entityId && l.entityId === id) ||
+      (l.metadata && normCol(l.metadata.name) === cleanNorm)
+    );
+
+    const typeId = match ? (match.entityId || match.id) : (id || `wcol_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`);
+
     const metadata = {
       name: cleanName,
       category: category.trim() || "Women's Ministry",
       description: description.trim(),
       frequency,
-      targetAmount: Number(targetAmount) || 0,
+      targetAmount: amountVal,
+      defaultAmount: amountVal,
       icon,
       color,
       active: true
     };
 
-    // Clear any prior deletion tombstones for this name/id so it displays cleanly
+    await prisma.auditLog.deleteMany({
+      where: { entity: 'WOMEN_COLLECTION_TYPE', entityId: typeId }
+    });
+
     await prisma.auditLog.deleteMany({
       where: {
         entity: 'DELETE_WOMEN_COLLECTION_TYPE',
-        entityId: { in: [cleanName.toUpperCase(), cleanName.replace(/\s+/g, '_').toUpperCase(), typeId.toUpperCase()] }
+        entityId: { in: [cleanName.toUpperCase(), cleanNorm, typeId.toUpperCase()] }
       }
     });
 
     await prisma.auditLog.create({
       data: {
         actorId: await resolveActorId(req),
-        action: 'CREATE_WOMEN_COLLECTION_TYPE',
+        action: match ? 'UPDATE_WOMEN_COLLECTION_TYPE' : 'CREATE_WOMEN_COLLECTION_TYPE',
         entity: 'WOMEN_COLLECTION_TYPE',
         entityId: typeId,
         metadata
       }
     });
 
-    res.status(201).json({ id: typeId, ...metadata, isStandard: false });
+    res.status(201).json({ success: true, data: { id: typeId, ...metadata, isStandard: false } });
   } catch (e) { next(e); }
 });
 
-// Delete collection type (allows removing standard & custom collection types)
+// Delete collection type
 router.delete('/collection-types/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
     const cleanId = (id || '').trim();
 
-    // 1. Delete custom type record if present
     await prisma.auditLog.deleteMany({
       where: { entity: 'WOMEN_COLLECTION_TYPE', entityId: cleanId }
     });
 
-    // 2. Log deletion record to suppress standard type if standard
     await prisma.auditLog.create({
       data: {
         actorId: await resolveActorId(req),
@@ -191,32 +243,127 @@ router.delete('/collection-types/:id', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// ── 2. ENROLLED WOMEN MEMBERS (ROSTER) ──
-// Strictly returns enrolled women members — never auto-adds all females in church
-router.get('/members', async (req, res, next) => {
+// ── 2. UNIFIED WOMEN FELLOWSHIP DIRECTORY & ROSTER ──
+async function getUnifiedWomenRoster(targetCollectionType = 'WOMEN_DUES') {
+  // 1. Fetch female church members from main directory
+  let dbFemales = [];
   try {
-    const { collectionType } = req.query;
+    dbFemales = await prisma.member.findMany({
+      where: {
+        active: true,
+        deletedAt: null,
+        OR: [
+          { gender: { contains: 'Female', mode: 'insensitive' } },
+          { gender: { startsWith: 'F', mode: 'insensitive' } },
+          { category: { contains: 'Women', mode: 'insensitive' } },
+          { role: { contains: 'Women', mode: 'insensitive' } }
+        ]
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        email: true,
+        gender: true,
+        address: true,
+        category: true,
+        role: true,
+        photoUrl: true,
+        createdAt: true
+      },
+      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }]
+    });
+  } catch (e) {}
 
-    const logs = await prisma.auditLog.findMany({
+  // 2. Fetch all custom registered sisters from audit logs
+  let customLogs = [];
+  try {
+    customLogs = await prisma.auditLog.findMany({
       where: { entity: 'WOMEN_MEMBER' },
       orderBy: { createdAt: 'desc' }
     });
+  } catch (e) {}
 
-    let members = logs.map(l => ({
-      id: l.entityId || l.id,
-      collectionType: (l.metadata && l.metadata.collectionType) || 'WOMEN_DUES',
-      pledgeAmount: (l.metadata && Number(l.metadata.pledgeAmount)) || 0,
-      currency: (l.metadata && l.metadata.currency) || 'GHS',
-      ...(l.metadata || {}),
-      createdAt: l.createdAt
-    })).filter(m => m.active !== false);
+  const collectionList = await getAllCollectionTypes();
+  const targetColNorm = normCol(targetCollectionType);
+  const matchedCol = collectionList.find(c => normCol(c.id) === targetColNorm || normCol(c.name) === targetColNorm);
+  const defaultPledge = matchedCol ? (Number(matchedCol.defaultAmount || matchedCol.targetAmount) || 50) : (targetColNorm.includes('WELFARE') ? 20 : (targetColNorm.includes('CONTRIBUTION') ? 100 : 50));
 
-    if (collectionType && collectionType.toUpperCase() !== 'ALL') {
-      const cNorm = collectionType.toUpperCase();
-      members = members.filter(m => (m.collectionType || 'WOMEN_DUES').toUpperCase() === cNorm);
+  const sistersMap = new Map();
+
+  for (const m of dbFemales) {
+    const fullName = `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Sister';
+    const cleanPhone = (m.phone || '').trim();
+    const key = (cleanPhone && cleanPhone !== '—') ? cleanPhone : fullName.toLowerCase();
+    
+    sistersMap.set(key, {
+      id: m.id,
+      memberId: m.id,
+      memberName: fullName,
+      fullName: fullName,
+      firstName: m.firstName,
+      lastName: m.lastName,
+      phone: cleanPhone || '—',
+      email: m.email || '',
+      gender: 'Female',
+      address: m.address || '',
+      pledgeAmount: defaultPledge,
+      currency: 'GHS',
+      collectionType: targetCollectionType,
+      isDbMember: true,
+      active: true,
+      createdAt: m.createdAt
+    });
+  }
+
+  for (const l of customLogs) {
+    if (!l.metadata || l.metadata.active === false) continue;
+    const m = l.metadata;
+    const fullName = (m.fullName || m.memberName || `${m.firstName || ''} ${m.lastName || ''}`).trim() || 'Sister';
+    const cleanPhone = (m.phone || '').trim();
+    const key = (cleanPhone && cleanPhone !== '—') ? cleanPhone : fullName.toLowerCase();
+
+    const existing = sistersMap.get(key);
+    if (existing) {
+      if (m.pledgeAmount !== undefined && (normCol(m.collectionType) === targetColNorm || !existing.hasCustomRate)) {
+        existing.pledgeAmount = Number(m.pledgeAmount) || defaultPledge;
+        existing.hasCustomRate = true;
+      }
+      if (m.notes) existing.notes = m.notes;
+    } else {
+      sistersMap.set(key, {
+        id: l.entityId || l.id,
+        memberId: m.memberId || null,
+        memberName: fullName,
+        fullName: fullName,
+        firstName: m.firstName || fullName.split(' ')[0] || 'Sister',
+        lastName: m.lastName || fullName.split(' ').slice(1).join(' ') || '',
+        phone: cleanPhone || '—',
+        email: m.email || '',
+        gender: 'Female',
+        address: m.address || '',
+        pledgeAmount: (m.pledgeAmount !== undefined) ? (Number(m.pledgeAmount) || defaultPledge) : defaultPledge,
+        currency: m.currency || 'GHS',
+        collectionType: targetCollectionType,
+        isDbMember: false,
+        active: true,
+        createdAt: l.createdAt
+      });
     }
+  }
 
-    // Fetch payments to compute lifetime contributions per collection
+  const result = Array.from(sistersMap.values());
+  result.sort((a, b) => a.fullName.localeCompare(b.fullName));
+  return result;
+}
+
+// Enrolled Women Members Roster
+router.get('/members', async (req, res, next) => {
+  try {
+    const { collectionType = 'WOMEN_DUES' } = req.query;
+    const sisters = await getUnifiedWomenRoster(collectionType);
+
     const paymentLogs = await prisma.auditLog.findMany({
       where: { entity: 'WOMEN_PAYMENT' },
       select: { metadata: true }
@@ -227,45 +374,48 @@ router.get('/members', async (req, res, next) => {
       if (p.metadata) {
         const pCol = normCol(p.metadata.collectionType);
         const amt = Number(p.metadata.amount) || 0;
-        if (p.metadata.womenMemberId) {
-          const k = `${p.metadata.womenMemberId}_${pCol}`;
+        const memberIdKey = p.metadata.womenMemberId || p.metadata.partnerId || p.metadata.memberId;
+        
+        if (memberIdKey) {
+          const k = `${memberIdKey}_${pCol}`;
           totalsMap[k] = (totalsMap[k] || 0) + amt;
-        }
-        if (p.metadata.partnerId) {
-          const k = `${p.metadata.partnerId}_${pCol}`;
-          totalsMap[k] = (totalsMap[k] || 0) + amt;
-        }
-        if (p.metadata.memberName) {
-          const k = `${(p.metadata.memberName || '').trim().toLowerCase()}_${pCol}`;
-          totalsMap[k] = (totalsMap[k] || 0) + amt;
+        } else if (p.metadata.memberName || p.metadata.fullName) {
+          const kName = `${(p.metadata.fullName || p.metadata.memberName || '').trim().toLowerCase()}_${pCol}`;
+          totalsMap[kName] = (totalsMap[kName] || 0) + amt;
         }
       }
     }
 
-    const enriched = members.map(m => {
-      const mCol = normCol(m.collectionType);
-      const kId = `${m.id}_${mCol}`;
-      const kName = `${(m.memberName || '').trim().toLowerCase()}_${mCol}`;
+    const enriched = sisters.map(s => {
+      const sCol = normCol(collectionType);
+      const kId = `${s.id}_${sCol}`;
+      const kName = `${(s.fullName || s.memberName || '').trim().toLowerCase()}_${sCol}`;
+      const totalContributed = totalsMap[kId] !== undefined ? totalsMap[kId] : (totalsMap[kName] || 0);
       return {
-        ...m,
-        totalContributed: totalsMap[kId] || totalsMap[kName] || 0
+        ...s,
+        totalContributed,
+        totalPaid: totalContributed
       };
     });
 
-    res.json(enriched);
+    res.json({
+      success: true,
+      data: enriched,
+      members: enriched
+    });
   } catch (e) { next(e); }
 });
 
-// Enrol / Register a Sister into a specific collection or fellowship
+// Register a Sister into the Women's Ministry Fellowship Directory
 router.post('/members', async (req, res, next) => {
   try {
-    const { id, memberId, memberName, phone, email, pledgeAmount = 50, currency = 'GHS', frequency = 'MONTHLY', collectionType = 'WOMEN_DUES', startDate, notes } = req.body || {};
+    const { id, memberId, fullName, memberName, phone, email, pledgeAmount = 50, currency = 'GHS', frequency = 'MONTHLY', collectionType = 'WOMEN_DUES', startDate, notes } = req.body || {};
 
-    if (!memberName || !memberName.trim()) {
+    const cleanName = (fullName || memberName || '').trim();
+    if (!cleanName) {
       return res.status(400).json({ error: 'Sister name is required' });
     }
 
-    const cleanName = memberName.trim();
     const cleanCollection = (collectionType || 'WOMEN_DUES').trim();
 
     let targetEntityId = id;
@@ -275,8 +425,7 @@ router.post('/members', async (req, res, next) => {
       });
       const match = existingLogs.find(l =>
         l.metadata &&
-        (l.metadata.memberName || '').trim().toLowerCase() === cleanName.toLowerCase() &&
-        (l.metadata.collectionType || 'WOMEN_DUES').trim().toUpperCase() === cleanCollection.toUpperCase()
+        (l.metadata.fullName || l.metadata.memberName || '').trim().toLowerCase() === cleanName.toLowerCase()
       );
       if (match) {
         targetEntityId = match.entityId || match.id;
@@ -285,17 +434,17 @@ router.post('/members', async (req, res, next) => {
 
     const womenMemberId = targetEntityId || `wmem_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
-    // Remove any previous active record with same entityId to update in place
     await prisma.auditLog.deleteMany({
       where: { entity: 'WOMEN_MEMBER', entityId: womenMemberId }
     });
 
     const metadata = {
       memberId: memberId || null,
+      fullName: cleanName,
       memberName: cleanName,
       phone: phone ? phone.trim() : '',
       email: email ? email.trim() : '',
-      pledgeAmount: Number(pledgeAmount) || 0,
+      pledgeAmount: Number(pledgeAmount) || 50,
       currency,
       frequency,
       collectionType: cleanCollection,
@@ -314,57 +463,100 @@ router.post('/members', async (req, res, next) => {
       }
     });
 
-    res.status(201).json({ id: womenMemberId, ...metadata });
+    try {
+      realtimeService.broadcast('WOMEN_MEMBER_UPDATED', {
+        memberId: womenMemberId,
+        name: cleanName
+      });
+    } catch (rErr) {}
+
+    res.status(201).json({ success: true, data: { id: womenMemberId, ...metadata } });
   } catch (e) { next(e); }
 });
 
-// Delete / Remove an enrolled sister from the collection roster
+// Remove a sister
 router.delete('/members/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
     await prisma.auditLog.deleteMany({
       where: { entity: 'WOMEN_MEMBER', entityId: id }
     });
-    res.json({ success: true, message: 'Sister removed from collection roster successfully' });
+    res.json({ success: true, message: 'Sister updated in roster successfully' });
   } catch (e) { next(e); }
 });
 
-// ── 3. WOMEN PAYMENTS ──
-// Record a payment for an enrolled sister
+// ── 3. WOMEN PAYMENTS (STRICT DEDUPLICATION & ZERO DOUBLE-COUNTING) ──
 router.post('/payments', async (req, res, next) => {
   try {
-    const { womenMemberId, memberName, amount, targetMonth, paymentDate, paymentMethod = 'CASH', collectionType = 'WOMEN_DUES', recordedBy = "Women's Ministry Leader", notes } = req.body || {};
+    const {
+      womenMemberId,
+      fullName,
+      memberName,
+      amount,
+      targetMonth,
+      month,
+      year,
+      paymentDate,
+      paymentMethod = 'CASH',
+      collectionType = 'WOMEN_DUES',
+      recordedBy = "Women's Ministry Leader",
+      notes
+    } = req.body || {};
 
-    if (!memberName || !amount || !targetMonth) {
-      return res.status(400).json({ error: 'Sister name, amount, and target month (YYYY-MM) are required' });
+    const cleanMemberName = (fullName || memberName || '').trim();
+    const parsedAmount = Number(amount);
+
+    // Resolve month format
+    let resolvedMonth = targetMonth;
+    if (!resolvedMonth) {
+      const y = year || new Date().getFullYear();
+      const m = month || (new Date().getMonth() + 1);
+      resolvedMonth = `${y}-${String(m).padStart(2, '0')}`;
     }
 
-    let resolvedMemberId = womenMemberId;
-    let resolvedCollection = collectionType || 'WOMEN_DUES';
+    if (!cleanMemberName || !parsedAmount || !resolvedMonth) {
+      return res.status(400).json({ error: 'Sister name, amount, and target month are required' });
+    }
 
-    // If womenMemberId is given, resolve collectionType if needed
-    if (resolvedMemberId) {
-      const mLog = await prisma.auditLog.findFirst({
-        where: { entity: 'WOMEN_MEMBER', entityId: resolvedMemberId }
-      });
-      if (mLog && mLog.metadata) {
-        if (!collectionType && mLog.metadata.collectionType) {
-          resolvedCollection = mLog.metadata.collectionType;
-        }
+    const resolvedCollection = (collectionType || 'WOMEN_DUES').trim();
+    const dateStr = paymentDate || new Date().toISOString().slice(0, 10);
+
+    // ── DEDUPLICATION GUARD ──
+    const recentDuplicate = await prisma.auditLog.findFirst({
+      where: {
+        entity: 'WOMEN_PAYMENT',
+        createdAt: { gte: new Date(Date.now() - 10000) }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    if (recentDuplicate && recentDuplicate.metadata) {
+      const rm = recentDuplicate.metadata;
+      if (
+        (rm.fullName || rm.memberName || '').trim().toLowerCase() === cleanMemberName.toLowerCase() &&
+        normCol(rm.collectionType) === normCol(resolvedCollection) &&
+        rm.targetMonth === resolvedMonth &&
+        Number(rm.amount) === parsedAmount
+      ) {
+        return res.status(200).json({ success: true, data: rm });
       }
     }
 
     const paymentId = `wpay_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    const parsedAmount = Number(amount);
-    const dateStr = paymentDate || new Date().toISOString().slice(0, 10);
+    const monthNumber = parseInt(resolvedMonth.slice(5, 7), 10) || 1;
+    const yearNumber = parseInt(resolvedMonth.slice(0, 4), 10) || new Date().getFullYear();
 
     const paymentMeta = {
+      id: paymentId,
       paymentId,
-      womenMemberId: resolvedMemberId || null,
-      partnerId: resolvedMemberId || null, // for uniform backward-compatibility
-      memberName: memberName.trim(),
+      receiptNumber: `REC-${paymentId.slice(-6).toUpperCase()}`,
+      womenMemberId: womenMemberId || null,
+      partnerId: womenMemberId || null,
+      fullName: cleanMemberName,
+      memberName: cleanMemberName,
       amount: parsedAmount,
-      targetMonth, // format YYYY-MM e.g. "2026-08"
+      targetMonth: resolvedMonth,
+      month: monthNumber,
+      year: yearNumber,
       paymentDate: dateStr,
       paymentMethod,
       collectionType: resolvedCollection,
@@ -372,7 +564,6 @@ router.post('/payments', async (req, res, next) => {
       notes: notes ? notes.trim() : ''
     };
 
-    // Save payment log
     await prisma.auditLog.create({
       data: {
         actorId: await resolveActorId(req),
@@ -383,9 +574,8 @@ router.post('/payments', async (req, res, next) => {
       }
     });
 
-    // Cross-post into double-entry ledger account
     try {
-      const code = `WOMEN_${resolvedCollection.replace(/[^A-Za-z0-9]/g, '_').toUpperCase()}`;
+      const code = `WOMEN_${normCol(resolvedCollection)}`;
       let acct = await prisma.financialAccount.findUnique({ where: { code } });
       if (!acct) {
         acct = await prisma.financialAccount.create({
@@ -403,12 +593,22 @@ router.post('/payments', async (req, res, next) => {
           type: 'INCOME',
           amount: parsedAmount,
           reference: `WMN-${paymentId.slice(-6).toUpperCase()}`,
-          description: `Women ${resolvedCollection} Payment: ${memberName} for ${targetMonth} via ${paymentMethod}`
+          description: `Women ${resolvedCollection} Payment: ${cleanMemberName} for ${resolvedMonth} via ${paymentMethod}`
         }
       });
     } catch (err) {}
 
-    res.status(201).json(paymentMeta);
+    try {
+      realtimeService.broadcast('WOMEN_PAYMENT_RECORDED', {
+        paymentId,
+        memberName: cleanMemberName,
+        amount: parsedAmount,
+        collectionType: resolvedCollection,
+        targetMonth: resolvedMonth
+      });
+    } catch (rErr) {}
+
+    res.status(201).json({ success: true, data: paymentMeta });
   } catch (e) { next(e); }
 });
 
@@ -433,15 +633,19 @@ router.get('/payments', async (req, res, next) => {
       payments = payments.filter(p => p.targetMonth && p.targetMonth.startsWith(String(year)));
     }
     if (collectionType && collectionType.toUpperCase() !== 'ALL') {
-      const cNorm = collectionType.toUpperCase();
-      payments = payments.filter(p => (p.collectionType || 'WOMEN_DUES').toUpperCase() === cNorm);
+      const cNorm = normCol(collectionType);
+      payments = payments.filter(p => normCol(p.collectionType || 'WOMEN_DUES') === cNorm);
     }
 
-    res.json(payments);
+    res.json({
+      success: true,
+      data: payments,
+      payments
+    });
   } catch (e) { next(e); }
 });
 
-// Delete a Women payment
+// Delete a payment record
 router.delete('/payments/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -453,95 +657,78 @@ router.delete('/payments/:id', async (req, res, next) => {
 });
 
 // ── 4. 12-MONTH DUES & COLLECTION TRACKING MATRIX ──
-// Returns the matrix strictly for enrolled sisters, separated by collection fund
 router.get('/matrix', async (req, res, next) => {
   try {
     const year = Number(req.query.year) || new Date().getFullYear();
-    const { collectionType } = req.query;
-    const currentMonthNum = new Date().getMonth() + 1; // 1 to 12
+    const { collectionType = 'WOMEN_DUES' } = req.query;
+    const currentMonthNum = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
 
-    // 1. Fetch enrolled women members
-    const memberLogs = await prisma.auditLog.findMany({
-      where: { entity: 'WOMEN_MEMBER' },
-      orderBy: { createdAt: 'desc' }
-    });
+    const sisters = await getUnifiedWomenRoster(collectionType);
 
-    let members = memberLogs.map(l => ({
-      id: l.entityId || l.id,
-      collectionType: (l.metadata && l.metadata.collectionType) || 'WOMEN_DUES',
-      pledgeAmount: (l.metadata && Number(l.metadata.pledgeAmount)) || 0,
-      currency: (l.metadata && l.metadata.currency) || 'GHS',
-      ...(l.metadata || {})
-    })).filter(m => m.active !== false);
-
-    // 2. Fetch all women payments for this year
     const paymentLogs = await prisma.auditLog.findMany({
       where: { entity: 'WOMEN_PAYMENT' },
       orderBy: { createdAt: 'desc' }
     });
     const allPayments = paymentLogs.map(l => l.metadata).filter(Boolean);
 
-    // 3. Collection Breakdown for metric cards
-    const collectionBreakdown = {};
-    members.forEach(m => {
-      const cType = (m.collectionType || 'WOMEN_DUES').toUpperCase();
-      if (!collectionBreakdown[cType]) {
-        collectionBreakdown[cType] = { totalEnrolled: 0, totalMonthlyPledged: 0, currentMonthCollected: 0, yearTotalCollected: 0 };
-      }
-      collectionBreakdown[cType].totalEnrolled++;
-      collectionBreakdown[cType].totalMonthlyPledged += (Number(m.pledgeAmount) || 0);
-    });
-
+    // Map payments strictly ONCE per transaction
+    const memberMonthMap = {};
     const currMonthPad = String(currentMonthNum).padStart(2, '0');
     const targetCurrMonth = `${year}-${currMonthPad}`;
 
-    allPayments.forEach(pay => {
-      const cType = (pay.collectionType || 'WOMEN_DUES').toUpperCase();
-      if (!collectionBreakdown[cType]) {
-        collectionBreakdown[cType] = { totalEnrolled: 0, totalMonthlyPledged: 0, currentMonthCollected: 0, yearTotalCollected: 0 };
-      }
-      const amt = Number(pay.amount) || 0;
-      collectionBreakdown[cType].yearTotalCollected += amt;
-      if (pay.targetMonth === targetCurrMonth) {
-        collectionBreakdown[cType].currentMonthCollected += amt;
-      }
+    const collectionBreakdown = {};
+    const allCollections = await getAllCollectionTypes();
+    allCollections.forEach(c => {
+      const cNorm = normCol(c.id || c.name);
+      collectionBreakdown[cNorm] = {
+        name: c.name,
+        totalEnrolled: sisters.length,
+        totalMonthlyPledged: (Number(c.defaultAmount || c.targetAmount) || 0) * sisters.length,
+        currentMonthCollected: 0,
+        yearTotalCollected: 0
+      };
     });
 
-    // 4. Filter by collectionType if requested
-    if (collectionType && collectionType.toUpperCase() !== 'ALL') {
-      const cNorm = collectionType.toUpperCase();
-      members = members.filter(m => (m.collectionType || 'WOMEN_DUES').toUpperCase() === cNorm);
-    }
+    const activeColNorm = normCol(collectionType);
 
-    // 5. Map payments by womenMemberId/memberName, collectionType, and month
-    const memberMonthMap = {};
     for (const p of allPayments) {
-      if (p.targetMonth && p.targetMonth.startsWith(String(year))) {
-        const monthPart = p.targetMonth.slice(5, 7); // e.g. "08"
-        const pCol = normCol(p.collectionType);
-        const amt = Number(p.amount) || 0;
+      const pCol = normCol(p.collectionType || 'WOMEN_DUES');
+      const amt = Number(p.amount) || 0;
 
-        if (p.womenMemberId) {
-          const k = `${p.womenMemberId}_${pCol}`;
-          if (!memberMonthMap[k]) memberMonthMap[k] = {};
-          memberMonthMap[k][monthPart] = (memberMonthMap[k][monthPart] || 0) + amt;
-        }
-        if (p.partnerId) {
-          const k = `${p.partnerId}_${pCol}`;
-          if (!memberMonthMap[k]) memberMonthMap[k] = {};
-          memberMonthMap[k][monthPart] = (memberMonthMap[k][monthPart] || 0) + amt;
-        }
-        if (p.memberName) {
-          const k = `${(p.memberName || '').trim().toLowerCase()}_${pCol}`;
-          if (!memberMonthMap[k]) memberMonthMap[k] = {};
-          memberMonthMap[k][monthPart] = (memberMonthMap[k][monthPart] || 0) + amt;
+      if (!collectionBreakdown[pCol]) {
+        collectionBreakdown[pCol] = {
+          name: p.collectionType || 'Women Collection',
+          totalEnrolled: sisters.length,
+          totalMonthlyPledged: 0,
+          currentMonthCollected: 0,
+          yearTotalCollected: 0
+        };
+      }
+      collectionBreakdown[pCol].yearTotalCollected += amt;
+      if (p.targetMonth === targetCurrMonth) {
+        collectionBreakdown[pCol].currentMonthCollected += amt;
+      }
+
+      if (pCol === activeColNorm && p.targetMonth && p.targetMonth.startsWith(String(year))) {
+        const monthPart = parseInt(p.targetMonth.slice(5, 7), 10);
+        const memberIdKey = p.womenMemberId || p.partnerId || p.memberId;
+        const nameKey = (p.fullName || p.memberName || '').trim().toLowerCase();
+
+        const primaryKey = memberIdKey ? `id_${memberIdKey}` : `name_${nameKey}`;
+        if (!memberMonthMap[primaryKey]) memberMonthMap[primaryKey] = {};
+        memberMonthMap[primaryKey][monthPart] = (memberMonthMap[primaryKey][monthPart] || 0) + amt;
+
+        // Also record under name fallback if id was used
+        if (memberIdKey && nameKey) {
+          const fallbackKey = `name_${nameKey}`;
+          if (!memberMonthMap[fallbackKey]) memberMonthMap[fallbackKey] = {};
+          memberMonthMap[fallbackKey][monthPart] = (memberMonthMap[fallbackKey][monthPart] || 0) + amt;
         }
       }
     }
 
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
     let totalMonthlyPledged = 0;
     let currentMonthPledged = 0;
     let currentMonthCollected = 0;
@@ -549,25 +736,30 @@ router.get('/matrix', async (req, res, next) => {
     let currentMonthMissedCount = 0;
     let totalYearToDate = 0;
 
-    const matrix = members.map(m => {
-      const pledge = Number(m.pledgeAmount) || 0;
+    const monthTotals = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0 };
+
+    const matrix = sisters.map(s => {
+      const pledge = Number(s.pledgeAmount) || 50;
       totalMonthlyPledged += pledge;
 
       const monthlyStatus = {};
+      const months = {};
       let memberYearPaid = 0;
-      const mCol = normCol(m.collectionType);
-      const kId = `${m.id}_${mCol}`;
-      const kName = `${(m.memberName || '').trim().toLowerCase()}_${mCol}`;
+
+      const idKey = `id_${s.id}`;
+      const nameKey = `name_${(s.fullName || s.memberName || '').trim().toLowerCase()}`;
 
       const activeMonthNum = (year < currentYear) ? 12 : ((year > currentYear) ? 1 : currentMonthNum);
 
       for (let month = 1; month <= 12; month++) {
         const mKey = String(month).padStart(2, '0');
-        const paidAmount = (memberMonthMap[kId] && memberMonthMap[kId][mKey])
-          || (memberMonthMap[kName] && memberMonthMap[kName][mKey])
-          || 0;
+        const paidAmount = (memberMonthMap[idKey] && memberMonthMap[idKey][month] !== undefined)
+          ? memberMonthMap[idKey][month]
+          : ((memberMonthMap[nameKey] && memberMonthMap[nameKey][month] !== undefined) ? memberMonthMap[nameKey][month] : 0);
+
+        months[month] = paidAmount;
+        monthTotals[month] += paidAmount;
         memberYearPaid += paidAmount;
-        totalYearToDate += paidAmount;
 
         let status = 'PENDING';
         const isPastMonth = (year < currentYear) || (year === currentYear && month < currentMonthNum);
@@ -602,28 +794,35 @@ router.get('/matrix', async (req, res, next) => {
         }
       }
 
+      totalYearToDate += memberYearPaid;
+
       return {
-        id: m.id,
-        womenMemberId: m.id,
-        partnerId: m.id,
-        memberId: m.memberId || null,
-        memberName: m.memberName,
-        phone: m.phone || '—',
-        email: m.email || '',
-        collectionType: m.collectionType || 'WOMEN_DUES',
+        id: s.id,
+        womenMemberId: s.id,
+        partnerId: s.id,
+        memberId: s.memberId || null,
+        memberName: s.fullName || s.memberName,
+        fullName: s.fullName || s.memberName,
+        phone: s.phone || '—',
+        email: s.email || '',
+        collectionType: collectionType,
         pledgeAmount: pledge,
-        currency: m.currency || 'GHS',
+        currency: s.currency || 'GHS',
         yearTotalPaid: memberYearPaid,
+        totalPaid: memberYearPaid,
+        months,
         monthlyStatus
       };
     });
 
-    res.json({
+    const responsePayload = {
       year,
-      collectionType: collectionType || 'ALL',
+      collectionType: collectionType || 'WOMEN_DUES',
       collectionBreakdown,
+      monthTotals,
+      yearTotal: totalYearToDate,
       summary: {
-        totalEnrolled: members.length,
+        totalEnrolled: sisters.length,
         totalMonthlyPledged,
         currentMonthPledged,
         currentMonthCollected,
@@ -632,7 +831,14 @@ router.get('/matrix', async (req, res, next) => {
         currentMonthMissedCount,
         totalYearToDate
       },
+      members: matrix,
       matrix
+    };
+
+    res.json({
+      success: true,
+      data: responsePayload,
+      ...responsePayload
     });
   } catch (e) { next(e); }
 });

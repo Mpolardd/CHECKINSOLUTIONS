@@ -15,6 +15,7 @@ const celebrations = require('./modules/celebrations/celebrations.routes');
 const reminders = require('./modules/reminders/reminders.routes');
 const women = require('./modules/women/women.routes');
 const sms = require('./modules/sms/sms.routes');
+const realtime = require('./modules/realtime/realtime.routes');
 const health = require('./modules/health/health.routes');
 const error = require('./middleware/error');
 
@@ -65,6 +66,7 @@ app.use(['/api/v1/women', '/v1/women'], women);
 app.use(['/api/v1/celebrations', '/v1/celebrations'], celebrations);
 app.use(['/api/v1/reminders', '/v1/reminders'], reminders);
 app.use(['/api/v1/sms', '/v1/sms'], sms);
+app.use(['/api/v1/realtime', '/v1/realtime', '/realtime'], realtime);
 
 app.use(error);
 

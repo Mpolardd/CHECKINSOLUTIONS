@@ -5,6 +5,7 @@ const { z } = require('zod');
 const { requireAuth, requireRoles } = require('../../middleware/auth');
 const { normalizePhone } = require('../../utils/phone');
 const analyticsService = require('./attendanceAnalytics.service');
+const realtimeService = require('../realtime/realtime.service');
 
 function getDayRange(dateInput) {
   let y, m, d;
@@ -341,6 +342,18 @@ router.post('/checkin', async (req, res, next) => {
       return { attendance, member, alreadyCheckedIn: false, service: matchedService };
     });
 
+    try {
+      realtimeService.broadcast('CHECKIN', {
+        memberId: result.member?.id,
+        name: result.member ? `${result.member.firstName} ${result.member.lastName}`.trim() : 'Member',
+        serviceName: result.service?.serviceType?.name || b.serviceName,
+        isGuest: Boolean(
+          result.member?.category && (result.member.category.toLowerCase().includes('visitor') || result.member.category.toLowerCase().includes('guest'))
+        ),
+        alreadyCheckedIn: result.alreadyCheckedIn
+      });
+    } catch (rErr) {}
+
     res.status(200).json({
       success: true,
       attendance: result.attendance,
@@ -362,12 +375,14 @@ router.post('/family-checkin', async (req, res, next) => {
       serviceName: z.string().optional()
     }).parse(req.body);
 
+    let resolvedServiceName = b.serviceName;
     const result = await prisma.$transaction(async (tx) => {
       const matchedService = await resolveTargetService(tx, {
         serviceId: b.serviceId,
         serviceName: b.serviceName
       });
       const targetServiceId = matchedService.id;
+      resolvedServiceName = matchedService.serviceType?.name || b.serviceName;
 
       const members = await tx.member.findMany({ where: { id: { in: b.memberIds }, householdId: b.householdId, active: true, deletedAt: null } });
       const valid = new Set(members.map(m => m.id));
@@ -379,6 +394,15 @@ router.post('/family-checkin', async (req, res, next) => {
       }
       return created;
     });
+
+    try {
+      realtimeService.broadcast('CHECKIN', {
+        count: result.length,
+        serviceName: resolvedServiceName,
+        type: 'FAMILY'
+      });
+    } catch (rErr) {}
+
     res.status(201).json({ success: true, checkedInCount: result.length, members: result });
   } catch (e) { next(e); }
 });
@@ -1112,6 +1136,19 @@ router.post('/quick-register-checkin', async (req, res, next) => {
       return { member, attendance, service: matchedService, alreadyCheckedIn };
     });
 
+    try {
+      realtimeService.broadcast('VISITOR_CHECKIN', {
+        memberId: result.member?.id,
+        name: result.member ? `${result.member.firstName} ${result.member.lastName}`.trim() : 'Visitor Guest',
+        serviceName: result.service?.serviceType?.name || body.serviceName,
+        phone: result.member?.phone || body.phone,
+        category: result.member?.category || body.category,
+        role: result.member?.role || 'Visitor / First Timer',
+        isGuest: true,
+        alreadyCheckedIn: result.alreadyCheckedIn
+      });
+    } catch (rErr) {}
+
     res.status(201).json({ success: true, ...result });
   } catch (e) { next(e); }
 });
@@ -1148,6 +1185,14 @@ router.post('/clear', requireAuth, requireRoles('SUPER_ADMIN'), async (req, res,
       return res.status(400).json({ error: 'serviceId, serviceName, or memberId is required' });
     }
     analyticsService.invalidateAnalyticsCache();
+    try {
+      realtimeService.broadcast('ATTENDANCE_PURGED', {
+        serviceId,
+        serviceName,
+        memberId,
+        clearAll
+      });
+    } catch (rErr) {}
     res.json({ success: true, message: 'Attendance records cleared successfully' });
   } catch (e) { next(e); }
 });
@@ -1266,48 +1311,16 @@ router.get('/visitors', requireAuth, async (req, res, next) => {
   try {
     const { startDate, endDate, limit } = req.query;
 
-    let guestLogs = [];
-    try {
-      guestLogs = await prisma.auditLog.findMany({
-        where: { action: 'VISITOR_REGISTRATION' },
-        select: { entityId: true, metadata: true, createdAt: true }
-      });
-    } catch (e) {}
-    const guestIdSet = new Set(guestLogs.map(g => g.entityId).filter(Boolean));
-
     const visitorMembers = await prisma.member.findMany({
       where: {
         active: true,
         deletedAt: null,
-        AND: [
-          {
-            NOT: {
-              AND: [
-                { category: { in: ['Adult', 'Child', 'Youth'] } },
-                {
-                  NOT: {
-                    OR: [
-                      { role: { contains: 'Visitor', mode: 'insensitive' } },
-                      { role: { contains: 'First Timer', mode: 'insensitive' } },
-                      { role: { contains: 'First-Timer', mode: 'insensitive' } },
-                      { category: { contains: 'Visitor', mode: 'insensitive' } },
-                      { category: { contains: 'Guest', mode: 'insensitive' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            OR: [
-              { id: { in: Array.from(guestIdSet) } },
-              { category: { contains: 'Visitor', mode: 'insensitive' } },
-              { category: { contains: 'Guest', mode: 'insensitive' } },
-              { role: { contains: 'Visitor', mode: 'insensitive' } },
-              { role: { contains: 'First Timer', mode: 'insensitive' } },
-              { role: { contains: 'First-Timer', mode: 'insensitive' } }
-            ]
-          }
+        OR: [
+          { category: { contains: 'Visitor', mode: 'insensitive' } },
+          { category: { contains: 'Guest', mode: 'insensitive' } },
+          { role: { contains: 'Visitor', mode: 'insensitive' } },
+          { role: { contains: 'First Timer', mode: 'insensitive' } },
+          { role: { contains: 'First-Timer', mode: 'insensitive' } }
         ]
       },
       select: {
@@ -1327,60 +1340,59 @@ router.get('/visitors', requireAuth, async (req, res, next) => {
     });
 
     const visitorMemberIds = visitorMembers.map(m => m.id);
-    const allVisitorIds = visitorMemberIds;
+    let attendances = [];
 
-    const attWhere = {
-      member: { active: true, deletedAt: null }
-    };
+    if (visitorMemberIds.length > 0) {
+      const attWhere = {
+        memberId: { in: visitorMemberIds },
+        member: { active: true, deletedAt: null }
+      };
 
-    if (allVisitorIds.length > 0) {
-      attWhere.memberId = { in: allVisitorIds };
-    }
-
-    if (startDate || endDate) {
-      attWhere.checkedInAt = {};
-      if (startDate) {
-        const { start } = getDayRange(startDate);
-        attWhere.checkedInAt.gte = new Date(start.getTime() - 14 * 3600 * 1000);
+      if (startDate || endDate) {
+        attWhere.checkedInAt = {};
+        if (startDate) {
+          const { start } = getDayRange(startDate);
+          attWhere.checkedInAt.gte = new Date(start.getTime() - 14 * 3600 * 1000);
+        }
+        if (endDate) {
+          const { end } = getDayRange(endDate);
+          attWhere.checkedInAt.lte = new Date(end.getTime() + 14 * 3600 * 1000);
+        }
       }
-      if (endDate) {
-        const { end } = getDayRange(endDate);
-        attWhere.checkedInAt.lte = new Date(end.getTime() + 14 * 3600 * 1000);
-      }
-    }
 
-    const take = limit ? Math.min(parseInt(limit, 10), 1000) : 500;
+      const take = limit ? Math.min(parseInt(limit, 10), 1000) : 500;
 
-    const attendances = await prisma.attendance.findMany({
-      where: attWhere,
-      include: {
-        member: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            phone: true,
-            gender: true,
-            address: true,
-            category: true,
-            role: true,
-            guardian: true,
-            photoUrl: true
-          }
-        },
-        service: {
-          select: {
-            id: true,
-            serviceDate: true,
-            serviceType: {
-              select: { name: true }
+      attendances = await prisma.attendance.findMany({
+        where: attWhere,
+        include: {
+          member: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              gender: true,
+              address: true,
+              category: true,
+              role: true,
+              guardian: true,
+              photoUrl: true
+            }
+          },
+          service: {
+            select: {
+              id: true,
+              serviceDate: true,
+              serviceType: {
+                select: { name: true }
+              }
             }
           }
-        }
-      },
-      orderBy: { checkedInAt: 'desc' },
-      take
-    });
+        },
+        orderBy: { checkedInAt: 'desc' },
+        take
+      });
+    }
 
     const summary = {
       totalRegisteredVisitors: visitorMembers.length,

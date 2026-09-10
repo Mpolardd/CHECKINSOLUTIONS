@@ -1818,6 +1818,57 @@
       overflow: hidden;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
+
+    .live-sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #065f46;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .live-sync-pill:hover {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: #10b981;
+    }
+    .live-sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: liveSyncPulse 2s infinite;
+    }
+    @keyframes liveSyncPulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .live-sync-pill.reconnecting {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #92400e;
+    }
+    .live-sync-pill.reconnecting .live-sync-dot {
+      background: #f59e0b;
+      animation: none;
+    }
+    .live-sync-pill.offline {
+      background: rgba(100, 116, 139, 0.1);
+      border-color: rgba(100, 116, 139, 0.3);
+      color: #475569;
+    }
+    .live-sync-pill.offline .live-sync-dot {
+      background: #94a3b8;
+      animation: none;
+    }
   </style>
 </head>
 
@@ -1835,6 +1886,10 @@
       </a>
       <div class="admin-header-actions">
         <div class="admin-nav-actions" id="headerNavActions" style="display: none;">
+          <div id="liveSyncStatusPill" class="live-sync-pill" title="Real-Time Data Connection: Connected to Live Church Stream (Click to refresh now)" onclick="triggerManualSync()">
+            <span class="live-sync-dot"></span>
+            <span id="liveSyncStatusText">Live Sync Active</span>
+          </div>
           <a href="/checkin" class="btn-header-action" title="Open Self Check-in Kiosk">
             <i class="fas fa-desktop"></i> <span class="nav-btn-text">Open Kiosk</span>
           </a>
@@ -5555,13 +5610,8 @@
       fetchLiveCounts();
       loadVisitorsData();
 
-      if (window.livePollTimer) clearInterval(window.livePollTimer);
-      window.livePollTimer = setInterval(() => {
-        const dash = document.getElementById('dashboardContent');
-        if (dash && dash.style.display !== 'none') {
-          fetchLiveCounts();
-        }
-      }, 3000);
+      // Initialize unified real-time Server-Sent Events (SSE) & Smart Background Sync
+      initRealtimeSync();
 
       // Proactive background session token renewal
       if (window.tokenKeepAliveTimer) clearInterval(window.tokenKeepAliveTimer);
@@ -5571,21 +5621,200 @@
           await getAdminAuthToken();
         }
       }, 15 * 60 * 1000); // Proactively renew token before expiry
+    }
 
+    function updateLiveSyncBadge(status, title) {
+      const pill = document.getElementById('liveSyncStatusPill');
+      const text = document.getElementById('liveSyncStatusText');
+      if (!pill || !text) return;
+      if (status === 'connected') {
+        pill.className = 'live-sync-pill';
+        pill.title = title || 'Live Real-Time Stream Connected: Auto-updates active across all modules';
+        text.innerText = 'Live Sync Active';
+      } else if (status === 'reconnecting') {
+        pill.className = 'live-sync-pill reconnecting';
+        pill.title = title || 'Reconnecting to live church stream...';
+        text.innerText = 'Sync Reconnecting...';
+      } else {
+        pill.className = 'live-sync-pill offline';
+        pill.title = title || 'Real-time stream offline / standby';
+        text.innerText = 'Sync Standby';
+      }
+    }
+
+    async function triggerManualSync() {
+      showToast('Refreshing live data across all church modules...', 'info', 'Live Refresh');
+      updateLiveSyncBadge('reconnecting', 'Synchronizing data from cloud...');
+      try {
+        await Promise.all([
+          fetchLiveCounts(),
+          loadSavedMembers(),
+          loadVisitorsData()
+        ]);
+        updateDirectoryCounts();
+        filterMembersTable();
+        renderVisitorsSection();
+        renderAttendanceAndDemographics();
+        updateLiveSyncBadge('connected');
+        showToast('Church Portal data is up to date!', 'success', 'Synchronized');
+      } catch (e) {
+        updateLiveSyncBadge('connected');
+      }
+    }
+
+    function initRealtimeSync() {
+      // 1. Establish Server-Sent Events (SSE) stream with backend
+      if (window._sfmiEventSource) {
+        try { window._sfmiEventSource.close(); } catch (e) {}
+        window._sfmiEventSource = null;
+      }
+
+      try {
+        const streamUrl = `${API_BASE}/realtime/stream`;
+        const es = new EventSource(streamUrl);
+        window._sfmiEventSource = es;
+
+        es.onopen = () => {
+          console.log('[Realtime] SSE Stream connected successfully.');
+          updateLiveSyncBadge('connected');
+        };
+
+        es.onerror = (err) => {
+          console.warn('[Realtime] SSE Stream disconnected, browser will auto-reconnect...', err);
+          updateLiveSyncBadge('reconnecting');
+        };
+
+        es.addEventListener('connected', () => {
+          updateLiveSyncBadge('connected');
+        });
+
+        es.addEventListener('CHECKIN', (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            console.log('[Realtime] Live Check-In Event:', data);
+            fetchLiveCounts();
+            if (data.isGuest) {
+              loadVisitorsData();
+            }
+            const guestTag = data.isGuest ? ' <span style="background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">First-Timer Guest</span>' : '';
+            showToast(`Live Kiosk Check-In: <strong>${escapeHtml(data.name || 'Member')}</strong>${guestTag} checked in for ${escapeHtml(data.serviceName || 'Service')}!`, 'success', 'Live Check-In');
+          } catch (err) {}
+        });
+
+        es.addEventListener('VISITOR_CHECKIN', (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            console.log('[Realtime] Live Visitor Check-In:', data);
+            fetchLiveCounts();
+            loadVisitorsData();
+            showToast(`New First-Timer Visitor: <strong>${escapeHtml(data.name || 'Guest')}</strong> just registered and checked in for ${escapeHtml(data.serviceName || 'Service')}!`, 'info', 'Visitor Arrival');
+          } catch (err) {}
+        });
+
+        es.addEventListener('MEMBER_CONVERTED', (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            console.log('[Realtime] Member Converted Event:', data);
+            Promise.all([loadSavedMembers(), loadVisitorsData(), fetchLiveCounts()]).then(() => {
+              updateDirectoryCounts();
+              filterMembersTable();
+              renderVisitorsSection();
+              renderAttendanceAndDemographics();
+            }).catch(() => {});
+            showToast(`Visitor <strong>${escapeHtml(data.name || 'Guest')}</strong> has been converted to a full church member!`, 'success', 'Member Directory Updated');
+          } catch (err) {}
+        });
+
+        es.addEventListener('MEMBER_CREATED', (e) => {
+          try {
+            loadSavedMembers();
+          } catch (err) {}
+        });
+
+        es.addEventListener('VISITOR_REGISTERED', (e) => {
+          try {
+            loadVisitorsData();
+          } catch (err) {}
+        });
+
+        es.addEventListener('MEMBER_UPDATED', (e) => {
+          try {
+            loadSavedMembers();
+            loadVisitorsData();
+          } catch (err) {}
+        });
+
+        es.addEventListener('MEMBER_DELETED', (e) => {
+          try {
+            loadSavedMembers();
+            loadVisitorsData();
+          } catch (err) {}
+        });
+
+        es.addEventListener('ATTENDANCE_PURGED', (e) => {
+          try {
+            fetchLiveCounts();
+            loadVisitorsData();
+            renderAttendanceAndDemographics();
+          } catch (err) {}
+        });
+      } catch (esErr) {
+        console.warn('SSE not supported or failed to initialize:', esErr);
+        updateLiveSyncBadge('offline');
+      }
+
+      // 2. BroadcastChannel for instant local cross-tab communication
       try {
         if (window.BroadcastChannel && !window._sfmiLiveBcAttached) {
           window._sfmiLiveBcAttached = true;
           const bc = new BroadcastChannel('sfmi_attendance_live');
           bc.onmessage = (e) => {
-            if (e.data && e.data.type === 'CHECKIN') {
-              console.log('Live check-in event received via BroadcastChannel:', e.data);
+            if (!e.data) return;
+            if (e.data.type === 'CHECKIN') {
               fetchLiveCounts();
-              const guestTag = e.data.isGuest ? ' <span style="background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;">First-Timer Guest</span>' : '';
-              showToast(`Live Kiosk Check-In: <strong>${escapeHtml(e.data.name)}</strong>${guestTag} checked in for ${escapeHtml(e.data.service || 'Service')} at ${e.data.time}!`, 'success', 'Live Kiosk Event');
+              if (e.data.isGuest) loadVisitorsData();
+            } else if (e.data.type === 'MEMBER_CONVERTED') {
+              Promise.all([loadSavedMembers(), loadVisitorsData(), fetchLiveCounts()]).then(() => {
+                updateDirectoryCounts();
+                filterMembersTable();
+                renderVisitorsSection();
+                renderAttendanceAndDemographics();
+              }).catch(() => {});
             }
           };
         }
       } catch (bcErr) {}
+
+      // 3. Smart Background Polling (runs every 10 seconds across all tabs)
+      if (window.livePollTimer) clearInterval(window.livePollTimer);
+      window.livePollTimer = setInterval(() => {
+        // Always refresh live attendance counts
+        fetchLiveCounts();
+
+        // Refresh currently active tab's specific data
+        const secMems = document.getElementById('secMembers');
+        if (secMems && secMems.style.display !== 'none') {
+          loadSavedMembers();
+        }
+        const secVis = document.getElementById('secVisitors');
+        if (secVis && secVis.style.display !== 'none') {
+          loadVisitorsData();
+        }
+      }, 10000);
+
+      // 4. Tab Visibility sync (auto-refresh when user switches back to this browser tab)
+      if (!window._sfmiVisibilityAttached) {
+        window._sfmiVisibilityAttached = true;
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            fetchLiveCounts();
+            const secMems = document.getElementById('secMembers');
+            if (secMems && secMems.style.display !== 'none') loadSavedMembers();
+            const secVis = document.getElementById('secVisitors');
+            if (secVis && secVis.style.display !== 'none') loadVisitorsData();
+          }
+        });
+      }
     }
 
     async function handleLoginSubmit(e) {
@@ -5744,16 +5973,17 @@
       const lbl = document.getElementById('activeTabLabel');
       if (lbl) lbl.innerHTML = TAB_LABELS[tab] || '';
       
-      if (tab === 'finance') { renderAdminFinanceTable(); syncFinanceViewMode(); }
+      if (tab === 'finance') { renderAdminFinanceTable(); syncFinanceViewMode(); loadFinanceData(); }
       if (tab === 'attendance') { renderAttendanceAndDemographics(); syncAttendanceViewMode(); fetchLiveCounts(); }
       if (tab === 'analytics') { loadAnalyticsDashboard(); syncAnalyticsViewMode(); }
-      if (tab === 'visitors') { renderVisitorsSection(); syncVisitorsViewMode(); }
-      if (tab === 'members') { renderMembersTable(); syncMembersViewMode(); }
+      if (tab === 'visitors') { renderVisitorsSection(); syncVisitorsViewMode(); loadVisitorsData(); }
+      if (tab === 'members') { renderMembersTable(); syncMembersViewMode(); loadSavedMembers(); }
       if (tab === 'messaging') { loadMessagingCenter(); syncMessagingViewMode(); loadArkeselSmsBalance(); }
       if (tab === 'programs') { renderProgramsManager(); syncProgramsViewMode(); fetchLiveCounts(); }
       if (tab === 'partnership') { loadPartnershipMatrix(); syncPartnershipViewMode(); }
       if (tab === 'subAdmins') { renderSubAdminsList(); syncSubAdminsViewMode(); }
       if (tab === 'reports') { loadHistoricalAttendanceReport(); syncReportsViewMode(); }
+      if (tab === 'finReports') { if (typeof loadHistoricalFinanceReport === 'function') loadHistoricalFinanceReport(); }
       if (tab === 'settings') { 
         renderSettingsProfile(); 
         if (typeof initArkeselSmsSettings === 'function') initArkeselSmsSettings();
@@ -6785,7 +7015,7 @@
         });
 
         const isPresent = Boolean(found);
-        const isGuest = (found && Boolean(found.isGuest)) || isGuestMember(m);
+        const isGuest = isGuestMember(m);
 
         if (isPresent) {
           presentCount++;
@@ -7451,7 +7681,7 @@
           return false;
         });
         const isPresent = Boolean(found);
-        const isGuest = (found && Boolean(found.isGuest)) || isGuestMember(m);
+        const isGuest = isGuestMember(m);
 
         if (isPresent) {
           if (isGuest) {
@@ -7717,7 +7947,7 @@
           return false;
         });
         const isPresent = Boolean(found);
-        const isGuest = (found && Boolean(found.isGuest)) || isGuestMember(m);
+        const isGuest = isGuestMember(m);
         return {
           ...m,
           isGuest,
@@ -7839,8 +8069,7 @@
 
     async function fetchLiveCounts() {
       try {
-        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
-        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const headers = await getAuthHeaders();
 
         const targetService = currentSelectedService || 'Sunday: Family & Friends Service';
         const selectedDate = document.getElementById('attDateSelect') ? document.getElementById('attDateSelect').value.trim() : '';
@@ -8038,11 +8267,13 @@
             );
 
             if (foundIndex >= 0) {
-              if (att.isGuest && !allMembers[foundIndex].isGuest) {
-                allMembers[foundIndex].isGuest = true;
-                if (!allMembers[foundIndex].category || allMembers[foundIndex].category === 'Adult') allMembers[foundIndex].category = 'Visitor / Guest';
-                if (!allMembers[foundIndex].role || allMembers[foundIndex].role === 'Member') allMembers[foundIndex].role = 'Visitor / First Timer';
-                modifiedDirectory = true;
+              const memberRecord = allMembers[foundIndex];
+              const isRegular = !isGuestMember(memberRecord);
+              if (isRegular) {
+                // Directory profile is a regular member: align attendance item
+                att.isGuest = false;
+                att.category = memberRecord.category || 'Adult';
+                att.role = memberRecord.role || 'Member';
               }
             } else if (att.name) {
               const alreadyInDirectory = allMembers.some(m =>
@@ -9102,8 +9333,26 @@
       closeEditMemberModal();
 
       if (wasGuest && !isGuest) {
+        Promise.all([loadSavedMembers(), loadVisitorsData(), fetchLiveCounts()]).then(() => {
+          updateDirectoryCounts();
+          filterMembersTable();
+          renderVisitorsSection();
+          renderAttendanceAndDemographics();
+        }).catch(() => {});
+        if (window.BroadcastChannel) {
+          try {
+            const bc = new BroadcastChannel('sfmi_attendance_live');
+            bc.postMessage({ type: 'MEMBER_CONVERTED', memberId: id, name: updatedFullName });
+            setTimeout(() => bc.close(), 500);
+          } catch (e) {}
+        }
         showToast(`<strong>${escapeHtml(updatedFullName)}</strong> has been successfully converted from a visitor into a permanent Church Member!`, 'success', 'Member Converted');
       } else {
+        Promise.all([loadSavedMembers(), loadVisitorsData()]).then(() => {
+          updateDirectoryCounts();
+          filterMembersTable();
+          renderVisitorsSection();
+        }).catch(() => {});
         showToast(`${isGuest ? 'Visitor' : 'Member'} profile for <strong>${escapeHtml(updatedFullName)}</strong> updated in cloud database!`, 'success', 'Profile Updated');
       }
     }
@@ -9282,6 +9531,8 @@
       const displayBanner = document.getElementById('adminKioskActiveDisplay');
       const activeSub = document.getElementById('adminKioskActiveSub');
       
+      const progs = (typeof customPrograms !== 'undefined' && Array.isArray(customPrograms)) ? customPrograms : [];
+
       // 1. Populate Attendance Tab Selector
       const attSelect = document.getElementById('attServiceSelect');
       if (attSelect) {
@@ -9293,7 +9544,7 @@
         ];
 
         attSelect.innerHTML = standardOptions.map(o => `<option value="${o.val}">${o.text}</option>`).join('') +
-          customPrograms.map(p => `<option value="${p.name}">[Special Program] ${p.name}</option>`).join('');
+          progs.map(p => `<option value="${p.name}">[Special Program] ${p.name}</option>`).join('');
 
         if (Array.from(attSelect.options).some(o => o.value === currentSelectedService)) {
           attSelect.value = currentSelectedService;
@@ -9308,12 +9559,102 @@
           <option value="Sunday: Family & Friends Service">Sunday — Family & Friends Service</option>
           <option value="Wednesday: Time with the Lord">Wednesday — Time with the Lord</option>
           <option value="Friday: Prophetic Healing & Deliverance">Friday — Prophetic Deliverance</option>
-        ` + customPrograms.map(p => `<option value="${p.name}">🌟 [Special Program] ${p.name}</option>`).join('');
+        ` + progs.map(p => `<option value="${p.name}">🌟 [Special Program] ${p.name}</option>`).join('');
 
         if (activeKiosk) {
           kioskPicker.value = activeKiosk;
         } else {
           kioskPicker.value = 'AUTO: Day-of-Week Schedule';
+        }
+      }
+
+      // 3. Populate Visitors Tab Service Select
+      const visSelect = document.getElementById('visServiceSelect');
+      if (visSelect) {
+        const curVal = visSelect.value || 'ALL';
+        visSelect.innerHTML = `
+          <option value="ALL">All Services</option>
+          <option value="Sunday: Family & Friends Service">Sunday — Family & Friends Service</option>
+          <option value="Wednesday: Time with the Lord">Wednesday — Time with the Lord</option>
+          <option value="Friday: Prophetic Healing & Deliverance">Friday — Prophetic Deliverance</option>
+        ` + progs.map(p => `<option value="${p.name}">[Program] ${p.name}</option>`).join('');
+        if (Array.from(visSelect.options).some(o => o.value === curVal)) {
+          visSelect.value = curVal;
+        }
+      }
+
+      // 4. Populate Finance Tab Service Filter
+      const finSelect = document.getElementById('finFilterService');
+      if (finSelect) {
+        const curVal = finSelect.value || 'ALL';
+        finSelect.innerHTML = `
+          <option value="ALL">All Services</option>
+          <option value="Sunday">Sunday Services</option>
+          <option value="Wednesday">Wednesday Services</option>
+          <option value="Friday">Friday Services</option>
+        ` + progs.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+        if (Array.from(finSelect.options).some(o => o.value === curVal)) {
+          finSelect.value = curVal;
+        }
+      }
+
+      // 5. Populate Analytics Service Type Select
+      const anaSelect = document.getElementById('analyticsServiceTypeSelect');
+      if (anaSelect) {
+        const curVal = anaSelect.value || 'ALL';
+        anaSelect.innerHTML = `
+          <option value="ALL">All Service Types (Combined)</option>
+          <option value="Sunday">Sunday Services</option>
+          <option value="Wednesday">Wednesday Services</option>
+          <option value="Friday">Friday Services</option>
+        ` + progs.map(p => `<option value="${p.name}">🌟 ${p.name}</option>`).join('');
+        if (Array.from(anaSelect.options).some(o => o.value === curVal)) {
+          anaSelect.value = curVal;
+        }
+      }
+
+      // 6. Populate Messaging Center Service Select
+      const msgSelect = document.getElementById('msgServiceSelect');
+      if (msgSelect) {
+        const curVal = msgSelect.value || 'ALL';
+        msgSelect.innerHTML = `
+          <option value="ALL">All Services</option>
+          <option value="Sunday: Family & Friends Service">Sunday (Family & Friends)</option>
+          <option value="Wednesday: Time with the Lord">Wednesday (Time with Lord)</option>
+          <option value="Friday: Prophetic Healing & Deliverance">Friday (Prophetic Deliverance)</option>
+        ` + progs.map(p => `<option value="${p.name}">[Program] ${p.name}</option>`).join('');
+        if (Array.from(msgSelect.options).some(o => o.value === curVal)) {
+          msgSelect.value = curVal;
+        }
+      }
+
+      // 7. Populate Historical Attendance Reports Service Select
+      const repAttSelect = document.getElementById('repAttServiceSelect');
+      if (repAttSelect) {
+        const curVal = repAttSelect.value || 'ALL';
+        repAttSelect.innerHTML = `
+          <option value="ALL">All Services</option>
+          <option value="Sunday: Family & Friends Service">Sunday (Family & Friends)</option>
+          <option value="Wednesday: Time with the Lord">Wednesday (Time with Lord)</option>
+          <option value="Friday: Prophetic Healing & Deliverance">Friday (Prophetic Deliverance)</option>
+        ` + progs.map(p => `<option value="${p.name}">[Program] ${p.name}</option>`).join('');
+        if (Array.from(repAttSelect.options).some(o => o.value === curVal)) {
+          repAttSelect.value = curVal;
+        }
+      }
+
+      // 8. Populate Historical Finance Reports Service Select
+      const repFinSelect = document.getElementById('repFinServiceSelect');
+      if (repFinSelect) {
+        const curVal = repFinSelect.value || 'ALL';
+        repFinSelect.innerHTML = `
+          <option value="ALL">All Services</option>
+          <option value="Sunday">Sunday (Family &amp; Friends)</option>
+          <option value="Wednesday">Wednesday (Time with Lord)</option>
+          <option value="Friday">Friday (Prophetic Deliverance)</option>
+        ` + progs.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+        if (Array.from(repFinSelect.options).some(o => o.value === curVal)) {
+          repFinSelect.value = curVal;
         }
       }
 
@@ -11016,6 +11357,8 @@ closeCreateProgramModal();
             if (Array.isArray(json.attendances)) {
               json.attendances.forEach(a => {
                 const m = a.member || {};
+                // Strictly exclude converted or regular church members
+                if (m && (m.category === 'Adult' || m.category === 'Youth' || m.category === 'Child') && !isGuestMember(m)) return;
                 const svcName = canonicalServiceName(a.service?.serviceType?.name || defaultFallbackSvc);
                 const dStr = formatLocalDate(a.checkedInAt || a.service?.serviceDate || Date.now());
                 backendVisits.push({
@@ -11041,6 +11384,7 @@ closeCreateProgramModal();
 
             if (Array.isArray(json.visitors)) {
               json.visitors.forEach(v => {
+                if (v && (v.category === 'Adult' || v.category === 'Youth' || v.category === 'Child') && !isGuestMember(v)) return;
                 const fullName = `${v.firstName || ""} ${v.lastName || ""}`.trim() || "Visitor Guest";
                 const already = backendVisits.some(b => (b.memberId && b.memberId === v.id) || (b.phone && b.phone !== "—" && b.phone === v.phone) || b.name.toLowerCase() === fullName.toLowerCase());
                 if (!already) {
@@ -11418,20 +11762,57 @@ closeCreateProgramModal();
             });
 
             if (res.ok) {
-              const idx = allMembers.findIndex(m => m.id === memberId);
+              const updatedData = await res.json().catch(() => null);
+              const normName = (name || '').trim().toLowerCase();
+
+              // 1. Optimistically update or insert into allMembers
+              const idx = allMembers.findIndex(m => m.id === memberId || (normName && `${m.firstName || ''} ${m.lastName || ''}`.trim().toLowerCase() === normName));
               if (idx !== -1) {
                 allMembers[idx].category = "Adult";
                 allMembers[idx].role = "Member";
                 allMembers[idx].isGuest = false;
+                if (updatedData) {
+                  allMembers[idx] = { ...allMembers[idx], ...updatedData, isGuest: false, category: "Adult", role: "Member" };
+                }
+              } else {
+                // Member was not in allMembers yet (e.g. newly created on kiosk) - add them!
+                const first = updatedData?.firstName || name.split(' ')[0] || 'Member';
+                const last = updatedData?.lastName || name.split(' ').slice(1).join(' ') || '';
+                allMembers.unshift({
+                  id: memberId,
+                  firstName: first,
+                  lastName: last,
+                  phone: updatedData?.phone || '',
+                  gender: updatedData?.gender || 'Not specified',
+                  address: updatedData?.address || '',
+                  category: 'Adult',
+                  role: 'Member',
+                  guardian: updatedData?.guardian || '',
+                  dob: updatedData?.dateOfBirth ? formatDisplayDate(updatedData.dateOfBirth.split('T')[0]) : '',
+                  rawDob: updatedData?.dateOfBirth ? updatedData.dateOfBirth.split('T')[0] : null,
+                  isGuest: false
+                });
               }
-              // Remove guest status in local processed and raw lists
-              rawVisitorsData = (rawVisitorsData || []).filter(v => v.memberId !== memberId && v.id !== memberId);
-              processedVisitorsList = (processedVisitorsList || []).filter(v => v.memberId !== memberId && v.id !== memberId);
 
+              // 2. Remove visitor status thoroughly from rawVisitorsData and processedVisitorsList by ID, memberId, and name
+              const phone = updatedData?.phone;
+              rawVisitorsData = (rawVisitorsData || []).filter(v => 
+                v.memberId !== memberId && v.id !== memberId && 
+                (!normName || (v.name || '').trim().toLowerCase() !== normName) &&
+                (!phone || v.phone !== phone)
+              );
+              processedVisitorsList = (processedVisitorsList || []).filter(v => 
+                v.memberId !== memberId && v.id !== memberId && 
+                (!normName || (v.name || '').trim().toLowerCase() !== normName) &&
+                (!phone || v.phone !== phone)
+              );
+
+              // 3. Normalize in serviceAttendanceMap
               if (typeof serviceAttendanceMap === 'object' && serviceAttendanceMap !== null) {
                 Object.keys(serviceAttendanceMap).forEach(k => {
                   (serviceAttendanceMap[k] || []).forEach(att => {
-                    if (att.memberId === memberId || att.id === memberId || att.member?.id === memberId) {
+                    const attFullName = `${att.firstName || ''} ${att.lastName || ''}`.trim().toLowerCase() || (att.name || '').trim().toLowerCase();
+                    if (att.memberId === memberId || att.id === memberId || att.member?.id === memberId || (normName && attFullName === normName) || (phone && att.phone === phone)) {
                       att.category = "Adult";
                       att.role = "Member";
                       att.isGuest = false;
@@ -11445,11 +11826,30 @@ closeCreateProgramModal();
                 });
               }
 
+              // 4. Update UI immediately
               updateDirectoryCounts();
               renderVisitorsSection();
               filterMembersTable();
               renderAttendanceAndDemographics();
-              showToast(`<strong>${name}</strong> has been successfully converted to a regular full church member!`, "success", "Member Converted");
+
+              // 5. Broadcast to local tabs
+              if (window.BroadcastChannel) {
+                try {
+                  const bc = new BroadcastChannel('sfmi_attendance_live');
+                  bc.postMessage({ type: 'MEMBER_CONVERTED', memberId, name });
+                  setTimeout(() => bc.close(), 500);
+                } catch (bErr) {}
+              }
+
+              showToast(`<strong>${escapeHtml(name)}</strong> has been successfully converted into a permanent Church Member!`, "success", "Member Converted");
+
+              // 6. Proactively re-sync in background to guarantee 100% cloud parity
+              Promise.all([loadSavedMembers(), loadVisitorsData(), fetchLiveCounts()]).then(() => {
+                updateDirectoryCounts();
+                renderVisitorsSection();
+                filterMembersTable();
+                renderAttendanceAndDemographics();
+              }).catch(() => {});
             } else {
               const err = await res.json().catch(() => ({ error: "Could not convert visitor" }));
               showToast(err.error || "Could not convert visitor to member.", "error", "Conversion Failed");

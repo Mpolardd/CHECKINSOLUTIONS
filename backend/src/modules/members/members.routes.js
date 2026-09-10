@@ -3,6 +3,7 @@ const { z } = require('zod');
 const prisma = require('../../config/prisma');
 const { requireAuth, requireRoles } = require('../../middleware/auth');
 const { normalizePhone } = require('../../utils/phone');
+const realtimeService = require('../realtime/realtime.service');
 
 const memberSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -153,6 +154,16 @@ router.post('/', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION
       });
     } catch (e) {}
 
+    try {
+      realtimeService.broadcast(isVisitor ? 'VISITOR_REGISTERED' : 'MEMBER_CREATED', {
+        memberId: m.id,
+        name: `${m.firstName} ${m.lastName}`.trim(),
+        category: m.category,
+        role: m.role,
+        isGuest: Boolean(isVisitor)
+      });
+    } catch (rErr) {}
+
     res.status(201).json(m);
   } catch (e) {
     next(e);
@@ -283,6 +294,26 @@ const updateMemberHandler = async (req, res, next) => {
       });
     } catch (e) {}
 
+    try {
+      if (isNowMember) {
+        realtimeService.broadcast('MEMBER_CONVERTED', {
+          memberId: m.id,
+          name: `${m.firstName} ${m.lastName}`.trim(),
+          category: m.category,
+          role: m.role,
+          member: m
+        });
+      }
+      realtimeService.broadcast('MEMBER_UPDATED', {
+        memberId: m.id,
+        name: `${m.firstName} ${m.lastName}`.trim(),
+        category: m.category,
+        role: m.role,
+        isGuest: !isNowMember && isFinalVisitorCat,
+        member: m
+      });
+    } catch (rErr) {}
+
     res.json(m);
   } catch (e) {
     next(e);
@@ -315,6 +346,13 @@ router.delete('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (
         }
       });
     } catch (e) {}
+
+    try {
+      realtimeService.broadcast('MEMBER_DELETED', {
+        memberId: req.params.id,
+        deletedName: `${member.firstName} ${member.lastName}`.trim()
+      });
+    } catch (rErr) {}
 
     res.json({ success: true, message: 'Member archived successfully (historical attendance preserved)' });
   } catch (e) {
