@@ -622,6 +622,7 @@
       selectedMonth: new Date().getMonth() + 1,
       funds: [],
       matrixData: null,
+      matrixCache: {},
       filterText: '',
       filterStatus: 'ALL'
     };
@@ -734,6 +735,15 @@
     async function loadMatrix(silent = false) {
       const tbody = document.getElementById('matrixTableBody');
       const sync = document.getElementById('backgroundSyncIndicator');
+      const cacheKey = `${state.activeFundId}_${state.selectedYear}`;
+
+      // If we have cached data, render it immediately and sync in background
+      if (state.matrixCache[cacheKey]) {
+        state.matrixData = state.matrixCache[cacheKey];
+        updateKpis(state.matrixData);
+        renderMatrixTable();
+        silent = true; // Make the subsequent fetch silent
+      }
 
       if (!silent) {
         tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:40px;"><i class="fas fa-circle-notch fa-spin"></i> Syncing...</td></tr>`;
@@ -745,7 +755,11 @@
         const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         const res = await fetch(`${API_BASE}/women/matrix?year=${state.selectedYear}&collectionType=${state.activeFundId}`, { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
+
+        // Update cache and state
+        state.matrixCache[cacheKey] = data;
         state.matrixData = data;
+
         updateKpis(data);
         renderMatrixTable();
       } catch (e) {
@@ -880,6 +894,10 @@
         for (const m of months) {
           await fetch(`${API_BASE}/women/payments`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ womenMemberId: document.getElementById('payMemberId').value, fullName: document.getElementById('payMemberName').value, collectionType: document.getElementById('payCollectionType').value, month: m, year: state.selectedYear, amount: amt, paymentMethod: document.getElementById('payMethod').value }) });
         }
+
+        // Invalidate cache for this fund/year
+        delete state.matrixCache[`${document.getElementById('payCollectionType').value}_${state.selectedYear}`];
+
         showToast('Payment saved!', 'success'); closeModal('quickPayModal'); loadMatrix(true);
       } catch (e) { showToast('Error saving payment.', 'error'); }
       btn.disabled = false;
@@ -919,6 +937,8 @@
         });
         if (res.ok) {
           showToast('Payment deleted.', 'success');
+          // Invalidate cache for active fund
+          delete state.matrixCache[`${state.activeFundId}_${state.selectedYear}`];
           loadPaymentHistory();
           loadMatrix(true);
         } else {
