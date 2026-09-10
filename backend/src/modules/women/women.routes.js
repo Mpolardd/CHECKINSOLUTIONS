@@ -90,7 +90,7 @@ const standardWomenCollectionTypes = [
     name: 'Women Contribution',
     category: "Women's Ministry",
     description: "General fellowship offerings, special seeds, and love contributions",
-    frequency: 'MONTHLY',
+    frequency: 'ONCE_OFF',
     targetAmount: 100,
     defaultAmount: 100,
     icon: 'fas fa-gem',
@@ -186,7 +186,7 @@ router.post('/collection-types', async (req, res, next) => {
       name: cleanName,
       category: category.trim() || "Women's Ministry",
       description: description.trim(),
-      frequency,
+      frequency: frequency || 'MONTHLY',
       targetAmount: amountVal,
       defaultAmount: amountVal,
       icon,
@@ -675,6 +675,8 @@ router.get('/matrix', async (req, res, next) => {
     });
 
     const activeColNorm = normCol(collectionType);
+    const activeFund = allCollections.find(c => normCol(c.id || c.name) === activeColNorm);
+    const activeFrequency = activeFund ? (activeFund.frequency || 'MONTHLY') : 'MONTHLY';
 
     for (const p of allPayments) {
       const pCol = normCol(p.collectionType || 'WOMEN_DUES');
@@ -802,6 +804,7 @@ router.get('/matrix', async (req, res, next) => {
     const responsePayload = {
       year,
       collectionType: collectionType || 'WOMEN_DUES',
+      frequency: activeFrequency,
       collectionBreakdown,
       monthTotals,
       yearTotal: totalYearToDate,
