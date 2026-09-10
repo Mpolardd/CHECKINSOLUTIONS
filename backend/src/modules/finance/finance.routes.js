@@ -14,7 +14,7 @@ const financial = z.object({
 
 const serviceFinanceSchema = z.object({
   serviceName: z.string().min(1, 'Service name is required'),
-  serviceDate: z.string().min(1, 'Service date is required'),
+  serviceDate: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).transform(v => new Date(v)),
   tithes: z.coerce.number().min(0).default(0),
   offering: z.coerce.number().min(0).default(0),
   buildingFund: z.coerce.number().min(0).default(0),
@@ -224,6 +224,13 @@ router.get('/analytics', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), as
 router.post('/transactions', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
   try {
     const b = financial.parse(req.body);
+
+    // Verify account exists
+    const account = await prisma.financialAccount.findUnique({ where: { id: b.accountId } });
+    if (!account) {
+      return res.status(400).json({ error: 'Financial account not found' });
+    }
+
     const tx = await prisma.financialTransaction.create({
       data: {
         accountId: b.accountId,

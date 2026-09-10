@@ -6,7 +6,8 @@ function requireAuth(req, res, next) {
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({error:'Authentication required'});
   try {
-    const secret = process.env.JWT_ACCESS_SECRET || 'church_mgmt_secret_dev_fallback_only';
+    const secret = process.env.JWT_ACCESS_SECRET;
+    if (!secret) throw new Error('JWT_ACCESS_SECRET is missing');
     req.user = jwt.verify(token, secret);
     if (req.user && req.user.sub && !req.user.userId) {
       req.user.userId = req.user.sub;

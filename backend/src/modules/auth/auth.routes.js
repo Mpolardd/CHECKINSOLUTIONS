@@ -16,7 +16,8 @@ if (!process.env.JWT_ACCESS_SECRET || process.env.JWT_ACCESS_SECRET.trim().lengt
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
 
 function accessToken(user) {
-  const secret = process.env.JWT_ACCESS_SECRET || 'church_mgmt_secret_dev_fallback_only';
+  const secret = process.env.JWT_ACCESS_SECRET;
+  if (!secret) throw new Error('JWT_ACCESS_SECRET is missing');
   const rawMin = parseInt(process.env.ACCESS_TOKEN_MINUTES, 10);
   const minutes = (!isNaN(rawMin) && rawMin >= 45) ? rawMin : 1440;
   return jwt.sign(
@@ -58,64 +59,6 @@ router.post('/login', async (req, res, next) => {
     let isMatch = false;
     if (user && user.passwordHash) {
       isMatch = await bcrypt.compare(cleanPassword, user.passwordHash);
-    }
-
-    // Direct password fallback & auto-repair for primary Admin and Women accounts
-    if (!isMatch && (emailNorm === 'admin@solutionsfaith.com' || emailNorm === 'admin@example.com')) {
-      if (['Prophet2468', 'prophet2468', 'Solutions12@26', 'solutions12@26'].includes(cleanPassword)) {
-        isMatch = true;
-      }
-    }
-
-    if (!isMatch && emailNorm === 'women@solutionsfaith.com') {
-      if (['Women12@26', 'women12@26', 'Prophet2468', 'prophet2468'].includes(cleanPassword)) {
-        isMatch = true;
-      }
-    }
-
-    // Auto-create Super Admin or Women account if missing from production database
-    if (!user && (emailNorm === 'admin@solutionsfaith.com' || emailNorm === 'admin@example.com')) {
-      if (['Prophet2468', 'prophet2468', 'Solutions12@26', 'solutions12@26'].includes(cleanPassword)) {
-        const hash = await bcrypt.hash(cleanPassword, 10);
-        user = await prisma.user.create({
-          data: {
-            email: emailNorm,
-            passwordHash: hash,
-            role: 'SUPER_ADMIN'
-          },
-          include: { member: true }
-        });
-        isMatch = true;
-      }
-    }
-
-    if (!user && emailNorm === 'women@solutionsfaith.com') {
-      if (['Women12@26', 'women12@26', 'Prophet2468', 'prophet2468'].includes(cleanPassword)) {
-        const hash = await bcrypt.hash(cleanPassword, 10);
-        user = await prisma.user.create({
-          data: {
-            email: emailNorm,
-            passwordHash: hash,
-            role: 'ADMIN'
-          },
-          include: { member: true }
-        });
-        isMatch = true;
-      }
-    }
-
-    // Automatically update stored passwordHash to cleanPassword upon successful override match
-    if (user && isMatch) {
-      try {
-        const hashMatches = await bcrypt.compare(cleanPassword, user.passwordHash);
-        if (!hashMatches) {
-          const newHash = await bcrypt.hash(cleanPassword, 10);
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { passwordHash: newHash }
-          });
-        }
-      } catch (hErr) {}
     }
 
     if (!user || !isMatch) {
@@ -227,7 +170,8 @@ router.get('/verify', async (req, res) => {
     if (!token) {
       return res.status(401).json({ error: 'No authorization token provided' });
     }
-    const secret = process.env.JWT_ACCESS_SECRET || 'church_mgmt_secret_dev_fallback_only';
+    const secret = process.env.JWT_ACCESS_SECRET;
+    if (!secret) throw new Error('JWT_ACCESS_SECRET is missing');
     const decoded = jwt.verify(token, secret);
     const user = await prisma.user.findUnique({
       where: { id: decoded.sub },

@@ -21,6 +21,8 @@ const error = require('./middleware/error');
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 app.use(helmet({
   contentSecurityPolicy: false // Allows self-contained HTML resources & external CDNs
 }));
