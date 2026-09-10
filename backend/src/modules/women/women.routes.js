@@ -243,47 +243,24 @@ router.delete('/collection-types/:id', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// ── 2. UNIFIED WOMEN FELLOWSHIP DIRECTORY & ROSTER ──
+// ── 2. REGISTERED WOMEN FELLOWSHIP DIRECTORY & ROSTER ──
 async function getUnifiedWomenRoster(targetCollectionType = 'WOMEN_DUES') {
-  // 1. Fetch female church members from main directory
-  let dbFemales = [];
-  try {
-    dbFemales = await prisma.member.findMany({
-      where: {
-        active: true,
-        deletedAt: null,
-        OR: [
-          { gender: { contains: 'Female', mode: 'insensitive' } },
-          { gender: { startsWith: 'F', mode: 'insensitive' } },
-          { category: { contains: 'Women', mode: 'insensitive' } },
-          { role: { contains: 'Women', mode: 'insensitive' } }
-        ]
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        email: true,
-        gender: true,
-        address: true,
-        category: true,
-        role: true,
-        photoUrl: true,
-        createdAt: true
-      },
-      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }]
-    });
-  } catch (e) {}
-
-  // 2. Fetch all custom registered sisters from audit logs
+  // 1. Fetch registered sisters from audit logs
   let customLogs = [];
   try {
     customLogs = await prisma.auditLog.findMany({
       where: { entity: 'WOMEN_MEMBER' },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'asc' }
     });
   } catch (e) {}
+
+  let deletionLogs = [];
+  try {
+    deletionLogs = await prisma.auditLog.findMany({
+      where: { entity: 'DELETE_WOMEN_MEMBER' }
+    });
+  } catch (e) {}
+  const deletedIds = new Set(deletionLogs.map(l => (l.entityId || '').trim()));
 
   const collectionList = await getAllCollectionTypes();
   const targetColNorm = normCol(targetCollectionType);
@@ -292,48 +269,28 @@ async function getUnifiedWomenRoster(targetCollectionType = 'WOMEN_DUES') {
 
   const sistersMap = new Map();
 
-  for (const m of dbFemales) {
-    const fullName = `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Sister';
-    const cleanPhone = (m.phone || '').trim();
-    const key = (cleanPhone && cleanPhone !== '—') ? cleanPhone : fullName.toLowerCase();
-    
-    sistersMap.set(key, {
-      id: m.id,
-      memberId: m.id,
-      memberName: fullName,
-      fullName: fullName,
-      firstName: m.firstName,
-      lastName: m.lastName,
-      phone: cleanPhone || '—',
-      email: m.email || '',
-      gender: 'Female',
-      address: m.address || '',
-      pledgeAmount: defaultPledge,
-      currency: 'GHS',
-      collectionType: targetCollectionType,
-      isDbMember: true,
-      active: true,
-      createdAt: m.createdAt
-    });
-  }
-
   for (const l of customLogs) {
     if (!l.metadata || l.metadata.active === false) continue;
+    const entityId = (l.entityId || l.id || '').trim();
+    if (deletedIds.has(entityId) || deletedIds.has(l.id)) continue;
+
     const m = l.metadata;
     const fullName = (m.fullName || m.memberName || `${m.firstName || ''} ${m.lastName || ''}`).trim() || 'Sister';
     const cleanPhone = (m.phone || '').trim();
-    const key = (cleanPhone && cleanPhone !== '—') ? cleanPhone : fullName.toLowerCase();
+    const key = entityId || ((cleanPhone && cleanPhone !== '—') ? cleanPhone : fullName.toLowerCase());
 
     const existing = sistersMap.get(key);
     if (existing) {
-      if (m.pledgeAmount !== undefined && (normCol(m.collectionType) === targetColNorm || !existing.hasCustomRate)) {
-        existing.pledgeAmount = Number(m.pledgeAmount) || defaultPledge;
+      if (m.pledgeAmount !== undefined && Number(m.pledgeAmount) > 0 && (normCol(m.collectionType) === targetColNorm || !existing.hasCustomRate)) {
+        existing.pledgeAmount = Number(m.pledgeAmount);
         existing.hasCustomRate = true;
       }
       if (m.notes) existing.notes = m.notes;
     } else {
       sistersMap.set(key, {
-        id: l.entityId || l.id,
+        id: entityId,
+        womenMemberId: entityId,
+        partnerId: entityId,
         memberId: m.memberId || null,
         memberName: fullName,
         fullName: fullName,
@@ -343,10 +300,10 @@ async function getUnifiedWomenRoster(targetCollectionType = 'WOMEN_DUES') {
         email: m.email || '',
         gender: 'Female',
         address: m.address || '',
-        pledgeAmount: (m.pledgeAmount !== undefined) ? (Number(m.pledgeAmount) || defaultPledge) : defaultPledge,
+        pledgeAmount: (m.pledgeAmount !== undefined && Number(m.pledgeAmount) > 0) ? Number(m.pledgeAmount) : defaultPledge,
         currency: m.currency || 'GHS',
         collectionType: targetCollectionType,
-        isDbMember: false,
+        hasCustomRate: Boolean(m.pledgeAmount && Number(m.pledgeAmount) > 0),
         active: true,
         createdAt: l.createdAt
       });

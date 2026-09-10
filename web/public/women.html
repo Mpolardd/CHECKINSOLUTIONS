@@ -21,6 +21,34 @@
       padding: 0 20px;
     }
 
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 6px;
+    }
+    .form-ctrl {
+      width: 100%;
+      border: 1.5px solid var(--line);
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-family: Inter, system-ui, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .form-ctrl:focus {
+      border-color: var(--rose);
+      box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
+    }
+
     .login-card {
       background: var(--card-bg);
       border: 1px solid var(--line);
@@ -823,30 +851,30 @@
   <!-- 1. Women's Ministry Embedded Login Screen -->
   <div class="login-container" id="womenLoginScreen" style="display: none;">
     <div class="login-card">
-      <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--rose-subtle); color: var(--rose); display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 16px;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--rose-subtle); border: 2px solid var(--rose); color: var(--rose); display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.15);">
         <i class="fa-solid fa-venus"></i>
       </div>
-      <h2 style="font-family: Manrope, sans-serif; font-size: 22px; margin-bottom: 6px; color: var(--ink);">Women's Ministry Login</h2>
-      <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px;">Sign in with your administrator or leader credentials to manage women's ministry funds &amp; rosters.</p>
+      <h2 style="font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800; color: var(--ink); margin-bottom: 6px;">Women's Ministry Login</h2>
+      <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px; line-height: 1.5;">Enter authorized credentials to access dues, welfare collections &amp; member rosters.</p>
 
       <form onsubmit="handleWomenLoginSubmit(event)" autocomplete="off">
-        <div style="text-align: left; margin-bottom: 16px;">
-          <label for="womenLoginEmail" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--ink);">Email Address</label>
-          <input required type="email" id="womenLoginEmail" class="form-input" style="width: 100%; border: 1.5px solid var(--line); padding: 10px 14px; border-radius: 8px; font-size: 14px;" placeholder="Enter your email address" autocomplete="username" />
+        <div class="form-group" style="text-align: left; margin-bottom: 16px;">
+          <label for="womenLoginEmail" class="form-label" style="display: block; font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 6px;">Email Address</label>
+          <input required type="email" id="womenLoginEmail" class="form-ctrl" placeholder="Enter leader or admin email" autocomplete="username" />
         </div>
-        <div style="text-align: left; margin-bottom: 16px;">
-          <label for="womenLoginPassword" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--ink);">Password</label>
+        <div class="form-group" style="text-align: left; margin-bottom: 18px;">
+          <label for="womenLoginPassword" class="form-label" style="display: block; font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 6px;">Password</label>
           <div style="position: relative; display: flex; align-items: center;">
-            <input required type="password" id="womenLoginPassword" class="form-input" style="width: 100%; border: 1.5px solid var(--line); padding: 10px 42px 10px 14px; border-radius: 8px; font-size: 14px;" placeholder="Enter password" autocomplete="current-password" />
-            <button type="button" onclick="toggleWomenPasswordVisibility()" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; display: flex; align-items: center; justify-content: center; font-size: 15px;">
+            <input required type="password" id="womenLoginPassword" class="form-ctrl" style="padding-right: 42px;" placeholder="Enter password" autocomplete="current-password" />
+            <button type="button" onclick="toggleWomenPasswordVisibility()" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; display: flex; align-items: center; justify-content: center; font-size: 15px;" title="Toggle Password Visibility">
               <i class="fa-solid fa-eye" id="womenEyeIcon"></i>
             </button>
           </div>
         </div>
 
-        <div id="womenLoginErrorMsg" style="display: none; padding: 10px 14px; margin-bottom: 16px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 6px; font-size: 13px; font-weight: 600; text-align: left;"></div>
+        <div id="womenLoginErrorMsg" style="display: none; padding: 11px 14px; margin-bottom: 16px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 8px; font-size: 13px; font-weight: 600; text-align: left;"></div>
 
-        <button type="submit" class="btn-solid" id="btnWomenLoginSubmit" style="width: 100%; padding: 12px; font-size: 14px; justify-content: center;">
+        <button type="submit" id="btnWomenLoginSubmit" style="width: 100%; padding: 13px 20px; font-size: 14.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #e11d48, #be123c); color: #fff; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(225, 29, 72, 0.3); transition: all 0.2s ease;">
           <i class="fa-solid fa-right-to-bracket"></i> Sign In to Women Portal
         </button>
       </form>
