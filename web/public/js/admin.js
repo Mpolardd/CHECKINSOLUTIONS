@@ -7728,16 +7728,16 @@ closeCreateProgramModal();
       const formatPill = (code, catObj, activeBg, activeColor) => {
         if (!catObj) return '';
         if (catObj.currentStreak > 0) {
-          return `<span style="background: ${activeBg}; color: ${activeColor}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;" title="${code} Streak">
+          return `<span style="background: ${activeBg}; color: ${activeColor}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;" title="Continuous ${code} Streak (Lifetime)">
             ${code}: 🔥 ${catObj.currentStreak}
           </span>`;
         }
         if (catObj.totalAttended > 0 && catObj.consecutiveMissed > 0) {
-          return `<span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;" title="${code} Missed">
+          return `<span style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap;" title="Last ${catObj.consecutiveMissed} ${code} Services Missed">
             ${code}: ❌ ${catObj.consecutiveMissed}
           </span>`;
         }
-        return `<span style="background: #f1f5f9; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap;" title="No check-ins">
+        return `<span style="background: #f1f5f9; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap;" title="No ${code} check-ins recorded yet">
           ${code}: —
         </span>`;
       };

@@ -371,7 +371,7 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
 
     // All Historical Services categorized for Multi-Service Streaks
     prisma.service.findMany({
-      where: { active: true },
+      where: { active: true, startsAt: { lte: now } },
       include: { serviceType: true },
       orderBy: { serviceDate: 'asc' }
     }),
@@ -558,7 +558,7 @@ async function getMonthlyAttendanceAnalytics({ year, month, serviceTypeFilter = 
     let eventAttended = 0;
 
     atts.forEach(a => {
-      const cat = classifyServiceCategory(a.service?.serviceType?.name || '', a.service?.serviceType?.name || '');
+      const cat = classifyServiceCategory(a.service?.name || '', a.service?.serviceType?.name || '');
       if (cat === 'SUNDAY') sundayAttended++;
       else if (cat === 'WEDNESDAY') wednesdayAttended++;
       else if (cat === 'FRIDAY') fridayAttended++;
