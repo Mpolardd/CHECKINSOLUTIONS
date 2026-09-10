@@ -376,11 +376,13 @@
 
     /* Login Screen */
     .login-wrapper {
-      flex: 1;
+      position: fixed;
+      inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 40px 20px;
+      background: var(--light);
+      z-index: 5000;
     }
 
     .login-card {
@@ -525,9 +527,6 @@
         <span id="adminUserPill" style="font-size: 11px; font-weight: 800; background: rgba(0,0,0,0.2); padding: 5px 12px; border-radius: 20px; color: #fecdd3;">
           <i class="fas fa-user-shield"></i> <span id="userNameText">Admin</span>
         </span>
-        <a href="/admin.html" class="btn-nav" title="Back to main dashboard">
-          <i class="fas fa-arrow-left"></i> Main Admin
-        </a>
         <button class="btn-nav btn-logout" onclick="handleWomenLogout()">
           <i class="fas fa-sign-out-alt"></i> Logout
         </button>
@@ -616,13 +615,13 @@
       </div>
 
       <div class="filter-group">
-        <button class="btn-main btn-outline" id="btnOpenHistoryModal">
+        <button class="btn-main btn-outline" onclick="openModal('historyModal'); loadPaymentHistory();">
           <i class="fas fa-receipt"></i> Payment Logs
         </button>
-        <button class="btn-main btn-outline" id="btnExportExcel" style="color: #16a34a; border-color: #bbf7d0;">
+        <button class="btn-main btn-outline" style="color: #16a34a; border-color: #bbf7d0;" onclick="exportToExcel()">
           <i class="fas fa-file-excel"></i> Export Excel
         </button>
-        <button class="btn-main btn-rose" id="btnOpenAddSisterModal">
+        <button class="btn-main btn-rose" onclick="openModal('addSisterModal')">
           <i class="fas fa-user-plus"></i> Add New Sister
         </button>
       </div>
@@ -1021,41 +1020,53 @@
       document.getElementById('searchInput').addEventListener('input', e => { state.filterText = e.target.value; renderMatrixTable(); });
       document.getElementById('statusFilter').addEventListener('change', e => { state.filterStatus = e.target.value; renderMatrixTable(); });
       document.getElementById('yearSelector').addEventListener('change', e => { state.selectedYear = Number(e.target.value); loadMatrix(); });
-      document.getElementById('btnOpenAddSisterModal').addEventListener('click', () => openModal('addSisterModal'));
-      document.getElementById('btnOpenHistoryModal').addEventListener('click', () => { openModal('historyModal'); loadPaymentHistory(); });
       document.getElementById('quickPayForm').addEventListener('submit', handlePaymentSubmit);
-      document.getElementById('btnExportExcel').addEventListener('click', exportToExcel);
       document.getElementById('existingFemaleSelect').addEventListener('change', e => {
         const opt = e.target.options[e.target.selectedIndex];
-        if (opt.value) { document.getElementById('newSisterName').value = opt.dataset.name; document.getElementById('newSisterPhone').value = opt.dataset.phone; }
+        if (opt.value) {
+          document.getElementById('newSisterName').value = opt.dataset.name;
+          document.getElementById('newSisterPhone').value = opt.dataset.phone;
+        }
       });
-
       document.getElementById('addSisterForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('btnSubmitNewSister'); btn.disabled = true;
+        const btn = document.getElementById('btnSubmitNewSister');
+        btn.disabled = true;
         try {
           const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
           await fetch(`${API_BASE}/women/members`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ fullName: document.getElementById('newSisterName').value, phone: document.getElementById('newSisterPhone').value, pledgeAmount: parseFloat(document.getElementById('newSisterRate').value) })
+            body: JSON.stringify({
+              fullName: document.getElementById('newSisterName').value,
+              phone: document.getElementById('newSisterPhone').value,
+              pledgeAmount: parseFloat(document.getElementById('newSisterRate').value)
+            })
           });
-          showToast('Sister registered!', 'success'); closeModal('addSisterModal'); loadInitialData();
+          showToast('Sister registered!', 'success');
+          closeModal('addSisterModal');
+          loadInitialData();
         } catch (e) { showToast('Registration failed.', 'error'); }
         btn.disabled = false;
       });
-
       document.getElementById('newFundForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('btnSubmitNewFund'); btn.disabled = true;
+        const btn = document.getElementById('btnSubmitNewFund');
+        btn.disabled = true;
         try {
           const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
           await fetch(`${API_BASE}/women/collection-types`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ name: document.getElementById('newFundName').value, defaultAmount: parseFloat(document.getElementById('newFundRate').value), description: document.getElementById('newFundDesc').value })
+            body: JSON.stringify({
+              name: document.getElementById('newFundName').value,
+              defaultAmount: parseFloat(document.getElementById('newFundRate').value),
+              description: document.getElementById('newFundDesc').value
+            })
           });
-          showToast('Fund created!', 'success'); closeModal('newFundModal'); loadCollectionFunds();
+          showToast('Fund created!', 'success');
+          closeModal('newFundModal');
+          loadCollectionFunds();
         } catch (e) { showToast('Creation failed.', 'error'); }
         btn.disabled = false;
       });
