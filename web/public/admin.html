@@ -16,15 +16,16 @@
     // Synchronous Auth Guard - prevents visual flash of protected content
     (function() {
       const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token') || sessionStorage.getItem('sfmi_sub_session');
-      if (!token) {
-        // No session found, ensure we stay on the login screen
-        document.documentElement.style.visibility = 'hidden';
-        window.addEventListener('DOMContentLoaded', () => {
+      // Keep everything hidden until checkAuth finishes or decides to show login
+      document.documentElement.style.visibility = 'hidden';
+
+      window.addEventListener('DOMContentLoaded', () => {
+        if (!token) {
           document.getElementById('loginScreen').style.display = 'block';
           document.getElementById('dashboardContent').style.display = 'none';
           document.documentElement.style.visibility = '';
-        });
-      }
+        }
+      });
     })();
   </script>
 

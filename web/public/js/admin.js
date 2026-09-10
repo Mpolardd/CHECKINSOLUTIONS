@@ -624,17 +624,10 @@
         return;
       }
 
-      // 2. If offline Super Admin or Sub-Admin session token, accept immediately
-      if (token && (token.startsWith('sfmi_super_admin_session_') || token.startsWith('sfmi_sub_admin_session_'))) {
-        resetInactivityTimer();
-        showDashboard();
-        return;
-      }
-
       // 3. Verify active token with backend API before rendering dashboard
-      if (token) {
+      if (token || subToken) {
         try {
-          let currentToken = token;
+          const currentToken = token || subToken;
           let res = await fetch(`${API_BASE}/auth/verify`, {
             headers: { 'Authorization': `Bearer ${currentToken}` }
           });
@@ -676,28 +669,28 @@
             showDashboard();
             return;
           } else {
-            // Token expired or invalid
+            // Token expired or invalid - STRICT ENFORCEMENT
             purgeAuthSession();
             showLogin();
             return;
           }
         } catch (err) {
-          // If offline / network error, allow existing local session
-          resetInactivityTimer();
-          showDashboard();
+          console.error('Auth verification failed due to network error:', err);
+          // Only allow dashboard if we have a locally verified user identity, otherwise force login for security
+          if (localStorage.getItem('sfmi_current_user')) {
+             showDashboard();
+          } else {
+             showLogin();
+          }
           return;
         }
-      }
-
-      if (subToken) {
-        resetInactivityTimer();
-        showDashboard();
       }
     }
 
     function showLogin() {
       document.getElementById('loginScreen').style.display = 'block';
       document.getElementById('dashboardContent').style.display = 'none';
+      document.documentElement.style.visibility = ''; // Ensure visible if showing login
       const wrap = document.getElementById('adminLogoutWrap');
       if (wrap) wrap.style.display = 'none';
       const btn = document.getElementById('btnLogout');
@@ -719,6 +712,8 @@
 
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboardContent').style.display = 'block';
+      document.documentElement.style.visibility = ''; // Make page visible after verification
+
       const wrap = document.getElementById('adminLogoutWrap');
       if (wrap) wrap.style.display = 'flex';
       const btn = document.getElementById('btnLogout');
@@ -6311,7 +6306,7 @@ closeCreateProgramModal();
         if (titleEl) titleEl.innerText = title || 'Confirm Action';
         if (textEl) {
           if (typeof text === 'string' && text.includes('<') && text.includes('>')) {
-            textEl.textContent = text;
+            textEl.innerHTML = text;
           } else {
             textEl.innerText = text || '';
           }

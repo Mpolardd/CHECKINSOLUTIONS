@@ -11,6 +11,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+  <script>
+    // Synchronous Auth Guard
+    (function() {
+      const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      document.documentElement.style.visibility = 'hidden';
+      window.addEventListener('DOMContentLoaded', () => {
+        if (!token || token.startsWith('sfmi_fin_offline_session_')) {
+          document.getElementById('partnerLoginScreen').style.display = 'block';
+          document.getElementById('partnerDashboardContent').style.display = 'none';
+          document.documentElement.style.visibility = '';
+        }
+      });
+    })();
+  </script>
+
   <style>
     :root {
       --ink: #0d1e16;
@@ -1013,20 +1028,12 @@
     async function checkPartnerAuth() {
       const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
 
-      if (!token) {
+      if (!token || token.startsWith('sfmi_fin_offline_session_')) {
         purgePartnerAuthSession();
         showPartnerLogin();
+        document.documentElement.style.visibility = ''; // Make visible after decision
         return;
       }
-
-      // Invalid or offline session tokens must be purged
-      if (token.startsWith('sfmi_fin_offline_session_')) {
-        purgePartnerAuthSession();
-        showPartnerLogin();
-        return;
-      }
-
-      showPartnerDashboard();
 
       try {
         const res = await fetch(`${API_BASE}/auth/verify`, {
@@ -1036,12 +1043,35 @@
           const data = await res.json();
           sessionStorage.setItem('sfmi_fin_token', token);
           if (data.user) sessionStorage.setItem('sfmi_fin_user', JSON.stringify(data.user));
+
+          showPartnerDashboard();
+          document.documentElement.style.visibility = '';
         } else if (res.status === 401 || res.status === 403) {
           purgePartnerAuthSession();
           showPartnerLogin();
+          document.documentElement.style.visibility = '';
           showToast('Session expired. Please sign in again.', 'warning', 'Session Expired');
+        } else {
+          // If other non-ok status, check local user cache
+          if (sessionStorage.getItem('sfmi_fin_user')) {
+             showPartnerDashboard();
+             document.documentElement.style.visibility = '';
+          } else {
+             showPartnerLogin();
+             document.documentElement.style.visibility = '';
+          }
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error('Partner auth check failed:', err);
+        // Fail-closed policy for security
+        if (sessionStorage.getItem('sfmi_fin_user')) {
+          showPartnerDashboard();
+          document.documentElement.style.visibility = '';
+        } else {
+          showPartnerLogin();
+          document.documentElement.style.visibility = '';
+        }
+      }
     }
 
     function showPartnerLogin() {
@@ -1652,7 +1682,14 @@
     let _confirmCallback = null;
     function showConfirmModal(title, text, callback, iconClass = 'fas fa-sign-out-alt', btnText = 'Log Out', btnColor = '#c5221f') {
       document.getElementById('confirmModalTitle').innerText = title;
-      document.getElementById('confirmModalText').innerText = text;
+      const textEl = document.getElementById('confirmModalText');
+      if (textEl) {
+        if (typeof text === 'string' && text.includes('<') && text.includes('>')) {
+          textEl.innerHTML = text;
+        } else {
+          textEl.innerText = text || '';
+        }
+      }
       const okBtn = document.getElementById('confirmModalOkBtn');
       if (okBtn) {
         okBtn.innerText = btnText;

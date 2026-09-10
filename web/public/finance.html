@@ -16,14 +16,16 @@
     // Synchronous Auth Guard - Treasury Portal
     (function() {
       const token = sessionStorage.getItem('sfmi_fin_token') || localStorage.getItem('sfmi_fin_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
-      if (!token || token.startsWith('sfmi_fin_offline_session_')) {
-        document.documentElement.style.visibility = 'hidden';
-        window.addEventListener('DOMContentLoaded', () => {
+      // Keep everything hidden until checkFinAuth finishes or decides to show login
+      document.documentElement.style.visibility = 'hidden';
+
+      window.addEventListener('DOMContentLoaded', () => {
+        if (!token || token.startsWith('sfmi_fin_offline_session_')) {
           document.getElementById('finLoginScreen').style.display = 'block';
           document.getElementById('finDashboardContent').style.display = 'none';
           document.documentElement.style.visibility = '';
-        });
-      }
+        }
+      });
     })();
   </script>
 

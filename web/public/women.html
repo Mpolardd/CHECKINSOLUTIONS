@@ -321,17 +321,19 @@
   </style>
 
   <script>
-    // Synchronous Auth Guard
+    // Synchronous Auth Guard - prevents visual flash of protected content
     (function() {
       const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
-      if (!token) {
-        document.documentElement.style.visibility = 'hidden';
-        window.addEventListener('DOMContentLoaded', () => {
+      // Keep everything hidden until checkAuth finishes or decides to show login
+      document.documentElement.style.visibility = 'hidden';
+
+      window.addEventListener('DOMContentLoaded', () => {
+        if (!token) {
           document.getElementById('womenLoginScreen').style.display = 'flex';
           document.getElementById('womenDashboardContent').style.display = 'none';
           document.documentElement.style.visibility = '';
-        });
-      }
+        }
+      });
     })();
   </script>
 </head>
@@ -615,17 +617,39 @@
 
     async function checkAuth() {
       const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
-      if (!token) { showWomenLogin(); return; }
-      showWomenDashboard();
+      if (!token) {
+        showWomenLogin();
+        document.documentElement.style.visibility = '';
+        return;
+      }
+
       try {
         const res = await fetch(`${API_BASE}/auth/verify`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
-          if (data.user?.role === 'FINANCE') { handleWomenLogout(); return; }
+          if (data.user?.role === 'FINANCE') {
+            handleWomenLogout();
+            return;
+          }
           document.getElementById('userNameText').innerText = data.user?.name || 'Admin';
+          showWomenDashboard();
           await loadInitialData();
-        } else { handleWomenLogout(); }
-      } catch (err) { await loadInitialData(); }
+          document.documentElement.style.visibility = '';
+        } else {
+          handleWomenLogout();
+        }
+      } catch (err) {
+        console.error('Auth check error:', err);
+        // On network error, check if we have enough local info to show dashboard, else fallback to login
+        if (localStorage.getItem('sfmi_current_user')) {
+          showWomenDashboard();
+          await loadInitialData();
+          document.documentElement.style.visibility = '';
+        } else {
+          showWomenLogin();
+          document.documentElement.style.visibility = '';
+        }
+      }
     }
 
     function showWomenLogin() {

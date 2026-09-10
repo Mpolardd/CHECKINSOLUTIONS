@@ -113,14 +113,11 @@
       if (!token || token.startsWith('sfmi_fin_offline_session_')) {
         purgeFinAuthSession();
         showFinLogin();
+        document.documentElement.style.visibility = ''; // Make visible if showing login
         return;
       }
 
-      // 3. Token exists - display dashboard immediately for UX
-      resetInactivityTimer();
-      showFinDashboard();
-
-      // 4. Verify token with backend API
+      // 3. Verify token with backend API before showing dashboard
       try {
         const res = await fetch(`${API_BASE}/auth/verify`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -133,25 +130,42 @@
           if (!['FINANCE', 'SUPER_ADMIN', 'ADMIN'].includes(role)) {
             purgeFinAuthSession();
             showFinLogin();
+            document.documentElement.style.visibility = '';
             showToast('Access Denied: The Treasury Portal (/finance) is strictly reserved for Treasury Officers and Administrators.', 'error', 'Access Denied');
             return;
           }
 
           sessionStorage.setItem('sfmi_fin_token', token);
           sessionStorage.setItem('sfmi_fin_user', JSON.stringify(data.user));
+
+          resetInactivityTimer();
+          showFinDashboard();
+          document.documentElement.style.visibility = ''; // Finally make visible
         } else if (res.status === 401 || res.status === 403) {
           const freshToken = await getValidFinanceToken();
           if (freshToken && !freshToken.startsWith('sfmi_fin_offline_session_')) {
             sessionStorage.setItem('sfmi_fin_token', freshToken);
             localStorage.setItem('sfmi_fin_token', freshToken);
+            // Retry check with fresh token
+            checkFinAuth();
           } else {
             purgeFinAuthSession();
             showFinLogin();
+            document.documentElement.style.visibility = '';
             showToast('Your session has expired. Please log in again.', 'warning', 'Session Expired');
           }
         }
       } catch (err) {
         console.warn('Backend session verification unavailable, using local active session:', err);
+        // Fail-closed policy: if we can't verify and have no local user cache, force login
+        if (sessionStorage.getItem('sfmi_fin_user') || localStorage.getItem('sfmi_fin_user')) {
+           resetInactivityTimer();
+           showFinDashboard();
+           document.documentElement.style.visibility = '';
+        } else {
+           showFinLogin();
+           document.documentElement.style.visibility = '';
+        }
       }
     }
 
@@ -272,7 +286,14 @@
     let _confirmCallback = null;
     function showConfirmModal(title, text, callback, iconClass = 'fas fa-sign-out-alt', btnText = 'Log Out', btnColor = '#c5221f') {
       document.getElementById('confirmModalTitle').innerText = title;
-      document.getElementById('confirmModalText').innerText = text;
+      const textEl = document.getElementById('confirmModalText');
+      if (textEl) {
+        if (typeof text === 'string' && text.includes('<') && text.includes('>')) {
+          textEl.innerHTML = text;
+        } else {
+          textEl.innerText = text || '';
+        }
+      }
       const okBtn = document.getElementById('confirmModalOkBtn');
       if (okBtn) {
         okBtn.innerText = btnText;
