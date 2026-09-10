@@ -4,1215 +4,679 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Women's Ministry Portal — Solutions Faith Ministry</title>
-  <link rel="icon" type="image/png" href="/logo.png">
-  <link rel="shortcut icon" type="image/png" href="/logo.png">
+  <title>Women's Ministry Portal | SOLUTIONS FAITH MINISTRY INTERNATIONAL</title>
+  <link rel="icon" type="image/jpeg" href="/church-logo.jpg">
+  <link rel="shortcut icon" type="image/jpeg" href="/church-logo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
-    .login-container {
-      max-width: 440px;
-      width: 100%;
-      margin: 60px auto;
-      padding: 0 20px;
-    }
-
-    
-    .form-group {
-      margin-bottom: 16px;
-    }
-    .form-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 6px;
-    }
-    .form-ctrl {
-      width: 100%;
-      border: 1.5px solid var(--line);
-      border-radius: 8px;
-      padding: 11px 14px;
-      font-size: 14px;
-      font-family: Inter, system-ui, sans-serif;
-      color: var(--ink);
-      background: #ffffff;
-      outline: none;
-      transition: all 0.2s ease;
-    }
-    .form-ctrl:focus {
-      border-color: var(--rose);
-      box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
-    }
-
-    .login-card {
-      background: var(--card-bg);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 38px 32px;
-      box-shadow: var(--shadow-lg);
-      text-align: center;
-    }
-
     :root {
-      --ink: #0f172a;
-      --paper: #f8fafc;
-      --card-bg: #ffffff;
+      --ink: #0d1a14;
+      --muted: #5e6d65;
+      --light: #f4f6f5;
+      --line: #d8e2dc;
+      --white: #ffffff;
+      --emerald: #14532d;
+      --emerald-dark: #072216;
       --rose: #e11d48;
       --rose-dark: #9f1239;
-      --rose-soft: rgba(225, 29, 72, 0.1);
-      --rose-subtle: #fff1f2;
-      --emerald-dark: #064e3b;
-      --emerald: #10b981;
-      --emerald-soft: #ecfdf5;
-      --amber: #f59e0b;
-      --amber-soft: #fffbeb;
-      --purple: #8b5cf6;
-      --purple-soft: #f5f3ff;
-      --line: #e2e8f0;
-      --muted: #64748b;
-      --radius: 12px;
-      --shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
-      --shadow-lg: 0 12px 30px -4px rgba(15, 23, 42, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+      --accent: #c89b55;
+      --accent-hover: #b38642;
+      --max: 1300px;
+      --radius: 8px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    
+
     body {
-      background: var(--paper);
+      font-family: "DM Sans", sans-serif;
       color: var(--ink);
-      font-family: Inter, system-ui, -apple-system, sans-serif;
+      background: var(--light);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      -webkit-font-smoothing: antialiased;
     }
 
-    /* Top Navigation */
+    /* Top Nav */
     .women-nav {
-      background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 50%, #881337 100%);
-      border-bottom: 2px solid var(--rose);
-      padding: 14px 24px;
+      background: var(--emerald-dark);
       color: white;
+      padding: 12px 24px;
+      border-bottom: 2px solid var(--rose);
       position: sticky;
       top: 0;
-      z-index: 100;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
     }
 
     .women-nav-inner {
-      max-width: 1400px;
+      max-width: var(--max);
       margin: 0 auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 14px;
+      gap: 16px;
     }
 
-    .brand-wrap {
+    .brand-women {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       text-decoration: none;
       color: white;
     }
 
-    .brand-logo-wrap {
-      position: relative;
-    }
-
-    .brand-logo-wrap img {
-      width: 44px;
-      height: 44px;
+    .brand-women img {
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
-      border: 2px solid var(--rose);
+      border: 1.5px solid var(--rose);
       object-fit: cover;
       background: white;
-      display: block;
     }
 
     .brand-title {
-      font-family: Cinzel, serif;
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: #fff;
+      font-family: Manrope, sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
     }
 
-    .brand-subtitle {
-      font-size: 0.78rem;
+    .brand-sub {
+      font-size: 10px;
       color: #fecdd3;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
     }
 
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .btn-nav {
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.1);
       color: white;
       border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-size: 0.85rem;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12.5px;
       font-weight: 600;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s ease;
-      cursor: pointer;
+      transition: all 0.2s;
     }
 
     .btn-nav:hover {
-      background: rgba(255, 255, 255, 0.22);
-      color: white;
-      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.18);
     }
 
-    .btn-nav-primary {
+    .btn-logout {
       background: var(--rose);
-      border-color: var(--rose);
+      border-color: var(--rose-dark);
     }
 
-    .btn-nav-primary:hover {
+    .btn-logout:hover {
       background: var(--rose-dark);
     }
 
-    /* Main Container */
-    .main-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 24px 20px 60px;
+    /* Main Content */
+    .women-container {
+      max-width: var(--max);
       width: 100%;
+      margin: 24px auto;
+      padding: 0 20px;
       flex: 1;
     }
 
-    /* Fund Tabs Switcher */
-    .fund-switcher-container {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 8px;
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      margin-bottom: 20px;
+    /* Fund Tabs */
+    .fund-tabs-bar {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .fund-tabs {
-      display: flex;
-      align-items: center;
       gap: 8px;
-      flex-wrap: wrap;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
     }
 
     .fund-tab-btn {
-      background: transparent;
-      border: 1px solid transparent;
       padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 600;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font-family: Manrope, sans-serif;
+      font-size: 13.5px;
+      font-weight: 700;
       color: var(--muted);
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 8px;
-      transition: all 0.18s ease;
+      white-space: nowrap;
+      transition: all 0.2s;
     }
 
     .fund-tab-btn:hover {
-      background: var(--paper);
+      border-color: var(--rose);
       color: var(--ink);
     }
 
     .fund-tab-btn.active {
-      background: var(--rose-subtle);
-      color: var(--rose-dark);
-      border-color: rgba(225, 29, 72, 0.25);
-      font-weight: 700;
-    }
-
-    .fund-rate-badge {
-      font-size: 0.75rem;
-      background: rgba(225, 29, 72, 0.12);
-      color: var(--rose);
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-weight: 700;
-    }
-
-    .fund-tab-btn.active .fund-rate-badge {
       background: var(--rose);
       color: white;
+      border-color: var(--rose);
     }
 
-    /* Stats Grid */
-    .stats-grid {
+    .fund-badge {
+      font-size: 11px;
+      background: rgba(0,0,0,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Metric Grid */
+    .metrics-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
       margin-bottom: 24px;
     }
 
-    .stat-card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 18px 20px;
+    .metric-box {
+      background: white;
       border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      transition: transform 0.2s, box-shadow 0.2s;
+      padding: 20px;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
     }
 
-    .stat-card:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .stat-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      flex-shrink: 0;
-    }
-
-    .stat-icon.rose { background: var(--rose-subtle); color: var(--rose); }
-    .stat-icon.emerald { background: var(--emerald-soft); color: var(--emerald); }
-    .stat-icon.purple { background: var(--purple-soft); color: var(--purple); }
-    .stat-icon.amber { background: var(--amber-soft); color: var(--amber); }
-
-    .stat-info {
-      flex: 1;
-    }
-
-    .stat-label {
-      font-size: 0.8rem;
-      color: var(--muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-
-    .stat-value {
-      font-size: 1.45rem;
-      font-weight: 800;
-      color: var(--ink);
+    .metric-num {
       font-family: Manrope, sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--rose);
+      line-height: 1.1;
     }
 
-    /* Controls Header */
+    .metric-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 6px;
+    }
+
+    /* Controls Bar */
     .controls-card {
-      background: var(--card-bg);
+      background: white;
+      border: 1px solid var(--line);
       border-radius: var(--radius);
       padding: 16px 20px;
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
       margin-bottom: 20px;
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 14px;
-    }
-
-    .search-filter-group {
-      display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 12px;
-      flex-wrap: wrap;
-      flex: 1;
-      min-width: 320px;
     }
 
-    .search-box {
-      position: relative;
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .search-box i {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .search-box input {
-      width: 100%;
-      padding: 9px 14px 9px 38px;
-      border-radius: 8px;
-      border: 1px solid var(--line);
-      font-size: 0.88rem;
-      background: var(--paper);
-      outline: none;
-      transition: all 0.2s;
-    }
-
-    .search-box input:focus {
-      border-color: var(--rose);
-      background: #fff;
-      box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
-    }
-
-    .custom-select {
-      padding: 9px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--line);
-      background: var(--paper);
-      font-size: 0.88rem;
-      font-weight: 500;
-      color: var(--ink);
-      cursor: pointer;
-      outline: none;
-    }
-
-    .custom-select:focus {
-      border-color: var(--rose);
-    }
-
-    .btn-action-group {
+    .filter-group {
       display: flex;
-      align-items: center;
       gap: 10px;
+      align-items: center;
       flex-wrap: wrap;
     }
 
-    .btn-solid {
-      background: var(--rose);
+    .form-ctrl {
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font-size: 13.5px;
+      font-family: inherit;
+      outline: none;
+      background: #fafbfa;
+    }
+
+    .form-ctrl:focus {
+      border-color: var(--rose);
+      background: white;
+    }
+
+    .btn-main {
+      padding: 10px 18px;
+      background: var(--ink);
       color: white;
+      font-weight: 700;
+      font-size: 13.5px;
       border: none;
-      padding: 9px 16px;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      font-weight: 600;
+      border-radius: 6px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 8px;
       transition: all 0.2s;
-      box-shadow: 0 2px 8px rgba(225, 29, 72, 0.25);
     }
 
-    .btn-solid:hover {
-      background: var(--rose-dark);
-      transform: translateY(-1px);
-    }
+    .btn-main:hover { background: #233a2d; }
+
+    .btn-rose { background: var(--rose); }
+    .btn-rose:hover { background: var(--rose-dark); }
 
     .btn-outline {
       background: white;
+      border: 1px solid var(--line);
       color: var(--ink);
-      border: 1px solid var(--line);
-      padding: 9px 14px;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s;
     }
+    .btn-outline:hover { border-color: var(--rose); }
 
-    .btn-outline:hover {
-      background: var(--paper);
-      border-color: #cbd5e1;
-    }
-
-    /* Matrix Table */
+    /* Table */
     .table-container {
-      background: var(--card-bg);
-      border-radius: var(--radius);
+      background: white;
       border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      overflow-x: auto;
-      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
     }
 
-    .matrix-table {
+    .responsive-table {
+      overflow-x: auto;
+    }
+
+    table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.85rem;
+      font-size: 13.5px;
       text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 12px 14px;
+      border-bottom: 2px solid var(--line);
       white-space: nowrap;
     }
 
-    .matrix-table th {
-      background: #f1f5f9;
-      color: var(--muted);
-      font-weight: 700;
-      text-transform: uppercase;
-      font-size: 0.72rem;
-      letter-spacing: 0.5px;
-      padding: 12px 10px;
-      border-bottom: 2px solid var(--line);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .matrix-table th.th-member {
-      min-width: 240px;
-      position: sticky;
-      left: 0;
-      background: #f1f5f9;
-      z-index: 20;
-    }
-
-    .matrix-table td {
-      padding: 10px 8px;
+    td {
+      padding: 12px 14px;
       border-bottom: 1px solid var(--line);
-      vertical-align: middle;
+      white-space: nowrap;
     }
 
-    .matrix-table tr:hover td {
-      background-color: #fdf2f4;
-    }
+    tr:hover td { background: #fff8f9; }
 
-    .matrix-table td.td-member {
+    .sticky-col {
       position: sticky;
       left: 0;
-      background: var(--card-bg);
-      z-index: 5;
+      background: white;
+      z-index: 10;
       border-right: 1px solid var(--line);
     }
 
-    .matrix-table tr:hover td.td-member {
-      background-color: #fdf2f4;
-    }
+    th.sticky-col { z-index: 20; background: #f8fafc; }
 
-    .member-info-box {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .member-avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: var(--rose-subtle);
-      color: var(--rose);
-      font-weight: 700;
-      font-size: 0.82rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .member-details {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .member-name {
-      font-weight: 700;
-      color: var(--ink);
-      font-size: 0.88rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .member-meta {
-      font-size: 0.74rem;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .whatsapp-link {
-      color: #16a34a;
-      text-decoration: none;
-      font-size: 0.76rem;
-    }
-
-    .whatsapp-link:hover {
-      text-decoration: underline;
-    }
-
-    /* Month Status Pills */
-    .month-cell {
-      text-align: center;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .month-pill {
+    /* Status Pills */
+    .status-pill {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 58px;
-      padding: 5px 6px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      transition: all 0.15s ease;
+      min-width: 60px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.1s;
     }
 
-    .month-pill.paid {
-      background: var(--emerald-soft);
-      color: #047857;
-      border: 1px solid #a7f3d0;
+    .status-pill:active { transform: scale(0.95); }
+
+    .status-paid { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .status-partial { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+    .status-unpaid { background: #f8fafc; color: #94a3b8; border: 1px dashed #cbd5e1; }
+
+    /* Login Screen */
+    .login-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
     }
 
-    .month-pill.paid:hover {
-      background: #d1fae5;
-      transform: scale(1.05);
+    .login-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      text-align: center;
     }
 
-    .month-pill.partial {
-      background: var(--amber-soft);
-      color: #b45309;
-      border: 1px solid #fde68a;
-    }
-
-    .month-pill.partial:hover {
-      background: #fef3c7;
-      transform: scale(1.05);
-    }
-
-    .month-pill.unpaid {
-      background: #f8fafc;
-      color: #94a3b8;
-      border: 1px dashed #cbd5e1;
-    }
-
-    .month-pill.unpaid:hover {
+    .login-icon {
+      width: 64px;
+      height: 64px;
       background: var(--rose-subtle);
       color: var(--rose);
-      border-color: #fecdd3;
-      transform: scale(1.05);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 20px;
+      border: 2px solid var(--rose);
     }
 
-    .total-paid-badge {
-      font-family: Manrope, sans-serif;
-      font-weight: 800;
-      font-size: 0.88rem;
-      color: #0f172a;
-      background: #f1f5f9;
-      padding: 4px 10px;
-      border-radius: 6px;
-      display: inline-block;
-    }
-
-    /* Modal Backdrop & Body */
+    /* Modal */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.6);
+      background: rgba(13, 26, 20, 0.6);
       backdrop-filter: blur(4px);
-      z-index: 999;
+      z-index: 2000;
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 20px;
     }
 
-    .modal-overlay.active {
-      display: flex;
-    }
+    .modal-overlay.active { display: flex; }
 
     .modal-card {
-      background: var(--card-bg);
-      border-radius: 16px;
+      background: white;
+      border-radius: 12px;
       width: 100%;
-      max-width: 520px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      border: 1px solid var(--line);
-      animation: modalPop 0.2s ease-out;
-    }
-
-    @keyframes modalPop {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
+      max-width: 500px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
     }
 
     .modal-header {
       padding: 20px 24px;
       border-bottom: 1px solid var(--line);
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       background: #fafafa;
-      border-radius: 16px 16px 0 0;
     }
 
-    .modal-header h3 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--ink);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .modal-close {
-      background: transparent;
-      border: none;
-      color: var(--muted);
-      font-size: 1.25rem;
-      cursor: pointer;
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .modal-close:hover {
-      background: #e2e8f0;
-      color: var(--ink);
-    }
-
-    .modal-body {
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .form-group label {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #334155;
-    }
-
-    .form-control {
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--line);
-      font-size: 0.9rem;
-      outline: none;
-      transition: all 0.2s;
-      background: #fff;
-    }
-
-    .form-control:focus {
-      border-color: var(--rose);
-      box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
-    }
+    .modal-body { padding: 24px; }
 
     .modal-footer {
       padding: 16px 24px;
+      background: #fafafa;
       border-top: 1px solid var(--line);
       display: flex;
-      align-items: center;
       justify-content: flex-end;
       gap: 12px;
-      background: #fafafa;
-      border-radius: 0 0 16px 16px;
     }
 
-    /* Quick Month Selector in Modal */
-    .months-badge-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin-top: 4px;
-    }
+    /* Mobile Cards */
+    .mobile-cards { display: none; }
 
-    .month-select-pill {
-      border: 1px solid var(--line);
-      background: var(--paper);
-      padding: 8px 4px;
-      text-align: center;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.15s;
-    }
-
-    .month-select-pill.selected {
-      background: var(--rose);
-      color: white;
-      border-color: var(--rose);
-    }
-
-    /* Toast Notification */
-    .toast-container {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 10000;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .toast {
-      background: #0f172a;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 10px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-      font-size: 0.88rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      animation: slideIn 0.3s ease-out;
-      border-left: 4px solid var(--rose);
-    }
-
-    .toast.success { border-left-color: var(--emerald); }
-    .toast.error { border-left-color: #ef4444; }
-
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    /* Print Receipt Layout */
-    @media print {
-      body * { visibility: hidden; }
-      #printableReceipt, #printableReceipt * { visibility: visible; }
-      #printableReceipt {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        padding: 20px;
+    @media (max-width: 768px) {
+      .responsive-table { display: none; }
+      .mobile-cards { display: flex; flex-direction: column; gap: 12px; }
+      .mob-card {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 16px;
+      }
+      .mob-card-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .mob-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
       }
     }
+
+    /* App Footer */
+    .app-footer {
+      margin-top: auto;
+      padding: 24px 0;
+      text-align: center;
+      border-top: 1px solid var(--line);
+      font-size: 12.5px;
+      color: var(--muted);
+    }
   </style>
+
+  <script>
+    // Synchronous Auth Guard - prevents visual flash of protected content
+    (function() {
+      const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token') || sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      if (!token) {
+        document.documentElement.style.visibility = 'hidden';
+        window.addEventListener('DOMContentLoaded', () => {
+          document.getElementById('womenLoginScreen').style.display = 'block';
+          document.getElementById('womenDashboardContent').style.display = 'none';
+          document.documentElement.style.visibility = '';
+        });
+      }
+    })();
+  </script>
 </head>
 
 <body>
 
-  <!-- Navigation -->
+  <!-- Top Bar -->
   <header class="women-nav">
     <div class="women-nav-inner">
-      <div class="brand-wrap">
-        <div class="brand-logo-wrap">
-          <img src="/logo.png" alt="Church Logo" onerror="this.src='/favicon.ico'" />
-        </div>
+      <a href="/women.html" class="brand-women">
+        <img id="navLogo" src="/church-logo.jpg" alt="Logo">
         <div>
-          <h1 class="brand-title">Women's Ministry Portal</h1>
-          <div class="brand-subtitle">
-            <i class="fa-solid fa-gem" style="color: #fda4af;"></i>
-            Solutions Faith Ministry • Dues, Welfare &amp; Contributions
-          </div>
+          <div class="brand-title">Women's Ministry Portal</div>
+          <div class="brand-sub">SOLUTIONS FAITH MINISTRY INTERNATIONAL</div>
         </div>
-      </div>
-
+      </a>
       <div class="nav-actions" id="womenNavActions" style="display: none;">
-        <span id="adminUserPill" style="font-size: 0.82rem; color: #fecdd3; font-weight: 600; background: rgba(0,0,0,0.25); padding: 6px 12px; border-radius: 20px;">
-          <i class="fa-solid fa-user-shield"></i> Admin
+        <span id="adminUserPill" style="font-size: 11px; font-weight: 800; background: rgba(0,0,0,0.2); padding: 5px 12px; border-radius: 20px; color: #fecdd3;">
+          <i class="fas fa-user-shield"></i> <span id="userNameText">Admin</span>
         </span>
-        <a href="/admin.html" class="btn-nav">
-          <i class="fa-solid fa-arrow-left"></i> Main Admin Portal
+        <a href="/admin.html" class="btn-nav" title="Back to main dashboard">
+          <i class="fas fa-arrow-left"></i> Main Admin
         </a>
-        <button id="btnLogout" class="btn-nav" onclick="handleWomenLogout()" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4);">
-          <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+        <button class="btn-nav btn-logout" onclick="handleWomenLogout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
         </button>
       </div>
     </div>
   </header>
 
-  <!-- 1. Women's Ministry Embedded Login Screen -->
-  <div class="login-container" id="womenLoginScreen" style="display: none;">
+  <!-- Login Screen -->
+  <div class="login-wrapper" id="womenLoginScreen" style="display: none;">
     <div class="login-card">
-      <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--rose-subtle); border: 2px solid var(--rose); color: var(--rose); display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.15);">
-        <i class="fa-solid fa-venus"></i>
-      </div>
-      <h2 style="font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800; color: var(--ink); margin-bottom: 6px;">Women's Ministry Login</h2>
-      <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px; line-height: 1.5;">Enter authorized credentials to access dues, welfare collections &amp; member rosters.</p>
+      <div class="login-icon"><i class="fas fa-venus"></i></div>
+      <h2 style="font-family: Manrope, sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 6px;">Women's Portal Login</h2>
+      <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px;">Enter authorized credentials to manage dues, welfare & contributions.</p>
 
       <form onsubmit="handleWomenLoginSubmit(event)" autocomplete="off">
-        <div class="form-group" style="text-align: left; margin-bottom: 16px;">
-          <label for="womenLoginEmail" class="form-label" style="display: block; font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 6px;">Email Address</label>
-          <input required type="email" id="womenLoginEmail" class="form-ctrl" placeholder="Enter leader or admin email" autocomplete="username" />
+        <div style="text-align: left; margin-bottom: 16px;">
+          <label style="display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px;">Email Address</label>
+          <input required type="email" id="womenLoginEmail" class="form-ctrl" style="width: 100%;" placeholder="Enter admin email" />
         </div>
-        <div class="form-group" style="text-align: left; margin-bottom: 18px;">
-          <label for="womenLoginPassword" class="form-label" style="display: block; font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 6px;">Password</label>
+        <div style="text-align: left; margin-bottom: 20px;">
+          <label style="display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px;">Password</label>
           <div style="position: relative; display: flex; align-items: center;">
-            <input required type="password" id="womenLoginPassword" class="form-ctrl" style="padding-right: 42px;" placeholder="Enter password" autocomplete="current-password" />
-            <button type="button" onclick="toggleWomenPasswordVisibility()" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; display: flex; align-items: center; justify-content: center; font-size: 15px;" title="Toggle Password Visibility">
-              <i class="fa-solid fa-eye" id="womenEyeIcon"></i>
+            <input required type="password" id="womenLoginPassword" class="form-ctrl" style="width: 100%; padding-right: 40px;" placeholder="Enter password" />
+            <button type="button" onclick="toggleWomenPasswordVisibility()" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted);">
+              <i class="fas fa-eye" id="womenEyeIcon"></i>
             </button>
           </div>
         </div>
-
-        <div id="womenLoginErrorMsg" style="display: none; padding: 11px 14px; margin-bottom: 16px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 8px; font-size: 13px; font-weight: 600; text-align: left;"></div>
-
-        <button type="submit" id="btnWomenLoginSubmit" style="width: 100%; padding: 13px 20px; font-size: 14.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #e11d48, #be123c); color: #fff; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(225, 29, 72, 0.3); transition: all 0.2s ease;">
-          <i class="fa-solid fa-right-to-bracket"></i> Sign In to Women Portal
+        <div id="womenLoginErrorMsg" style="display: none; padding: 12px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 8px; font-size: 13px; margin-bottom: 16px; font-weight: 600;"></div>
+        <button type="submit" id="btnWomenLoginSubmit" class="btn-main btn-rose" style="width: 100%; justify-content: center; padding: 14px;">
+          Sign In to Women Portal
         </button>
       </form>
     </div>
   </div>
 
-  <!-- 2. Main Dashboard Content (Protected) -->
-  <main class="main-container" id="womenDashboardContent" style="display: none;">
+  <!-- Dashboard Container -->
+  <main class="women-container" id="womenDashboardContent" style="display: none;">
 
-    <!-- Fund Switcher Tabs -->
-    <div class="fund-switcher-container">
-      <div class="fund-tabs" id="fundTabsContainer">
-        <!-- Dynamically rendered fund tabs -->
-        <button class="fund-tab-btn active" data-fund-id="WOMEN_DUES">
-          <i class="fa-solid fa-hand-holding-heart"></i>
-          <span>Women Monthly Dues</span>
-          <span class="fund-rate-badge">GH₵ 50.00</span>
-        </button>
-        <button class="fund-tab-btn" data-fund-id="WOMEN_WELFARE">
-          <i class="fa-solid fa-shield-heart"></i>
-          <span>Women Welfare Fund</span>
-          <span class="fund-rate-badge">GH₵ 20.00</span>
-        </button>
-        <button class="fund-tab-btn" data-fund-id="WOMEN_CONTRIBUTION">
-          <i class="fa-solid fa-coins"></i>
-          <span>Women Contribution</span>
-          <span class="fund-rate-badge">GH₵ 100.00</span>
-        </button>
-      </div>
-
-      <div style="display: flex; gap: 8px;">
-        <button class="btn-outline" id="btnOpenNewFundModal" title="Create a custom fund or special dues project">
-          <i class="fa-solid fa-plus-circle" style="color: var(--rose);"></i> Add New Fund
-        </button>
-      </div>
+    <!-- Fund Tabs Navigation -->
+    <div class="fund-tabs-bar" id="fundTabsContainer">
+      <!-- Dynamically Injected -->
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon rose">
-          <i class="fa-solid fa-users"></i>
-        </div>
-        <div class="stat-info">
-          <div class="stat-label">Total Sisters</div>
-          <div class="stat-value" id="kpiTotalSisters">0</div>
-        </div>
+    <!-- Statistics Grid -->
+    <div class="metrics-row">
+      <div class="metric-box">
+        <div class="metric-num" id="kpiTotalSisters">0</div>
+        <div class="metric-label">Total Sisters Registered</div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-icon emerald">
-          <i class="fa-solid fa-calendar-check"></i>
-        </div>
-        <div class="stat-info">
-          <div class="stat-label" id="kpiThisMonthLabel">Paid This Month</div>
-          <div class="stat-value" id="kpiThisMonthPaid">GH₵ 0.00</div>
-        </div>
+      <div class="metric-box">
+        <div class="metric-num" id="kpiThisMonthPaid">GH₵ 0.00</div>
+        <div class="metric-label" id="kpiThisMonthLabel">Collected This Month</div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-icon purple">
-          <i class="fa-solid fa-bullseye"></i>
-        </div>
-        <div class="stat-info">
-          <div class="stat-label" id="kpiTargetLabel">Monthly Target</div>
-          <div class="stat-value" id="kpiMonthlyTarget">GH₵ 0.00</div>
-        </div>
+      <div class="metric-box">
+        <div class="metric-num" id="kpiMonthlyTarget" style="color: var(--ink);">GH₵ 0.00</div>
+        <div class="metric-label" id="kpiTargetLabel">Monthly Goal</div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-icon amber">
-          <i class="fa-solid fa-piggy-bank"></i>
-        </div>
-        <div class="stat-info">
-          <div class="stat-label" id="kpiYtdLabel">Year-to-Date (2026)</div>
-          <div class="stat-value" id="kpiYtdTotal">GH₵ 0.00</div>
-        </div>
+      <div class="metric-box" style="border-left: 4px solid var(--rose);">
+        <div class="metric-num" id="kpiYtdTotal">GH₵ 0.00</div>
+        <div class="metric-label" id="kpiYtdLabel">Year-to-Date Collections</div>
       </div>
     </div>
 
     <!-- Controls Bar -->
     <div class="controls-card">
-      <div class="search-filter-group">
-        <div class="search-box">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="searchInput" placeholder="Search sister by name, phone, or ID..." />
+      <div class="filter-group">
+        <div style="position: relative;">
+          <i class="fas fa-search" style="position: absolute; left: 12px; top: 12px; font-size: 12px; color: var(--muted);"></i>
+          <input type="text" id="searchInput" class="form-ctrl" style="padding-left: 32px; width: 260px;" placeholder="Search sister name or phone..." />
         </div>
-
-        <select id="statusFilter" class="custom-select" title="Filter by payment status in selected month">
+        <select id="statusFilter" class="form-ctrl" style="font-weight: 600;">
           <option value="ALL">All Sisters</option>
-          <option value="PAID">Paid (Selected Month)</option>
-          <option value="DUE">Due / Unpaid (Selected Month)</option>
+          <option value="PAID">Paid Only</option>
+          <option value="DUE">Due / Unpaid</option>
         </select>
-
-        <select id="yearSelector" class="custom-select" title="Select Matrix Year">
-          <option value="2024">Year 2024</option>
+        <select id="yearSelector" class="form-ctrl" style="font-weight: 700;">
           <option value="2025">Year 2025</option>
           <option value="2026" selected>Year 2026</option>
           <option value="2027">Year 2027</option>
         </select>
       </div>
 
-      <div class="btn-action-group">
-        <button class="btn-outline" id="btnOpenHistoryModal">
-          <i class="fa-solid fa-clock-rotate-left"></i> Payment Logs
+      <div class="filter-group">
+        <button class="btn-main btn-outline" id="btnOpenHistoryModal">
+          <i class="fas fa-receipt"></i> Payment Logs
         </button>
-        <button class="btn-outline" id="btnExportExcel">
-          <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i> Export Matrix
+        <button class="btn-main btn-outline" id="btnExportExcel" style="color: #16a34a; border-color: #bbf7d0;">
+          <i class="fas fa-file-excel"></i> Export Excel
         </button>
-        <button class="btn-solid" id="btnOpenAddSisterModal">
-          <i class="fa-solid fa-user-plus"></i> Add Sister
+        <button class="btn-main btn-rose" id="btnOpenAddSisterModal">
+          <i class="fas fa-user-plus"></i> Add New Sister
         </button>
       </div>
     </div>
 
-    <!-- 12-Month Matrix Table Card -->
+    <!-- Matrix Table Card -->
     <div class="table-container">
-      <table class="matrix-table" id="matrixTable">
-        <thead>
-          <tr>
-            <th class="th-member">Sister Name &amp; Contact</th>
-            <th style="text-align: center; width: 85px;">Rate</th>
-            <th class="month-col" data-m="1">Jan</th>
-            <th class="month-col" data-m="2">Feb</th>
-            <th class="month-col" data-m="3">Mar</th>
-            <th class="month-col" data-m="4">Apr</th>
-            <th class="month-col" data-m="5">May</th>
-            <th class="month-col" data-m="6">Jun</th>
-            <th class="month-col" data-m="7">Jul</th>
-            <th class="month-col" data-m="8">Aug</th>
-            <th class="month-col" data-m="9">Sep</th>
-            <th class="month-col" data-m="10">Oct</th>
-            <th class="month-col" data-m="11">Nov</th>
-            <th class="month-col" data-m="12">Dec</th>
-            <th style="text-align: center; width: 100px;">Total Paid</th>
-            <th style="text-align: center; width: 90px;">Action</th>
-          </tr>
-        </thead>
-        <tbody id="matrixTableBody">
-          <tr>
-            <td colspan="16" style="text-align: center; padding: 40px; color: var(--muted);">
-              <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--rose);"></i>
-              <div style="margin-top: 10px; font-weight: 600;">Loading Women's Ministry Matrix...</div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="responsive-table">
+        <table id="matrixTable">
+          <thead>
+            <tr>
+              <th class="sticky-col">Sister Name & Contact</th>
+              <th style="text-align: center;">Rate</th>
+              <th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th>
+              <th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th>
+              <th style="text-align: center;">Total Paid</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="matrixTableBody">
+            <!-- Injected by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mobile View Grid -->
+    <div class="mobile-cards" id="mobileMatrixCards">
+      <!-- Injected by JS -->
     </div>
 
   </main>
 
-  <!-- QUICK PAY MODAL -->
+  <footer class="app-footer">
+    <div class="women-nav-inner" style="justify-content: center;">
+      &copy; 2026 Solutions Faith Ministries International — Women's Ministry Treasury
+    </div>
+  </footer>
+
+  <!-- MODALS -->
   <div class="modal-overlay" id="quickPayModal">
     <div class="modal-card">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-receipt" style="color: var(--rose);"></i> Record Dues Payment</h3>
-        <button class="modal-close" onclick="closeModal('quickPayModal')">&times;</button>
+        <h3 style="font-family: Manrope, sans-serif; font-weight: 800;"><i class="fas fa-receipt" style="color: var(--rose);"></i> Record Payment</h3>
+        <button style="background:none; border:none; font-size:20px; cursor:pointer;" onclick="closeModal('quickPayModal')">&times;</button>
       </div>
       <form id="quickPayForm">
         <div class="modal-body">
           <input type="hidden" id="payMemberId" />
-          
-          <div class="form-group">
-            <label>Sister Name</label>
-            <input type="text" id="payMemberName" class="form-control" readonly style="background: #f1f5f9; font-weight: 700;" />
+          <div style="margin-bottom: 16px;">
+            <label style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Sister Name</label>
+            <input type="text" id="payMemberName" class="form-ctrl" style="width:100%; font-weight:800; background:#f1f5f9;" readonly />
           </div>
-
-          <div class="form-group">
-            <label>Fund / Collection</label>
-            <select id="payCollectionType" class="form-control" style="font-weight: 600;">
-              <!-- options populated via JS -->
-            </select>
+          <div style="margin-bottom: 16px;">
+            <label style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Fund Type</label>
+            <select id="payCollectionType" class="form-ctrl" style="width:100%; font-weight:700;"></select>
           </div>
-
-          <div class="form-group">
-            <label>Select Target Month(s) for Payment</label>
-            <div class="months-badge-grid" id="payMonthsGrid">
-              <!-- Jan - Dec pills -->
-            </div>
-            <div style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">
-              Click months to select/deselect. Amount auto-calculates based on selected months.
-            </div>
+          <div style="margin-bottom: 16px;">
+            <label style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Select Months</label>
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 6px;" id="payMonthsGrid"></div>
           </div>
-
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div class="form-group">
-              <label>Amount (GH₵)</label>
-              <input type="number" step="0.01" min="1" id="payAmount" class="form-control" required style="font-weight: 800; font-size: 1.1rem; color: #047857;" />
+            <div>
+              <label style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Amount (GH₵)</label>
+              <input type="number" step="0.01" id="payAmount" class="form-ctrl" style="width:100%; font-weight:800; font-size:16px; color:var(--rose);" required />
             </div>
-            <div class="form-group">
-              <label>Payment Method</label>
-              <select id="payMethod" class="form-control">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Method</label>
+              <select id="payMethod" class="form-ctrl" style="width:100%;">
                 <option value="CASH">Cash</option>
-                <option value="MOMO">Mobile Money</option>
-                <option value="BANK">Bank Transfer</option>
-                <option value="POS">POS / Card</option>
+                <option value="MOMO">MoMo</option>
+                <option value="BANK">Bank</option>
               </select>
             </div>
           </div>
-
-          <div class="form-group">
-            <label>Reference / Notes (Optional)</label>
-            <input type="text" id="payNotes" class="form-control" placeholder="e.g. Paid via MoMo / Sister Sarah" />
-          </div>
         </div>
-
         <div class="modal-footer">
-          <button type="button" class="btn-outline" onclick="closeModal('quickPayModal')">Cancel</button>
-          <button type="submit" class="btn-solid" id="btnSubmitPayment">
-            <i class="fa-solid fa-check-circle"></i> Save Payment
-          </button>
+          <button type="button" class="btn-main btn-outline" onclick="closeModal('quickPayModal')">Cancel</button>
+          <button type="submit" class="btn-main btn-rose" id="btnSubmitPayment">Save Payment</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ADD SISTER MODAL -->
-  <div class="modal-overlay" id="addSisterModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-user-plus" style="color: var(--rose);"></i> Add Sister to Women's Ministry</h3>
-        <button class="modal-close" onclick="closeModal('addSisterModal')">&times;</button>
-      </div>
-      <form id="addSisterForm">
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Quick Select from Church Female Members</label>
-            <select id="existingFemaleSelect" class="form-control">
-              <option value="">-- Or enter custom details below --</option>
-            </select>
-          </div>
+  <div class="toast-container" id="toastContainer" style="position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:10px; pointer-events:none;"></div>
 
-          <div style="text-align: center; color: var(--muted); font-size: 0.78rem; font-weight: 700; margin: 4px 0;">— OR ENTER NEW SISTER —</div>
-
-          <div class="form-group">
-            <label>Sister Full Name *</label>
-            <input type="text" id="newSisterName" class="form-control" placeholder="e.g. Sister Grace Mensah" required />
-          </div>
-
-          <div class="form-group">
-            <label>Phone Number *</label>
-            <input type="tel" id="newSisterPhone" class="form-control" placeholder="e.g. 0244123456" />
-          </div>
-
-          <div class="form-group">
-            <label>Monthly Pledge Rate (GH₵)</label>
-            <input type="number" step="0.01" id="newSisterRate" class="form-control" value="50.00" />
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn-outline" onclick="closeModal('addSisterModal')">Cancel</button>
-          <button type="submit" class="btn-solid" id="btnSubmitNewSister">
-            <i class="fa-solid fa-user-check"></i> Register Sister
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- CREATE NEW FUND MODAL -->
-  <div class="modal-overlay" id="newFundModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-folder-plus" style="color: var(--rose);"></i> Create New Fund / Dues Project</h3>
-        <button class="modal-close" onclick="closeModal('newFundModal')">&times;</button>
-      </div>
-      <form id="newFundForm">
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Fund Name *</label>
-            <input type="text" id="newFundName" class="form-control" placeholder="e.g. Women Annual Conference Dues" required />
-          </div>
-
-          <div class="form-group">
-            <label>Default Rate per Sister (GH₵) *</label>
-            <input type="number" step="0.01" min="1" id="newFundRate" class="form-control" value="50.00" required />
-          </div>
-
-          <div class="form-group">
-            <label>Description / Purpose (Optional)</label>
-            <textarea id="newFundDesc" class="form-control" rows="2" placeholder="Brief description of this fund..."></textarea>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn-outline" onclick="closeModal('newFundModal')">Cancel</button>
-          <button type="submit" class="btn-solid" id="btnSubmitNewFund">
-            <i class="fa-solid fa-plus-circle"></i> Create Fund
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- PAYMENT LOGS MODAL -->
-  <div class="modal-overlay" id="historyModal">
-    <div class="modal-card" style="max-width: 800px;">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-clock-rotate-left" style="color: var(--rose);"></i> Recent Women's Ministry Payments</h3>
-        <button class="modal-close" onclick="closeModal('historyModal')">&times;</button>
-      </div>
-      <div class="modal-body" style="padding: 16px;">
-        <div style="overflow-x: auto; max-height: 480px;">
-          <table class="matrix-table" style="font-size: 0.82rem;">
-            <thead>
-              <tr>
-                <th>Receipt #</th>
-                <th>Date</th>
-                <th>Sister Name</th>
-                <th>Fund</th>
-                <th>Month</th>
-                <th>Amount</th>
-                <th>Method</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="historyTableBody">
-              <tr><td colspan="8" style="text-align: center; padding: 20px;">Loading records...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-outline" onclick="closeModal('historyModal')">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast notifications -->
-  <div class="toast-container" id="toastContainer"></div>
-
-  <!-- Printable Receipt Container (Hidden on screen) -->
-  <div id="printableReceipt" style="display: none;"></div>
-
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- External JS reference -->
   <script>
-    // State management
     const state = {
       activeFundId: 'WOMEN_DUES',
       selectedYear: new Date().getFullYear(),
@@ -1232,815 +696,261 @@
       return isLocal ? 'http://localhost:4000/api/v1' : '/api/v1';
     })();
 
-    // Init application
     document.addEventListener('DOMContentLoaded', async () => {
       setupEventListeners();
       await checkAuth();
     });
 
-    function getAuthToken() {
-      return sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token') || sessionStorage.getItem('token') || localStorage.getItem('token') || '';
-    }
-
-    function purgeWomenSession() {
-      sessionStorage.removeItem('sfmi_token');
-      localStorage.removeItem('sfmi_token');
-      sessionStorage.removeItem('token');
-      localStorage.removeItem('token');
-      sessionStorage.removeItem('user');
-      localStorage.removeItem('user');
-      sessionStorage.removeItem('sfmi_current_user');
-      localStorage.removeItem('sfmi_current_user');
+    async function checkAuth() {
+      const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+      if (!token) { showWomenLogin(); return; }
+      showWomenDashboard();
+      try {
+        const res = await fetch(`${API_BASE}/auth/verify`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user?.role === 'FINANCE') { handleWomenLogout(); return; }
+          document.getElementById('userNameText').innerText = data.user?.name || 'Admin';
+          await loadInitialData();
+        } else { handleWomenLogout(); }
+      } catch (err) { await loadInitialData(); }
     }
 
     function showWomenLogin() {
       document.getElementById('womenLoginScreen').style.display = 'block';
       document.getElementById('womenDashboardContent').style.display = 'none';
-      const navActions = document.getElementById('womenNavActions');
-      if (navActions) navActions.style.display = 'none';
+      document.getElementById('womenNavActions').style.display = 'none';
     }
 
-    function showWomenDashboard(user) {
+    function showWomenDashboard() {
       document.getElementById('womenLoginScreen').style.display = 'none';
       document.getElementById('womenDashboardContent').style.display = 'block';
-      const navActions = document.getElementById('womenNavActions');
-      if (navActions) navActions.style.display = 'flex';
-
-      try {
-        const u = user || JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user') || '{}');
-        const pill = document.getElementById('adminUserPill');
-        if (pill) {
-          pill.innerHTML = `<i class="fa-solid fa-user-shield"></i> ${escapeHtml(u.name || u.fullName || u.email || 'Admin')}`;
-        }
-      } catch (e) {}
-    }
-
-    async function checkAuth() {
-      const token = getAuthToken();
-      if (!token) {
-        showWomenLogin();
-        return;
-      }
-
-      // Fast optimistic display
-      showWomenDashboard();
-
-      try {
-        const res = await fetch(`${API_BASE}/auth/verify`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const user = data.user || {};
-          if (user.role === 'FINANCE') {
-            purgeWomenSession();
-            showWomenLogin();
-            showToast('Access Denied: Treasury officers cannot access the Women Portal.', 'error');
-            return;
-          }
-          sessionStorage.setItem('sfmi_current_user', JSON.stringify(user));
-          localStorage.setItem('sfmi_current_user', JSON.stringify(user));
-          showWomenDashboard(user);
-          await loadInitialData();
-        } else if (res.status === 401 || res.status === 403) {
-          purgeWomenSession();
-          showWomenLogin();
-          showToast('Session expired. Please sign in to continue.', 'warning');
-        } else {
-          await loadInitialData();
-        }
-      } catch (err) {
-        await loadInitialData();
-      }
-    }
-
-    async function loadInitialData() {
-      try {
-        await loadCollectionFunds();
-        await loadChurchFemaleMembers();
-        await loadMatrix();
-      } catch (e) {}
-    }
-
-    async function handleWomenLoginSubmit(e) {
-      e.preventDefault();
-      const email = document.getElementById('womenLoginEmail').value.trim();
-      const password = document.getElementById('womenLoginPassword').value.trim();
-      const errorMsg = document.getElementById('womenLoginErrorMsg');
-      const submitBtn = document.getElementById('btnWomenLoginSubmit');
-
-      if (errorMsg) errorMsg.style.display = 'none';
-      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing In…'; }
-
-      try {
-        const res = await fetch(`${API_BASE}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const user = data.user || {};
-          if (user.role === 'FINANCE') {
-            purgeWomenSession();
-            if (errorMsg) {
-              errorMsg.style.display = 'block';
-              errorMsg.innerText = 'Access Denied: Treasury officers cannot access the Women Portal.';
-            }
-            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to Women Portal'; }
-            return;
-          }
-
-          sessionStorage.setItem('sfmi_token', data.accessToken);
-          localStorage.setItem('sfmi_token', data.accessToken);
-          sessionStorage.setItem('token', data.accessToken);
-          localStorage.setItem('token', data.accessToken);
-          sessionStorage.setItem('sfmi_current_user', JSON.stringify(user));
-          localStorage.setItem('sfmi_current_user', JSON.stringify(user));
-
-          showWomenDashboard(user);
-          await loadInitialData();
-          showToast('Welcome to the Women\'s Ministry Portal!', 'success');
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          if (errorMsg) {
-            errorMsg.style.display = 'block';
-            errorMsg.innerText = errData.error || errData.message || 'Invalid email or password. Please try again.';
-          }
-        }
-      } catch (err) {
-        if (errorMsg) {
-          errorMsg.style.display = 'block';
-          errorMsg.innerText = 'Unable to connect to authentication server. Please check your connection.';
-        }
-      } finally {
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to Women Portal'; }
-      }
+      document.getElementById('womenNavActions').style.display = 'flex';
+      const logo = localStorage.getItem('sfmi_logo_url');
+      if (logo) document.getElementById('navLogo').src = logo;
     }
 
     function handleWomenLogout() {
-      purgeWomenSession();
-      showWomenLogin();
-      showToast('You have been logged out safely.', 'info');
+      sessionStorage.removeItem('sfmi_token');
+      localStorage.removeItem('sfmi_token');
+      window.location.reload();
     }
 
-    function toggleWomenPasswordVisibility() {
-      const input = document.getElementById('womenLoginPassword');
-      const icon = document.getElementById('womenEyeIcon');
-      if (input && icon) {
-        if (input.type === 'password') {
-          input.type = 'text';
-          icon.classList.remove('fa-eye');
-          icon.classList.add('fa-eye-slash');
-        } else {
-          input.type = 'password';
-          icon.classList.remove('fa-eye-slash');
-          icon.classList.add('fa-eye');
-        }
-      }
+    async function loadInitialData() {
+      await loadCollectionFunds();
+      await loadMatrix();
     }
 
-    async function apiRequest(url, options = {}) {
-      const token = getAuthToken();
-      const headers = {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        ...options.headers
-      };
-
-      const fullUrl = url.startsWith('http') ? url : (url.startsWith('/api/v1') ? url : `${API_BASE}${url.replace(/^\/api/, '')}`);
-      const res = await fetch(fullUrl, { ...options, headers });
-      if (res.status === 401) {
-        purgeWomenSession();
-        showWomenLogin();
-        showToast('Your session has expired. Please log in again.', 'warning');
-        return null;
-      }
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.message || data.error || 'Network error');
-      }
-      return data;
-    }
-
-    function showToast(msg, type = 'info') {
-      const container = document.getElementById('toastContainer');
-      const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      
-      let icon = 'circle-info';
-      if (type === 'success') icon = 'circle-check';
-      if (type === 'error') icon = 'circle-exclamation';
-
-      toast.innerHTML = `<i class="fa-solid fa-${icon}"></i> <span>${msg}</span>`;
-      container.appendChild(toast);
-
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
-      }, 3500);
-    }
-
-    function openModal(id) {
-      const modal = document.getElementById(id);
-      if (modal) modal.classList.add('active');
-    }
-
-    function closeModal(id) {
-      const modal = document.getElementById(id);
-      if (modal) modal.classList.remove('active');
-    }
-
-    // Load Funds / Collections
     async function loadCollectionFunds() {
       try {
-        const res = await apiRequest(`${API_BASE}/women/collection-types`);
-        const list = Array.isArray(res) ? res : (res?.data || res?.collections || []);
-        if (list && list.length > 0) {
-          state.funds = list;
-          renderFundTabs();
-          populateFundDropdowns();
-        }
-      } catch (err) {
-        console.error('Failed to load collections:', err);
-      }
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const res = await fetch(`${API_BASE}/women/collection-types`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        state.funds = data.collections || data.data || [];
+        renderFundTabs();
+        populateFundDropdowns();
+      } catch (e) {}
     }
 
     function renderFundTabs() {
       const container = document.getElementById('fundTabsContainer');
-      if (!container) return;
-
-      container.innerHTML = state.funds.map(f => {
-        const isActive = f.id === state.activeFundId;
-        const icon = f.id.includes('WELFARE') ? 'fa-shield-heart' : (f.id.includes('CONTRIBUTION') ? 'fa-coins' : 'fa-hand-holding-heart');
-        return `
-          <button class="fund-tab-btn ${isActive ? 'active' : ''}" data-fund-id="${f.id}">
-            <i class="fa-solid ${icon}"></i>
-            <span>${escapeHtml(f.name)}</span>
-            <span class="fund-rate-badge">GH₵ ${Number(f.defaultAmount || f.targetAmount || 0).toFixed(2)}</span>
-          </button>
-        `;
-      }).join('');
-
-      container.querySelectorAll('.fund-tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          state.activeFundId = btn.getAttribute('data-fund-id');
-          renderFundTabs();
-          loadMatrix();
-        });
-      });
+      container.innerHTML = state.funds.map(f => `
+        <button class="fund-tab-btn ${f.id === state.activeFundId ? 'active' : ''}" onclick="switchFund('${f.id}')">
+          <i class="fas ${f.icon || 'fa-hand-holding-heart'}"></i>
+          ${escapeHtml(f.name)}
+          <span class="fund-badge">GH₵ ${f.defaultAmount}</span>
+        </button>
+      `).join('');
     }
 
-    function populateFundDropdowns() {
-      const paySelect = document.getElementById('payCollectionType');
-      if (paySelect) {
-        paySelect.innerHTML = state.funds.map(f => `
-          <option value="${f.id}" data-rate="${f.defaultAmount || f.targetAmount || 50}">
-            ${escapeHtml(f.name)} (GH₵ ${Number(f.defaultAmount || f.targetAmount || 50).toFixed(2)})
-          </option>
-        `).join('');
-      }
-    }
+    window.switchFund = (id) => {
+      state.activeFundId = id;
+      renderFundTabs();
+      loadMatrix();
+    };
 
-    // Load Female Church Members for easy dropdown selection
-    async function loadChurchFemaleMembers() {
-      try {
-        const res = await apiRequest(`${API_BASE}/members?limit=300`);
-        const list = Array.isArray(res) ? res : (res?.members || res?.data || []);
-        if (list && list.length > 0) {
-          state.churchMembers = list.filter(m => (m.gender || '').toUpperCase().startsWith('F') || (m.title || '').match(/sister|mrs|ms|madam/i));
-          
-          const select = document.getElementById('existingFemaleSelect');
-          if (select) {
-            select.innerHTML = `<option value="">-- Choose registered female church member --</option>` +
-              state.churchMembers.map(m => `
-                <option value="${m.id}" data-name="${escapeHtml(m.fullName || (m.firstName + ' ' + m.lastName))}" data-phone="${m.phoneNumber || m.phone || ''}">
-                  ${escapeHtml(m.fullName || (m.firstName + ' ' + m.lastName))} (${m.phoneNumber || m.phone || 'No Phone'})
-                </option>
-              `).join('');
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load church members:', err);
-      }
-    }
-
-    // Load Matrix
     async function loadMatrix() {
       const tbody = document.getElementById('matrixTableBody');
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="16" style="text-align: center; padding: 40px; color: var(--muted);">
-            <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--rose);"></i>
-            <div style="margin-top: 10px; font-weight: 600;">Loading Matrix Data...</div>
-          </td>
-        </tr>
-      `;
-
+      tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:40px;"><i class="fas fa-circle-notch fa-spin"></i> Syncing matrix...</td></tr>`;
       try {
-        const res = await apiRequest(`${API_BASE}/women/matrix?year=${state.selectedYear}&collectionType=${state.activeFundId}`);
-        const data = res?.data || res;
-        if (!data) throw new Error('Could not fetch matrix');
-
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const res = await fetch(`${API_BASE}/women/matrix?year=${state.selectedYear}&collectionType=${state.activeFundId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
         state.matrixData = data;
         updateKpis(data);
         renderMatrixTable();
-      } catch (err) {
-        console.error('Matrix error:', err);
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="16" style="text-align: center; padding: 30px; color: #ef4444;">
-              <i class="fa-solid fa-circle-exclamation fa-2x"></i>
-              <div style="margin-top: 8px; font-weight: 600;">Failed to load data: ${err.message}</div>
-            </td>
-          </tr>
-        `;
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; color:red;">Failed to sync data.</td></tr>`;
       }
     }
 
     function updateKpis(data) {
-      const activeFund = state.funds.find(f => f.id === state.activeFundId) || {};
-      const rate = Number(activeFund.defaultAmount || activeFund.targetAmount || 50);
-      const members = data.members || data.matrix || [];
-      const totalSisters = members.length;
-      const currentMonth = state.selectedMonth;
-
-      document.getElementById('kpiTotalSisters').innerText = totalSisters;
-
-      const monthlyTarget = totalSisters * rate;
-      document.getElementById('kpiMonthlyTarget').innerText = `GH₵ ${monthlyTarget.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-      document.getElementById('kpiTargetLabel').innerText = `Target (${MONTH_NAMES[currentMonth - 1]} ${state.selectedYear})`;
-
-      const currentMonthCollected = (data.monthTotals && data.monthTotals[currentMonth]) || (data.summary && data.summary.currentMonthCollected) || 0;
-      document.getElementById('kpiThisMonthPaid').innerText = `GH₵ ${currentMonthCollected.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-      document.getElementById('kpiThisMonthLabel').innerText = `Collected (${MONTH_NAMES[currentMonth - 1]})`;
-
-      const ytdTotal = data.yearTotal || (data.summary && data.summary.totalYearToDate) || 0;
-      document.getElementById('kpiYtdTotal').innerText = `GH₵ ${ytdTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-      document.getElementById('kpiYtdLabel').innerText = `Year-to-Date (${state.selectedYear})`;
+      const s = data.summary || {};
+      document.getElementById('kpiTotalSisters').innerText = s.totalEnrolled || 0;
+      document.getElementById('kpiThisMonthPaid').innerText = `GH₵ ${(s.currentMonthCollected || 0).toFixed(2)}`;
+      document.getElementById('kpiMonthlyTarget').innerText = `GH₵ ${(s.currentMonthPledged || 0).toFixed(2)}`;
+      document.getElementById('kpiYtdTotal').innerText = `GH₵ ${(s.totalYearToDate || 0).toFixed(2)}`;
+      document.getElementById('kpiThisMonthLabel').innerText = `Collected (${MONTH_NAMES[state.selectedMonth-1]})`;
     }
 
     function renderMatrixTable() {
       const tbody = document.getElementById('matrixTableBody');
-      const members = state.matrixData ? (state.matrixData.members || state.matrixData.matrix || []) : [];
-      if (!members || members.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="16" style="text-align: center; padding: 40px; color: var(--muted);">
-              <i class="fa-solid fa-folder-open fa-2x" style="color: #cbd5e1; margin-bottom: 8px;"></i>
-              <div style="font-weight: 600;">No female members found in church directory.</div>
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      const activeFund = state.funds.find(f => f.id === state.activeFundId) || {};
-      const defaultRate = Number(activeFund.defaultAmount || activeFund.targetAmount || 50);
-
-      const filtered = members.filter(m => {
-        const query = state.filterText.toLowerCase().trim();
-        const name = m.fullName || m.memberName || '';
-        const matchesQuery = !query || 
-          name.toLowerCase().includes(query) ||
-          (m.phone && m.phone.toLowerCase().includes(query)) ||
-          (m.id && m.id.toLowerCase().includes(query));
-
-        if (!matchesQuery) return false;
-
-        if (state.filterStatus === 'PAID') {
-          const paidThisMonth = (m.months && m.months[state.selectedMonth]) || 0;
-          return paidThisMonth > 0;
-        } else if (state.filterStatus === 'DUE') {
-          const paidThisMonth = (m.months && m.months[state.selectedMonth]) || 0;
-          const targetRate = Number(m.pledgeAmount || defaultRate);
-          return paidThisMonth < targetRate;
-        }
-
-        return true;
+      const mob = document.getElementById('mobileMatrixCards');
+      const members = (state.matrixData?.members || []).filter(m => {
+        const q = state.filterText.toLowerCase();
+        return !q || (m.fullName || '').toLowerCase().includes(q) || (m.phone || '').includes(q);
       });
 
-      if (filtered.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="16" style="text-align: center; padding: 40px; color: var(--muted);">
-              <i class="fa-solid fa-folder-open fa-2x" style="color: #cbd5e1; margin-bottom: 8px;"></i>
-              <div style="font-weight: 600;">No sisters match your search criteria.</div>
-            </td>
-          </tr>
-        `;
+      if (!members.length) {
+        tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:40px;">No records found.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = filtered.map(m => {
-        const name = m.fullName || m.memberName || 'Sister';
-        const rate = Number(m.pledgeAmount || defaultRate);
-        const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-        const cleanPhone = (m.phone || '').replace(/\D/g, '');
-        const whatsappLink = cleanPhone ? `https://wa.me/233${cleanPhone.replace(/^0/, '')}` : null;
-
+      tbody.innerHTML = members.map(m => {
+        const rate = m.pledgeAmount || 50;
         let monthCells = '';
-        for (let month = 1; month <= 12; month++) {
-          const paid = (m.months && m.months[month]) || 0;
-          let pillClass = 'unpaid';
-          let pillText = '-';
-
-          if (paid >= rate && paid > 0) {
-            pillClass = 'paid';
-            pillText = `GH₵ ${paid}`;
-          } else if (paid > 0) {
-            pillClass = 'partial';
-            pillText = `GH₵ ${paid}`;
-          }
-
-          monthCells += `
-            <td class="month-cell" onclick="openQuickPayForMonth('${escapeHtml(m.id)}', '${escapeHtml(name)}', ${month}, ${rate})">
-              <span class="month-pill ${pillClass}" title="${FULL_MONTH_NAMES[month-1]}: GH₵ ${paid.toFixed(2)} / ${rate.toFixed(2)}">
-                ${pillText}
-              </span>
-            </td>
-          `;
+        for (let i = 1; i <= 12; i++) {
+          const paid = m.months[i] || 0;
+          const status = paid >= rate ? 'status-paid' : (paid > 0 ? 'status-partial' : 'status-unpaid');
+          monthCells += `<td style="text-align:center;"><span class="status-pill ${status}" onclick="openQuickPayForMonth('${m.id}', '${escapeHtml(m.fullName)}', ${i}, ${rate})">${paid > 0 ? 'GH₵'+paid : '—'}</span></td>`;
         }
-
-        const totalPaid = m.totalPaid !== undefined ? m.totalPaid : (m.yearTotalPaid || 0);
-
         return `
-          <tr data-member-id="${escapeHtml(m.id)}">
-            <td class="td-member">
-              <div class="member-info-box">
-                <div class="member-avatar">${initials}</div>
-                <div class="member-details">
-                  <div class="member-name">${escapeHtml(name)}</div>
-                  <div class="member-meta">
-                    <span><i class="fa-solid fa-phone"></i> ${m.phone || 'No Phone'}</span>
-                    ${whatsappLink ? `• <a href="${whatsappLink}" target="_blank" class="whatsapp-link"><i class="fa-brands fa-whatsapp"></i> Chat</a>` : ''}
-                  </div>
-                </div>
-              </div>
+          <tr>
+            <td class="sticky-col">
+              <div style="font-weight:700; color:var(--ink);">${escapeHtml(m.fullName)}</div>
+              <div style="font-size:11px; color:var(--muted);">${m.phone || '—'}</div>
             </td>
-            <td style="text-align: center; font-weight: 600; color: var(--muted);">
-              GH₵ ${rate.toFixed(0)}
-            </td>
+            <td style="text-align:center; font-weight:700; color:var(--muted);">GH₵${rate}</td>
             ${monthCells}
-            <td style="text-align: center;">
-              <span class="total-paid-badge">GH₵ ${totalPaid.toFixed(2)}</span>
-            </td>
-            <td style="text-align: center;">
-              <button class="btn-solid" style="padding: 5px 10px; font-size: 0.78rem;" onclick="openQuickPay('${escapeHtml(m.id)}', '${escapeHtml(name)}', ${rate})">
-                <i class="fa-solid fa-plus"></i> Pay
-              </button>
-            </td>
+            <td style="text-align:center; font-weight:800; color:var(--emerald-dark);">GH₵${(m.totalPaid || 0).toFixed(2)}</td>
+            <td style="text-align:right;"><button class="btn-main btn-rose" style="padding:4px 10px; font-size:11px;" onclick="openQuickPay('${m.id}', '${escapeHtml(m.fullName)}', ${rate})">+ Pay</button></td>
           </tr>
         `;
       }).join('');
+
+      mob.innerHTML = members.map(m => `
+        <div class="mob-card">
+          <div class="mob-card-header">
+            <div style="font-weight:800;">${escapeHtml(m.fullName)}</div>
+            <div style="color:var(--rose); font-weight:800;">GH₵${(m.totalPaid || 0).toFixed(2)}</div>
+          </div>
+          <div class="mob-grid">
+            ${MONTH_NAMES.map((name, i) => {
+              const paid = m.months[i+1] || 0;
+              return `<div style="font-size:10px; text-align:center; padding:4px; border:1px solid #f1f5f9; border-radius:4px; ${paid > 0 ? 'background:#ecfdf5;' : ''}">${name}: <b>${paid}</b></div>`;
+            }).join('')}
+          </div>
+          <button class="btn-main btn-rose" style="width:100%; margin-top:12px; font-size:12px;" onclick="openQuickPay('${m.id}', '${escapeHtml(m.fullName)}', ${m.pledgeAmount})">Record Payment</button>
+        </div>
+      `).join('');
     }
 
-    // Modal Operations
-    window.openQuickPay = function(memberId, memberName, rate) {
-      openQuickPayForMonth(memberId, memberName, state.selectedMonth, rate);
-    };
-
-    window.openQuickPayForMonth = function(memberId, memberName, month, rate) {
-      document.getElementById('payMemberId').value = memberId;
-      document.getElementById('payMemberName').value = memberName;
-      
-      const fundSelect = document.getElementById('payCollectionType');
-      fundSelect.value = state.activeFundId;
-
-      renderModalMonthsGrid([month]);
-      updateModalCalculatedAmount(rate || 50);
-
+    window.openQuickPay = (id, name, rate) => openQuickPayForMonth(id, name, state.selectedMonth, rate);
+    window.openQuickPayForMonth = (id, name, month, rate) => {
+      document.getElementById('payMemberId').value = id;
+      document.getElementById('payMemberName').value = name;
+      document.getElementById('payAmount').value = rate;
+      const grid = document.getElementById('payMonthsGrid');
+      grid.innerHTML = MONTH_NAMES.map((n, i) => `
+        <div class="status-pill ${i+1 === month ? 'status-paid' : 'status-unpaid'}" style="padding:8px 0;" onclick="this.className=this.className.includes('status-paid')?'status-pill status-unpaid':'status-pill status-paid'">${n}</div>
+      `).join('');
+      document.getElementById('payCollectionType').innerHTML = state.funds.map(f => `<option value="${f.id}" ${f.id===state.activeFundId?'selected':''}>${f.name}</option>`).join('');
       openModal('quickPayModal');
     };
 
-    function renderModalMonthsGrid(selectedMonths = [state.selectedMonth]) {
-      const grid = document.getElementById('payMonthsGrid');
-      grid.innerHTML = MONTH_NAMES.map((name, idx) => {
-        const mNum = idx + 1;
-        const isSel = selectedMonths.includes(mNum);
-        return `
-          <div class="month-select-pill ${isSel ? 'selected' : ''}" data-month="${mNum}">
-            ${name}
-          </div>
-        `;
-      }).join('');
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-      grid.querySelectorAll('.month-select-pill').forEach(pill => {
-        pill.addEventListener('click', () => {
-          pill.classList.toggle('selected');
-          recalculateModalAmount();
-        });
-      });
-    }
-
-    function getSelectedModalMonths() {
-      const pills = document.querySelectorAll('#payMonthsGrid .month-select-pill.selected');
-      return Array.from(pills).map(p => Number(p.getAttribute('data-month')));
-    }
-
-    function recalculateModalAmount() {
-      const fundSelect = document.getElementById('payCollectionType');
-      const opt = fundSelect.options[fundSelect.selectedIndex];
-      const rate = Number(opt ? opt.getAttribute('data-rate') : 50) || 50;
-      updateModalCalculatedAmount(rate);
-    }
-
-    function updateModalCalculatedAmount(rate) {
-      const selected = getSelectedModalMonths();
-      const count = Math.max(1, selected.length);
-      const input = document.getElementById('payAmount');
-      input.value = (count * rate).toFixed(2);
-    }
-
-    // Setup event listeners
     function setupEventListeners() {
-      document.getElementById('searchInput').addEventListener('input', (e) => {
-        state.filterText = e.target.value;
-        renderMatrixTable();
-      });
-
-      document.getElementById('statusFilter').addEventListener('change', (e) => {
-        state.filterStatus = e.target.value;
-        renderMatrixTable();
-      });
-
-      document.getElementById('yearSelector').addEventListener('change', (e) => {
-        state.selectedYear = Number(e.target.value);
-        loadMatrix();
-      });
-
-      document.getElementById('btnOpenNewFundModal').addEventListener('click', () => {
-        openModal('newFundModal');
-      });
-
-      document.getElementById('btnOpenAddSisterModal').addEventListener('click', () => {
-        openModal('addSisterModal');
-      });
-
-      document.getElementById('btnOpenHistoryModal').addEventListener('click', () => {
-        openModal('historyModal');
-        loadPaymentHistory();
-      });
-
-      document.getElementById('btnExportExcel').addEventListener('click', exportMatrixToExcel);
-
-      const btnL = document.getElementById('btnLogout'); if (btnL) btnL.addEventListener('click', handleWomenLogout);
-
-      document.getElementById('payCollectionType').addEventListener('change', recalculateModalAmount);
-
-      document.getElementById('existingFemaleSelect').addEventListener('change', (e) => {
-        const opt = e.target.options[e.target.selectedIndex];
-        if (opt && opt.value) {
-          document.getElementById('newSisterName').value = opt.getAttribute('data-name');
-          document.getElementById('newSisterPhone').value = opt.getAttribute('data-phone') || '';
-        }
-      });
-
-      document.getElementById('quickPayForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const submitBtn = document.getElementById('btnSubmitPayment');
-        if (submitBtn.disabled) return;
-
-        const memberId = document.getElementById('payMemberId').value;
-        const memberName = document.getElementById('payMemberName').value;
-        const collectionType = document.getElementById('payCollectionType').value;
-        const months = getSelectedModalMonths();
-        const amount = parseFloat(document.getElementById('payAmount').value);
-        const paymentMethod = document.getElementById('payMethod').value;
-        const notes = document.getElementById('payNotes').value;
-
-        if (months.length === 0) {
-          showToast('Please select at least one month', 'error');
-          return;
-        }
-
-        if (!amount || amount <= 0) {
-          showToast('Please enter a valid payment amount', 'error');
-          return;
-        }
-
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
-
-        try {
-          const amtPerMonth = amount / months.length;
-
-          for (const m of months) {
-            await apiRequest(`${API_BASE}/women/payments`, {
-              method: 'POST',
-              body: JSON.stringify({
-                womenMemberId: memberId,
-                fullName: memberName,
-                collectionType,
-                month: m,
-                year: state.selectedYear,
-                amount: amtPerMonth,
-                paymentMethod,
-                notes: notes ? `${notes} (${MONTH_NAMES[m-1]})` : `Month: ${MONTH_NAMES[m-1]}`
-              })
-            });
-          }
-
-          showToast(`Successfully recorded payment of GH₵ ${amount.toFixed(2)} for ${memberName}`, 'success');
-          closeModal('quickPayModal');
-          await loadMatrix();
-        } catch (err) {
-          showToast(err.message || 'Payment recording failed', 'error');
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = `<i class="fa-solid fa-check-circle"></i> Save Payment`;
-        }
-      });
-
-      document.getElementById('addSisterForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const submitBtn = document.getElementById('btnSubmitNewSister');
-        if (submitBtn.disabled) return;
-
-        const name = document.getElementById('newSisterName').value.trim();
-        const phone = document.getElementById('newSisterPhone').value.trim();
-        const rate = parseFloat(document.getElementById('newSisterRate').value) || 50;
-
-        if (!name) {
-          showToast('Please enter sister name', 'error');
-          return;
-        }
-
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Registering...`;
-
-        try {
-          await apiRequest(`${API_BASE}/women/members`, {
-            method: 'POST',
-            body: JSON.stringify({
-              fullName: name,
-              phone,
-              pledgeAmount: rate
-            })
-          });
-
-          showToast(`Registered ${name} successfully!`, 'success');
-          closeModal('addSisterModal');
-          document.getElementById('addSisterForm').reset();
-          await loadMatrix();
-        } catch (err) {
-          showToast(err.message || 'Failed to register sister', 'error');
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = `<i class="fa-solid fa-user-check"></i> Register Sister`;
-        }
-      });
-
-      document.getElementById('newFundForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const submitBtn = document.getElementById('btnSubmitNewFund');
-        if (submitBtn.disabled) return;
-
-        const name = document.getElementById('newFundName').value.trim();
-        const rate = parseFloat(document.getElementById('newFundRate').value) || 50;
-        const desc = document.getElementById('newFundDesc').value.trim();
-
-        if (!name) {
-          showToast('Please enter fund name', 'error');
-          return;
-        }
-
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Creating...`;
-
-        try {
-          const res = await apiRequest(`${API_BASE}/women/collection-types`, {
-            method: 'POST',
-            body: JSON.stringify({
-              name,
-              defaultAmount: rate,
-              description: desc
-            })
-          });
-
-          showToast(`Created collection fund "${name}"!`, 'success');
-          closeModal('newFundModal');
-          document.getElementById('newFundForm').reset();
-          
-          await loadCollectionFunds();
-          if (res && res.data && res.data.id) {
-            state.activeFundId = res.data.id;
-            renderFundTabs();
-          }
-          await loadMatrix();
-        } catch (err) {
-          showToast(err.message || 'Failed to create fund', 'error');
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = `<i class="fa-solid fa-plus-circle"></i> Create Fund`;
-        }
-      });
+      document.getElementById('searchInput').addEventListener('input', e => { state.filterText = e.target.value; renderMatrixTable(); });
+      document.getElementById('yearSelector').addEventListener('change', e => { state.selectedYear = e.target.value; loadMatrix(); });
+      document.getElementById('quickPayForm').addEventListener('submit', handlePaymentSubmit);
     }
 
-    // Load Payment Logs History
-    async function loadPaymentHistory() {
-      const tbody = document.getElementById('historyTableBody');
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading recent records...</td></tr>`;
-
+    async function handlePaymentSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitPayment');
+      btn.disabled = true;
       try {
-        const res = await apiRequest(`${API_BASE}/women/payments?limit=50&year=${state.selectedYear}`);
-        const list = Array.isArray(res) ? res : (res?.data || res?.payments || []);
-        if (!list || list.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--muted);">No payment logs recorded yet for ${state.selectedYear}.</td></tr>`;
-          return;
-        }
+        const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
+        const months = Array.from(document.querySelectorAll('#payMonthsGrid .status-paid')).map(el => MONTH_NAMES.indexOf(el.innerText) + 1);
+        const amtPerMonth = parseFloat(document.getElementById('payAmount').value) / (months.length || 1);
 
-        tbody.innerHTML = list.map(p => {
-          const fund = state.funds.find(f => f.id === p.collectionType) || { name: p.collectionType };
-          const dateStr = p.paymentDate ? new Date(p.paymentDate).toLocaleDateString() : '—';
-          return `
-            <tr>
-              <td style="font-family: monospace; font-weight: 700; color: var(--rose);">${escapeHtml(p.receiptNumber || ('REC-' + p.id.substring(0,6)))}</td>
-              <td>${dateStr}</td>
-              <td style="font-weight: 600;">${escapeHtml(p.fullName || p.memberName || 'Sister')}</td>
-              <td><span class="fund-rate-badge">${escapeHtml(fund.name || p.collectionType)}</span></td>
-              <td><b>${MONTH_NAMES[(p.month || 1) - 1]} ${p.year || ''}</b></td>
-              <td style="font-weight: 800; color: #047857;">GH₵ ${Number(p.amount).toFixed(2)}</td>
-              <td><span style="font-size: 0.75rem; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${p.paymentMethod || 'CASH'}</span></td>
-              <td>
-                <button class="btn-outline" style="padding: 4px 8px; font-size: 0.75rem;" onclick="printSingleReceipt('${escapeHtml(p.id)}', '${escapeHtml(p.fullName || p.memberName)}', '${escapeHtml(fund.name)}', ${p.amount}, '${MONTH_NAMES[(p.month||1)-1]} ${p.year}', '${p.receiptNumber||p.id}', '${dateStr}', '${p.paymentMethod||'CASH'}')">
-                  <i class="fa-solid fa-print"></i> Receipt
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-      } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: #ef4444;">Failed to load payment logs.</td></tr>`;
-      }
+        for (const m of months) {
+          await fetch(`${API_BASE}/women/payments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({
+              womenMemberId: document.getElementById('payMemberId').value,
+              fullName: document.getElementById('payMemberName').value,
+              collectionType: document.getElementById('payCollectionType').value,
+              month: m,
+              year: state.selectedYear,
+              amount: amtPerMonth,
+              paymentMethod: document.getElementById('payMethod').value
+            })
+          });
+        }
+        showToast('Payment saved successfully!', 'success');
+        closeModal('quickPayModal');
+        loadMatrix();
+      } catch (e) { showToast('Error saving payment.', 'error'); }
+      btn.disabled = false;
     }
 
-    // Print Receipt Helper
-    window.printSingleReceipt = function(id, name, fund, amount, period, receiptNo, dateStr, method) {
-      const container = document.getElementById('printableReceipt');
-      container.innerHTML = `
-        <div style="max-width: 480px; margin: 0 auto; border: 2px solid #0f172a; padding: 24px; font-family: Inter, sans-serif; background: #fff;">
-          <div style="text-align: center; border-bottom: 2px dashed #94a3b8; padding-bottom: 14px; margin-bottom: 14px;">
-            <h2 style="font-family: Cinzel, serif; margin-bottom: 4px; font-size: 1.3rem;">SOLUTIONS FAITH MINISTRY</h2>
-            <div style="font-size: 0.85rem; font-weight: 700; color: #e11d48;">WOMEN'S MINISTRY OFFICIAL PAYMENT RECEIPT</div>
-            <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Receipt #: <b>${receiptNo}</b> | Date: <b>${dateStr}</b></div>
-          </div>
-          <table style="width: 100%; font-size: 0.88rem; border-collapse: collapse; margin-bottom: 16px;">
-            <tr><td style="padding: 6px 0; color: #64748b;">Sister Name:</td><td style="font-weight: 700; text-align: right;">${name}</td></tr>
-            <tr><td style="padding: 6px 0; color: #64748b;">Fund/Dues:</td><td style="font-weight: 700; text-align: right;">${fund}</td></tr>
-            <tr><td style="padding: 6px 0; color: #64748b;">Period/Month:</td><td style="font-weight: 700; text-align: right;">${period}</td></tr>
-            <tr><td style="padding: 6px 0; color: #64748b;">Payment Mode:</td><td style="font-weight: 700; text-align: right;">${method}</td></tr>
-            <tr style="border-top: 2px solid #0f172a; font-size: 1.1rem;"><td style="padding: 10px 0; font-weight: 800;">Amount Paid:</td><td style="font-weight: 800; text-align: right; color: #047857;">GH₵ ${Number(amount).toFixed(2)}</td></tr>
-          </table>
-          <div style="text-align: center; border-top: 1px dashed #cbd5e1; padding-top: 10px; font-size: 0.75rem; color: #64748b;">
-            May the Lord abundantly bless you and enlarge your territory!<br>
-            <i>Issued by Church Administration</i>
-          </div>
-        </div>
-      `;
-      window.print();
-    };
+    function showToast(msg, type) {
+      const container = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = 'status-pill status-' + (type==='success'?'paid':'unpaid');
+      t.style = 'padding:12px 20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); pointer-events:auto;';
+      t.innerHTML = msg;
+      container.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
 
-    // Export Matrix to Excel
-    function exportMatrixToExcel() {
-      const members = state.matrixData ? (state.matrixData.members || state.matrixData.matrix || []) : [];
-      if (!members || members.length === 0) {
-        showToast('No data available to export', 'error');
-        return;
-      }
-
-      const activeFund = state.funds.find(f => f.id === state.activeFundId) || { name: 'Women Dues' };
-      const rows = members.map(m => {
-        const row = {
-          'Sister Name': m.fullName || m.memberName,
-          'Phone': m.phone || 'N/A',
-          'Monthly Pledge': Number(m.pledgeAmount || 50)
-        };
-        for (let i = 1; i <= 12; i++) {
-          row[MONTH_NAMES[i-1]] = (m.months && m.months[i]) || 0;
-        }
-        row['Total Paid'] = m.totalPaid !== undefined ? m.totalPaid : (m.yearTotalPaid || 0);
-        return row;
-      });
-
-      const ws = XLSX.utils.json_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, activeFund.name.substring(0, 31));
-      XLSX.writeFile(wb, `${activeFund.name.replace(/\s+/g, '_')}_Matrix_${state.selectedYear}.xlsx`);
-      showToast('Excel matrix exported successfully!', 'success');
+    function toggleWomenPasswordVisibility() {
+      const p = document.getElementById('womenLoginPassword');
+      const i = document.getElementById('womenEyeIcon');
+      p.type = p.type === 'password' ? 'text' : 'password';
+      i.className = p.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
     }
 
     function escapeHtml(str) {
       if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    async function handleWomenLoginSubmit(e) {
+      e.preventDefault();
+      const err = document.getElementById('womenLoginErrorMsg');
+      const btn = document.getElementById('btnWomenLoginSubmit');
+      err.style.display = 'none';
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: document.getElementById('womenLoginEmail').value, password: document.getElementById('womenLoginPassword').value })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          sessionStorage.setItem('sfmi_token', data.accessToken);
+          localStorage.setItem('sfmi_token', data.accessToken);
+          window.location.reload();
+        } else {
+          err.style.display = 'block';
+          err.innerText = data.message || 'Login failed.';
+        }
+      } catch (e) { err.style.display = 'block'; err.innerText = 'Server error.'; }
+      btn.disabled = false;
+    }
+
+    function populateFundDropdowns() {
+      const s = document.getElementById('payCollectionType');
+      if (s) s.innerHTML = state.funds.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
     }
   </script>
+
 </body>
+
 </html>
