@@ -645,11 +645,13 @@
           if (res.ok) {
             const data = await res.json();
             const role = (data.user && data.user.role) ? data.user.role : '';
+            const email = (data.user && data.user.email || '').toLowerCase();
 
-            if (role === 'FINANCE') {
+            // Strictly block non-admin accounts from Admin Portal
+            if (role === 'FINANCE' || email === 'women@solutionsfaith.com') {
               purgeAuthSession();
               showLogin();
-              showToast('Access Denied: Treasury officers cannot access the Admin Portal.', 'error', 'Access Denied');
+              showToast('Access Denied: This account is restricted to its own specific portal.', 'error', 'Access Denied');
               return;
             }
 
@@ -963,12 +965,21 @@
         if (res.ok) {
           const data = await res.json();
           const role = (data.user && data.user.role) ? data.user.role : '';
+          const email = (data.user && data.user.email || '').toLowerCase();
 
-          // Strictly block Treasury/Finance accounts from accessing Admin Portal
+          // Strictly block Treasury and Women's Ministry accounts from Admin Portal
           if (role === 'FINANCE') {
             purgeAuthSession();
             errorMsg.style.display = 'block';
             errorMsg.innerText = 'Access Denied: Treasury Officers cannot access the Admin Portal. Please log in at Treasury Portal.';
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Admin Portal'; }
+            return;
+          }
+
+          if (email === 'women@solutionsfaith.com') {
+            purgeAuthSession();
+            errorMsg.style.display = 'block';
+            errorMsg.innerText = 'Access Denied: This account is restricted to the Women\'s Ministry Portal.';
             if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Admin Portal'; }
             return;
           }

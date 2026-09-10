@@ -126,12 +126,15 @@
         if (res.ok) {
           const data = await res.json();
           const role = (data.user && data.user.role) ? data.user.role : '';
+          const email = (data.user && data.user.email || '').toLowerCase();
 
-          if (!['FINANCE', 'SUPER_ADMIN', 'ADMIN'].includes(role)) {
+          // Strictly block non-treasury accounts from Treasury Portal
+          // Allow Super Admin for oversight
+          if (role !== 'FINANCE' && role !== 'SUPER_ADMIN') {
             purgeFinAuthSession();
             showFinLogin();
             document.documentElement.style.visibility = '';
-            showToast('Access Denied: The Treasury Portal (/finance) is strictly reserved for Treasury Officers and Administrators.', 'error', 'Access Denied');
+            showToast('Access Denied: The Treasury Portal is strictly reserved for Treasury Officers.', 'error', 'Access Denied');
             return;
           }
 
@@ -227,10 +230,14 @@
 
         if (res.ok) {
           const data = await res.json();
-          if (data.user && !['FINANCE', 'SUPER_ADMIN', 'ADMIN'].includes(data.user.role)) {
+          const role = data.user?.role || '';
+          const email = (data.user?.email || '').toLowerCase();
+
+          // Strictly block non-treasury accounts
+          if (role !== 'FINANCE' && role !== 'SUPER_ADMIN') {
             purgeFinAuthSession();
             errorMsg.style.display = 'block';
-            errorMsg.innerText = 'Access Denied: The Treasury Portal (/finance) is strictly reserved for Treasury & Finance Officers. Administrators please sign in at /admin.';
+            errorMsg.innerText = 'Access Denied: The Treasury Portal is strictly reserved for Treasury & Finance Officers.';
             if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = 'Sign In to Treasury Portal'; }
             return;
           }
