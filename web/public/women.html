@@ -285,9 +285,11 @@
     .status-unpaid { background: #f8fafc; color: #94a3b8; border: 1px dashed #cbd5e1; }
 
     /* Login Screen */
-    .login-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--light); z-index: 5000; }
+    .login-wrapper { display: flex; align-items: center; justify-content: center; background: var(--light); padding: 80px 20px; flex: 1; }
     .login-card { background: white; border: 1px solid var(--line); border-radius: 12px; padding: 40px; width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; }
-    .login-icon { width: 64px; height: 64px; background: var(--rose-subtle); color: var(--rose); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 20px; border: 2px solid var(--rose); }
+    .login-logo { width: 72px; height: 72px; border-radius: 50%; border: 2px solid var(--emerald); object-fit: cover; margin: 0 auto 20px; background: white; }
+    .btn-login { background: var(--emerald); color: white; }
+    .btn-login:hover { background: var(--emerald-dark); }
 
     /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(13, 26, 20, 0.6); backdrop-filter: blur(4px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -362,7 +364,7 @@
 
   <div class="login-wrapper" id="womenLoginScreen" style="display: none;">
     <div class="login-card">
-      <div class="login-icon"><i class="fas fa-venus"></i></div>
+      <img src="/church-logo.jpg" alt="Church Logo" class="login-logo">
       <h2 style="font-family: Manrope, sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 6px;">Women's Portal Login</h2>
       <p style="font-size: 13.5px; color: var(--muted); margin-bottom: 24px;">Enter authorized credentials to manage dues, welfare & contributions.</p>
       <form onsubmit="handleWomenLoginSubmit(event)" autocomplete="off">
@@ -380,7 +382,7 @@
           </div>
         </div>
         <div id="womenLoginErrorMsg" style="display: none; padding: 12px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; border-radius: 8px; font-size: 13px; margin-bottom: 16px; font-weight: 600;"></div>
-        <button type="submit" id="btnWomenLoginSubmit" class="btn-main btn-rose" style="width: 100%; justify-content: center; padding: 14px;">Sign In to Women Portal</button>
+        <button type="submit" id="btnWomenLoginSubmit" class="btn-main btn-login" style="width: 100%; justify-content: center; padding: 14px;">Sign In to Women Portal</button>
       </form>
     </div>
   </div>
@@ -675,6 +677,7 @@
       document.getElementById('womenLoginScreen').style.display = 'flex';
       document.getElementById('womenDashboardContent').style.display = 'none';
       document.getElementById('womenNavActions').style.display = 'none';
+      document.body.style.background = 'var(--light)';
     }
 
     function showWomenDashboard() {
