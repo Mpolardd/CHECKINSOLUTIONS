@@ -478,6 +478,11 @@ router.post('/payments', async (req, res, next) => {
     const resolvedCollection = (collectionType || 'WOMEN_DUES').trim();
     const dateStr = paymentDate || new Date().toISOString().slice(0, 10);
 
+    // Resolve human-readable name for the collection type
+    const allCollections = await getAllCollectionTypes();
+    const fundDetails = allCollections.find(c => normCol(c.id) === normCol(resolvedCollection) || normCol(c.name) === normCol(resolvedCollection));
+    const fundName = fundDetails ? fundDetails.name : resolvedCollection;
+
     // ── DEDUPLICATION GUARD ──
     const recentDuplicate = await prisma.auditLog.findFirst({
       where: {
@@ -518,6 +523,7 @@ router.post('/payments', async (req, res, next) => {
       paymentDate: dateStr,
       paymentMethod,
       collectionType: resolvedCollection,
+      collectionTypeName: fundName,
       recordedBy: recordedBy ? recordedBy.trim() : "Women's Ministry Leader",
       notes: notes ? notes.trim() : '',
       transactionRef

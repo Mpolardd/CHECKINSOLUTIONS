@@ -910,20 +910,25 @@
         const token = sessionStorage.getItem('sfmi_token') || localStorage.getItem('sfmi_token');
         const res = await fetch(`${API_BASE}/women/payments?limit=50&year=${state.selectedYear}`, { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json(); const payments = data.payments || data.data || [];
-        tbody.innerHTML = payments.map(p => `<tr>
-          <td>${p.receiptNumber}</td>
-          <td>${new Date(p.paymentDate).toLocaleDateString()}</td>
-          <td>${p.fullName}</td>
-          <td>${p.collectionType}</td>
-          <td>${MONTH_NAMES[p.month-1]}</td>
-          <td>GH₵${p.amount}</td>
-          <td>${p.paymentMethod}</td>
-          <td style="text-align: right;">
-            <button class="btn-main btn-outline" style="padding: 4px 8px; color: #c5221f; border-color: #fecdd3;" onclick="deletePayment('${p.paymentId || p.id}', '${escapeHtml(p.fullName)}', ${p.amount})">
-              <i class="fas fa-trash-alt"></i>
-            </button>
-          </td>
-        </tr>`).join('');
+        tbody.innerHTML = payments.map(p => {
+          const fund = state.funds.find(f => f.id === p.collectionType);
+          const fundName = fund ? fund.name : (p.collectionTypeName || p.collectionType);
+
+          return `<tr>
+            <td>${p.receiptNumber}</td>
+            <td>${new Date(p.paymentDate).toLocaleDateString()}</td>
+            <td>${p.fullName}</td>
+            <td>${fundName}</td>
+            <td>${MONTH_NAMES[p.month-1]}</td>
+            <td>GH₵${p.amount}</td>
+            <td>${p.paymentMethod}</td>
+            <td style="text-align: right;">
+              <button class="btn-main btn-outline" style="padding: 4px 8px; color: #c5221f; border-color: #fecdd3;" onclick="deletePayment('${p.paymentId || p.id}', '${escapeHtml(p.fullName)}', ${p.amount})">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </td>
+          </tr>`;
+        }).join('');
       } catch (e) { tbody.innerHTML = `<tr><td colspan="8">Error.</td></tr>`; }
     }
 
