@@ -2,7 +2,7 @@ const router = require('express').Router();
 const prisma = require('../../config/prisma');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
-const { requireAuth, requireRoles } = require('../../middleware/auth');
+const { requireAuth, requireRoles, requirePermission } = require('../../middleware/auth');
 const { normalizePhone } = require('../../utils/phone');
 const analyticsService = require('./attendanceAnalytics.service');
 const realtimeService = require('../realtime/realtime.service');
@@ -700,7 +700,7 @@ router.get('/service-types', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/services', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
+router.post('/services', requireAuth, requirePermission('programs'), async (req, res, next) => {
   try {
     const b = z.object({
       serviceTypeId: z.string(),
@@ -745,7 +745,7 @@ router.get('/programs', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/programs', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
+router.post('/programs', requireAuth, requirePermission('programs'), async (req, res, next) => {
   try {
     const program = req.body;
     if (!program || !program.id || !program.name) {
@@ -814,7 +814,7 @@ router.post('/programs', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), asyn
   } catch (e) { next(e); }
 });
 
-router.delete('/programs/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
+router.delete('/programs/:id', requireAuth, requirePermission('programs'), async (req, res, next) => {
   try {
     const { id } = req.params;
     const raw = decodeURIComponent(id).trim().toLowerCase();
@@ -867,7 +867,7 @@ router.get('/active-kiosk', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/active-kiosk', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
+router.post('/active-kiosk', requireAuth, requirePermission('programs'), async (req, res, next) => {
   try {
     const { programName } = req.body || {};
     await prisma.auditLog.deleteMany({
@@ -1488,7 +1488,7 @@ router.get('/analytics/member/:id', requireAuth, async (req, res, next) => {
 });
 
 // Record Pastoral Follow-Up Action & Note
-router.post('/analytics/pastoral-followup', requireAuth, async (req, res, next) => {
+router.post('/analytics/pastoral-followup', requireAuth, requirePermission('attendance'), async (req, res, next) => {
   try {
     const { memberId, status, note } = req.body;
     if (!memberId || !status) {

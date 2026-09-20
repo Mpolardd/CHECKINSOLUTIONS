@@ -185,7 +185,7 @@
 
       const permissions = isSuperAdmin 
         ? ['attendance', 'finance', 'analytics', 'visitors', 'members', 'programs', 'partnership', 'subAdmins', 'reports', 'finReports', 'settings']
-        : rawPerms.filter(p => p !== 'finance' && p !== 'subAdmins');
+        : rawPerms.filter(p => p !== 'subAdmins');
 
       if (!isSuperAdmin && (rawPerms.includes('attendance') || rawPerms.includes('members') || rawPerms.includes('visitors'))) {
         if (!permissions.includes('analytics')) permissions.push('analytics');
@@ -209,13 +209,14 @@
         if (!isAllowed && sec) sec.style.display = 'none';
       });
 
-      // Strict enforcement: Financial Overview & Analytics tab & section is NEVER visible to Sub-Admins
+      // Strict enforcement: Financial Overview & Analytics tab & section visibility
+      const hasFinance = permissions.includes('finance');
       const finBtn = document.getElementById('tabBtnFinance');
-      if (finBtn && !isSuperAdmin) finBtn.style.display = 'none';
+      if (finBtn) finBtn.style.display = hasFinance ? 'inline-flex' : 'none';
       const mobFinBtn = document.getElementById('mobBtnFinance');
-      if (mobFinBtn && !isSuperAdmin) mobFinBtn.style.display = 'none';
+      if (mobFinBtn) mobFinBtn.style.display = hasFinance ? 'flex' : 'none';
       const secFin = document.getElementById('secFinance');
-      if (secFin && !isSuperAdmin) secFin.style.display = 'none';
+      if (secFin && !hasFinance) secFin.style.display = 'none';
 
       // Manage Sub-Admins button & tab is strictly Super Admin only
       const btnSub = document.getElementById('btnManageSubAdmins');
@@ -385,6 +386,7 @@
       if (document.getElementById('permAttendance').checked) perms.push('attendance');
       if (document.getElementById('permMembers').checked) perms.push('members');
       if (document.getElementById('permPrograms').checked) perms.push('programs');
+      if (document.getElementById('permFinance')?.checked) perms.push('finance');
       if (document.getElementById('permPartnership')?.checked) perms.push('partnership');
       if (document.getElementById('permReports')?.checked) perms.push('reports');
       if (document.getElementById('permFinReports')?.checked) perms.push('finReports');
@@ -449,6 +451,7 @@
       document.getElementById('editPermAttendance').checked = perms.includes('attendance');
       document.getElementById('editPermMembers').checked = perms.includes('members');
       document.getElementById('editPermPrograms').checked = perms.includes('programs');
+      if (document.getElementById('editPermFinance')) document.getElementById('editPermFinance').checked = perms.includes('finance');
       if (document.getElementById('editPermPartnership')) document.getElementById('editPermPartnership').checked = perms.includes('partnership');
       if (document.getElementById('editPermReports')) document.getElementById('editPermReports').checked = perms.includes('reports');
       if (document.getElementById('editPermFinReports')) document.getElementById('editPermFinReports').checked = perms.includes('finReports');
@@ -477,6 +480,7 @@
       if (document.getElementById('editPermAttendance').checked) perms.push('attendance');
       if (document.getElementById('editPermMembers').checked) perms.push('members');
       if (document.getElementById('editPermPrograms').checked) perms.push('programs');
+      if (document.getElementById('editPermFinance')?.checked) perms.push('finance');
       if (document.getElementById('editPermPartnership')?.checked) perms.push('partnership');
       if (document.getElementById('editPermReports')?.checked) perms.push('reports');
       if (document.getElementById('editPermFinReports')?.checked) perms.push('finReports');
@@ -725,6 +729,9 @@
 
       if (isSuperAdmin) {
         loadSubAdmins();
+      }
+
+      if (isSuperAdmin || permissions.includes('finance')) {
         loadFinanceData();
       }
 
@@ -2366,7 +2373,9 @@
         currentUser = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
       } catch (e) {}
       const isSubAdmin = currentUser && (currentUser.role === 'SUB_ADMIN' || currentUser.role === 'ADMIN');
-      if (isSubAdmin) {
+      const hasFinance = (currentUser && Array.isArray(currentUser.permissions)) ? currentUser.permissions.includes('finance') : false;
+
+      if (isSubAdmin && !hasFinance) {
         rawFinanceEntries = [];
         filteredFinanceEntries = [];
         return;

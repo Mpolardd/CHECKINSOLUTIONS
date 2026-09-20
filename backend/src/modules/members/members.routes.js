@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { z } = require('zod');
 const prisma = require('../../config/prisma');
-const { requireAuth, requireRoles } = require('../../middleware/auth');
+const { requireAuth, requireRoles, requirePermission } = require('../../middleware/auth');
 const { normalizePhone } = require('../../utils/phone');
 const realtimeService = require('../realtime/realtime.service');
 
@@ -99,7 +99,7 @@ router.get('/', requireAuth, async (req, res, next) => {
   }
 });
 
-router.post('/', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION'), async (req, res, next) => {
+router.post('/', requireAuth, requirePermission('members', 'REGISTRATION'), async (req, res, next) => {
   try {
     const b = memberSchema.parse(req.body);
     const normPhone = normalizePhone(b.phone);
@@ -172,7 +172,7 @@ router.post('/', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION
 });
 
 // Photo Upload Helper - Supports Supabase Storage Bucket or optimized storage
-router.post('/upload-photo', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION'), async (req, res, next) => {
+router.post('/upload-photo', requireAuth, requirePermission('members', 'REGISTRATION'), async (req, res, next) => {
   try {
     const { photoData, fileName } = req.body || {};
     if (!photoData || typeof photoData !== 'string') {
@@ -321,11 +321,11 @@ const updateMemberHandler = async (req, res, next) => {
   }
 };
 
-router.put('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION'), updateMemberHandler);
-router.patch('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN', 'REGISTRATION'), updateMemberHandler);
+router.put('/:id', requireAuth, requirePermission('members', 'REGISTRATION'), updateMemberHandler);
+router.patch('/:id', requireAuth, requirePermission('members', 'REGISTRATION'), updateMemberHandler);
 
 // Soft Delete to safeguard historical attendance and reporting data
-router.delete('/:id', requireAuth, requireRoles('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
+router.delete('/:id', requireAuth, requirePermission('members'), async (req, res, next) => {
   try {
     const member = await prisma.member.findUnique({ where: { id: req.params.id } });
     if (!member) return res.status(404).json({ error: 'Member not found' });

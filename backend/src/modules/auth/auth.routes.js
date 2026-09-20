@@ -286,7 +286,7 @@ router.post('/subadmins', requireAuth, requireRoles('SUPER_ADMIN'), async (req, 
     });
 
     const allowedPerms = Array.isArray(permissions)
-      ? permissions.filter(p => p !== 'finance' && p !== 'subAdmins')
+      ? permissions.filter(p => p !== 'subAdmins')
       : ['attendance', 'members', 'programs', 'partnership', 'reports'];
 
     await prisma.auditLog.create({
@@ -334,7 +334,7 @@ router.put('/subadmins/:id', requireAuth, requireRoles('SUPER_ADMIN'), async (re
     }
 
     const allowedPerms = Array.isArray(permissions)
-      ? permissions.filter(p => p !== 'finance' && p !== 'subAdmins')
+      ? permissions.filter(p => p !== 'subAdmins')
       : ['attendance', 'members', 'programs', 'partnership', 'reports'];
 
     await prisma.auditLog.create({

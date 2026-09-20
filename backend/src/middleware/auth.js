@@ -26,4 +26,47 @@ function requireRoles(...roles) {
   };
 }
 
-module.exports = { requireAuth, requireRoles };
+/**
+ * Enhanced middleware to check for specific module permissions.
+ * Grants access if:
+ * 1. User is SUPER_ADMIN
+ * 2. User has the specified role (optional)
+ * 3. User is an ADMIN (Sub-Admin) and has the required permission string in their profile audit log
+ */
+function requirePermission(permissionName, requiredRole = null) {
+  return async (req, res, next) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+
+      const { role } = req.user;
+
+      // 1. Super Admins bypass all module-level permission checks
+      if (role === 'SUPER_ADMIN') return next();
+
+      // 2. Check if user matches a specific required role (e.g. FINANCE for the whole module)
+      if (requiredRole && role === requiredRole) return next();
+
+      // 3. For Sub-Admins (ADMIN role), check the dynamic permissions list in their profile
+      if (role === 'ADMIN') {
+        const targetUserId = req.user.id || req.user.userId || req.user.sub;
+        const log = await prisma.auditLog.findFirst({
+          where: { entity: 'SUB_ADMIN_PROFILE', entityId: targetUserId },
+          orderBy: { createdAt: 'desc' }
+        });
+        const perms = (log && log.metadata && Array.isArray(log.metadata.permissions)) ? log.metadata.permissions : [];
+
+        if (perms.includes(permissionName)) {
+          return next();
+        }
+      }
+
+      return res.status(403).json({
+        error: `Insufficient permissions: '${permissionName}' access required for this action.`
+      });
+    } catch (err) {
+      return res.status(500).json({ error: 'Internal authorization error during permission check' });
+    }
+  };
+}
+
+module.exports = { requireAuth, requireRoles, requirePermission };
