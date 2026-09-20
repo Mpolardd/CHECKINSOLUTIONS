@@ -3,6 +3,32 @@ const { z } = require('zod');
 const prisma = require('../../config/prisma');
 const { requireAuth, requireRoles } = require('../../middleware/auth');
 
+// Middleware to grant access if user is SUPER_ADMIN, FINANCE, or ADMIN with 'partnership' permission
+async function requirePartnershipAccess(req, res, next) {
+  try {
+    const role = req.user?.role;
+    if (role === 'SUPER_ADMIN' || role === 'FINANCE') {
+      return next();
+    }
+
+    if (role === 'ADMIN') {
+      const targetUserId = req.user.id || req.user.userId || req.user.sub;
+      const log = await prisma.auditLog.findFirst({
+        where: { entity: 'SUB_ADMIN_PROFILE', entityId: targetUserId },
+        orderBy: { createdAt: 'desc' }
+      });
+      const perms = (log && log.metadata && Array.isArray(log.metadata.permissions)) ? log.metadata.permissions : [];
+      if (perms.includes('partnership')) {
+        return next();
+      }
+    }
+
+    return res.status(403).json({ error: 'Insufficient permissions for Partnership & Pledges' });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal authorization error' });
+  }
+}
+
 const financial = z.object({
   accountId: z.string(),
   memberId: z.string().optional(),
@@ -307,7 +333,7 @@ router.get('/collection-types', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/collection-types', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
+router.post('/collection-types', requireAuth, requirePartnershipAccess, async (req, res, next) => {
   try {
     const { name, category = 'Ministry Collection', description = '', frequency = 'MONTHLY', targetAmount = 0, icon = 'fas fa-layer-group', color = '#10b981', targetGroup = 'ALL' } = req.body || {};
     if (!name || !name.trim()) {
@@ -342,7 +368,7 @@ router.post('/collection-types', requireAuth, requireRoles('SUPER_ADMIN', 'FINAN
   } catch (e) { next(e); }
 });
 
-router.delete('/collection-types/:id', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
+router.delete('/collection-types/:id', requireAuth, requirePartnershipAccess, async (req, res, next) => {
   try {
     const { id } = req.params;
     const cleanId = (id || '').trim();
@@ -415,7 +441,7 @@ router.get('/partners', requireAuth, async (req, res, next) => {
 });
 
 // Register or Update a Partner
-router.post('/partners', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
+router.post('/partners', requireAuth, requirePartnershipAccess, async (req, res, next) => {
   try {
     const { id, memberId, memberName, phone, email, pledgeAmount, currency = 'GHS', frequency = 'MONTHLY', collectionType = 'PARTNERSHIP', startDate, notes } = req.body || {};
     if (!memberName || !pledgeAmount) {
@@ -457,7 +483,7 @@ router.post('/partners', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), as
 });
 
 // Deactivate / Delete Partner
-router.delete('/partners/:id', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
+router.delete('/partners/:id', requireAuth, requirePartnershipAccess, async (req, res, next) => {
   try {
     const { id } = req.params;
     await prisma.auditLog.deleteMany({
@@ -468,7 +494,7 @@ router.delete('/partners/:id', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE
 });
 
 // Record a Partnership Payment
-router.post('/partnerships/payments', requireAuth, requireRoles('SUPER_ADMIN', 'FINANCE'), async (req, res, next) => {
+router.post('/partnerships/payments', requireAuth, requirePartnershipAccess, async (req, res, next) => {
   try {
     const { partnerId, memberName, amount, targetMonth, paymentDate, paymentMethod = 'CASH', collectionType, recordedBy = 'Treasury Officer', notes } = req.body || {};
     if (!partnerId || !amount || !targetMonth) {
