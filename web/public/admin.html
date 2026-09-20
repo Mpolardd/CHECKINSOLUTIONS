@@ -1887,6 +1887,13 @@
       background: #94a3b8;
       animation: none;
     }
+
+    /* Autocomplete Suggestions Box */
+    .suggestions-box { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--line); border-radius: 0 0 8px 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 3000; max-height: 200px; overflow-y: auto; display: none; }
+    .suggestion-item { padding: 10px 14px; cursor: pointer; font-size: 13.5px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: #f0fdf4; }
+    .suggestion-item .member-tag { font-size: 10px; font-weight: 800; text-transform: uppercase; background: #f1f5f9; color: var(--muted); padding: 2px 6px; border-radius: 4px; }
   </style>
 </head>
 
@@ -4573,9 +4580,10 @@
             </select>
           </div>
 
-          <div class="form-group">
+          <div class="form-group" style="position: relative;">
             <label for="adminRegPartnerName" class="form-label">Member Full Name *</label>
-            <input required type="text" id="adminRegPartnerName" class="form-ctrl" placeholder="e.g. Deaconess Mary Mensah" />
+            <input required type="text" id="adminRegPartnerName" class="form-ctrl" placeholder="Type member name to search..." oninput="handlePartnerMemberSearchInput(this.value)" autocomplete="off" />
+            <div id="partnerMemberSuggestionsBox" class="suggestions-box"></div>
           </div>
 
           <div class="form-group">

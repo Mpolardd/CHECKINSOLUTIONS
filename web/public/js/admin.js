@@ -6015,7 +6015,7 @@ closeCreateProgramModal();
       }
     }
 
-    function openAdminRegisterPartnerModal() {
+    window.openAdminRegisterPartnerModal = function() {
       const modal = document.getElementById('adminRegisterPartnerModal');
       if (!modal) return;
       populateCollectionTypeDropdowns();
@@ -6027,6 +6027,10 @@ closeCreateProgramModal();
       document.getElementById('adminRegPartnerPledge').value = '';
       document.getElementById('adminRegPartnerStartDate').value = formatLocalDate(new Date());
       document.getElementById('adminRegPartnerNotes').value = '';
+
+      const box = document.getElementById('partnerMemberSuggestionsBox');
+      if (box) box.style.display = 'none';
+
       modal.style.display = 'flex';
       modal.classList.add('active');
       setTimeout(() => {
@@ -6042,6 +6046,52 @@ closeCreateProgramModal();
         modal.classList.remove('active');
       }
     }
+
+    window.handlePartnerMemberSearchInput = function(query) {
+      const box = document.getElementById('partnerMemberSuggestionsBox');
+      if (!box) return;
+
+      const q = query.trim().toLowerCase();
+      if (!q || q.length < 2) {
+        box.style.display = 'none';
+        return;
+      }
+
+      const matches = allMembers.filter(m =>
+        `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) ||
+        (m.phone && m.phone.includes(q))
+      ).slice(0, 5);
+
+      if (matches.length === 0) {
+        box.style.display = 'none';
+        return;
+      }
+
+      box.innerHTML = matches.map(m => {
+        const fullName = `${m.firstName} ${m.lastName}`.trim();
+        const phone = m.phone || '';
+        const role = m.role || 'Member';
+        return `
+          <div class="suggestion-item" onclick="selectPartnerMemberSuggestion('${escapeHtml(fullName)}', '${escapeHtml(phone)}')">
+            <div>
+              <strong>${escapeHtml(fullName)}</strong><br/>
+              <small style="color:var(--muted);">${escapeHtml(phone) || 'No phone'}</small>
+            </div>
+            <span class="member-tag">${escapeHtml(role)}</span>
+          </div>`;
+      }).join('');
+      box.style.display = 'block';
+    };
+
+    window.selectPartnerMemberSuggestion = function(name, phone) {
+      const nameInput = document.getElementById('adminRegPartnerName');
+      const phoneInput = document.getElementById('adminRegPartnerPhone');
+      const box = document.getElementById('partnerMemberSuggestionsBox');
+
+      if (nameInput) nameInput.value = name;
+      if (phoneInput) phoneInput.value = phone;
+      if (box) box.style.display = 'none';
+    };
 
     async function handleAdminSavePartnerSubmit(e) {
       e.preventDefault();
