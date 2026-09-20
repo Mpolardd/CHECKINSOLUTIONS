@@ -5919,9 +5919,11 @@ closeCreateProgramModal();
           let badge = `<span style="color:#94a3b8; font-size:11px;">—</span>`;
 
           if (mInfo.status === 'PAID') {
-            badge = `<span style="background:#d1fae5; color:#065f46; font-weight:800; font-size:10.5px; padding:3px 5px; border-radius:4px; display:inline-block;" title="GHS ${mInfo.paid.toFixed(2)} Paid in Full">✓ ${mInfo.paid >= 1000 ? (mInfo.paid/1000).toFixed(1)+'k' : mInfo.paid.toFixed(0)}</span>`;
+            const displayAmt = mInfo.paid >= 1000 ? (mInfo.paid/1000).toFixed(1)+'k' : (mInfo.paid % 1 === 0 ? mInfo.paid.toFixed(0) : mInfo.paid.toFixed(2));
+            badge = `<span style="background:#d1fae5; color:#065f46; font-weight:800; font-size:10.5px; padding:3px 5px; border-radius:4px; display:inline-block;" title="GHS ${mInfo.paid.toFixed(2)} Paid in Full">✓ ${displayAmt}</span>`;
           } else if (mInfo.status === 'PARTIAL') {
-            badge = `<span style="background:#fef3c7; color:#92400e; font-weight:800; font-size:10.5px; padding:3px 5px; border-radius:4px; display:inline-block;" title="Partial: GHS ${mInfo.paid.toFixed(2)} of GHS ${mInfo.pledge.toFixed(2)}">~ ${mInfo.paid.toFixed(0)}</span>`;
+            const displayAmt = mInfo.paid >= 1000 ? (mInfo.paid/1000).toFixed(1)+'k' : (mInfo.paid % 1 === 0 ? mInfo.paid.toFixed(0) : mInfo.paid.toFixed(2));
+            badge = `<span style="background:#fef3c7; color:#92400e; font-weight:800; font-size:10.5px; padding:3px 5px; border-radius:4px; display:inline-block;" title="Partial: GHS ${mInfo.paid.toFixed(2)} of GHS ${mInfo.pledge.toFixed(2)}">~ ${displayAmt}</span>`;
           } else if (mInfo.status === 'MISSED') {
             badge = `<span style="background:#fee2e2; color:#991b1b; font-weight:800; font-size:10.5px; padding:3px 5px; border-radius:4px; display:inline-block;" title="Missed Payment: GHS 0.00">✕ Miss</span>`;
           } else if (mInfo.status === 'DUE') {
@@ -6204,6 +6206,13 @@ closeCreateProgramModal();
       const btn = document.getElementById('btnAdminSubmitPay');
       if (btn) { btn.disabled = true; btn.innerText = 'Recording payment…'; }
 
+      // Get current user's name for attribution
+      let recordedBy = 'Super Admin';
+      try {
+        const user = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
+        if (user && user.name) recordedBy = user.name;
+      } catch (e) {}
+
       try {
         const token = await getAdminAuthToken();
         const res = await fetch(`${API_BASE}/finance/partnerships/payments`, {
@@ -6213,13 +6222,14 @@ closeCreateProgramModal();
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           },
           body: JSON.stringify({
-            partnerId, memberName, amount, targetMonth, paymentDate, paymentMethod, collectionType, recordedBy: 'Super Admin', notes
+            partnerId, memberName, amount, targetMonth, paymentDate, paymentMethod, collectionType, recordedBy, notes
           })
         });
 
         if (res.ok) {
           closeAdminRecordPaymentModal();
           showToast(`Contribution of <strong>GHS ${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong> for <strong>${escapeHtml(memberName)}</strong> saved to <strong>${escapeHtml(collectionType)}</strong>!`, 'success', 'Payment Recorded');
+          isPartnershipDataFetched = false; // Invalidate cache to force fresh fetch
           loadPartnershipMatrix();
         } else {
           const err = await res.json();
@@ -6308,6 +6318,7 @@ closeCreateProgramModal();
         if (res.ok) {
           showToast('Payment record removed and ledger updated.', 'success', 'Payment Deleted');
           // Refresh both the history modal and the main matrix
+          isPartnershipDataFetched = false; // Invalidate cache
           viewPartnerHistory(partnerId);
           loadPartnershipMatrix();
         } else {
