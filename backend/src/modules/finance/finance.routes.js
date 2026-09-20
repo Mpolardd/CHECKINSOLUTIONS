@@ -458,6 +458,7 @@ router.post('/partnerships/payments', requireAuth, requirePermission('partnershi
     const paymentId = `pay_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const parsedAmount = Number(amount);
     const dateStr = paymentDate || new Date().toISOString().slice(0, 10);
+    const transactionRef = `${resolvedCollectionType.slice(0, 4).toUpperCase()}-${paymentId.slice(-6).toUpperCase()}`;
 
     const paymentMeta = {
       paymentId,
@@ -469,7 +470,8 @@ router.post('/partnerships/payments', requireAuth, requirePermission('partnershi
       paymentMethod,
       collectionType: resolvedCollectionType,
       recordedBy,
-      notes: notes || ''
+      notes: notes || '',
+      transactionRef
     };
 
     // Save payment log
@@ -500,13 +502,56 @@ router.post('/partnerships/payments', requireAuth, requirePermission('partnershi
           accountId: partnerAccount.id,
           type: 'INCOME',
           amount: parsedAmount,
-          reference: `${resolvedCollectionType.slice(0, 4).toUpperCase()}-${paymentId.slice(-6).toUpperCase()}`,
+          reference: transactionRef,
           description: `${resolvedCollectionType} Contribution: ${memberName} for ${targetMonth} via ${paymentMethod}`
         }
       });
     } catch (err) {}
 
     res.status(201).json(paymentMeta);
+  } catch (e) { next(e); }
+});
+
+// Delete a partnership payment record
+router.delete('/partnerships/payments/:id', requireAuth, requirePermission('partnership', 'FINANCE'), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Find the payment record to get metadata (transaction reference)
+    const log = await prisma.auditLog.findFirst({
+      where: { entity: 'PARTNERSHIP_PAYMENT', entityId: id }
+    });
+
+    if (!log) {
+      return res.status(404).json({ error: 'Payment record not found' });
+    }
+
+    const metadata = log.metadata || {};
+    const transactionRef = metadata.transactionRef;
+
+    await prisma.$transaction(async (tx) => {
+      // 2. Delete the associated financial transaction if reference exists
+      if (transactionRef) {
+        await tx.financialTransaction.deleteMany({
+          where: { reference: transactionRef }
+        });
+      } else {
+        // Fallback for older records without explicit transactionRef in metadata
+        // Reconstruct from old pattern: ${resolvedCollectionType.slice(0, 4).toUpperCase()}-${paymentId.slice(-6).toUpperCase()}
+        const colType = metadata.collectionType || 'PARTNERSHIP';
+        const legacyRef = `${colType.slice(0, 4).toUpperCase()}-${id.slice(-6).toUpperCase()}`;
+        await tx.financialTransaction.deleteMany({
+          where: { reference: legacyRef }
+        });
+      }
+
+      // 3. Delete the audit log entry
+      await tx.auditLog.deleteMany({
+        where: { entity: 'PARTNERSHIP_PAYMENT', entityId: id }
+      });
+    });
+
+    res.json({ success: true, message: 'Payment record and associated ledger entry removed successfully' });
   } catch (e) { next(e); }
 });
 

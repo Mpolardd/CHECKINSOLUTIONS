@@ -6263,6 +6263,11 @@ closeCreateProgramModal();
                 <td style="padding: 10px 12px;"><strong style="color: var(--emerald-dark);">GHS ${(Number(p.amount) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></td>
                 <td style="padding: 10px 12px;"><span style="font-size: 11px; font-weight: 700; text-transform: uppercase;">${p.paymentMethod || 'CASH'}</span></td>
                 <td style="padding: 10px 12px; font-size: 12px; color: var(--muted);">${escapeHtml(p.recordedBy || 'Treasury')}</td>
+                <td style="padding: 10px 12px; text-align: center;">
+                  <button type="button" class="btn-main" style="padding: 4px 8px; font-size: 11px; background: #c5221f;" onclick="deletePartnerPayment('${p.paymentId || p.id}', '${partnerId}', ${p.amount}, '${p.targetMonth}')" title="Delete Payment">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
               </tr>
             `).join('');
             return;
@@ -6273,13 +6278,46 @@ closeCreateProgramModal();
       tbody.innerHTML = `<tr><td colspan="5" style="padding:24px; text-align:center; color:var(--muted);">No payment records found for this partner.</td></tr>`;
     }
 
-    function closePartnerHistoryModal() {
+    window.closePartnerHistoryModal = function() {
       const modal = document.getElementById('adminPartnerHistoryModal');
       if (modal) {
         modal.style.display = 'none';
         modal.classList.remove('active');
       }
     }
+
+    window.deletePartnerPayment = async function(paymentId, partnerId, amount, targetMonth) {
+      const confirmed = await showConfirmModal(
+        'Delete Payment Record?',
+        `Are you sure you want to permanently delete the payment of <strong>GHS ${Number(amount).toLocaleString()}</strong> for <strong>${targetMonth}</strong>?\n\nThis will also remove the entry from the main church financial ledger.`,
+        'Delete Payment',
+        'fas fa-trash-alt',
+        'Delete Payment',
+        '#c5221f'
+      );
+
+      if (!confirmed) return;
+
+      try {
+        const token = await getAdminAuthToken();
+        const res = await fetch(`${API_BASE}/finance/partnerships/payments/${paymentId}`, {
+          method: 'DELETE',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+
+        if (res.ok) {
+          showToast('Payment record removed and ledger updated.', 'success', 'Payment Deleted');
+          // Refresh both the history modal and the main matrix
+          viewPartnerHistory(partnerId);
+          loadPartnershipMatrix();
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Failed to delete payment.', 'error', 'Delete Failed');
+        }
+      } catch (err) {
+        showToast('Network error deleting payment.', 'error', 'Network Error');
+      }
+    };
 
     function deletePartnerFromAdmin(partnerId) {
       showConfirmModal(
