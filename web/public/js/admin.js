@@ -6209,9 +6209,14 @@ closeCreateProgramModal();
       // Get current user's name for attribution
       let recordedBy = 'Super Admin';
       try {
-        const user = JSON.parse(sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user'));
-        if (user && user.name) recordedBy = user.name;
-      } catch (e) {}
+        const storedUser = sessionStorage.getItem('sfmi_current_user') || localStorage.getItem('sfmi_current_user');
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          if (user && user.name) recordedBy = user.name;
+        }
+      } catch (e) {
+        console.error('Failed to parse current user for attribution:', e);
+      }
 
       try {
         const token = await getAdminAuthToken();

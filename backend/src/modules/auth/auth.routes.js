@@ -15,13 +15,13 @@ if (!process.env.JWT_ACCESS_SECRET || process.env.JWT_ACCESS_SECRET.trim().lengt
 
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
 
-function accessToken(user) {
+function accessToken(user, name = null) {
   const secret = process.env.JWT_ACCESS_SECRET;
   if (!secret) throw new Error('JWT_ACCESS_SECRET is missing');
   const rawMin = parseInt(process.env.ACCESS_TOKEN_MINUTES, 10);
   const minutes = (!isNaN(rawMin) && rawMin >= 45) ? rawMin : 1440;
   return jwt.sign(
-    { sub: user.id, userId: user.id, email: user.email, role: user.role, memberId: user.memberId || null },
+    { sub: user.id, userId: user.id, email: user.email, role: user.role, name: name, memberId: user.memberId || null },
     secret,
     { expiresIn: `${minutes}m` }
   );
@@ -38,6 +38,37 @@ async function refreshToken(user) {
     }
   });
   return raw;
+}
+
+async function computeUserName(user) {
+  let name = '';
+  const emailNorm = (user.email || '').toLowerCase();
+
+  if (user.role === 'ADMIN' || user.role === 'SUB_ADMIN') {
+    const log = await prisma.auditLog.findFirst({
+      where: { entity: 'SUB_ADMIN_PROFILE', entityId: user.id },
+      orderBy: { createdAt: 'desc' }
+    });
+    if (log && log.metadata && log.metadata.name) {
+      name = log.metadata.name;
+    }
+  }
+
+  if (!name && user.member && user.member.firstName) {
+    name = `${user.member.firstName} ${user.member.lastName || ''}`.trim();
+  }
+
+  if (!name) {
+    if (emailNorm === 'admin@solutionsfaith.com' || emailNorm === 'admin@example.com') {
+      name = 'Super Admin';
+    } else if (emailNorm === 'women@solutionsfaith.com') {
+      name = 'Women Ministry Leader';
+    } else {
+      const username = user.email.split('@')[0];
+      name = username.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+  }
+  return name;
 }
 
 router.post('/login', async (req, res, next) => {
@@ -75,7 +106,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    let name = '';
+    const name = await computeUserName(user);
     let permissions = user.role === 'SUPER_ADMIN'
       ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'finReports', 'subAdmins', 'women']
       : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']);
@@ -85,24 +116,8 @@ router.post('/login', async (req, res, next) => {
         where: { entity: 'SUB_ADMIN_PROFILE', entityId: user.id },
         orderBy: { createdAt: 'desc' }
       });
-      if (log && log.metadata) {
-        if (log.metadata.name) name = log.metadata.name;
-        if (Array.isArray(log.metadata.permissions)) permissions = log.metadata.permissions;
-      }
-    }
-
-    if (!name && user.member && user.member.firstName) {
-      name = `${user.member.firstName} ${user.member.lastName || ''}`.trim();
-    }
-
-    if (!name) {
-      if (emailNorm === 'admin@solutionsfaith.com' || emailNorm === 'admin@example.com') {
-        name = 'Super Admin';
-      } else if (emailNorm === 'women@solutionsfaith.com') {
-        name = 'Women Ministry Leader';
-      } else {
-        const username = user.email.split('@')[0];
-        name = username.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      if (log && log.metadata && Array.isArray(log.metadata.permissions)) {
+        permissions = log.metadata.permissions;
       }
     }
 
@@ -120,7 +135,7 @@ router.post('/login', async (req, res, next) => {
     } catch (e) {}
 
     res.json({
-      accessToken: accessToken(user),
+      accessToken: accessToken(user, name),
       refreshToken: await refreshToken(user),
       user: {
         id: user.id,
@@ -141,10 +156,11 @@ router.post('/refresh', async (req, res, next) => {
     const raw = req.body?.refreshToken;
     if (!raw) return res.status(400).json({ error: 'refreshToken required' });
     const hash = crypto.createHash('sha256').update(raw).digest('hex');
-    const row = await prisma.refreshToken.findUnique({ where: { tokenHash: hash }, include: { user: true } });
+    const row = await prisma.refreshToken.findUnique({ where: { tokenHash: hash }, include: { user: { include: { member: true } } } });
     if (!row || row.revokedAt || row.expiresAt < new Date()) return res.status(401).json({ error: 'Invalid refresh token' });
     await prisma.refreshToken.update({ where: { id: row.id }, data: { revokedAt: new Date() } });
-    res.json({ accessToken: accessToken(row.user), refreshToken: await refreshToken(row.user) });
+    const name = await computeUserName(row.user);
+    res.json({ accessToken: accessToken(row.user, name), refreshToken: await refreshToken(row.user) });
   } catch (e) {
     next(e);
   }
@@ -181,7 +197,7 @@ router.get('/verify', async (req, res) => {
       return res.status(401).json({ error: 'User account no longer exists' });
     }
 
-    let name = '';
+    const name = await computeUserName(user);
     let permissions = user.role === 'SUPER_ADMIN'
       ? ['finance', 'attendance', 'members', 'programs', 'partnership', 'reports', 'finReports', 'subAdmins', 'women']
       : (user.role === 'FINANCE' ? ['finance'] : ['attendance', 'members', 'programs', 'partnership', 'reports']);
@@ -191,25 +207,8 @@ router.get('/verify', async (req, res) => {
         where: { entity: 'SUB_ADMIN_PROFILE', entityId: user.id },
         orderBy: { createdAt: 'desc' }
       });
-      if (log && log.metadata) {
-        if (log.metadata.name) name = log.metadata.name;
-        if (Array.isArray(log.metadata.permissions)) permissions = log.metadata.permissions;
-      }
-    }
-
-    if (!name && user.member && user.member.firstName) {
-      name = `${user.member.firstName} ${user.member.lastName || ''}`.trim();
-    }
-
-    if (!name) {
-      const emailNorm = (user.email || '').toLowerCase();
-      if (emailNorm === 'admin@solutionsfaith.com' || emailNorm === 'admin@example.com') {
-        name = 'Super Admin';
-      } else if (emailNorm === 'women@solutionsfaith.com') {
-        name = 'Women Ministry Leader';
-      } else {
-        const username = user.email.split('@')[0];
-        name = username.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      if (log && log.metadata && Array.isArray(log.metadata.permissions)) {
+        permissions = log.metadata.permissions;
       }
     }
 

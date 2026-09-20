@@ -460,9 +460,11 @@ router.post('/partnerships/payments', requireAuth, requirePermission('partnershi
     const dateStr = paymentDate || new Date().toISOString().slice(0, 10);
     const transactionRef = `${resolvedCollectionType.slice(0, 4).toUpperCase()}-${paymentId.slice(-6).toUpperCase()}`;
 
-    // Resolve recordedBy: prioritize frontend value, but ensure it's not generic if user info is available
+    // Resolve recordedBy: strictly prioritize backend user name if available
     let effectiveRecordedBy = recordedBy;
-    if (!effectiveRecordedBy || effectiveRecordedBy === 'Super Admin' || effectiveRecordedBy === 'Treasury Officer') {
+    if (req.user && req.user.name && req.user.name !== 'Super Admin') {
+      effectiveRecordedBy = req.user.name;
+    } else if (!effectiveRecordedBy || effectiveRecordedBy === 'Super Admin' || effectiveRecordedBy === 'Treasury Officer') {
       if (req.user && req.user.name) effectiveRecordedBy = req.user.name;
     }
     if (!effectiveRecordedBy) effectiveRecordedBy = 'Treasury Officer';
