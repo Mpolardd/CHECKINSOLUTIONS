@@ -8559,14 +8559,11 @@ closeCreateProgramModal();
       const headers = [
         "#",
         "Attendee Full Name",
-        "Category",
         "Phone Number",
-        "WhatsApp Number",
-        "Gender",
         "Residential Location",
-        "Guardian / Parent",
-        "Member Since / Registered",
-        "Pastoral Care Status"
+        "Category",
+        "Gender",
+        "Member Since / Registered"
       ];
 
       const rows = list.map((m, idx) => {
@@ -8574,10 +8571,6 @@ closeCreateProgramModal();
           ? allMembers.find(am => am.id === m.memberId)
           : null;
 
-        const phoneClean = (m.phone || fullMem?.phone || '').replace(/[^0-9]/g, '');
-        const waNumber = phoneClean
-          ? (phoneClean.startsWith('0') ? '+233' + phoneClean.slice(1) : (phoneClean.startsWith('233') ? '+' + phoneClean : phoneClean))
-          : '';
         const cleanAddress = (m.address || fullMem?.address || '').replace(/^📍\s*/, '').trim();
         const rawCreatedAt = m.createdAt || fullMem?.createdAt;
         const regDate = rawCreatedAt ? new Date(rawCreatedAt).toLocaleDateString('en-GB') : '';
@@ -8585,14 +8578,11 @@ closeCreateProgramModal();
         return [
           idx + 1,
           m.name || `${m.firstName || ''} ${m.lastName || ''}`.trim() || fullMem?.name || '',
-          m.category || fullMem?.category || 'Adult',
           m.phone || fullMem?.phone || '',
-          waNumber,
-          m.gender || fullMem?.gender || 'Not Specified',
           cleanAddress,
-          m.guardian || fullMem?.guardian || '',
-          regDate,
-          m.pastoralFollowUp?.status || 'In Good Standing'
+          m.category || fullMem?.category || 'Adult',
+          m.gender || fullMem?.gender || 'Not Specified',
+          regDate
         ];
       });
 
@@ -8607,14 +8597,11 @@ closeCreateProgramModal();
           ws['!cols'] = [
             { wch: 6 },  // #
             { wch: 28 }, // Attendee Full Name
-            { wch: 15 }, // Category
             { wch: 18 }, // Phone Number
-            { wch: 20 }, // WhatsApp Number
+            { wch: 32 }, // Residential Location
+            { wch: 15 }, // Category
             { wch: 12 }, // Gender
-            { wch: 30 }, // Residential Location
-            { wch: 22 }, // Guardian / Parent
-            { wch: 16 }, // Member Since / Registered
-            { wch: 24 }  // Pastoral Care Status
+            { wch: 16 }  // Member Since / Registered
           ];
           const wb = XLSX.utils.book_new();
           XLSX.utils.book_append_sheet(wb, ws, "Attendee Profiles");
