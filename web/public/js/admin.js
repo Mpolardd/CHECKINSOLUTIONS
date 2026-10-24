@@ -7804,57 +7804,31 @@ closeCreateProgramModal();
       }).join('');
     }
 
-    function renderAnalyticsMasterTable() {
-      if (!currentAnalyticsData || !currentAnalyticsData.members) return;
-      const tbody = document.getElementById('analyticsMasterTableBody');
-      const mobContainer = document.getElementById('analyticsMobileCards');
-      if (!tbody) return;
+    function getFilteredAnalyticsMembersList(overrideFilter = null) {
+      if (!currentAnalyticsData || !currentAnalyticsData.members) return [];
+      let list = [...currentAnalyticsData.members];
+      const filter = overrideFilter !== null ? overrideFilter : (currentAnalyticsFilter || 'ALL');
 
-      let list = currentAnalyticsData.members;
-
-      // Update Preset Counts
-      const elCountAll = document.getElementById('anCountAll');
-      if (elCountAll) elCountAll.innerText = list.length;
-      const elCountMembers = document.getElementById('anCountMembers');
-      if (elCountMembers) elCountMembers.innerText = list.filter(m => !m.isVisitor).length;
-      const elCountVisitors = document.getElementById('anCountVisitors');
-      if (elCountVisitors) elCountVisitors.innerText = list.filter(m => m.isVisitor).length;
-      const elCountSun = document.getElementById('anCountSundayFaithful');
-      if (elCountSun) elCountSun.innerText = list.filter(m => m.sunday.consecutiveMissed === 0 && (m.sunday.attended > 0 || m.sunday.currentStreak > 0 || m.sunday.totalAttended > 0)).length;
-      const elCountWed = document.getElementById('anCountWedFaithful');
-      if (elCountWed) elCountWed.innerText = list.filter(m => m.wednesday.consecutiveMissed === 0 && (m.wednesday.attended > 0 || m.wednesday.currentStreak > 0 || m.wednesday.totalAttended > 0)).length;
-      const elCountFri = document.getElementById('anCountFriFaithful');
-      if (elCountFri) elCountFri.innerText = list.filter(m => m.friday.consecutiveMissed === 0 && (m.friday.attended > 0 || m.friday.currentStreak > 0 || m.friday.totalAttended > 0)).length;
-      const elCountPillars = document.getElementById('anCountPillars');
-      if (elCountPillars) elCountPillars.innerText = list.filter(m => m.overall.rate >= 75 || m.sunday.rate >= 80).length;
-      const elCountDeclining = document.getElementById('anCountDeclining');
-      if (elCountDeclining) elCountDeclining.innerText = list.filter(m => m.overall.isRapidlyDeclining || m.overall.rateDelta <= -30).length;
-      const elCountFollowUp = document.getElementById('anCountFollowUp');
-      if (elCountFollowUp) elCountFollowUp.innerText = list.filter(m => (m.sunday.consecutiveMissed >= 3 && m.sunday.totalAttended > 0) || (m.overall.consecutiveMissed >= 3 && m.overall.totalAttended > 0) || (m.pastoralFollowUp?.status || '').includes('Required')).length;
-      const elCountZero = document.getElementById('anCountZero');
-      if (elCountZero) elCountZero.innerText = list.filter(m => m.overall.attended === 0).length;
-
-      // Apply Filter
-      if (currentAnalyticsFilter === 'MEMBERS_ONLY') {
+      if (filter === 'MEMBERS_ONLY') {
         list = list.filter(m => !m.isVisitor);
-      } else if (currentAnalyticsFilter === 'VISITORS_ONLY') {
+      } else if (filter === 'VISITORS_ONLY') {
         list = list.filter(m => m.isVisitor);
-      } else if (currentAnalyticsFilter === 'SUNDAY_FAITHFUL') {
-        list = list.filter(m => m.sunday.consecutiveMissed === 0 && (m.sunday.attended > 0 || m.sunday.currentStreak > 0 || m.sunday.totalAttended > 0));
-      } else if (currentAnalyticsFilter === 'WEDNESDAY_FAITHFUL') {
-        list = list.filter(m => m.wednesday.consecutiveMissed === 0 && (m.wednesday.attended > 0 || m.wednesday.currentStreak > 0 || m.wednesday.totalAttended > 0));
-      } else if (currentAnalyticsFilter === 'FRIDAY_FAITHFUL') {
-        list = list.filter(m => m.friday.consecutiveMissed === 0 && (m.friday.attended > 0 || m.friday.currentStreak > 0 || m.friday.totalAttended > 0));
-      } else if (currentAnalyticsFilter === 'PILLARS') {
-        list = list.filter(m => m.overall.rate >= 75 || m.sunday.rate >= 80);
-      } else if (currentAnalyticsFilter === 'DECLINING') {
-        list = list.filter(m => m.overall.isRapidlyDeclining || m.overall.rateDelta <= -30);
-      } else if (currentAnalyticsFilter === 'FOLLOW_UP_REQUIRED') {
-        list = list.filter(m => (m.sunday.consecutiveMissed >= 3 && m.sunday.totalAttended > 0) || (m.overall.consecutiveMissed >= 3 && m.overall.totalAttended > 0) || (m.pastoralFollowUp?.status || '').includes('Required'));
-      } else if (currentAnalyticsFilter === 'ZERO') {
-        list = list.filter(m => m.overall.attended === 0);
-      } else if (currentAnalyticsFilter.startsWith('ACTIVE_STREAK_')) {
-        const parts = currentAnalyticsFilter.replace('ACTIVE_STREAK_', '').toLowerCase().split('_');
+      } else if (filter === 'SUNDAY_FAITHFUL') {
+        list = list.filter(m => m.sunday?.consecutiveMissed === 0 && (m.sunday?.attended > 0 || m.sunday?.currentStreak > 0 || m.sunday?.totalAttended > 0));
+      } else if (filter === 'WEDNESDAY_FAITHFUL') {
+        list = list.filter(m => m.wednesday?.consecutiveMissed === 0 && (m.wednesday?.attended > 0 || m.wednesday?.currentStreak > 0 || m.wednesday?.totalAttended > 0));
+      } else if (filter === 'FRIDAY_FAITHFUL') {
+        list = list.filter(m => m.friday?.consecutiveMissed === 0 && (m.friday?.attended > 0 || m.friday?.currentStreak > 0 || m.friday?.totalAttended > 0));
+      } else if (filter === 'PILLARS') {
+        list = list.filter(m => (m.overall?.rate || 0) >= 75 || (m.sunday?.rate || 0) >= 80);
+      } else if (filter === 'DECLINING') {
+        list = list.filter(m => m.overall?.isRapidlyDeclining || (m.overall?.rateDelta || 0) <= -30);
+      } else if (filter === 'FOLLOW_UP_REQUIRED') {
+        list = list.filter(m => ((m.sunday?.consecutiveMissed || 0) >= 3 && (m.sunday?.totalAttended || 0) > 0) || ((m.overall?.consecutiveMissed || 0) >= 3 && (m.overall?.totalAttended || 0) > 0) || (m.pastoralFollowUp?.status || '').includes('Required'));
+      } else if (filter === 'ZERO') {
+        list = list.filter(m => (m.overall?.attended || 0) === 0);
+      } else if (filter.startsWith('ACTIVE_STREAK_')) {
+        const parts = filter.replace('ACTIVE_STREAK_', '').toLowerCase().split('_');
         const svcCat = parts[0];
         const tier = parts.slice(1).join('_').toUpperCase();
 
@@ -7869,13 +7843,51 @@ closeCreateProgramModal();
         }
       }
 
-      // Apply Search
-      if (currentAnalyticsSearch) {
+      // Apply Search (when not overriding filter for global exports)
+      if (currentAnalyticsSearch && overrideFilter === null) {
         list = list.filter(m =>
-          m.name.toLowerCase().includes(currentAnalyticsSearch) ||
-          m.phone.includes(currentAnalyticsSearch)
+          (m.name || '').toLowerCase().includes(currentAnalyticsSearch) ||
+          (m.phone || '').includes(currentAnalyticsSearch)
         );
       }
+
+      return list;
+    }
+
+    function renderAnalyticsMasterTable() {
+      if (!currentAnalyticsData || !currentAnalyticsData.members) return;
+      const tbody = document.getElementById('analyticsMasterTableBody');
+      const mobContainer = document.getElementById('analyticsMobileCards');
+      if (!tbody) return;
+
+      const rawList = currentAnalyticsData.members;
+
+      // Update Preset Counts
+      const elCountAll = document.getElementById('anCountAll');
+      if (elCountAll) elCountAll.innerText = rawList.length;
+      const elCountAllBtn = document.getElementById('anCountAllBtn');
+      if (elCountAllBtn) elCountAllBtn.innerText = rawList.length;
+      const elCountMembers = document.getElementById('anCountMembers');
+      if (elCountMembers) elCountMembers.innerText = rawList.filter(m => !m.isVisitor).length;
+      const elCountVisitors = document.getElementById('anCountVisitors');
+      if (elCountVisitors) elCountVisitors.innerText = rawList.filter(m => m.isVisitor).length;
+      const elCountSun = document.getElementById('anCountSundayFaithful');
+      if (elCountSun) elCountSun.innerText = rawList.filter(m => m.sunday.consecutiveMissed === 0 && (m.sunday.attended > 0 || m.sunday.currentStreak > 0 || m.sunday.totalAttended > 0)).length;
+      const elCountWed = document.getElementById('anCountWedFaithful');
+      if (elCountWed) elCountWed.innerText = rawList.filter(m => m.wednesday.consecutiveMissed === 0 && (m.wednesday.attended > 0 || m.wednesday.currentStreak > 0 || m.wednesday.totalAttended > 0)).length;
+      const elCountFri = document.getElementById('anCountFriFaithful');
+      if (elCountFri) elCountFri.innerText = rawList.filter(m => m.friday.consecutiveMissed === 0 && (m.friday.attended > 0 || m.friday.currentStreak > 0 || m.friday.totalAttended > 0)).length;
+      const elCountPillars = document.getElementById('anCountPillars');
+      if (elCountPillars) elCountPillars.innerText = rawList.filter(m => m.overall.rate >= 75 || m.sunday.rate >= 80).length;
+      const elCountDeclining = document.getElementById('anCountDeclining');
+      if (elCountDeclining) elCountDeclining.innerText = rawList.filter(m => m.overall.isRapidlyDeclining || m.overall.rateDelta <= -30).length;
+      const elCountFollowUp = document.getElementById('anCountFollowUp');
+      if (elCountFollowUp) elCountFollowUp.innerText = rawList.filter(m => (m.sunday.consecutiveMissed >= 3 && m.sunday.totalAttended > 0) || (m.overall.consecutiveMissed >= 3 && m.overall.totalAttended > 0) || (m.pastoralFollowUp?.status || '').includes('Required')).length;
+      const elCountZero = document.getElementById('anCountZero');
+      if (elCountZero) elCountZero.innerText = rawList.filter(m => m.overall.attended === 0).length;
+
+      // Apply Filter & Search via helper
+      let list = getFilteredAnalyticsMembersList();
 
       if (list.length === 0) {
         tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: var(--muted); padding: 30px;">No attendees found matching this filter.</td></tr>`;
@@ -8502,6 +8514,158 @@ closeCreateProgramModal();
       document.body.removeChild(link);
       showToast('Monthly Member Engagement Matrix exported to CSV successfully!', 'success', 'CSV Exported');
     }
+
+    function getReadableAnalyticsFilterName(filter) {
+      const map = {
+        'ALL': 'All Attendees',
+        'MEMBERS_ONLY': 'Members Only',
+        'VISITORS_ONLY': 'Visitors & Guests',
+        'SUNDAY_FAITHFUL': 'Sunday Faithful',
+        'WEDNESDAY_FAITHFUL': 'Wednesday Faithful',
+        'FRIDAY_FAITHFUL': 'Friday Faithful',
+        'PILLARS': 'All-Round Pillars',
+        'DECLINING': 'Declining Attendance',
+        'FOLLOW_UP_REQUIRED': 'Follow-Up Needed',
+        'ZERO': 'Zero Attendance'
+      };
+      if (filter && filter.startsWith('ACTIVE_STREAK_')) {
+        return filter.replace('ACTIVE_STREAK_', '').replace(/_/g, ' ');
+      }
+      return map[filter] || filter || 'Current View';
+    }
+
+    /* ═════════════════════════════════════════════════════════════════════════
+       ATTENDEE PROFILES EXCEL DOWNLOAD (LEDGER ATTENDEE PROFILES ONLY)
+    ═════════════════════════════════════════════════════════════════════════ */
+    function downloadAttendeeProfilesExcel(mode = 'CURRENT') {
+      if (!currentAnalyticsData || !currentAnalyticsData.members || currentAnalyticsData.members.length === 0) {
+        showToast('No attendee records available in analytics to download.', 'warning', 'No Records');
+        return;
+      }
+
+      const list = mode === 'ALL'
+        ? [...currentAnalyticsData.members]
+        : getFilteredAnalyticsMembersList();
+
+      if (list.length === 0) {
+        showToast('No attendees match the current ledger filter to download.', 'warning', 'Empty Selection');
+        return;
+      }
+
+      const period = (currentAnalyticsData.period?.label || 'Monthly').replace(/\s+/g, '_');
+      const filterSlug = mode === 'ALL' ? 'All' : (currentAnalyticsFilter || 'All');
+      const fileName = `SFMI_Monthly_Ledger_Attendee_Profiles_${period}_${filterSlug}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+      const headers = [
+        "#",
+        "Attendee Full Name",
+        "First Name",
+        "Last Name",
+        "Attendee Type",
+        "Category",
+        "Role",
+        "Phone Number",
+        "WhatsApp Number",
+        "Email Address",
+        "Gender",
+        "Residential Location",
+        "Guardian / Parent",
+        "Date of Birth",
+        "Member Since / Registered",
+        "Pastoral Care Status"
+      ];
+
+      const rows = list.map((m, idx) => {
+        const fullMem = (typeof allMembers !== 'undefined' && Array.isArray(allMembers))
+          ? allMembers.find(am => am.id === m.memberId)
+          : null;
+
+        const phoneClean = (m.phone || fullMem?.phone || '').replace(/[^0-9]/g, '');
+        const waNumber = phoneClean
+          ? (phoneClean.startsWith('0') ? '+233' + phoneClean.slice(1) : (phoneClean.startsWith('233') ? '+' + phoneClean : phoneClean))
+          : '';
+        const cleanAddress = (m.address || fullMem?.address || '').replace(/^📍\s*/, '').trim();
+        const rawDob = m.dateOfBirth || fullMem?.dateOfBirth;
+        const dobStr = rawDob ? String(rawDob).slice(0, 10) : '';
+        const rawCreatedAt = m.createdAt || fullMem?.createdAt;
+        const regDate = rawCreatedAt ? new Date(rawCreatedAt).toLocaleDateString('en-GB') : '';
+
+        return [
+          idx + 1,
+          m.name || `${m.firstName || ''} ${m.lastName || ''}`.trim() || fullMem?.name || '',
+          m.firstName || fullMem?.firstName || '',
+          m.lastName || fullMem?.lastName || '',
+          m.isVisitor ? 'Visitor / Guest' : 'Church Member',
+          m.category || fullMem?.category || 'Adult',
+          m.role || fullMem?.role || 'Member',
+          m.phone || fullMem?.phone || '',
+          waNumber,
+          m.email || fullMem?.email || '',
+          m.gender || fullMem?.gender || 'Not Specified',
+          cleanAddress,
+          m.guardian || fullMem?.guardian || '',
+          dobStr,
+          regDate,
+          m.pastoralFollowUp?.status || 'In Good Standing'
+        ];
+      });
+
+      const filterReadable = mode === 'ALL'
+        ? 'All Attendees'
+        : getReadableAnalyticsFilterName(currentAnalyticsFilter);
+
+      // 1. If SheetJS (XLSX) is available, download native formatted .xlsx workbook
+      if (typeof XLSX !== 'undefined' && XLSX.utils && XLSX.writeFile) {
+        try {
+          const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+          ws['!cols'] = [
+            { wch: 6 },  // #
+            { wch: 28 }, // Full Name
+            { wch: 16 }, // First Name
+            { wch: 16 }, // Last Name
+            { wch: 18 }, // Attendee Type
+            { wch: 14 }, // Category
+            { wch: 14 }, // Role
+            { wch: 18 }, // Phone Number
+            { wch: 20 }, // WhatsApp Number
+            { wch: 28 }, // Email Address
+            { wch: 12 }, // Gender
+            { wch: 30 }, // Residential Location
+            { wch: 20 }, // Guardian / Parent
+            { wch: 14 }, // Date of Birth
+            { wch: 16 }, // Member Since
+            { wch: 24 }  // Pastoral Care Status
+          ];
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Attendee Profiles");
+          XLSX.writeFile(wb, `${fileName}.xlsx`);
+          showToast(`Downloaded ${list.length} attendee profiles (${filterReadable}) to Excel!`, 'success', 'Excel Downloaded');
+          return;
+        } catch (err) {
+          console.warn('XLSX export failed, falling back to CSV:', err);
+        }
+      }
+
+      // 2. Fallback to UTF-8 BOM CSV (compatible with all versions of Microsoft Excel)
+      let csv = '\uFEFF';
+      csv += headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(',') + '\n';
+      rows.forEach(r => {
+        csv += r.map(val => `"${String(val ?? '').replace(/"/g, '""')}"`).join(',') + '\n';
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${fileName}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      showToast(`Downloaded ${list.length} attendee profiles (${filterReadable}) to Excel/CSV!`, 'success', 'Export Complete');
+    }
+
+    window.downloadAttendeeProfilesExcel = downloadAttendeeProfilesExcel;
 
     function printExecutiveReport() {
       openPastorSummaryModal();

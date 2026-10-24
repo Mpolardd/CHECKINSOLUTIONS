@@ -32,6 +32,7 @@
   <script src="https://cdn.jsdelivr.net/npm/heic-to@1.5.2/dist/iife/heic-to.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <style>
     :root {
@@ -2517,7 +2518,10 @@
             <i class="fas fa-crown" style="color: #fbbf24;"></i> Multi-Service Streaks Hub
           </button>
           <button class="btn-download" style="font-size: 12px; padding: 6px 14px;" onclick="downloadAnalyticsCSV()">
-            <i class="fas fa-file-excel"></i> Export to Excel (CSV)
+            <i class="fas fa-file-excel"></i> Export Full Analytics (CSV)
+          </button>
+          <button class="btn-download" style="font-size: 12px; padding: 6px 14px; background: #107c41; color: white;" onclick="downloadAttendeeProfilesExcel('CURRENT')" title="Download Excel (.xlsx) spreadsheet with Attendee Profile details only">
+            <i class="fas fa-id-card"></i> Download Attendee Profiles (Excel)
           </button>
           <button class="btn-main" style="background: #334155; font-size: 12px; padding: 6px 14px;" onclick="printExecutiveReport()">
             <i class="fas fa-print"></i> Print / PDF Report
@@ -2736,24 +2740,33 @@
 
       <!-- Master Monthly Member Engagement Matrix Table -->
       <div class="admin-card" style="margin-top: 18px;" id="analyticsMasterTableCard">
-        <div class="card-head-row">
+        <div class="card-head-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
           <div>
             <h2 style="font-family: Manrope, sans-serif; font-size: 17px;" id="analyticsTableTitle">Monthly Attendance &amp; Engagement Ledger</h2>
             <p class="card-sub" id="analyticsTableSubtitle">Complete breakdown of every attendee's Sunday, Wednesday, Friday, and Overall streaks, service habits, and engagement score.</p>
           </div>
-          <!-- Table Presets -->
-          <div class="filter-presets" style="flex-wrap: wrap;">
-            <button class="btn-preset active" id="btnAnFilterAll" onclick="setAnalyticsMemberFilter('ALL')">All Attendees (<span id="anCountAll">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterMembers" onclick="setAnalyticsMemberFilter('MEMBERS_ONLY')" style="color: #047857;">Members Only (<span id="anCountMembers">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterVisitors" onclick="setAnalyticsMemberFilter('VISITORS_ONLY')" style="color: #b45309;">Visitors &amp; Guests (<span id="anCountVisitors">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterSundayFaithful" onclick="setAnalyticsMemberFilter('SUNDAY_FAITHFUL')" style="color: #0284c7;">Sunday Faithful (<span id="anCountSundayFaithful">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterWedFaithful" onclick="setAnalyticsMemberFilter('WEDNESDAY_FAITHFUL')" style="color: #8b5cf6;">Wednesday Faithful (<span id="anCountWedFaithful">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterFriFaithful" onclick="setAnalyticsMemberFilter('FRIDAY_FAITHFUL')" style="color: #ec4899;">Friday Faithful (<span id="anCountFriFaithful">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterPillars" onclick="setAnalyticsMemberFilter('PILLARS')" style="color: #15803d; font-weight: 700;">All-Round Pillars (<span id="anCountPillars">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterDeclining" onclick="setAnalyticsMemberFilter('DECLINING')" style="color: #dc2626;">Declining (<span id="anCountDeclining">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterFollowUp" onclick="setAnalyticsMemberFilter('FOLLOW_UP_REQUIRED')" style="color: #b91c1c; font-weight: 700;">Follow-Up Needed (<span id="anCountFollowUp">0</span>)</button>
-            <button class="btn-preset" id="btnAnFilterZero" onclick="setAnalyticsMemberFilter('ZERO')" style="color: #475569;">Zero Attendance (<span id="anCountZero">0</span>)</button>
+          <!-- Download Attendee Profiles Action -->
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button class="btn-main" style="background: #107c41; color: #ffffff; font-size: 12.5px; padding: 7px 14px; font-weight: 700; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" onclick="downloadAttendeeProfilesExcel('CURRENT')" id="btnDownloadAttendeeProfiles" title="Download Excel (.xlsx/.csv) containing Attendee Profile details only for current view">
+              <i class="fas fa-file-excel"></i> Download Attendee Profiles (Excel)
+            </button>
+            <button class="btn-preset" style="font-size: 11.5px; padding: 6px 11px; color: #107c41; font-weight: 700; border: 1.5px solid #107c41; background: #f0fdf4; border-radius: 6px; cursor: pointer;" onclick="downloadAttendeeProfilesExcel('ALL')" title="Download Attendee Profile details for ALL attendees">
+              All Profiles (<span id="anCountAllBtn">0</span>)
+            </button>
           </div>
+        </div>
+        <!-- Table Presets -->
+        <div class="filter-presets" style="flex-wrap: wrap; margin-top: 12px;">
+          <button class="btn-preset active" id="btnAnFilterAll" onclick="setAnalyticsMemberFilter('ALL')">All Attendees (<span id="anCountAll">0</span>)</button>
+          <button class="btn-preset" id="btnAnFilterMembers" onclick="setAnalyticsMemberFilter('MEMBERS_ONLY')" style="color: #047857;">Members Only (<span id="anCountMembers">0</span>)</button>
+          <button class="btn-preset" id="btnAnFilterVisitors" onclick="setAnalyticsMemberFilter('VISITORS_ONLY')" style="color: #b45309;">Visitors &amp; Guests (<span id="anCountVisitors">0</span>)</button>
+          <button class="btn-preset" id="btnAnFilterSundayFaithful" onclick="setAnalyticsMemberFilter('SUNDAY_FAITHFUL')" style="color: #0284c7;">Sunday Faithful (<span id="anCountSundayFaithful">0</span>)</button>
+          <button class="btn-preset" id="btnAnFilterWedFaithful" onclick="setAnalyticsMemberFilter('WEDNESDAY_FAITHFUL')" style="color: #8b5cf6;">Wednesday Faithful (<span id="anCountWedFaithful">0</span>)</button>
+          <button class="btn-preset" id="btnAnFilterFriFaithful" onclick="setAnalyticsMemberFilter('FRIDAY_FAITHFUL')" style="color: #ec4899;">Friday Faithful (<span id="anCountFriFaithful">0</span>)</button>
+          <button class="btn-preset" id="btnAnFilterPillars" onclick="setAnalyticsMemberFilter('PILLARS')" style="color: #15803d; font-weight: 700;">All-Round Pillars (<span id="anCountPillars">0</span>)</button>
+          <button class="btn-preset" id="btnAnFilterDeclining" onclick="setAnalyticsMemberFilter('DECLINING')" style="color: #dc2626;">Declining (<span id="anCountDeclining">0</span>)</button>
+          <button class="btn-preset" id="btnAnFilterFollowUp" onclick="setAnalyticsMemberFilter('FOLLOW_UP_REQUIRED')" style="color: #b91c1c; font-weight: 700;">Follow-Up Needed (<span id="anCountFollowUp">0</span>)</button>
+          <button class="btn-preset" id="btnAnFilterZero" onclick="setAnalyticsMemberFilter('ZERO')" style="color: #475569;">Zero Attendance (<span id="anCountZero">0</span>)</button>
         </div>
 
         <div class="table-responsive" style="margin-top: 14px;">
