@@ -8559,18 +8559,12 @@ closeCreateProgramModal();
       const headers = [
         "#",
         "Attendee Full Name",
-        "First Name",
-        "Last Name",
-        "Attendee Type",
         "Category",
-        "Role",
         "Phone Number",
         "WhatsApp Number",
-        "Email Address",
         "Gender",
         "Residential Location",
         "Guardian / Parent",
-        "Date of Birth",
         "Member Since / Registered",
         "Pastoral Care Status"
       ];
@@ -8585,26 +8579,18 @@ closeCreateProgramModal();
           ? (phoneClean.startsWith('0') ? '+233' + phoneClean.slice(1) : (phoneClean.startsWith('233') ? '+' + phoneClean : phoneClean))
           : '';
         const cleanAddress = (m.address || fullMem?.address || '').replace(/^📍\s*/, '').trim();
-        const rawDob = m.dateOfBirth || fullMem?.dateOfBirth;
-        const dobStr = rawDob ? String(rawDob).slice(0, 10) : '';
         const rawCreatedAt = m.createdAt || fullMem?.createdAt;
         const regDate = rawCreatedAt ? new Date(rawCreatedAt).toLocaleDateString('en-GB') : '';
 
         return [
           idx + 1,
           m.name || `${m.firstName || ''} ${m.lastName || ''}`.trim() || fullMem?.name || '',
-          m.firstName || fullMem?.firstName || '',
-          m.lastName || fullMem?.lastName || '',
-          m.isVisitor ? 'Visitor / Guest' : 'Church Member',
           m.category || fullMem?.category || 'Adult',
-          m.role || fullMem?.role || 'Member',
           m.phone || fullMem?.phone || '',
           waNumber,
-          m.email || fullMem?.email || '',
           m.gender || fullMem?.gender || 'Not Specified',
           cleanAddress,
           m.guardian || fullMem?.guardian || '',
-          dobStr,
           regDate,
           m.pastoralFollowUp?.status || 'In Good Standing'
         ];
@@ -8620,20 +8606,14 @@ closeCreateProgramModal();
           const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
           ws['!cols'] = [
             { wch: 6 },  // #
-            { wch: 28 }, // Full Name
-            { wch: 16 }, // First Name
-            { wch: 16 }, // Last Name
-            { wch: 18 }, // Attendee Type
-            { wch: 14 }, // Category
-            { wch: 14 }, // Role
+            { wch: 28 }, // Attendee Full Name
+            { wch: 15 }, // Category
             { wch: 18 }, // Phone Number
             { wch: 20 }, // WhatsApp Number
-            { wch: 28 }, // Email Address
             { wch: 12 }, // Gender
             { wch: 30 }, // Residential Location
-            { wch: 20 }, // Guardian / Parent
-            { wch: 14 }, // Date of Birth
-            { wch: 16 }, // Member Since
+            { wch: 22 }, // Guardian / Parent
+            { wch: 16 }, // Member Since / Registered
             { wch: 24 }  // Pastoral Care Status
           ];
           const wb = XLSX.utils.book_new();
